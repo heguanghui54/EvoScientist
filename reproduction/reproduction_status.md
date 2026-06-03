@@ -25,7 +25,7 @@ and paper-level experimental reproduction.
 | DeepSeek-backed EvoScientist proposal-only outputs exist | Ubuntu batch with `--proposal-only --stream-logs`; manifest has 30 `ok` outputs | Verified |
 | Target-system output coverage is complete for proposal-only mode | `audit_reproduction_artifacts.py --artifacts-root reproduction/artifacts/remote_fetch` reports EvoScientist 30/30 present | Verified |
 | Full tool-enabled EvoScientist trajectory exists for query 1 | `full_trajectory_status.json`; final report title: "CrossLingual-RAG: Cross-Lingual Retrieval-Augmented Generation for Extremely Low-Resource Machine Translation" | Verified |
-| Full trajectory audit is executable | `audit_full_trajectories.py`; current audit counts: 14 success, 9 timeout, 7 missing | Verified |
+| Full trajectory audit is executable | `audit_full_trajectories.py`; current audit counts: 14 success, 9 timeout, 1 failed, 6 missing | Verified |
 | Full trajectory reruns are isolated by default | `run_idea_generation.py` now uses `EvoSci --mode run --name repro-query-XX` unless `--session-mode daemon` is explicitly requested | Verified |
 | Replacement direct-LLM baseline outputs exist | `Direct-DeepSeek` baseline has answer files for 30/30 paper queries | Verified |
 | Replacement-baseline judge pipeline is complete | Clean EvoScientist answers vs `Direct-DeepSeek`: 60 swapped pairwise records, 60 DeepSeek judge outputs, aggregate table, audit complete | Verified |

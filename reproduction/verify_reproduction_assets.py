@@ -108,7 +108,9 @@ def main() -> None:
     assert "CodeSemEval" in full_status["query_23_success"]["final_report"]["title"]
     assert full_status["audit"]["counts"]["success"] == 14
     assert full_status["audit"]["counts"]["timeout"] == 9
-    assert full_status["audit"]["counts"]["missing"] == 7
+    assert full_status["audit"]["counts"]["failed"] == 1
+    assert full_status["audit"]["counts"]["missing"] == 6
+    assert full_status["incomplete_queries"]["query_24"]["status"] == "failed"
     reported = json.loads(reported_path.read_text(encoding="utf-8"))
     for section in [
         "table1_llm_idea_generation",
