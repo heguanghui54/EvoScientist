@@ -8,11 +8,11 @@ Audit status: `incomplete`
 
 | Status | Count |
 | --- | ---: |
-| success | 5 |
+| success | 6 |
 | timeout | 2 |
-| missing | 23 |
+| missing | 22 |
 
-Successful query ids: `[1, 2, 3, 5, 6]`
+Successful query ids: `[1, 2, 3, 5, 6, 8]`
 
 ## Successful Full Trajectories
 
@@ -123,6 +123,27 @@ EVOSCI_QUERY_TIMEOUT=1200 EVOSCI_QUERY_EXTRA_ARGS='--query-ids 6,7,8,9,10,11,12,
 - manifest return code is 0.
 - isolated workspace was `runs/repro-query-06`.
 
+Query 8 status: `ok`
+
+Title: VeriPlan: Verifier-Gated Replanning for Reliable Multi-Step Agent Reasoning
+
+Output directory: `reproduction/artifacts/remote_fetch/full_trajectories/EvoScientist/query_08`
+
+Token usage: 86,739 input / 5,207 output
+
+## Query 8 Successful Command
+
+```bash
+EVOSCI_QUERY_TIMEOUT=1200 EVOSCI_QUERY_EXTRA_ARGS='--query-ids 6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30 --force-proposal --stream-logs --idle-timeout 600 --output-dir reproduction/artifacts/full_trajectories/EvoScientist' reproduction/ssh_ubuntu_run.sh batch-bg 30
+```
+
+## Query 8 Evidence
+
+- `final_report.md` exists and is 12,569 bytes.
+- stdout reports `[Usage: 86,739 in · 5,207 out]`.
+- manifest return code is 0.
+- isolated workspace was `runs/repro-query-08`.
+
 ## Current Non-Successful Full Trajectories
 
 - Query 4: runner reported idle timeout after 600 seconds without log growth.
@@ -143,7 +164,7 @@ EVOSCI_QUERY_TIMEOUT=1200 EVOSCI_QUERY_EXTRA_ARGS='--query-ids 6,7,8,9,10,11,12,
   Final report collected: True
 
 ## Limitations
-- Only queries 1, 2, 3, 5, and 6 currently have successful full tool-enabled trajectories with final_report.md.
+- Only queries 1, 2, 3, 5, 6, and 8 currently have successful full tool-enabled trajectories with final_report.md.
 - Queries 4 and 7 idle-timed-out after 600 seconds without log growth in the fetched audit snapshot.
 - The run used DeepSeek configuration rather than the paper-matched Gemini/Claude setup.
 - Tavily search was unavailable, so the research-agent behavior may differ from paper settings.
