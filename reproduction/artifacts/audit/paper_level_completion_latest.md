@@ -12,7 +12,7 @@ are present in the checkout.
 
 | Component | Status | Evidence |
 | --- | --- | --- |
-| Full trajectories | incomplete | 23/30 successful final reports; non-success IDs: 16, 18, 22, 24, 25, 26, 30 |
+| Full trajectories | incomplete | 24/30 successful final reports; non-success IDs: 16, 22, 24, 25, 26, 30 |
 | Table 1 LLM judge | incomplete | expected 420 pairwise records; missing baseline outputs: Virtual Scientist, AI-Researcher, InternAgent, AI Scientist-v2, Hypogenic, Novix, K-Dense |
 | Table 2 human eval | incomplete | missing files: inputs.jsonl, labels.jsonl, aggregate.json |
 | Table 3 ablation | incomplete | missing variants: -IDE, -IVE, -all |
