@@ -56,6 +56,8 @@ def main() -> None:
         "probe_ai_researcher_baseline.py",
         "probe_internagent_baseline.py",
         "build_internagent_qa_runbook.py",
+        "probe_ai_scientist_v2_baseline.py",
+        "build_ai_scientist_v2_ideation_runbook.py",
         "aggregate_human_labels.py",
         "aggregate_ablation_results.py",
         "aggregate_code_execution.py",
@@ -153,6 +155,32 @@ def main() -> None:
     internagent_runbook_sh = internagent_runbook_sh_path.read_text(encoding="utf-8")
     assert internagent_runbook_sh.count("python launch.py --mode qa") == 30
     assert "query_30.md" in internagent_runbook_sh
+    ai_scientist_probe_json_path = ROOT / "ai_scientist_v2_baseline_probe.json"
+    ai_scientist_probe_md_path = ROOT / "ai_scientist_v2_baseline_probe.md"
+    assert ai_scientist_probe_json_path.is_file(), "missing AI Scientist-v2 probe JSON"
+    assert ai_scientist_probe_md_path.is_file(), "missing AI Scientist-v2 probe markdown"
+    ai_scientist_probe = json.loads(ai_scientist_probe_json_path.read_text(encoding="utf-8"))
+    assert ai_scientist_probe["baseline"] == "AI Scientist-v2"
+    assert ai_scientist_probe["evo_table1_drop_in_status"] == "ideation_adapter_candidate"
+    assert ai_scientist_probe["paper_exact_status"] == "not_paper_exact"
+    assert ai_scientist_probe["signals"]["ideation_cli_available"] is True
+    assert ai_scientist_probe["direct_30_query_runner_available"] is True
+    assert "perform_ideation_temp_free.py" in ai_scientist_probe["entrypoints"]["ideation"]
+    ai_scientist_runbook_root = ROOT / "ai_scientist_v2_ideation_runbook"
+    ai_scientist_runbook_json_path = ai_scientist_runbook_root / "ai_scientist_v2_ideation_runbook.json"
+    ai_scientist_runbook_md_path = ai_scientist_runbook_root / "ai_scientist_v2_ideation_runbook.md"
+    ai_scientist_runbook_sh_path = ai_scientist_runbook_root / "run_ai_scientist_v2_ideation.sh"
+    assert ai_scientist_runbook_json_path.is_file(), "missing AI Scientist-v2 runbook JSON"
+    assert ai_scientist_runbook_md_path.is_file(), "missing AI Scientist-v2 runbook markdown"
+    assert ai_scientist_runbook_sh_path.is_file(), "missing AI Scientist-v2 runbook shell script"
+    ai_scientist_runbook = json.loads(ai_scientist_runbook_json_path.read_text(encoding="utf-8"))
+    assert ai_scientist_runbook["baseline"] == "AI Scientist-v2"
+    assert ai_scientist_runbook["query_count"] == 30
+    assert len(ai_scientist_runbook["commands"]) == 30
+    assert ai_scientist_runbook["paper_exact"] is False
+    assert "AI Scientist-v2" in ai_scientist_runbook["import_command"]
+    assert ai_scientist_runbook_sh_path.read_text(encoding="utf-8").count("perform_ideation_temp_free.py") == 30
+    assert (ai_scientist_runbook_root / "topics" / "query_30.md").is_file()
     replacement_protocol = json.loads(replacement_protocol_json_path.read_text(encoding="utf-8"))
     assert replacement_protocol["import_tool"]["script"] == "reproduction/import_baseline_outputs.py"
     assert replacement_protocol["judge_protocol"]["records_per_baseline"] == 60
@@ -183,6 +211,8 @@ def main() -> None:
     assert "internagent_baseline_probe.json" in action_plan_md
     assert "build_internagent_qa_runbook.py" in action_plan_md
     assert "internagent_qa_runbook.sh" in action_plan_md
+    assert "ai_scientist_v2_baseline_probe.json" in action_plan_md
+    assert "build_ai_scientist_v2_ideation_runbook.py" in action_plan_md
     full_status = json.loads(full_status_json_path.read_text(encoding="utf-8"))
     expected_success_ids = list(range(1, 31))
     expected_incomplete_ids = []
@@ -270,6 +300,8 @@ def main() -> None:
         "AI-Researcher baseline probe is recorded",
         "InternAgent baseline probe is recorded",
         "InternAgent QA runbook is executable",
+        "AI Scientist-v2 baseline probe is recorded",
+        "AI Scientist-v2 ideation runbook is executable",
         "Paper-level non-Table-1 artifact schemas are pinned",
         "Human-label aggregation is executable",
         "Ablation aggregation is executable",
@@ -756,6 +788,31 @@ def main() -> None:
         generated_runbook = json.loads(runbook_json.read_text(encoding="utf-8"))
         assert generated_runbook["query_count"] == 2
         assert runbook_sh.read_text(encoding="utf-8").count("python launch.py --mode qa") == 2
+
+        ai_scientist_tmp_root = tmp_path / "ai_scientist_runbook"
+        subprocess.run(
+            [
+                sys.executable,
+                str(ROOT / "build_ai_scientist_v2_ideation_runbook.py"),
+                "--output-root",
+                str(ai_scientist_tmp_root),
+                "--output-jsonl",
+                str(tmp_path / "ai_scientist_import.jsonl"),
+                "--limit",
+                "2",
+            ],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+        generated_ai_scientist = json.loads(
+            (ai_scientist_tmp_root / "ai_scientist_v2_ideation_runbook.json").read_text(encoding="utf-8")
+        )
+        assert generated_ai_scientist["query_count"] == 2
+        assert (ai_scientist_tmp_root / "topics" / "query_02.md").is_file()
+        assert (
+            ai_scientist_tmp_root / "run_ai_scientist_v2_ideation.sh"
+        ).read_text(encoding="utf-8").count("perform_ideation_temp_free.py") == 2
 
         audit_root = tmp_path / "audit_artifacts"
         audit_systems = audit_root / "idea_outputs"

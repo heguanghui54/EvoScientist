@@ -1,0 +1,296 @@
+{
+  "date": "2026-06-04",
+  "baseline": "AI Scientist-v2",
+  "mode": "ideation_replacement_baseline",
+  "paper_exact": false,
+  "source_probe": "reproduction/ai_scientist_v2_baseline_probe.json",
+  "query_count": 30,
+  "external_checkout": "$HOME/research/AI-Scientist-v2",
+  "model": "gpt-4o-2024-05-13",
+  "max_num_generations": 1,
+  "num_reflections": 5,
+  "topic_dir": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/ai_scientist_v2_ideation_runbook/topics",
+  "commands": [
+    {
+      "query_id": 1,
+      "topic": "Machine translation",
+      "goal": "Generate a research proposal on low-resource machine translation.",
+      "local_topic_path": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/ai_scientist_v2_ideation_runbook/topics/query_01.md",
+      "external_topic_path": "$HOME/research/AI-Scientist-v2/ai_scientist/ideas/query_01.md",
+      "external_json_path": "$HOME/research/AI-Scientist-v2/ai_scientist/ideas/query_01.json",
+      "command": "python ai_scientist/perform_ideation_temp_free.py --workshop-file ai_scientist/ideas/query_01.md --model gpt-4o-2024-05-13 --max-num-generations 1 --num-reflections 5"
+    },
+    {
+      "query_id": 2,
+      "topic": "Software engineering",
+      "goal": "Help me generate a research proposal on AI for software engineering.",
+      "local_topic_path": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/ai_scientist_v2_ideation_runbook/topics/query_02.md",
+      "external_topic_path": "$HOME/research/AI-Scientist-v2/ai_scientist/ideas/query_02.md",
+      "external_json_path": "$HOME/research/AI-Scientist-v2/ai_scientist/ideas/query_02.json",
+      "command": "python ai_scientist/perform_ideation_temp_free.py --workshop-file ai_scientist/ideas/query_02.md --model gpt-4o-2024-05-13 --max-num-generations 1 --num-reflections 5"
+    },
+    {
+      "query_id": 3,
+      "topic": "LLM evaluation",
+      "goal": "Generate a research proposal on how to address the accuracy issues of automated evaluation for Large Language Models.",
+      "local_topic_path": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/ai_scientist_v2_ideation_runbook/topics/query_03.md",
+      "external_topic_path": "$HOME/research/AI-Scientist-v2/ai_scientist/ideas/query_03.md",
+      "external_json_path": "$HOME/research/AI-Scientist-v2/ai_scientist/ideas/query_03.json",
+      "command": "python ai_scientist/perform_ideation_temp_free.py --workshop-file ai_scientist/ideas/query_03.md --model gpt-4o-2024-05-13 --max-num-generations 1 --num-reflections 5"
+    },
+    {
+      "query_id": 4,
+      "topic": "Healthcare agents",
+      "goal": "Help me generate a research proposal on AI agents in healthcare.",
+      "local_topic_path": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/ai_scientist_v2_ideation_runbook/topics/query_04.md",
+      "external_topic_path": "$HOME/research/AI-Scientist-v2/ai_scientist/ideas/query_04.md",
+      "external_json_path": "$HOME/research/AI-Scientist-v2/ai_scientist/ideas/query_04.json",
+      "command": "python ai_scientist/perform_ideation_temp_free.py --workshop-file ai_scientist/ideas/query_04.md --model gpt-4o-2024-05-13 --max-num-generations 1 --num-reflections 5"
+    },
+    {
+      "query_id": 5,
+      "topic": "Literature review automation",
+      "goal": "Generate a research proposal on automated literature review generation.",
+      "local_topic_path": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/ai_scientist_v2_ideation_runbook/topics/query_05.md",
+      "external_topic_path": "$HOME/research/AI-Scientist-v2/ai_scientist/ideas/query_05.md",
+      "external_json_path": "$HOME/research/AI-Scientist-v2/ai_scientist/ideas/query_05.json",
+      "command": "python ai_scientist/perform_ideation_temp_free.py --workshop-file ai_scientist/ideas/query_05.md --model gpt-4o-2024-05-13 --max-num-generations 1 --num-reflections 5"
+    },
+    {
+      "query_id": 6,
+      "topic": "Speech recognition",
+      "goal": "Generate a research proposal on low-resource speech recognition.",
+      "local_topic_path": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/ai_scientist_v2_ideation_runbook/topics/query_06.md",
+      "external_topic_path": "$HOME/research/AI-Scientist-v2/ai_scientist/ideas/query_06.md",
+      "external_json_path": "$HOME/research/AI-Scientist-v2/ai_scientist/ideas/query_06.json",
+      "command": "python ai_scientist/perform_ideation_temp_free.py --workshop-file ai_scientist/ideas/query_06.md --model gpt-4o-2024-05-13 --max-num-generations 1 --num-reflections 5"
+    },
+    {
+      "query_id": 7,
+      "topic": "Model efficiency",
+      "goal": "Generate a research proposal on how to break the performance ceiling of small models.",
+      "local_topic_path": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/ai_scientist_v2_ideation_runbook/topics/query_07.md",
+      "external_topic_path": "$HOME/research/AI-Scientist-v2/ai_scientist/ideas/query_07.md",
+      "external_json_path": "$HOME/research/AI-Scientist-v2/ai_scientist/ideas/query_07.json",
+      "command": "python ai_scientist/perform_ideation_temp_free.py --workshop-file ai_scientist/ideas/query_07.md --model gpt-4o-2024-05-13 --max-num-generations 1 --num-reflections 5"
+    },
+    {
+      "query_id": 8,
+      "topic": "AI agents",
+      "goal": "Generate a research proposal on complex reasoning for AI agents.",
+      "local_topic_path": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/ai_scientist_v2_ideation_runbook/topics/query_08.md",
+      "external_topic_path": "$HOME/research/AI-Scientist-v2/ai_scientist/ideas/query_08.md",
+      "external_json_path": "$HOME/research/AI-Scientist-v2/ai_scientist/ideas/query_08.json",
+      "command": "python ai_scientist/perform_ideation_temp_free.py --workshop-file ai_scientist/ideas/query_08.md --model gpt-4o-2024-05-13 --max-num-generations 1 --num-reflections 5"
+    },
+    {
+      "query_id": 9,
+      "topic": "Model deployment",
+      "goal": "Generate a research proposal on solving quantization challenges for LLM deployment on edge devices.",
+      "local_topic_path": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/ai_scientist_v2_ideation_runbook/topics/query_09.md",
+      "external_topic_path": "$HOME/research/AI-Scientist-v2/ai_scientist/ideas/query_09.md",
+      "external_json_path": "$HOME/research/AI-Scientist-v2/ai_scientist/ideas/query_09.json",
+      "command": "python ai_scientist/perform_ideation_temp_free.py --workshop-file ai_scientist/ideas/query_09.md --model gpt-4o-2024-05-13 --max-num-generations 1 --num-reflections 5"
+    },
+    {
+      "query_id": 10,
+      "topic": "Text-to-SQL",
+      "goal": "Help me generate a research proposal on Text-to-SQL.",
+      "local_topic_path": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/ai_scientist_v2_ideation_runbook/topics/query_10.md",
+      "external_topic_path": "$HOME/research/AI-Scientist-v2/ai_scientist/ideas/query_10.md",
+      "external_json_path": "$HOME/research/AI-Scientist-v2/ai_scientist/ideas/query_10.json",
+      "command": "python ai_scientist/perform_ideation_temp_free.py --workshop-file ai_scientist/ideas/query_10.md --model gpt-4o-2024-05-13 --max-num-generations 1 --num-reflections 5"
+    },
+    {
+      "query_id": 11,
+      "topic": "LLM capabilities",
+      "goal": "Generate a research proposal on the decoupling of Large Language Model capabilities.",
+      "local_topic_path": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/ai_scientist_v2_ideation_runbook/topics/query_11.md",
+      "external_topic_path": "$HOME/research/AI-Scientist-v2/ai_scientist/ideas/query_11.md",
+      "external_json_path": "$HOME/research/AI-Scientist-v2/ai_scientist/ideas/query_11.json",
+      "command": "python ai_scientist/perform_ideation_temp_free.py --workshop-file ai_scientist/ideas/query_11.md --model gpt-4o-2024-05-13 --max-num-generations 1 --num-reflections 5"
+    },
+    {
+      "query_id": 12,
+      "topic": "Factual consistency",
+      "goal": "Generate a research proposal on how to resolve factual consistency issues in Large Language Models.",
+      "local_topic_path": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/ai_scientist_v2_ideation_runbook/topics/query_12.md",
+      "external_topic_path": "$HOME/research/AI-Scientist-v2/ai_scientist/ideas/query_12.md",
+      "external_json_path": "$HOME/research/AI-Scientist-v2/ai_scientist/ideas/query_12.json",
+      "command": "python ai_scientist/perform_ideation_temp_free.py --workshop-file ai_scientist/ideas/query_12.md --model gpt-4o-2024-05-13 --max-num-generations 1 --num-reflections 5"
+    },
+    {
+      "query_id": 13,
+      "topic": "Data synthesis",
+      "goal": "Generate a research proposal on data synthesis for code LLMs.",
+      "local_topic_path": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/ai_scientist_v2_ideation_runbook/topics/query_13.md",
+      "external_topic_path": "$HOME/research/AI-Scientist-v2/ai_scientist/ideas/query_13.md",
+      "external_json_path": "$HOME/research/AI-Scientist-v2/ai_scientist/ideas/query_13.json",
+      "command": "python ai_scientist/perform_ideation_temp_free.py --workshop-file ai_scientist/ideas/query_13.md --model gpt-4o-2024-05-13 --max-num-generations 1 --num-reflections 5"
+    },
+    {
+      "query_id": 14,
+      "topic": "Inference efficiency",
+      "goal": "Generate a research proposal on solving inference latency issues in Large Language Models.",
+      "local_topic_path": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/ai_scientist_v2_ideation_runbook/topics/query_14.md",
+      "external_topic_path": "$HOME/research/AI-Scientist-v2/ai_scientist/ideas/query_14.md",
+      "external_json_path": "$HOME/research/AI-Scientist-v2/ai_scientist/ideas/query_14.json",
+      "command": "python ai_scientist/perform_ideation_temp_free.py --workshop-file ai_scientist/ideas/query_14.md --model gpt-4o-2024-05-13 --max-num-generations 1 --num-reflections 5"
+    },
+    {
+      "query_id": 15,
+      "topic": "Machine translation",
+      "goal": "Generate a research proposal on debiasing in machine translation.",
+      "local_topic_path": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/ai_scientist_v2_ideation_runbook/topics/query_15.md",
+      "external_topic_path": "$HOME/research/AI-Scientist-v2/ai_scientist/ideas/query_15.md",
+      "external_json_path": "$HOME/research/AI-Scientist-v2/ai_scientist/ideas/query_15.json",
+      "command": "python ai_scientist/perform_ideation_temp_free.py --workshop-file ai_scientist/ideas/query_15.md --model gpt-4o-2024-05-13 --max-num-generations 1 --num-reflections 5"
+    },
+    {
+      "query_id": 16,
+      "topic": "Knowledge injection",
+      "goal": "Generate a research proposal on addressing the challenges of knowledge injection in domain-specific Large Language Models.",
+      "local_topic_path": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/ai_scientist_v2_ideation_runbook/topics/query_16.md",
+      "external_topic_path": "$HOME/research/AI-Scientist-v2/ai_scientist/ideas/query_16.md",
+      "external_json_path": "$HOME/research/AI-Scientist-v2/ai_scientist/ideas/query_16.json",
+      "command": "python ai_scientist/perform_ideation_temp_free.py --workshop-file ai_scientist/ideas/query_16.md --model gpt-4o-2024-05-13 --max-num-generations 1 --num-reflections 5"
+    },
+    {
+      "query_id": 17,
+      "topic": "Information extraction",
+      "goal": "Generate a research proposal on automated information extraction.",
+      "local_topic_path": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/ai_scientist_v2_ideation_runbook/topics/query_17.md",
+      "external_topic_path": "$HOME/research/AI-Scientist-v2/ai_scientist/ideas/query_17.md",
+      "external_json_path": "$HOME/research/AI-Scientist-v2/ai_scientist/ideas/query_17.json",
+      "command": "python ai_scientist/perform_ideation_temp_free.py --workshop-file ai_scientist/ideas/query_17.md --model gpt-4o-2024-05-13 --max-num-generations 1 --num-reflections 5"
+    },
+    {
+      "query_id": 18,
+      "topic": "UX evaluation",
+      "goal": "Generate a research proposal on user experience evaluation for Large Language Models.",
+      "local_topic_path": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/ai_scientist_v2_ideation_runbook/topics/query_18.md",
+      "external_topic_path": "$HOME/research/AI-Scientist-v2/ai_scientist/ideas/query_18.md",
+      "external_json_path": "$HOME/research/AI-Scientist-v2/ai_scientist/ideas/query_18.json",
+      "command": "python ai_scientist/perform_ideation_temp_free.py --workshop-file ai_scientist/ideas/query_18.md --model gpt-4o-2024-05-13 --max-num-generations 1 --num-reflections 5"
+    },
+    {
+      "query_id": 19,
+      "topic": "Evaluation leaderboards",
+      "goal": "Generate a research proposal on how to construct efficient leaderboards for LLM evaluation.",
+      "local_topic_path": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/ai_scientist_v2_ideation_runbook/topics/query_19.md",
+      "external_topic_path": "$HOME/research/AI-Scientist-v2/ai_scientist/ideas/query_19.md",
+      "external_json_path": "$HOME/research/AI-Scientist-v2/ai_scientist/ideas/query_19.json",
+      "command": "python ai_scientist/perform_ideation_temp_free.py --workshop-file ai_scientist/ideas/query_19.md --model gpt-4o-2024-05-13 --max-num-generations 1 --num-reflections 5"
+    },
+    {
+      "query_id": 20,
+      "topic": "Text generation",
+      "goal": "Generate a research proposal on the evaluation of diversity in text generation.",
+      "local_topic_path": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/ai_scientist_v2_ideation_runbook/topics/query_20.md",
+      "external_topic_path": "$HOME/research/AI-Scientist-v2/ai_scientist/ideas/query_20.md",
+      "external_json_path": "$HOME/research/AI-Scientist-v2/ai_scientist/ideas/query_20.json",
+      "command": "python ai_scientist/perform_ideation_temp_free.py --workshop-file ai_scientist/ideas/query_20.md --model gpt-4o-2024-05-13 --max-num-generations 1 --num-reflections 5"
+    },
+    {
+      "query_id": 21,
+      "topic": "Content detection",
+      "goal": "Generate a research proposal on how to address false positives in AI-generated content detection.",
+      "local_topic_path": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/ai_scientist_v2_ideation_runbook/topics/query_21.md",
+      "external_topic_path": "$HOME/research/AI-Scientist-v2/ai_scientist/ideas/query_21.md",
+      "external_json_path": "$HOME/research/AI-Scientist-v2/ai_scientist/ideas/query_21.json",
+      "command": "python ai_scientist/perform_ideation_temp_free.py --workshop-file ai_scientist/ideas/query_21.md --model gpt-4o-2024-05-13 --max-num-generations 1 --num-reflections 5"
+    },
+    {
+      "query_id": 22,
+      "topic": "Code LLM security",
+      "goal": "Generate a research proposal on the security of code LLMs.",
+      "local_topic_path": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/ai_scientist_v2_ideation_runbook/topics/query_22.md",
+      "external_topic_path": "$HOME/research/AI-Scientist-v2/ai_scientist/ideas/query_22.md",
+      "external_json_path": "$HOME/research/AI-Scientist-v2/ai_scientist/ideas/query_22.json",
+      "command": "python ai_scientist/perform_ideation_temp_free.py --workshop-file ai_scientist/ideas/query_22.md --model gpt-4o-2024-05-13 --max-num-generations 1 --num-reflections 5"
+    },
+    {
+      "query_id": 23,
+      "topic": "Code LLM evaluation",
+      "goal": "Generate a research proposal on how to build a deep evaluation framework for code LLMs.",
+      "local_topic_path": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/ai_scientist_v2_ideation_runbook/topics/query_23.md",
+      "external_topic_path": "$HOME/research/AI-Scientist-v2/ai_scientist/ideas/query_23.md",
+      "external_json_path": "$HOME/research/AI-Scientist-v2/ai_scientist/ideas/query_23.json",
+      "command": "python ai_scientist/perform_ideation_temp_free.py --workshop-file ai_scientist/ideas/query_23.md --model gpt-4o-2024-05-13 --max-num-generations 1 --num-reflections 5"
+    },
+    {
+      "query_id": 24,
+      "topic": "RAG",
+      "goal": "Generate a research proposal on solving multi-hop reasoning challenges in Retrieval-Augmented Generation (RAG).",
+      "local_topic_path": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/ai_scientist_v2_ideation_runbook/topics/query_24.md",
+      "external_topic_path": "$HOME/research/AI-Scientist-v2/ai_scientist/ideas/query_24.md",
+      "external_json_path": "$HOME/research/AI-Scientist-v2/ai_scientist/ideas/query_24.json",
+      "command": "python ai_scientist/perform_ideation_temp_free.py --workshop-file ai_scientist/ideas/query_24.md --model gpt-4o-2024-05-13 --max-num-generations 1 --num-reflections 5"
+    },
+    {
+      "query_id": 25,
+      "topic": "Multi-source reasoning",
+      "goal": "Generate a research proposal on complex reasoning with multi-source information.",
+      "local_topic_path": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/ai_scientist_v2_ideation_runbook/topics/query_25.md",
+      "external_topic_path": "$HOME/research/AI-Scientist-v2/ai_scientist/ideas/query_25.md",
+      "external_json_path": "$HOME/research/AI-Scientist-v2/ai_scientist/ideas/query_25.json",
+      "command": "python ai_scientist/perform_ideation_temp_free.py --workshop-file ai_scientist/ideas/query_25.md --model gpt-4o-2024-05-13 --max-num-generations 1 --num-reflections 5"
+    },
+    {
+      "query_id": 26,
+      "topic": "Data filtering",
+      "goal": "Generate a research proposal on solving data filtering challenges for domain-specific models.",
+      "local_topic_path": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/ai_scientist_v2_ideation_runbook/topics/query_26.md",
+      "external_topic_path": "$HOME/research/AI-Scientist-v2/ai_scientist/ideas/query_26.md",
+      "external_json_path": "$HOME/research/AI-Scientist-v2/ai_scientist/ideas/query_26.json",
+      "command": "python ai_scientist/perform_ideation_temp_free.py --workshop-file ai_scientist/ideas/query_26.md --model gpt-4o-2024-05-13 --max-num-generations 1 --num-reflections 5"
+    },
+    {
+      "query_id": 27,
+      "topic": "Long-context understanding",
+      "goal": "Generate a research proposal on how to enhance the long-context understanding of Large Language Models.",
+      "local_topic_path": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/ai_scientist_v2_ideation_runbook/topics/query_27.md",
+      "external_topic_path": "$HOME/research/AI-Scientist-v2/ai_scientist/ideas/query_27.md",
+      "external_json_path": "$HOME/research/AI-Scientist-v2/ai_scientist/ideas/query_27.json",
+      "command": "python ai_scientist/perform_ideation_temp_free.py --workshop-file ai_scientist/ideas/query_27.md --model gpt-4o-2024-05-13 --max-num-generations 1 --num-reflections 5"
+    },
+    {
+      "query_id": 28,
+      "topic": "Alignment",
+      "goal": "Generate a research proposal on cross-cultural alignment for Large Language Models.",
+      "local_topic_path": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/ai_scientist_v2_ideation_runbook/topics/query_28.md",
+      "external_topic_path": "$HOME/research/AI-Scientist-v2/ai_scientist/ideas/query_28.md",
+      "external_json_path": "$HOME/research/AI-Scientist-v2/ai_scientist/ideas/query_28.json",
+      "command": "python ai_scientist/perform_ideation_temp_free.py --workshop-file ai_scientist/ideas/query_28.md --model gpt-4o-2024-05-13 --max-num-generations 1 --num-reflections 5"
+    },
+    {
+      "query_id": 29,
+      "topic": "Alignment",
+      "goal": "Generate a research proposal on value alignment for AI agents.",
+      "local_topic_path": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/ai_scientist_v2_ideation_runbook/topics/query_29.md",
+      "external_topic_path": "$HOME/research/AI-Scientist-v2/ai_scientist/ideas/query_29.md",
+      "external_json_path": "$HOME/research/AI-Scientist-v2/ai_scientist/ideas/query_29.json",
+      "command": "python ai_scientist/perform_ideation_temp_free.py --workshop-file ai_scientist/ideas/query_29.md --model gpt-4o-2024-05-13 --max-num-generations 1 --num-reflections 5"
+    },
+    {
+      "query_id": 30,
+      "topic": "Audio foundation models",
+      "goal": "Help me generate a research proposal on general-purpose audio foundation models.",
+      "local_topic_path": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/ai_scientist_v2_ideation_runbook/topics/query_30.md",
+      "external_topic_path": "$HOME/research/AI-Scientist-v2/ai_scientist/ideas/query_30.md",
+      "external_json_path": "$HOME/research/AI-Scientist-v2/ai_scientist/ideas/query_30.json",
+      "command": "python ai_scientist/perform_ideation_temp_free.py --workshop-file ai_scientist/ideas/query_30.md --model gpt-4o-2024-05-13 --max-num-generations 1 --num-reflections 5"
+    }
+  ],
+  "copy_topics_command": "cp /Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/ai_scientist_v2_ideation_runbook/topics/query_*.md $HOME/research/AI-Scientist-v2/ai_scientist/ideas/",
+  "rename_topics_note": "Copied files are named query_XX.md and produce query_XX.json outputs.",
+  "jsonl_converter": "python - <<'PY'\nimport json\nimport os\nfrom pathlib import Path\ngenerated_root = Path(os.path.expandvars('$HOME/research/AI-Scientist-v2/ai_scientist/ideas')).expanduser()\noutput = Path('/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/ai_scientist_v2_ideation_import_template.jsonl')\noutput.parent.mkdir(parents=True, exist_ok=True)\nrows = []\nfor path in sorted(generated_root.glob('query_*.json')):\n    qid = int(path.stem.split('_')[1])\n    ideas = json.loads(path.read_text())\n    if not ideas:\n        continue\n    idea = ideas[0]\n    answer = '\\n\\n'.join([\n        f\"# {idea.get('Title', idea.get('Name', 'AI Scientist-v2 idea'))}\",\n        f\"Short Hypothesis: {idea.get('Short Hypothesis', '')}\",\n        f\"Related Work: {idea.get('Related Work', '')}\",\n        f\"Abstract: {idea.get('Abstract', '')}\",\n        f\"Experiments: {idea.get('Experiments', '')}\",\n        f\"Risk Factors and Limitations: {idea.get('Risk Factors and Limitations', '')}\",\n    ])\n    rows.append({'query_id': qid, 'answer': answer, 'prompt': (generated_root / f'query_{qid:02d}.md').read_text()})\nwith output.open('w', encoding='utf-8') as f:\n    for row in rows:\n        f.write(json.dumps(row, ensure_ascii=False) + '\\n')\nprint(json.dumps({'written': len(rows), 'output': str(output)}, indent=2))\nPY",
+  "import_command": ".venv/bin/python reproduction/import_baseline_outputs.py --system-name 'AI Scientist-v2' --source /Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/ai_scientist_v2_ideation_import_template.jsonl --source-format jsonl --output-root reproduction/artifacts/idea_outputs --strict",
+  "next_commands_after_import": [
+    ".venv/bin/python reproduction/build_pairwise_judge_inputs.py --systems-root reproduction/artifacts/idea_outputs --baseline 'AI Scientist-v2' --output reproduction/artifacts/judge_inputs/evosci_vs_ai_scientist_v2.jsonl",
+    ".venv/bin/python reproduction/run_llm_judge.py --provider deepseek --model deepseek-v4-flash --input reproduction/artifacts/judge_inputs/evosci_vs_ai_scientist_v2.jsonl --output reproduction/artifacts/judge_outputs/evosci_vs_ai_scientist_v2_deepseek.jsonl --resume",
+    ".venv/bin/python reproduction/aggregate_judge_results.py --input reproduction/artifacts/judge_outputs/evosci_vs_ai_scientist_v2_deepseek.jsonl --output-csv reproduction/artifacts/tables/evosci_vs_ai_scientist_v2_deepseek.csv --output-json reproduction/artifacts/tables/evosci_vs_ai_scientist_v2_deepseek.json",
+    ".venv/bin/python reproduction/audit_reproduction_artifacts.py --baseline 'AI Scientist-v2' --judge-inputs reproduction/artifacts/judge_inputs/evosci_vs_ai_scientist_v2.jsonl --judge-outputs reproduction/artifacts/judge_outputs/evosci_vs_ai_scientist_v2_deepseek.jsonl --aggregate-json reproduction/artifacts/tables/evosci_vs_ai_scientist_v2_deepseek.json"
+  ],
+  "caveat": "This runbook generates replacement-baseline ideas through AI Scientist-v2 ideation. It does not recover the paper's original raw AI Scientist-v2 Table 1 outputs."
+}

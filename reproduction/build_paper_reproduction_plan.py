@@ -98,6 +98,17 @@ def table1_actions(components: dict[str, Any], protocol: dict[str, Any]) -> list
                 "bash /path/to/EvoScientist/reproduction/internagent_qa_runbook.sh",
                 ".venv/bin/python reproduction/import_baseline_outputs.py --system-name InternAgent --source $HOME/research/InternAgent/outputs/evoscientist_table1_queries/internagent --source-format directory --output-root reproduction/artifacts/idea_outputs --strict",
             ]
+        if baseline == "AI Scientist-v2":
+            actions[-1]["probe"] = "reproduction/ai_scientist_v2_baseline_probe.json"
+            actions[-1]["note"] = (
+                "Current probe found AI Scientist-v2 has an ideation CLI suitable for a replacement "
+                "baseline adapter, but it is not paper-exact raw Table 1 evidence."
+            )
+            actions[-1]["replacement_run_template"] = [
+                ".venv/bin/python reproduction/build_ai_scientist_v2_ideation_runbook.py",
+                "bash /path/to/EvoScientist/reproduction/ai_scientist_v2_ideation_runbook/run_ai_scientist_v2_ideation.sh",
+                ".venv/bin/python reproduction/import_baseline_outputs.py --system-name 'AI Scientist-v2' --source reproduction/ai_scientist_v2_ideation_import_template.jsonl --source-format jsonl --output-root reproduction/artifacts/idea_outputs --strict",
+            ]
     if not table1["judge_inputs"]["complete"] or not table1["judge_outputs"]["complete"]:
         actions.append(
             {

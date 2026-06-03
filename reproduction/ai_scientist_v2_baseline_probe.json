@@ -1,0 +1,39 @@
+{
+  "date": "2026-06-04",
+  "baseline": "AI Scientist-v2",
+  "source": "https://github.com/SakanaAI/AI-Scientist-v2",
+  "checked_head": "96bd51617cfdbb494a9fc283af00fe090edfae48",
+  "files_checked": [
+    "README.md",
+    "ai_scientist/perform_ideation_temp_free.py",
+    "ai_scientist/ideas/i_cant_believe_its_not_better.md",
+    "repository file tree"
+  ],
+  "direct_30_query_runner_available": true,
+  "evo_table1_drop_in_status": "ideation_adapter_candidate",
+  "paper_exact_status": "not_paper_exact",
+  "signals": {
+    "ideation_cli_available": true,
+    "structured_idea_output": true,
+    "topic_markdown_template": true,
+    "full_pipeline_available": true,
+    "requires_linux_cuda_for_full_pipeline": true,
+    "semantic_scholar_used_for_novelty": true,
+    "missing_required_paths": []
+  },
+  "entrypoints": {
+    "ideation": "python ai_scientist/perform_ideation_temp_free.py --workshop-file ai_scientist/ideas/my_research_topic.md --model gpt-4o-2024-05-13 --max-num-generations 1 --num-reflections 5",
+    "full_pipeline": "python launch_scientist_bfts.py --load_ideas ai_scientist/ideas/my_research_topic.json ..."
+  },
+  "required_env": [
+    "OPENAI_API_KEY or GEMINI_API_KEY",
+    "S2_API_KEY optional for Semantic Scholar"
+  ],
+  "reproduction_implication": "AI Scientist-v2 has a usable ideation CLI that can be adapted to the 30 recovered EvoScientist queries by writing one topic markdown file per query and importing the resulting JSON idea as baseline output. This is a replacement-baseline rerun path, not the paper's raw AI Scientist-v2 Table 1 artifact.",
+  "next_actions": [
+    "Generate per-query topic markdown files from reproduction/queries.json.",
+    "Run perform_ideation_temp_free.py once per query with a pinned model and reflection budget.",
+    "Convert each generated JSON idea file into query_XX.md or JSONL records accepted by import_baseline_outputs.py.",
+    "Judge imported outputs through the existing swapped pairwise judge pipeline."
+  ]
+}

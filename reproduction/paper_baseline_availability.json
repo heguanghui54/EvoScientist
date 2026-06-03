@@ -63,10 +63,15 @@
           "label": "SakanaAI/AI-Scientist-v2",
           "url": "https://github.com/SakanaAI/AI-Scientist-v2",
           "evidence": "Public repository for The AI Scientist-v2."
+        },
+        {
+          "label": "local runner probe",
+          "url": "reproduction/ai_scientist_v2_baseline_probe.json",
+          "evidence": "Probe found an ideation CLI that can be adapted to the 30 recovered queries through per-query topic markdown files."
         }
       ],
       "table1_raw_outputs_available": false,
-      "rerun_path": "Possible rerun candidate, but it needs separate environment setup and prompt/protocol alignment. The public repository does not provide EvoScientist Table 1 30-query outputs."
+      "rerun_path": "Plausible replacement rerun candidate via `ai_scientist/perform_ideation_temp_free.py` with one topic markdown file per recovered query, but the public repository does not provide the paper's raw AI Scientist-v2 Table 1 outputs."
     },
     {
       "name": "Hypogenic",

@@ -349,6 +349,9 @@ The 30-query InternAgent QA replacement-baseline runbook is recorded in
 `reproduction/internagent_qa_runbook.md`,
 `reproduction/internagent_qa_runbook.json`, and
 `reproduction/internagent_qa_runbook.sh`.
+The AI Scientist-v2 ideation replacement-baseline probe and runbook are recorded
+in `reproduction/ai_scientist_v2_baseline_probe.md` and
+`reproduction/ai_scientist_v2_ideation_runbook/`.
 
 The remaining Table 2/Table 3/Figure 2 artifact schemas are pinned in:
 

@@ -66,16 +66,15 @@ bash /path/to/EvoScientist/reproduction/internagent_qa_runbook.sh
 Required evidence: 30 answer.txt files under reproduction/artifacts/idea_outputs/AI Scientist-v2/
 
 System: AI Scientist-v2
+Probe: reproduction/ai_scientist_v2_baseline_probe.json
+Note: Current probe found AI Scientist-v2 has an ideation CLI suitable for a replacement baseline adapter, but it is not paper-exact raw Table 1 evidence.
 
 Commands:
 
 ```bash
-.venv/bin/python reproduction/import_baseline_outputs.py --system-name 'AI Scientist-v2' --source {source_jsonl} --source-format jsonl --output-root reproduction/artifacts/idea_outputs --strict
-.venv/bin/python reproduction/import_baseline_outputs.py --system-name 'AI Scientist-v2' --source {source_dir} --source-format directory --output-root reproduction/artifacts/idea_outputs --strict
-.venv/bin/python reproduction/build_pairwise_judge_inputs.py --systems-root reproduction/artifacts/idea_outputs --baseline 'AI Scientist-v2' --output reproduction/artifacts/judge_inputs/evosci_vs_ai_scientist_v2.jsonl
-.venv/bin/python reproduction/run_llm_judge.py --provider deepseek --model deepseek-v4-flash --input reproduction/artifacts/judge_inputs/evosci_vs_ai_scientist_v2.jsonl --output reproduction/artifacts/judge_outputs/evosci_vs_ai_scientist_v2_deepseek.jsonl --resume
-.venv/bin/python reproduction/aggregate_judge_results.py --input reproduction/artifacts/judge_outputs/evosci_vs_ai_scientist_v2_deepseek.jsonl --output-csv reproduction/artifacts/tables/evosci_vs_ai_scientist_v2_deepseek.csv --output-json reproduction/artifacts/tables/evosci_vs_ai_scientist_v2_deepseek.json
-.venv/bin/python reproduction/audit_reproduction_artifacts.py --baseline 'AI Scientist-v2' --judge-inputs reproduction/artifacts/judge_inputs/evosci_vs_ai_scientist_v2.jsonl --judge-outputs reproduction/artifacts/judge_outputs/evosci_vs_ai_scientist_v2_deepseek.jsonl --aggregate-json reproduction/artifacts/tables/evosci_vs_ai_scientist_v2_deepseek.json
+.venv/bin/python reproduction/build_ai_scientist_v2_ideation_runbook.py
+bash /path/to/EvoScientist/reproduction/ai_scientist_v2_ideation_runbook/run_ai_scientist_v2_ideation.sh
+.venv/bin/python reproduction/import_baseline_outputs.py --system-name 'AI Scientist-v2' --source reproduction/ai_scientist_v2_ideation_import_template.jsonl --source-format jsonl --output-root reproduction/artifacts/idea_outputs --strict
 ```
 
 ### 5. table1_llm_idea_generation / baseline_output_import_or_generation

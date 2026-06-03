@@ -33,6 +33,8 @@ and paper-level experimental reproduction.
 | AI-Researcher baseline probe is recorded | `ai_researcher_baseline_probe.json` records that the public runner is benchmark-instance based, not a drop-in runner for the 30 recovered queries | Verified |
 | InternAgent baseline probe is recorded | `internagent_baseline_probe.json` records a QA CLI replacement-baseline path and its paper-exact limitations | Verified |
 | InternAgent QA runbook is executable | `build_internagent_qa_runbook.py` generates 30 query commands plus import/judge/audit steps for the replacement baseline | Verified |
+| AI Scientist-v2 baseline probe is recorded | `ai_scientist_v2_baseline_probe.json` records an ideation-adapter replacement path and its paper-exact limitations | Verified |
+| AI Scientist-v2 ideation runbook is executable | `build_ai_scientist_v2_ideation_runbook.py` generates 30 topic files plus ideation/import/judge/audit steps | Verified |
 | Paper-level non-Table-1 artifact schemas are pinned | `paper_artifact_schema.json` and `verify_paper_artifact_schema.py` define Table 2 human-label, Table 3 ablation, and Figure 2 code-execution evidence schemas | Verified |
 | Human-label aggregation is executable | `aggregate_human_labels.py` converts Table 2 human labels into Win/Tie/Lose aggregate JSON/CSV | Verified |
 | Ablation aggregation is executable | `aggregate_ablation_results.py` converts Table 3 variant judge outputs into variant-perspective Win/Tie/Lose aggregate JSON/CSV | Verified |
