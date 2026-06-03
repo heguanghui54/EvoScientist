@@ -340,6 +340,16 @@ baseline, and the acceptance checks for extending the Direct-DeepSeek comparison
 to available baseline runners. External baseline exports can be normalized with
 `reproduction/import_baseline_outputs.py` before judging.
 
+The remaining Table 2/Table 3/Figure 2 artifact schemas are pinned in:
+
+```text
+reproduction/paper_artifact_schema.json
+reproduction/paper_artifact_schema.md
+```
+
+They define the minimum fields for human labels, ablation judge records, and
+code-execution logs before those artifacts can satisfy the paper-level audit.
+
 Run an offline end-to-end smoke test of the evaluation pipeline:
 
 ```bash

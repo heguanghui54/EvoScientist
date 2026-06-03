@@ -56,6 +56,7 @@ def main() -> None:
         "compare_reproduction_to_paper.py",
         "audit_reproduction_artifacts.py",
         "verify_replacement_baseline_protocol.py",
+        "verify_paper_artifact_schema.py",
     ]:
         assert (ROOT / script).is_file(), f"missing script: {script}"
     assert (ROOT / "judge_prompt_template.md").is_file(), "missing judge prompt template"
@@ -67,6 +68,8 @@ def main() -> None:
     baseline_inventory_md_path = ROOT / "paper_baseline_availability.md"
     replacement_protocol_json_path = ROOT / "replacement_baseline_protocol.json"
     replacement_protocol_md_path = ROOT / "replacement_baseline_protocol.md"
+    paper_artifact_schema_json_path = ROOT / "paper_artifact_schema.json"
+    paper_artifact_schema_md_path = ROOT / "paper_artifact_schema.md"
     full_status_json_path = ROOT / "full_trajectory_status.json"
     full_status_md_path = ROOT / "full_trajectory_status.md"
     assert gap_json_path.is_file(), "missing public artifact gap report JSON"
@@ -75,6 +78,8 @@ def main() -> None:
     assert baseline_inventory_md_path.is_file(), "missing baseline availability inventory markdown"
     assert replacement_protocol_json_path.is_file(), "missing replacement baseline protocol JSON"
     assert replacement_protocol_md_path.is_file(), "missing replacement baseline protocol markdown"
+    assert paper_artifact_schema_json_path.is_file(), "missing paper artifact schema JSON"
+    assert paper_artifact_schema_md_path.is_file(), "missing paper artifact schema markdown"
     assert full_status_json_path.is_file(), "missing full trajectory status JSON"
     assert full_status_md_path.is_file(), "missing full trajectory status markdown"
     gap_report = json.loads(gap_json_path.read_text(encoding="utf-8"))
@@ -107,6 +112,12 @@ def main() -> None:
     assert replacement_protocol["candidate_baselines"][0]["status"] == "completed_replacement_baseline"
     replacement_protocol_md = replacement_protocol_md_path.read_text(encoding="utf-8")
     assert "exact Table 1 reproduction" in replacement_protocol_md
+    paper_artifact_schema = json.loads(paper_artifact_schema_json_path.read_text(encoding="utf-8"))
+    assert "human_evaluation" in paper_artifact_schema["schemas"]
+    assert "ablation" in paper_artifact_schema["schemas"]
+    assert "code_execution" in paper_artifact_schema["schemas"]
+    paper_artifact_schema_md = paper_artifact_schema_md_path.read_text(encoding="utf-8")
+    assert "Figure 2 Code Execution" in paper_artifact_schema_md
     full_status = json.loads(full_status_json_path.read_text(encoding="utf-8"))
     expected_success_ids = list(range(1, 31))
     expected_incomplete_ids = []
@@ -182,6 +193,7 @@ def main() -> None:
     assert "Idle timed out after" in full_audit_text, "full trajectory audit does not detect idle timeouts"
     assert "Table 2 human idea-generation evaluation" in paper_level_audit_text
     assert "Figure 2 code-execution success analysis" in paper_level_audit_text
+    assert "schema_report" in paper_level_audit_text
     assert "paper-level reproduction goal remains incomplete" in paper_level_audit_text
     for needle in [
         "Verified Locally",
@@ -190,6 +202,7 @@ def main() -> None:
         "Target-system output coverage is complete for proposal-only mode",
         "Replacement-baseline judge pipeline is complete",
         "Replacement baseline protocol is pinned",
+        "Paper-level non-Table-1 artifact schemas are pinned",
         "EvoScientist CLI outputs are normalized before judging",
         "Full trajectory audit is executable",
         "Full trajectory reruns are isolated by default",

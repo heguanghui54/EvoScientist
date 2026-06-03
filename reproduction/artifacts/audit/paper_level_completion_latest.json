@@ -1190,6 +1190,37 @@
       ],
       "complete": false,
       "paper_table": "Table 2 human idea-generation evaluation",
+      "schema_valid": false,
+      "schema_report": {
+        "root": "reproduction/artifacts/human_evaluation",
+        "files": {
+          "inputs.jsonl": {
+            "path": "reproduction/artifacts/human_evaluation/inputs.jsonl",
+            "exists": false,
+            "complete": false,
+            "missing_records": [
+              "file"
+            ]
+          },
+          "labels.jsonl": {
+            "path": "reproduction/artifacts/human_evaluation/labels.jsonl",
+            "exists": false,
+            "complete": false,
+            "missing_records": [
+              "file"
+            ]
+          },
+          "aggregate.json": {
+            "path": "reproduction/artifacts/human_evaluation/aggregate.json",
+            "exists": false,
+            "complete": false,
+            "missing_fields": [
+              "file"
+            ]
+          }
+        },
+        "complete": false
+      },
       "required_evidence": [
         "anonymized pairwise human-evaluation inputs",
         "labels from the three PhD-level annotators",
@@ -1297,6 +1328,127 @@
           "complete": false
         }
       },
+      "schema_valid": false,
+      "schema_report": {
+        "root": "reproduction/artifacts/ablations",
+        "variants": {
+          "-IDE": {
+            "root": "reproduction/artifacts/ablations/-IDE",
+            "files": {
+              "system_outputs_complete.json": {
+                "path": "reproduction/artifacts/ablations/-IDE/system_outputs_complete.json",
+                "exists": false,
+                "complete": false,
+                "missing_fields": [
+                  "file"
+                ]
+              },
+              "judge_inputs.jsonl": {
+                "path": "reproduction/artifacts/ablations/-IDE/judge_inputs.jsonl",
+                "exists": false,
+                "complete": false,
+                "missing_records": [
+                  "file"
+                ]
+              },
+              "judge_outputs.jsonl": {
+                "path": "reproduction/artifacts/ablations/-IDE/judge_outputs.jsonl",
+                "exists": false,
+                "complete": false,
+                "missing_records": [
+                  "file"
+                ]
+              },
+              "aggregate.json": {
+                "path": "reproduction/artifacts/ablations/-IDE/aggregate.json",
+                "exists": false,
+                "complete": false,
+                "missing_fields": [
+                  "file"
+                ]
+              }
+            },
+            "complete": false
+          },
+          "-IVE": {
+            "root": "reproduction/artifacts/ablations/-IVE",
+            "files": {
+              "system_outputs_complete.json": {
+                "path": "reproduction/artifacts/ablations/-IVE/system_outputs_complete.json",
+                "exists": false,
+                "complete": false,
+                "missing_fields": [
+                  "file"
+                ]
+              },
+              "judge_inputs.jsonl": {
+                "path": "reproduction/artifacts/ablations/-IVE/judge_inputs.jsonl",
+                "exists": false,
+                "complete": false,
+                "missing_records": [
+                  "file"
+                ]
+              },
+              "judge_outputs.jsonl": {
+                "path": "reproduction/artifacts/ablations/-IVE/judge_outputs.jsonl",
+                "exists": false,
+                "complete": false,
+                "missing_records": [
+                  "file"
+                ]
+              },
+              "aggregate.json": {
+                "path": "reproduction/artifacts/ablations/-IVE/aggregate.json",
+                "exists": false,
+                "complete": false,
+                "missing_fields": [
+                  "file"
+                ]
+              }
+            },
+            "complete": false
+          },
+          "-all": {
+            "root": "reproduction/artifacts/ablations/-all",
+            "files": {
+              "system_outputs_complete.json": {
+                "path": "reproduction/artifacts/ablations/-all/system_outputs_complete.json",
+                "exists": false,
+                "complete": false,
+                "missing_fields": [
+                  "file"
+                ]
+              },
+              "judge_inputs.jsonl": {
+                "path": "reproduction/artifacts/ablations/-all/judge_inputs.jsonl",
+                "exists": false,
+                "complete": false,
+                "missing_records": [
+                  "file"
+                ]
+              },
+              "judge_outputs.jsonl": {
+                "path": "reproduction/artifacts/ablations/-all/judge_outputs.jsonl",
+                "exists": false,
+                "complete": false,
+                "missing_records": [
+                  "file"
+                ]
+              },
+              "aggregate.json": {
+                "path": "reproduction/artifacts/ablations/-all/aggregate.json",
+                "exists": false,
+                "complete": false,
+                "missing_fields": [
+                  "file"
+                ]
+              }
+            },
+            "complete": false
+          }
+        },
+        "complete": false
+      },
       "complete": false,
       "required_evidence": [
         "outputs for -IDE, -IVE, and -all variants",
@@ -1330,6 +1482,37 @@
       ],
       "complete": false,
       "paper_figure": "Figure 2 code-execution success analysis",
+      "schema_valid": false,
+      "schema_report": {
+        "root": "reproduction/artifacts/code_execution",
+        "files": {
+          "trajectories.jsonl": {
+            "path": "reproduction/artifacts/code_execution/trajectories.jsonl",
+            "exists": false,
+            "complete": false,
+            "missing_records": [
+              "file"
+            ]
+          },
+          "execution_logs.jsonl": {
+            "path": "reproduction/artifacts/code_execution/execution_logs.jsonl",
+            "exists": false,
+            "complete": false,
+            "missing_records": [
+              "file"
+            ]
+          },
+          "summary.json": {
+            "path": "reproduction/artifacts/code_execution/summary.json",
+            "exists": false,
+            "complete": false,
+            "missing_fields": [
+              "file"
+            ]
+          }
+        },
+        "complete": false
+      },
       "required_evidence": [
         "generated code trajectories across experiment stages",
         "execution success/failure logs",
@@ -1343,6 +1526,10 @@
       "complete": false,
       "note": "Public artifact gap report exists and records missing raw paper artifacts"
     }
+  },
+  "artifact_schema": {
+    "path": "reproduction/paper_artifact_schema.json",
+    "exists": true
   },
   "blocking_items": [
     "incomplete: table1_llm_idea_generation",

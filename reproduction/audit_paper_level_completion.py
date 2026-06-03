@@ -14,6 +14,7 @@ from pathlib import Path
 from typing import Any
 
 import audit_reproduction_artifacts as table1_audit
+import verify_paper_artifact_schema as schema_audit
 
 
 ROOT = Path(__file__).resolve().parent
@@ -21,6 +22,7 @@ REPO_ROOT = ROOT.parent
 DEFAULT_ARTIFACTS = ROOT / "artifacts"
 DEFAULT_FULL_STATUS = ROOT / "full_trajectory_status.json"
 DEFAULT_PUBLIC_GAP = ROOT / "public_artifact_gap_report.json"
+DEFAULT_SCHEMA = ROOT / "paper_artifact_schema.json"
 
 HUMAN_REQUIRED_FILES = [
     "inputs.jsonl",
@@ -138,10 +140,14 @@ def audit_table1(artifacts_root: Path) -> dict[str, Any]:
     return report
 
 
-def audit_table2(artifacts_root: Path) -> dict[str, Any]:
+def audit_table2(artifacts_root: Path, schema: dict[str, Any]) -> dict[str, Any]:
     root = artifacts_root / "human_evaluation"
     report = complete_files(root, HUMAN_REQUIRED_FILES)
+    schema_report = schema_audit.validate_human(schema["schemas"]["human_evaluation"], artifacts_root)
     report["paper_table"] = "Table 2 human idea-generation evaluation"
+    report["schema_valid"] = schema_report["complete"]
+    report["schema_report"] = schema_report
+    report["complete"] = report["complete"] and schema_report["complete"]
     report["required_evidence"] = [
         "anonymized pairwise human-evaluation inputs",
         "labels from the three PhD-level annotators",
@@ -150,16 +156,19 @@ def audit_table2(artifacts_root: Path) -> dict[str, Any]:
     return report
 
 
-def audit_table3(artifacts_root: Path) -> dict[str, Any]:
+def audit_table3(artifacts_root: Path, schema: dict[str, Any]) -> dict[str, Any]:
     root = artifacts_root / "ablations"
     variants = {}
     for variant in ABLATION_VARIANTS:
         variants[variant] = complete_files(root / variant, ABLATION_REQUIRED_FILES)
-    complete = all(item["complete"] for item in variants.values())
+    schema_report = schema_audit.validate_ablation(schema["schemas"]["ablation"], artifacts_root)
+    complete = all(item["complete"] for item in variants.values()) and schema_report["complete"]
     return {
         "paper_table": "Table 3 ablation idea-generation evaluation",
         "root": str(root),
         "variants": variants,
+        "schema_valid": schema_report["complete"],
+        "schema_report": schema_report,
         "complete": complete,
         "required_evidence": [
             "outputs for -IDE, -IVE, and -all variants",
@@ -169,10 +178,14 @@ def audit_table3(artifacts_root: Path) -> dict[str, Any]:
     }
 
 
-def audit_figure2(artifacts_root: Path) -> dict[str, Any]:
+def audit_figure2(artifacts_root: Path, schema: dict[str, Any]) -> dict[str, Any]:
     root = artifacts_root / "code_execution"
     report = complete_files(root, CODE_EXECUTION_REQUIRED_FILES)
+    schema_report = schema_audit.validate_code_execution(schema["schemas"]["code_execution"], artifacts_root)
     report["paper_figure"] = "Figure 2 code-execution success analysis"
+    report["schema_valid"] = schema_report["complete"]
+    report["schema_report"] = schema_report
+    report["complete"] = report["complete"] and schema_report["complete"]
     report["required_evidence"] = [
         "generated code trajectories across experiment stages",
         "execution success/failure logs",
@@ -221,12 +234,13 @@ def make_paths_relative(value: Any) -> Any:
 
 
 def build_report(args: argparse.Namespace) -> dict[str, Any]:
+    schema = read_json(args.schema)
     components = {
         "full_trajectories": audit_full_trajectories(args.full_status),
         "table1_llm_idea_generation": audit_table1(args.artifacts_root),
-        "table2_human_idea_generation": audit_table2(args.artifacts_root),
-        "table3_ablation_idea_generation": audit_table3(args.artifacts_root),
-        "figure2_code_execution": audit_figure2(args.artifacts_root),
+        "table2_human_idea_generation": audit_table2(args.artifacts_root, schema),
+        "table3_ablation_idea_generation": audit_table3(args.artifacts_root, schema),
+        "figure2_code_execution": audit_figure2(args.artifacts_root, schema),
         "public_artifact_gap": audit_public_gap(args.public_gap_report),
     }
     blocking = [
@@ -240,6 +254,10 @@ def build_report(args: argparse.Namespace) -> dict[str, Any]:
         "status": status,
         "scope": "paper-level reproduction of arXiv:2603.08127 experiments",
         "components": components,
+        "artifact_schema": {
+            "path": str(args.schema),
+            "exists": args.schema.is_file(),
+        },
         "blocking_items": blocking,
         "replacement_baseline_note": (
             "Direct-DeepSeek comparison is useful as a replacement baseline, "
@@ -344,6 +362,7 @@ def main() -> None:
     parser.add_argument("--artifacts-root", type=Path, default=DEFAULT_ARTIFACTS)
     parser.add_argument("--full-status", type=Path, default=DEFAULT_FULL_STATUS)
     parser.add_argument("--public-gap-report", type=Path, default=DEFAULT_PUBLIC_GAP)
+    parser.add_argument("--schema", type=Path, default=DEFAULT_SCHEMA)
     parser.add_argument("--output-json", type=Path, default=None)
     parser.add_argument("--output-md", type=Path, default=None)
     parser.add_argument("--date", default="2026-06-04")

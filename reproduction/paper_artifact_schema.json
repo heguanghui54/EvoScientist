@@ -1,0 +1,60 @@
+{
+  "date": "2026-06-04",
+  "purpose": "Define machine-checkable schemas for paper-level artifacts beyond Table 1 system outputs.",
+  "schemas": {
+    "human_evaluation": {
+      "root": "reproduction/artifacts/human_evaluation",
+      "files": {
+        "inputs.jsonl": {
+          "record_required_fields": ["comparison_id", "query_id", "baseline", "answer_a", "answer_b", "dimensions"]
+        },
+        "labels.jsonl": {
+          "record_required_fields": ["comparison_id", "annotator_id", "dimension", "winner"]
+        },
+        "aggregate.json": {
+          "required_fields": ["baselines"],
+          "baseline_required_fields": ["dimensions"]
+        }
+      },
+      "valid_winners": ["assistant_1", "assistant_2", "tie"]
+    },
+    "ablation": {
+      "root": "reproduction/artifacts/ablations",
+      "variants": ["-IDE", "-IVE", "-all"],
+      "files": {
+        "system_outputs_complete.json": {
+          "required_fields": ["variant", "query_count", "complete"]
+        },
+        "judge_inputs.jsonl": {
+          "record_required_fields": ["comparison_id", "query_id", "assistant_1_system", "assistant_2_system", "answer_a", "answer_b"]
+        },
+        "judge_outputs.jsonl": {
+          "record_required_fields": ["comparison_id", "scores"]
+        },
+        "aggregate.json": {
+          "required_fields": ["baselines"]
+        }
+      }
+    },
+    "code_execution": {
+      "root": "reproduction/artifacts/code_execution",
+      "files": {
+        "trajectories.jsonl": {
+          "record_required_fields": ["trajectory_id", "query_id", "stage", "proposal_id"]
+        },
+        "execution_logs.jsonl": {
+          "record_required_fields": ["trajectory_id", "stage", "attempt_id", "success"]
+        },
+        "summary.json": {
+          "required_fields": ["before_evolution_pct", "after_evolution_pct", "stage_success_rates"]
+        }
+      },
+      "expected_reported_metrics": {
+        "before_evolution_pct": 34.39,
+        "after_evolution_pct": 44.56,
+        "stage3_before_evolution_pct": 20.33,
+        "stage3_after_evolution_pct": 21.57
+      }
+    }
+  }
+}
