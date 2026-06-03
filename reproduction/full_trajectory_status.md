@@ -8,11 +8,11 @@ Audit status: `incomplete`
 
 | Status | Count |
 | --- | ---: |
-| success | 9 |
+| success | 10 |
 | timeout | 5 |
-| missing | 16 |
+| missing | 15 |
 
-Successful query ids: `[1, 2, 3, 5, 6, 8, 10, 11, 13]`
+Successful query ids: `[1, 2, 3, 5, 6, 8, 10, 11, 13, 15]`
 
 ## Successful Full Trajectories
 
@@ -189,6 +189,21 @@ Token usage: 134,427 input / 5,906 output
 - manifest return code is 0.
 - isolated workspace was `runs/repro-query-13`.
 
+Query 15 status: `ok`
+
+Title: Research Proposal: Context-Adaptive Gender Debiasing (CAGED) for Neural Machine Translation
+
+Output directory: `reproduction/artifacts/remote_fetch/full_trajectories/EvoScientist/query_15`
+
+Token usage: 29,993 input / 1,066 output
+
+## Query 15 Evidence
+
+- `final_report.md` exists and is 13,452 bytes.
+- stdout reports `[Usage: 29,993 in · 1,066 out]`.
+- manifest return code is 0.
+- isolated workspace was `runs/repro-query-15`.
+
 ## Current Non-Successful Full Trajectories
 
 - Query 4: runner reported idle timeout after 600 seconds without log growth.
@@ -212,7 +227,7 @@ Token usage: 134,427 input / 5,906 output
   Final report collected: True
 
 ## Limitations
-- Only queries 1, 2, 3, 5, 6, 8, 10, 11, and 13 currently have successful full tool-enabled trajectories with final_report.md.
+- Only queries 1, 2, 3, 5, 6, 8, 10, 11, 13, and 15 currently have successful full tool-enabled trajectories with final_report.md.
 - Queries 4, 7, 9, 12, and 14 idle-timed-out after 600 seconds without log growth in the fetched audit snapshot.
 - The run used DeepSeek configuration rather than the paper-matched Gemini/Claude setup.
 - Tavily search was unavailable, so the research-agent behavior may differ from paper settings.
