@@ -16,6 +16,7 @@ set -euo pipefail
 HOST="${EVOSCI_SSH_HOST:-ubuntu-heshi}"
 REMOTE_DIR="${EVOSCI_REMOTE_DIR:-~/research/EvoScientist-repro}"
 QUERY_EXTRA_ARGS="${EVOSCI_QUERY_EXTRA_ARGS:-}"
+QUERY_TIMEOUT="${EVOSCI_QUERY_TIMEOUT:-1800}"
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 remote() {
@@ -51,17 +52,17 @@ case "${1:-}" in
   query)
     qid="${2:-1}"
     sync_repo
-    run_remote "conda activate \${EVOSCI_CONDA_ENV:-evoscientist-repro}; python reproduction/run_idea_generation.py --query-id $qid --timeout \${EVOSCI_QUERY_TIMEOUT:-1800} $QUERY_EXTRA_ARGS"
+    run_remote "conda activate \${EVOSCI_CONDA_ENV:-evoscientist-repro}; python reproduction/run_idea_generation.py --query-id $qid --timeout $QUERY_TIMEOUT $QUERY_EXTRA_ARGS"
     ;;
   query-bg)
     qid="${2:-1}"
     sync_repo
-    run_remote "mkdir -p reproduction/artifacts/remote_jobs; conda activate \${EVOSCI_CONDA_ENV:-evoscientist-repro}; nohup python reproduction/run_idea_generation.py --query-id $qid --timeout \${EVOSCI_QUERY_TIMEOUT:-1800} $QUERY_EXTRA_ARGS > reproduction/artifacts/remote_jobs/query_${qid}.log 2>&1 & echo \$! > reproduction/artifacts/remote_jobs/query_${qid}.pid; echo started query_${qid} pid=\$(cat reproduction/artifacts/remote_jobs/query_${qid}.pid)"
+    run_remote "mkdir -p reproduction/artifacts/remote_jobs; conda activate \${EVOSCI_CONDA_ENV:-evoscientist-repro}; nohup python reproduction/run_idea_generation.py --query-id $qid --timeout $QUERY_TIMEOUT $QUERY_EXTRA_ARGS > reproduction/artifacts/remote_jobs/query_${qid}.log 2>&1 & echo \$! > reproduction/artifacts/remote_jobs/query_${qid}.pid; echo started query_${qid} pid=\$(cat reproduction/artifacts/remote_jobs/query_${qid}.pid)"
     ;;
   batch-bg)
     limit="${2:-30}"
     sync_repo
-    run_remote "mkdir -p reproduction/artifacts/remote_jobs; conda activate \${EVOSCI_CONDA_ENV:-evoscientist-repro}; nohup python reproduction/run_idea_generation.py --limit $limit --timeout \${EVOSCI_QUERY_TIMEOUT:-1800} $QUERY_EXTRA_ARGS > reproduction/artifacts/remote_jobs/batch_${limit}.log 2>&1 & echo \$! > reproduction/artifacts/remote_jobs/batch_${limit}.pid; echo started batch_${limit} pid=\$(cat reproduction/artifacts/remote_jobs/batch_${limit}.pid)"
+    run_remote "mkdir -p reproduction/artifacts/remote_jobs; conda activate \${EVOSCI_CONDA_ENV:-evoscientist-repro}; nohup python reproduction/run_idea_generation.py --limit $limit --timeout $QUERY_TIMEOUT $QUERY_EXTRA_ARGS > reproduction/artifacts/remote_jobs/batch_${limit}.log 2>&1 & echo \$! > reproduction/artifacts/remote_jobs/batch_${limit}.pid; echo started batch_${limit} pid=\$(cat reproduction/artifacts/remote_jobs/batch_${limit}.pid)"
     ;;
   status)
     run_remote "if [ -d reproduction/artifacts/remote_jobs ]; then for pidfile in reproduction/artifacts/remote_jobs/*.pid; do [ -f \"\$pidfile\" ] || continue; pid=\$(cat \"\$pidfile\"); name=\$(basename \"\$pidfile\" .pid); if ps -p \"\$pid\" >/dev/null 2>&1; then echo \"\$name RUNNING pid=\$pid\"; else echo \"\$name EXITED pid=\$pid\"; fi; logfile=\"reproduction/artifacts/remote_jobs/\$name.log\"; [ -f \"\$logfile\" ] && { echo \"--- remote job log: \$logfile\"; tail -20 \"\$logfile\"; }; if [[ \"\$name\" =~ ^query_([0-9]+)\$ ]]; then qid=\"\${BASH_REMATCH[1]}\"; for outdir in reproduction/artifacts/full_trajectories/EvoScientist/query_\$(printf '%02d' \"\$qid\") reproduction/artifacts/idea_outputs/EvoScientist/query_\$(printf '%02d' \"\$qid\") reproduction/artifacts/idea_generation/query_\$(printf '%02d' \"\$qid\"); do [ -d \"\$outdir\" ] || continue; for stream in stdout.txt stderr.txt; do stream_path=\"\$outdir/\$stream\"; [ -f \"\$stream_path\" ] && { echo \"--- \$stream_path\"; tail -20 \"\$stream_path\"; }; done; done; fi; done; count=\$(find reproduction/artifacts/idea_outputs/EvoScientist -maxdepth 1 -type d -name \"query_*\" 2>/dev/null | wc -l | tr -d \" \"); full_count=\$(find reproduction/artifacts/full_trajectories/EvoScientist -maxdepth 1 -type d -name \"query_*\" 2>/dev/null | wc -l | tr -d \" \"); echo \"idea_outputs_query_dirs=\$count\"; echo \"full_trajectory_query_dirs=\$full_count\"; latest=\$(find reproduction/artifacts/full_trajectories/EvoScientist reproduction/artifacts/idea_outputs/EvoScientist -maxdepth 1 -type d -name \"query_*\" 2>/dev/null | sort | tail -1); if [ -n \"\$latest\" ]; then echo \"latest_query_dir=\$latest\"; for stream in stdout.txt stderr.txt; do stream_path=\"\$latest/\$stream\"; [ -f \"\$stream_path\" ] && { echo \"--- latest \$stream_path\"; tail -20 \"\$stream_path\"; }; done; fi; else echo no remote_jobs directory; fi"

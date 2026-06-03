@@ -76,6 +76,9 @@ def main() -> None:
     assert full_status["query_id"] == 1
     assert "CrossLingual-RAG" in full_status["final_report"]["title"]
     assert full_status["artifact_files"]["final_report.md"]["bytes"] >= 10000
+    assert full_status["full_trajectory_counts"]["successful_final_reports"] == 1
+    assert len(full_status["query_2_attempts"]) == 2
+    assert "clarification" in full_status["query_2_attempts"][0]["result"]
     reported = json.loads(reported_path.read_text(encoding="utf-8"))
     for section in [
         "table1_llm_idea_generation",
@@ -87,6 +90,11 @@ def main() -> None:
     status_path = ROOT / "reproduction_status.md"
     assert status_path.is_file(), "missing reproduction status matrix"
     status_text = status_path.read_text(encoding="utf-8")
+    runner_text = (ROOT / "run_idea_generation.py").read_text(encoding="utf-8")
+    assert "DEFAULT_COLLECT_FILES" in runner_text, "idea runner does not collect workspace outputs"
+    assert "final_report.md" in runner_text, "idea runner does not collect final_report.md"
+    assert "--force-proposal" in runner_text, "idea runner cannot force broad queries to proposal output"
+    assert "clear_workspace_files" in runner_text, "idea runner does not clear stale collected files"
     for needle in [
         "Verified Locally",
         "Not Yet Paper-Level Reproduction",

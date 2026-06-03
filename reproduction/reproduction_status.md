@@ -70,6 +70,9 @@ Remote target:
   run with `--proposal-only --stream-logs`
 - Verified: query 1 completed as a full tool-enabled trajectory with a saved
   `final_report.md`; status is tracked in `reproduction/full_trajectory_status.md`
+- Query 2 full attempts are tracked as failures: original full run asked for
+  clarification; `--force-proposal` run hung before producing content and was
+  manually terminated
 - Local fetched summary:
   `reproduction/artifacts/remote_fetch/idea_outputs/EvoScientist/PROPOSAL_SUMMARY.md`
 - Note: this confirms the API/agent path across the paper query set, but it

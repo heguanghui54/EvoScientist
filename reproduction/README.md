@@ -174,6 +174,20 @@ reproduction/full_trajectory_status.md
 reproduction/full_trajectory_status.json
 ```
 
+For broad full-agent queries, use `--force-proposal` to prevent the agent from
+asking clarification questions instead of producing a proposal:
+
+```bash
+EVOSCI_QUERY_TIMEOUT=900 \
+EVOSCI_QUERY_EXTRA_ARGS='--force-proposal --stream-logs --output-dir reproduction/artifacts/full_trajectories/EvoScientist' \
+  reproduction/ssh_ubuntu_run.sh query-bg 2
+```
+
+The SSH wrapper passes `EVOSCI_QUERY_TIMEOUT` through to the remote runner.
+`run_idea_generation.py` also clears stale workspace-level `final_report.md` and
+`research_request.md` before each query, then copies newly generated files into
+the query artifact directory.
+
 Build pairwise judge inputs and aggregate judge results:
 
 ```bash
@@ -324,7 +338,8 @@ To reproduce the paper experiments rather than only the software system:
   especially the paper's Gemini/Claude/Gemini-judge setup;
 - optionally a Tavily key for web-search-based research-agent behavior;
 - full tool-enabled EvoScientist trajectories for all 30 recovered paper queries
-  (currently only query 1 has a full trajectory);
+  (currently only query 1 has a successful full trajectory; query 2 full attempts
+  are documented as clarification/hang failures);
 - baseline outputs for the seven paper systems, or runnable baseline setups;
 - the LLM-as-judge prompt/input pairs and model access for `gemini-3-flash`;
 - human-evaluation labels if reproducing the human agreement numbers;

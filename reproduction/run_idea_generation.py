@@ -32,6 +32,7 @@ PROVIDER_KEY_FIELDS = {
     "custom-openai": "custom_openai_api_key",
     "custom-anthropic": "custom_anthropic_api_key",
 }
+DEFAULT_COLLECT_FILES = ["final_report.md", "research_request.md"]
 
 
 def load_queries() -> list[dict]:
@@ -65,6 +66,31 @@ def ensure_provider_configured() -> None:
         )
 
 
+def collect_workspace_files(qdir: Path, filenames: list[str]) -> list[dict[str, str | int]]:
+    collected = []
+    for filename in filenames:
+        source = ROOT / filename
+        if not source.is_file():
+            continue
+        destination = qdir / filename
+        destination.write_bytes(source.read_bytes())
+        collected.append(
+            {
+                "source": str(source),
+                "artifact": str(destination),
+                "bytes": destination.stat().st_size,
+            }
+        )
+    return collected
+
+
+def clear_workspace_files(filenames: list[str]) -> None:
+    for filename in filenames:
+        path = ROOT / filename
+        if path.is_file():
+            path.unlink()
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--limit", type=int, default=None, help="Run only the first N queries.")
@@ -78,11 +104,29 @@ def main() -> None:
         help="Ask EvoScientist for a direct proposal without tool or shell execution.",
     )
     parser.add_argument(
+        "--force-proposal",
+        action="store_true",
+        help=(
+            "For broad paper queries, force a complete proposal without asking "
+            "the user for clarification. Tools and agent workflow remain enabled."
+        ),
+    )
+    parser.add_argument(
         "--stream-logs",
         action="store_true",
         help="Stream EvoSci stdout/stderr to files while the run is active.",
     )
+    parser.add_argument(
+        "--collect-file",
+        action="append",
+        default=None,
+        help=(
+            "Workspace-relative file to copy into each query artifact directory "
+            "after EvoSci exits. Defaults to final_report.md and research_request.md."
+        ),
+    )
     args = parser.parse_args()
+    collect_files = args.collect_file if args.collect_file is not None else DEFAULT_COLLECT_FILES
 
     queries = load_queries()
     if args.query_id is not None:
@@ -121,8 +165,21 @@ def main() -> None:
                 "baselines, ablations, and expected failure modes.\n\n"
                 f"Query: {prompt}"
             )
+        elif args.force_proposal:
+            prompt = (
+                "Generate one complete, concrete research proposal for the "
+                "following paper reproduction query. If the query is broad, pick "
+                "one specific high-impact subproblem yourself and state that "
+                "choice. Do not ask the user clarification questions. You may "
+                "use your normal tools and agent workflow, but the final answer "
+                "must include: title, problem, hypothesis, method, "
+                "dataset/benchmark, evaluation metrics, baselines, ablations, "
+                "expected failure modes, and a short execution plan.\n\n"
+                f"Query: {prompt}"
+            )
         (qdir / "prompt.txt").write_text(prompt + "\n", encoding="utf-8")
         (qdir / "query.json").write_text(json.dumps(query, indent=2), encoding="utf-8")
+        clear_workspace_files(collect_files)
 
         entry = {"id": query["id"], "topic": query["topic"], "dir": str(qdir)}
         if args.dry_run:
@@ -177,6 +234,7 @@ def main() -> None:
             returncode = result.returncode
         entry["returncode"] = returncode
         entry["status"] = "ok" if returncode == 0 else "failed"
+        entry["collected_files"] = collect_workspace_files(qdir, collect_files)
         manifest["outputs"].append(entry)
 
     (args.output_dir / "manifest.json").write_text(

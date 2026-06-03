@@ -63,9 +63,68 @@
     ]
   },
   "limitations": [
-    "Only query 1 has a full tool-enabled trajectory so far; the remaining 29 paper queries are proposal-only.",
+    "Only query 1 currently has a successful full tool-enabled trajectory with final_report.md.",
+    "Query 2 original full run asked for clarification instead of generating a proposal.",
+    "Query 2 force-proposal full run hung before producing content and was manually terminated.",
     "The run used DeepSeek configuration rather than the paper-matched Gemini/Claude setup.",
     "Tavily search was unavailable, so the research-agent behavior may differ from paper settings.",
     "This is still not the full 7-baseline paper-level Table 1 reproduction."
+  ],
+  "full_trajectory_counts": {
+    "successful_final_reports": 1,
+    "attempted_queries": [
+      1,
+      2
+    ],
+    "pending_queries": [
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23,
+      24,
+      25,
+      26,
+      27,
+      28,
+      29,
+      30
+    ]
+  },
+  "query_2_attempts": [
+    {
+      "mode": "full tool-enabled, original paper query",
+      "result": "returned clarification request, not a proposal",
+      "returncode": 0,
+      "final_report_collected": false,
+      "thread_id": "9698ee49",
+      "evidence": "reproduction/artifacts/remote_fetch/full_trajectories/EvoScientist/query_02/stdout.txt before force-proposal rerun"
+    },
+    {
+      "mode": "full tool-enabled with --force-proposal",
+      "result": "hung with no stdout progress after startup; manually terminated after about 17 minutes",
+      "remote_pid": "353333",
+      "child_pid": "353335",
+      "final_report_collected": false,
+      "thread_id": "d00064c1",
+      "evidence": "remote status showed process running and only startup prompt in stdout"
+    }
   ]
 }
