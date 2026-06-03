@@ -95,8 +95,8 @@ def main() -> None:
     assert full_status["query_11_success"]["artifact_files"]["final_report.md"]["bytes"] >= 10000
     assert "Capability Graph" in full_status["query_11_success"]["final_report"]["title"]
     assert full_status["audit"]["counts"]["success"] == 8
-    assert full_status["audit"]["counts"]["timeout"] == 3
-    assert full_status["audit"]["counts"]["missing"] == 19
+    assert full_status["audit"]["counts"]["timeout"] == 4
+    assert full_status["audit"]["counts"]["missing"] == 18
     reported = json.loads(reported_path.read_text(encoding="utf-8"))
     for section in [
         "table1_llm_idea_generation",

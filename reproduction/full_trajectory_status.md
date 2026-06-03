@@ -9,8 +9,8 @@ Audit status: `incomplete`
 | Status | Count |
 | --- | ---: |
 | success | 8 |
-| timeout | 3 |
-| missing | 19 |
+| timeout | 4 |
+| missing | 18 |
 
 Successful query ids: `[1, 2, 3, 5, 6, 8, 10, 11]`
 
@@ -179,6 +179,7 @@ Token usage: 174,586 input / 8,234 output
 - Query 4: runner reported idle timeout after 600 seconds without log growth.
 - Query 7: runner reported idle timeout after 600 seconds without log growth.
 - Query 9: runner reported idle timeout after 600 seconds without log growth.
+- Query 12: runner reported idle timeout after 600 seconds without log growth.
 
 ## Query 2 Attempts
 
@@ -196,7 +197,7 @@ Token usage: 174,586 input / 8,234 output
 
 ## Limitations
 - Only queries 1, 2, 3, 5, 6, 8, 10, and 11 currently have successful full tool-enabled trajectories with final_report.md.
-- Queries 4, 7, and 9 idle-timed-out after 600 seconds without log growth in the fetched audit snapshot.
+- Queries 4, 7, 9, and 12 idle-timed-out after 600 seconds without log growth in the fetched audit snapshot.
 - The run used DeepSeek configuration rather than the paper-matched Gemini/Claude setup.
 - Tavily search was unavailable, so the research-agent behavior may differ from paper settings.
 - This is still not the full 7-baseline paper-level Table 1 reproduction.
