@@ -55,6 +55,7 @@ def main() -> None:
         "run_llm_judge.py",
         "probe_ai_researcher_baseline.py",
         "probe_internagent_baseline.py",
+        "build_internagent_qa_runbook.py",
         "aggregate_human_labels.py",
         "aggregate_ablation_results.py",
         "aggregate_code_execution.py",
@@ -136,6 +137,22 @@ def main() -> None:
     assert internagent_probe["direct_30_query_runner_available"] is True
     assert "launch.py --mode qa" in internagent_probe["entrypoints"]["master_qa"]
     assert "qa_drop_in_candidate" in internagent_probe_md_path.read_text(encoding="utf-8")
+    internagent_runbook_json_path = ROOT / "internagent_qa_runbook.json"
+    internagent_runbook_md_path = ROOT / "internagent_qa_runbook.md"
+    internagent_runbook_sh_path = ROOT / "internagent_qa_runbook.sh"
+    assert internagent_runbook_json_path.is_file(), "missing InternAgent QA runbook JSON"
+    assert internagent_runbook_md_path.is_file(), "missing InternAgent QA runbook markdown"
+    assert internagent_runbook_sh_path.is_file(), "missing InternAgent QA runbook shell script"
+    internagent_runbook = json.loads(internagent_runbook_json_path.read_text(encoding="utf-8"))
+    assert internagent_runbook["baseline"] == "InternAgent"
+    assert internagent_runbook["mode"] == "qa_replacement_baseline"
+    assert internagent_runbook["query_count"] == 30
+    assert internagent_runbook["paper_exact"] is False
+    assert len(internagent_runbook["commands"]) == 30
+    assert "import_baseline_outputs.py --system-name InternAgent" in internagent_runbook["import_command"]
+    internagent_runbook_sh = internagent_runbook_sh_path.read_text(encoding="utf-8")
+    assert internagent_runbook_sh.count("python launch.py --mode qa") == 30
+    assert "query_30.md" in internagent_runbook_sh
     replacement_protocol = json.loads(replacement_protocol_json_path.read_text(encoding="utf-8"))
     assert replacement_protocol["import_tool"]["script"] == "reproduction/import_baseline_outputs.py"
     assert replacement_protocol["judge_protocol"]["records_per_baseline"] == 60
@@ -164,7 +181,8 @@ def main() -> None:
     assert "Paper Reproduction Action Plan" in action_plan_md
     assert "gemini-3-flash" in action_plan_md
     assert "internagent_baseline_probe.json" in action_plan_md
-    assert "launch.py --mode qa" in action_plan_md
+    assert "build_internagent_qa_runbook.py" in action_plan_md
+    assert "internagent_qa_runbook.sh" in action_plan_md
     full_status = json.loads(full_status_json_path.read_text(encoding="utf-8"))
     expected_success_ids = list(range(1, 31))
     expected_incomplete_ids = []
@@ -251,6 +269,7 @@ def main() -> None:
         "Replacement baseline protocol is pinned",
         "AI-Researcher baseline probe is recorded",
         "InternAgent baseline probe is recorded",
+        "InternAgent QA runbook is executable",
         "Paper-level non-Table-1 artifact schemas are pinned",
         "Human-label aggregation is executable",
         "Ablation aggregation is executable",
@@ -713,6 +732,30 @@ def main() -> None:
         assert generated_plan["status"] == "incomplete"
         assert generated_plan["action_count"] == action_plan["action_count"]
         assert "'Virtual Scientist'" in plan_md.read_text(encoding="utf-8")
+
+        runbook_json = tmp_path / "internagent_qa_runbook.json"
+        runbook_md = tmp_path / "internagent_qa_runbook.md"
+        runbook_sh = tmp_path / "internagent_qa_runbook.sh"
+        subprocess.run(
+            [
+                sys.executable,
+                str(ROOT / "build_internagent_qa_runbook.py"),
+                "--output-json",
+                str(runbook_json),
+                "--output-md",
+                str(runbook_md),
+                "--output-sh",
+                str(runbook_sh),
+                "--limit",
+                "2",
+            ],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+        generated_runbook = json.loads(runbook_json.read_text(encoding="utf-8"))
+        assert generated_runbook["query_count"] == 2
+        assert runbook_sh.read_text(encoding="utf-8").count("python launch.py --mode qa") == 2
 
         audit_root = tmp_path / "audit_artifacts"
         audit_systems = audit_root / "idea_outputs"

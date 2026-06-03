@@ -1,0 +1,231 @@
+{
+  "date": "2026-06-04",
+  "baseline": "InternAgent",
+  "mode": "qa_replacement_baseline",
+  "paper_exact": false,
+  "source_probe": "reproduction/internagent_baseline_probe.json",
+  "query_count": 30,
+  "external_checkout": "$HOME/research/InternAgent",
+  "answers_dir": "outputs/evoscientist_table1_queries/internagent",
+  "external_answers_dir": "$HOME/research/InternAgent/outputs/evoscientist_table1_queries/internagent",
+  "commands": [
+    {
+      "query_id": 1,
+      "topic": "Machine translation",
+      "goal": "Generate a research proposal on low-resource machine translation.",
+      "answer_path": "outputs/evoscientist_table1_queries/internagent/query_01.md",
+      "command": "python launch.py --mode qa --question 'Generate a research proposal on low-resource machine translation.' --output outputs/evoscientist_table1_queries/internagent/query_01.md"
+    },
+    {
+      "query_id": 2,
+      "topic": "Software engineering",
+      "goal": "Help me generate a research proposal on AI for software engineering.",
+      "answer_path": "outputs/evoscientist_table1_queries/internagent/query_02.md",
+      "command": "python launch.py --mode qa --question 'Help me generate a research proposal on AI for software engineering.' --output outputs/evoscientist_table1_queries/internagent/query_02.md"
+    },
+    {
+      "query_id": 3,
+      "topic": "LLM evaluation",
+      "goal": "Generate a research proposal on how to address the accuracy issues of automated evaluation for Large Language Models.",
+      "answer_path": "outputs/evoscientist_table1_queries/internagent/query_03.md",
+      "command": "python launch.py --mode qa --question 'Generate a research proposal on how to address the accuracy issues of automated evaluation for Large Language Models.' --output outputs/evoscientist_table1_queries/internagent/query_03.md"
+    },
+    {
+      "query_id": 4,
+      "topic": "Healthcare agents",
+      "goal": "Help me generate a research proposal on AI agents in healthcare.",
+      "answer_path": "outputs/evoscientist_table1_queries/internagent/query_04.md",
+      "command": "python launch.py --mode qa --question 'Help me generate a research proposal on AI agents in healthcare.' --output outputs/evoscientist_table1_queries/internagent/query_04.md"
+    },
+    {
+      "query_id": 5,
+      "topic": "Literature review automation",
+      "goal": "Generate a research proposal on automated literature review generation.",
+      "answer_path": "outputs/evoscientist_table1_queries/internagent/query_05.md",
+      "command": "python launch.py --mode qa --question 'Generate a research proposal on automated literature review generation.' --output outputs/evoscientist_table1_queries/internagent/query_05.md"
+    },
+    {
+      "query_id": 6,
+      "topic": "Speech recognition",
+      "goal": "Generate a research proposal on low-resource speech recognition.",
+      "answer_path": "outputs/evoscientist_table1_queries/internagent/query_06.md",
+      "command": "python launch.py --mode qa --question 'Generate a research proposal on low-resource speech recognition.' --output outputs/evoscientist_table1_queries/internagent/query_06.md"
+    },
+    {
+      "query_id": 7,
+      "topic": "Model efficiency",
+      "goal": "Generate a research proposal on how to break the performance ceiling of small models.",
+      "answer_path": "outputs/evoscientist_table1_queries/internagent/query_07.md",
+      "command": "python launch.py --mode qa --question 'Generate a research proposal on how to break the performance ceiling of small models.' --output outputs/evoscientist_table1_queries/internagent/query_07.md"
+    },
+    {
+      "query_id": 8,
+      "topic": "AI agents",
+      "goal": "Generate a research proposal on complex reasoning for AI agents.",
+      "answer_path": "outputs/evoscientist_table1_queries/internagent/query_08.md",
+      "command": "python launch.py --mode qa --question 'Generate a research proposal on complex reasoning for AI agents.' --output outputs/evoscientist_table1_queries/internagent/query_08.md"
+    },
+    {
+      "query_id": 9,
+      "topic": "Model deployment",
+      "goal": "Generate a research proposal on solving quantization challenges for LLM deployment on edge devices.",
+      "answer_path": "outputs/evoscientist_table1_queries/internagent/query_09.md",
+      "command": "python launch.py --mode qa --question 'Generate a research proposal on solving quantization challenges for LLM deployment on edge devices.' --output outputs/evoscientist_table1_queries/internagent/query_09.md"
+    },
+    {
+      "query_id": 10,
+      "topic": "Text-to-SQL",
+      "goal": "Help me generate a research proposal on Text-to-SQL.",
+      "answer_path": "outputs/evoscientist_table1_queries/internagent/query_10.md",
+      "command": "python launch.py --mode qa --question 'Help me generate a research proposal on Text-to-SQL.' --output outputs/evoscientist_table1_queries/internagent/query_10.md"
+    },
+    {
+      "query_id": 11,
+      "topic": "LLM capabilities",
+      "goal": "Generate a research proposal on the decoupling of Large Language Model capabilities.",
+      "answer_path": "outputs/evoscientist_table1_queries/internagent/query_11.md",
+      "command": "python launch.py --mode qa --question 'Generate a research proposal on the decoupling of Large Language Model capabilities.' --output outputs/evoscientist_table1_queries/internagent/query_11.md"
+    },
+    {
+      "query_id": 12,
+      "topic": "Factual consistency",
+      "goal": "Generate a research proposal on how to resolve factual consistency issues in Large Language Models.",
+      "answer_path": "outputs/evoscientist_table1_queries/internagent/query_12.md",
+      "command": "python launch.py --mode qa --question 'Generate a research proposal on how to resolve factual consistency issues in Large Language Models.' --output outputs/evoscientist_table1_queries/internagent/query_12.md"
+    },
+    {
+      "query_id": 13,
+      "topic": "Data synthesis",
+      "goal": "Generate a research proposal on data synthesis for code LLMs.",
+      "answer_path": "outputs/evoscientist_table1_queries/internagent/query_13.md",
+      "command": "python launch.py --mode qa --question 'Generate a research proposal on data synthesis for code LLMs.' --output outputs/evoscientist_table1_queries/internagent/query_13.md"
+    },
+    {
+      "query_id": 14,
+      "topic": "Inference efficiency",
+      "goal": "Generate a research proposal on solving inference latency issues in Large Language Models.",
+      "answer_path": "outputs/evoscientist_table1_queries/internagent/query_14.md",
+      "command": "python launch.py --mode qa --question 'Generate a research proposal on solving inference latency issues in Large Language Models.' --output outputs/evoscientist_table1_queries/internagent/query_14.md"
+    },
+    {
+      "query_id": 15,
+      "topic": "Machine translation",
+      "goal": "Generate a research proposal on debiasing in machine translation.",
+      "answer_path": "outputs/evoscientist_table1_queries/internagent/query_15.md",
+      "command": "python launch.py --mode qa --question 'Generate a research proposal on debiasing in machine translation.' --output outputs/evoscientist_table1_queries/internagent/query_15.md"
+    },
+    {
+      "query_id": 16,
+      "topic": "Knowledge injection",
+      "goal": "Generate a research proposal on addressing the challenges of knowledge injection in domain-specific Large Language Models.",
+      "answer_path": "outputs/evoscientist_table1_queries/internagent/query_16.md",
+      "command": "python launch.py --mode qa --question 'Generate a research proposal on addressing the challenges of knowledge injection in domain-specific Large Language Models.' --output outputs/evoscientist_table1_queries/internagent/query_16.md"
+    },
+    {
+      "query_id": 17,
+      "topic": "Information extraction",
+      "goal": "Generate a research proposal on automated information extraction.",
+      "answer_path": "outputs/evoscientist_table1_queries/internagent/query_17.md",
+      "command": "python launch.py --mode qa --question 'Generate a research proposal on automated information extraction.' --output outputs/evoscientist_table1_queries/internagent/query_17.md"
+    },
+    {
+      "query_id": 18,
+      "topic": "UX evaluation",
+      "goal": "Generate a research proposal on user experience evaluation for Large Language Models.",
+      "answer_path": "outputs/evoscientist_table1_queries/internagent/query_18.md",
+      "command": "python launch.py --mode qa --question 'Generate a research proposal on user experience evaluation for Large Language Models.' --output outputs/evoscientist_table1_queries/internagent/query_18.md"
+    },
+    {
+      "query_id": 19,
+      "topic": "Evaluation leaderboards",
+      "goal": "Generate a research proposal on how to construct efficient leaderboards for LLM evaluation.",
+      "answer_path": "outputs/evoscientist_table1_queries/internagent/query_19.md",
+      "command": "python launch.py --mode qa --question 'Generate a research proposal on how to construct efficient leaderboards for LLM evaluation.' --output outputs/evoscientist_table1_queries/internagent/query_19.md"
+    },
+    {
+      "query_id": 20,
+      "topic": "Text generation",
+      "goal": "Generate a research proposal on the evaluation of diversity in text generation.",
+      "answer_path": "outputs/evoscientist_table1_queries/internagent/query_20.md",
+      "command": "python launch.py --mode qa --question 'Generate a research proposal on the evaluation of diversity in text generation.' --output outputs/evoscientist_table1_queries/internagent/query_20.md"
+    },
+    {
+      "query_id": 21,
+      "topic": "Content detection",
+      "goal": "Generate a research proposal on how to address false positives in AI-generated content detection.",
+      "answer_path": "outputs/evoscientist_table1_queries/internagent/query_21.md",
+      "command": "python launch.py --mode qa --question 'Generate a research proposal on how to address false positives in AI-generated content detection.' --output outputs/evoscientist_table1_queries/internagent/query_21.md"
+    },
+    {
+      "query_id": 22,
+      "topic": "Code LLM security",
+      "goal": "Generate a research proposal on the security of code LLMs.",
+      "answer_path": "outputs/evoscientist_table1_queries/internagent/query_22.md",
+      "command": "python launch.py --mode qa --question 'Generate a research proposal on the security of code LLMs.' --output outputs/evoscientist_table1_queries/internagent/query_22.md"
+    },
+    {
+      "query_id": 23,
+      "topic": "Code LLM evaluation",
+      "goal": "Generate a research proposal on how to build a deep evaluation framework for code LLMs.",
+      "answer_path": "outputs/evoscientist_table1_queries/internagent/query_23.md",
+      "command": "python launch.py --mode qa --question 'Generate a research proposal on how to build a deep evaluation framework for code LLMs.' --output outputs/evoscientist_table1_queries/internagent/query_23.md"
+    },
+    {
+      "query_id": 24,
+      "topic": "RAG",
+      "goal": "Generate a research proposal on solving multi-hop reasoning challenges in Retrieval-Augmented Generation (RAG).",
+      "answer_path": "outputs/evoscientist_table1_queries/internagent/query_24.md",
+      "command": "python launch.py --mode qa --question 'Generate a research proposal on solving multi-hop reasoning challenges in Retrieval-Augmented Generation (RAG).' --output outputs/evoscientist_table1_queries/internagent/query_24.md"
+    },
+    {
+      "query_id": 25,
+      "topic": "Multi-source reasoning",
+      "goal": "Generate a research proposal on complex reasoning with multi-source information.",
+      "answer_path": "outputs/evoscientist_table1_queries/internagent/query_25.md",
+      "command": "python launch.py --mode qa --question 'Generate a research proposal on complex reasoning with multi-source information.' --output outputs/evoscientist_table1_queries/internagent/query_25.md"
+    },
+    {
+      "query_id": 26,
+      "topic": "Data filtering",
+      "goal": "Generate a research proposal on solving data filtering challenges for domain-specific models.",
+      "answer_path": "outputs/evoscientist_table1_queries/internagent/query_26.md",
+      "command": "python launch.py --mode qa --question 'Generate a research proposal on solving data filtering challenges for domain-specific models.' --output outputs/evoscientist_table1_queries/internagent/query_26.md"
+    },
+    {
+      "query_id": 27,
+      "topic": "Long-context understanding",
+      "goal": "Generate a research proposal on how to enhance the long-context understanding of Large Language Models.",
+      "answer_path": "outputs/evoscientist_table1_queries/internagent/query_27.md",
+      "command": "python launch.py --mode qa --question 'Generate a research proposal on how to enhance the long-context understanding of Large Language Models.' --output outputs/evoscientist_table1_queries/internagent/query_27.md"
+    },
+    {
+      "query_id": 28,
+      "topic": "Alignment",
+      "goal": "Generate a research proposal on cross-cultural alignment for Large Language Models.",
+      "answer_path": "outputs/evoscientist_table1_queries/internagent/query_28.md",
+      "command": "python launch.py --mode qa --question 'Generate a research proposal on cross-cultural alignment for Large Language Models.' --output outputs/evoscientist_table1_queries/internagent/query_28.md"
+    },
+    {
+      "query_id": 29,
+      "topic": "Alignment",
+      "goal": "Generate a research proposal on value alignment for AI agents.",
+      "answer_path": "outputs/evoscientist_table1_queries/internagent/query_29.md",
+      "command": "python launch.py --mode qa --question 'Generate a research proposal on value alignment for AI agents.' --output outputs/evoscientist_table1_queries/internagent/query_29.md"
+    },
+    {
+      "query_id": 30,
+      "topic": "Audio foundation models",
+      "goal": "Help me generate a research proposal on general-purpose audio foundation models.",
+      "answer_path": "outputs/evoscientist_table1_queries/internagent/query_30.md",
+      "command": "python launch.py --mode qa --question 'Help me generate a research proposal on general-purpose audio foundation models.' --output outputs/evoscientist_table1_queries/internagent/query_30.md"
+    }
+  ],
+  "import_command": ".venv/bin/python reproduction/import_baseline_outputs.py --system-name InternAgent --source $HOME/research/InternAgent/outputs/evoscientist_table1_queries/internagent --source-format directory --output-root reproduction/artifacts/idea_outputs --strict",
+  "next_commands_after_import": [
+    ".venv/bin/python reproduction/build_pairwise_judge_inputs.py --systems-root reproduction/artifacts/idea_outputs --baseline InternAgent --output reproduction/artifacts/judge_inputs/evosci_vs_internagent.jsonl",
+    ".venv/bin/python reproduction/run_llm_judge.py --provider deepseek --model deepseek-v4-flash --input reproduction/artifacts/judge_inputs/evosci_vs_internagent.jsonl --output reproduction/artifacts/judge_outputs/evosci_vs_internagent_deepseek.jsonl --resume",
+    ".venv/bin/python reproduction/aggregate_judge_results.py --input reproduction/artifacts/judge_outputs/evosci_vs_internagent_deepseek.jsonl --output-csv reproduction/artifacts/tables/evosci_vs_internagent_deepseek.csv --output-json reproduction/artifacts/tables/evosci_vs_internagent_deepseek.json",
+    ".venv/bin/python reproduction/audit_reproduction_artifacts.py --baseline InternAgent --judge-inputs reproduction/artifacts/judge_inputs/evosci_vs_internagent.jsonl --judge-outputs reproduction/artifacts/judge_outputs/evosci_vs_internagent_deepseek.jsonl --aggregate-json reproduction/artifacts/tables/evosci_vs_internagent_deepseek.json"
+  ],
+  "caveat": "This runbook generates replacement-baseline answers through InternAgent QA mode. It does not recover the paper's original raw InternAgent Table 1 outputs."
+}

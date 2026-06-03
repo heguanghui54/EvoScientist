@@ -56,10 +56,9 @@ Note: Current probe found InternAgent has a one-shot QA CLI suitable for a repla
 Commands:
 
 ```bash
-git clone https://github.com/InternScience/InternAgent.git {external_checkout}
-cd {external_checkout} && conda create -n InternAgent python=3.11 && conda activate InternAgent && pip install -r requirements.txt
-python launch.py --mode qa --question {query_json_string} --output {answers_dir}/query_{id:02d}.md
-.venv/bin/python reproduction/import_baseline_outputs.py --system-name InternAgent --source {answers_dir} --source-format directory --output-root reproduction/artifacts/idea_outputs --strict
+.venv/bin/python reproduction/build_internagent_qa_runbook.py
+bash /path/to/EvoScientist/reproduction/internagent_qa_runbook.sh
+.venv/bin/python reproduction/import_baseline_outputs.py --system-name InternAgent --source $HOME/research/InternAgent/outputs/evoscientist_table1_queries/internagent --source-format directory --output-root reproduction/artifacts/idea_outputs --strict
 ```
 
 ### 4. table1_llm_idea_generation / baseline_output_import_or_generation

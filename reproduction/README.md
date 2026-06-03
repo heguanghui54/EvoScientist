@@ -345,6 +345,10 @@ The current AI-Researcher public-runner fit check is recorded in
 The current InternAgent public-runner fit check is recorded in
 `reproduction/internagent_baseline_probe.json` and
 `reproduction/internagent_baseline_probe.md`.
+The 30-query InternAgent QA replacement-baseline runbook is recorded in
+`reproduction/internagent_qa_runbook.md`,
+`reproduction/internagent_qa_runbook.json`, and
+`reproduction/internagent_qa_runbook.sh`.
 
 The remaining Table 2/Table 3/Figure 2 artifact schemas are pinned in:
 
