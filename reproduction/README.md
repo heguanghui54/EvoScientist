@@ -198,7 +198,7 @@ To continue the remaining paper queries without rerunning successful queries:
 
 ```bash
 EVOSCI_QUERY_TIMEOUT=1200 \
-EVOSCI_QUERY_EXTRA_ARGS='--start-id 4 --force-proposal --stream-logs --output-dir reproduction/artifacts/full_trajectories/EvoScientist' \
+EVOSCI_QUERY_EXTRA_ARGS='--start-id 4 --force-proposal --stream-logs --idle-timeout 600 --output-dir reproduction/artifacts/full_trajectories/EvoScientist' \
   reproduction/ssh_ubuntu_run.sh batch-bg 30
 ```
 

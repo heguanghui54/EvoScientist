@@ -9,6 +9,7 @@ import os
 import shutil
 import subprocess
 import sys
+import time
 from pathlib import Path
 
 
@@ -120,6 +121,15 @@ def main() -> None:
     parser.add_argument("--end-id", type=int, default=None, help="Run queries with id <= N.")
     parser.add_argument("--output-dir", type=Path, default=DEFAULT_OUTPUT)
     parser.add_argument("--timeout", type=int, default=1800, help="Seconds per query.")
+    parser.add_argument(
+        "--idle-timeout",
+        type=int,
+        default=0,
+        help=(
+            "When streaming logs, terminate a query after N seconds without "
+            "stdout/stderr growth. Disabled by default."
+        ),
+    )
     parser.add_argument("--dry-run", action="store_true", help="Write prompts without calling EvoSci.")
     parser.add_argument(
         "--proposal-only",
@@ -297,16 +307,42 @@ def main() -> None:
                     stderr=stderr_file,
                     stdin=subprocess.DEVNULL,
                 )
-                try:
-                    returncode = proc.wait(timeout=args.timeout)
-                except subprocess.TimeoutExpired:
-                    proc.terminate()
-                    try:
-                        proc.wait(timeout=10)
-                    except subprocess.TimeoutExpired:
-                        proc.kill()
-                    returncode = 124
-                    stderr_file.write(f"\nTimed out after {args.timeout} seconds.\n")
+                start_time = time.monotonic()
+                last_activity = start_time
+                last_stdout_size = 0
+                last_stderr_size = 0
+                returncode = None
+                while returncode is None:
+                    returncode = proc.poll()
+                    stdout_file.flush()
+                    stderr_file.flush()
+                    stdout_size = stdout_path.stat().st_size if stdout_path.exists() else 0
+                    stderr_size = stderr_path.stat().st_size if stderr_path.exists() else 0
+                    if stdout_size != last_stdout_size or stderr_size != last_stderr_size:
+                        last_activity = time.monotonic()
+                        last_stdout_size = stdout_size
+                        last_stderr_size = stderr_size
+                    now = time.monotonic()
+                    timed_out = now - start_time > args.timeout
+                    idle_timed_out = args.idle_timeout > 0 and now - last_activity > args.idle_timeout
+                    if timed_out or idle_timed_out:
+                        proc.terminate()
+                        try:
+                            proc.wait(timeout=10)
+                        except subprocess.TimeoutExpired:
+                            proc.kill()
+                            proc.wait(timeout=10)
+                        returncode = 124 if timed_out else 125
+                        if timed_out:
+                            stderr_file.write(f"\nTimed out after {args.timeout} seconds.\n")
+                        else:
+                            stderr_file.write(
+                                f"\nIdle timed out after {args.idle_timeout} seconds without log growth.\n"
+                            )
+                        stderr_file.flush()
+                        break
+                    if returncode is None:
+                        time.sleep(5)
         else:
             result = subprocess.run(
                 cmd,
