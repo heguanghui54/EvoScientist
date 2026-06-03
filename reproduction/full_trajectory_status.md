@@ -8,11 +8,11 @@ Audit status: `incomplete`
 
 | Status | Count |
 | --- | ---: |
-| success | 10 |
-| timeout | 7 |
-| missing | 13 |
+| success | 11 |
+| timeout | 8 |
+| missing | 11 |
 
-Successful query ids: `[1, 2, 3, 5, 6, 8, 10, 11, 13, 15]`
+Successful query ids: `[1, 2, 3, 5, 6, 8, 10, 11, 13, 15, 19]`
 
 ## Successful Full Trajectories
 
@@ -204,6 +204,21 @@ Token usage: 29,993 input / 1,066 output
 - manifest return code is 0.
 - isolated workspace was `runs/repro-query-15`.
 
+Query 19 status: `ok`
+
+Title: Adaptive Pairwise Sampling for Cost-Efficient LLM Leaderboards
+
+Output directory: `reproduction/artifacts/remote_fetch/full_trajectories/EvoScientist/query_19`
+
+Token usage: 87,128 input / 5,191 output
+
+## Query 19 Evidence
+
+- `final_report.md` exists and is 13,639 bytes.
+- stdout reports `[Usage: 87,128 in · 5,191 out]`.
+- manifest return code is 0.
+- isolated workspace was `runs/repro-query-19`.
+
 ## Current Non-Successful Full Trajectories
 
 - Query 4: runner reported idle timeout after 600 seconds without log growth.
@@ -213,6 +228,7 @@ Token usage: 29,993 input / 1,066 output
 - Query 14: runner reported idle timeout after 600 seconds without log growth.
 - Query 16: runner reported idle timeout after 600 seconds without log growth.
 - Query 17: runner reported idle timeout after 600 seconds without log growth.
+- Query 18: runner reported idle timeout after 600 seconds without log growth.
 
 ## Query 2 Attempts
 
@@ -229,8 +245,8 @@ Token usage: 29,993 input / 1,066 output
   Final report collected: True
 
 ## Limitations
-- Only queries 1, 2, 3, 5, 6, 8, 10, 11, 13, and 15 currently have successful full tool-enabled trajectories with final_report.md.
-- Queries 4, 7, 9, 12, 14, 16, and 17 idle-timed-out after 600 seconds without log growth in the fetched audit snapshot.
+- Only queries 1, 2, 3, 5, 6, 8, 10, 11, 13, 15, and 19 currently have successful full tool-enabled trajectories with final_report.md.
+- Queries 4, 7, 9, 12, 14, 16, 17, and 18 idle-timed-out after 600 seconds without log growth in the fetched audit snapshot.
 - The run used DeepSeek configuration rather than the paper-matched Gemini/Claude setup.
 - Tavily search was unavailable, so the research-agent behavior may differ from paper settings.
 - This is still not the full 7-baseline paper-level Table 1 reproduction.

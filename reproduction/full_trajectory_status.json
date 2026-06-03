@@ -63,14 +63,14 @@
     ]
   },
   "limitations": [
-    "Only queries 1, 2, 3, 5, 6, 8, 10, 11, 13, and 15 currently have successful full tool-enabled trajectories with final_report.md.",
-    "Queries 4, 7, 9, 12, 14, 16, and 17 idle-timed-out after 600 seconds without log growth in the fetched audit snapshot.",
+    "Only queries 1, 2, 3, 5, 6, 8, 10, 11, 13, 15, and 19 currently have successful full tool-enabled trajectories with final_report.md.",
+    "Queries 4, 7, 9, 12, 14, 16, 17, and 18 idle-timed-out after 600 seconds without log growth in the fetched audit snapshot.",
     "The run used DeepSeek configuration rather than the paper-matched Gemini/Claude setup.",
     "Tavily search was unavailable, so the research-agent behavior may differ from paper settings.",
     "This is still not the full 7-baseline paper-level Table 1 reproduction."
   ],
   "full_trajectory_counts": {
-    "successful_final_reports": 10,
+    "successful_final_reports": 11,
     "attempted_queries": [
       1,
       2,
@@ -88,11 +88,11 @@
       14,
       15,
       16,
-      17
+      17,
+      18,
+      19
     ],
     "pending_queries": [
-      18,
-      19,
       20,
       21,
       22,
@@ -142,9 +142,9 @@
     "status": "incomplete",
     "query_count": 30,
     "counts": {
-      "success": 10,
-      "timeout": 7,
-      "missing": 13
+      "success": 11,
+      "timeout": 8,
+      "missing": 11
     },
     "successful_query_ids": [
       1,
@@ -156,7 +156,8 @@
       10,
       11,
       13,
-      15
+      15,
+      19
     ],
     "failed_or_incomplete_query_ids": [
       4,
@@ -167,7 +168,6 @@
       16,
       17,
       18,
-      19,
       20,
       21,
       22,
@@ -390,6 +390,26 @@
       "status": "timeout",
       "reason": "runner reported idle timeout after 600 seconds without log growth",
       "workspace": "runs/repro-query-17"
+    },
+    "query_4": {
+      "status": "timeout",
+      "reason": "runner reported idle timeout after 600 seconds without log growth",
+      "workspace": "runs/repro-query-04"
+    },
+    "query_7": {
+      "status": "timeout",
+      "reason": "runner reported idle timeout after 600 seconds without log growth",
+      "workspace": "runs/repro-query-07"
+    },
+    "query_9": {
+      "status": "timeout",
+      "reason": "runner reported idle timeout after 600 seconds without log growth",
+      "workspace": "runs/repro-query-09"
+    },
+    "query_18": {
+      "status": "timeout",
+      "reason": "runner reported idle timeout after 600 seconds without log growth",
+      "workspace": "runs/repro-query-18"
     }
   },
   "query_6_success": {
@@ -727,6 +747,64 @@
     "final_report": {
       "title": "Research Proposal: Context-Adaptive Gender Debiasing (CAGED) for Neural Machine Translation",
       "bytes": 13452,
+      "sections_detected": [
+        "Problem",
+        "Hypothesis",
+        "Method",
+        "Dataset",
+        "Benchmark",
+        "Evaluation",
+        "Baselines",
+        "Ablations",
+        "Failure"
+      ]
+    }
+  },
+  "query_19_success": {
+    "query_id": 19,
+    "topic": "Evaluation leaderboards",
+    "goal": "Generate a research proposal on how to construct efficient leaderboards for LLM evaluation.",
+    "mode": "full tool-enabled with --force-proposal and isolated --mode run workspace",
+    "remote_host": "ubuntu-heshi",
+    "command": "EVOSCI_QUERY_TIMEOUT=1200 EVOSCI_QUERY_EXTRA_ARGS='--query-ids 6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30 --force-proposal --stream-logs --idle-timeout 600 --output-dir reproduction/artifacts/full_trajectories/EvoScientist' reproduction/ssh_ubuntu_run.sh batch-bg 30",
+    "manifest_status": "ok",
+    "returncode": 0,
+    "thread_id": "40f21e6b",
+    "workspace": "runs/repro-query-19",
+    "output_dir": "reproduction/artifacts/remote_fetch/full_trajectories/EvoScientist/query_19",
+    "artifact_files": {
+      "stdout.txt": {
+        "exists": true,
+        "bytes": 7967
+      },
+      "stderr.txt": {
+        "exists": true,
+        "bytes": 251
+      },
+      "prompt.txt": {
+        "exists": true,
+        "bytes": 695
+      },
+      "query.json": {
+        "exists": true,
+        "bytes": 157
+      },
+      "answer.txt": {
+        "exists": false,
+        "bytes": 0
+      },
+      "final_report.md": {
+        "exists": true,
+        "bytes": 13639
+      }
+    },
+    "usage": {
+      "input_tokens": 87128,
+      "output_tokens": 5191
+    },
+    "final_report": {
+      "title": "Adaptive Pairwise Sampling for Cost-Efficient LLM Leaderboards",
+      "bytes": 13639,
       "sections_detected": [
         "Problem",
         "Hypothesis",

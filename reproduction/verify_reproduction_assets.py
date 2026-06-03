@@ -77,7 +77,7 @@ def main() -> None:
     assert full_status["query_id"] == 1
     assert "CrossLingual-RAG" in full_status["final_report"]["title"]
     assert full_status["artifact_files"]["final_report.md"]["bytes"] >= 10000
-    assert full_status["full_trajectory_counts"]["successful_final_reports"] == 10
+    assert full_status["full_trajectory_counts"]["successful_final_reports"] == 11
     assert len(full_status["query_2_attempts"]) == 3
     assert "clarification" in full_status["query_2_attempts"][0]["result"]
     assert full_status["query_2_success"]["artifact_files"]["final_report.md"]["bytes"] >= 10000
@@ -98,9 +98,11 @@ def main() -> None:
     assert "ExeCoT" in full_status["query_13_success"]["final_report"]["title"]
     assert full_status["query_15_success"]["artifact_files"]["final_report.md"]["bytes"] >= 10000
     assert "Context-Adaptive Gender Debiasing" in full_status["query_15_success"]["final_report"]["title"]
-    assert full_status["audit"]["counts"]["success"] == 10
-    assert full_status["audit"]["counts"]["timeout"] == 7
-    assert full_status["audit"]["counts"]["missing"] == 13
+    assert full_status["query_19_success"]["artifact_files"]["final_report.md"]["bytes"] >= 10000
+    assert "Cost-Efficient LLM Leaderboards" in full_status["query_19_success"]["final_report"]["title"]
+    assert full_status["audit"]["counts"]["success"] == 11
+    assert full_status["audit"]["counts"]["timeout"] == 8
+    assert full_status["audit"]["counts"]["missing"] == 11
     reported = json.loads(reported_path.read_text(encoding="utf-8"))
     for section in [
         "table1_llm_idea_generation",
