@@ -54,6 +54,7 @@ def main() -> None:
         "run_offline_smoke.py",
         "run_llm_judge.py",
         "aggregate_human_labels.py",
+        "aggregate_code_execution.py",
         "compare_reproduction_to_paper.py",
         "audit_reproduction_artifacts.py",
         "verify_replacement_baseline_protocol.py",
@@ -118,6 +119,7 @@ def main() -> None:
     assert paper_artifact_schema["schemas"]["human_evaluation"]["aggregator"] == "reproduction/aggregate_human_labels.py"
     assert "ablation" in paper_artifact_schema["schemas"]
     assert "code_execution" in paper_artifact_schema["schemas"]
+    assert paper_artifact_schema["schemas"]["code_execution"]["aggregator"] == "reproduction/aggregate_code_execution.py"
     paper_artifact_schema_md = paper_artifact_schema_md_path.read_text(encoding="utf-8")
     assert "Figure 2 Code Execution" in paper_artifact_schema_md
     full_status = json.loads(full_status_json_path.read_text(encoding="utf-8"))
@@ -206,6 +208,7 @@ def main() -> None:
         "Replacement baseline protocol is pinned",
         "Paper-level non-Table-1 artifact schemas are pinned",
         "Human-label aggregation is executable",
+        "Code-execution aggregation is executable",
         "EvoScientist CLI outputs are normalized before judging",
         "Full trajectory audit is executable",
         "Full trajectory reruns are isolated by default",
@@ -438,6 +441,73 @@ def main() -> None:
         )
         human_summary = json.loads(human_aggregate.read_text(encoding="utf-8"))
         assert human_summary["baselines"]["BaselineA"]["avg_gap"] == 100.0
+
+        execution_logs = tmp_path / "execution_logs.jsonl"
+        execution_logs.write_text(
+            "\n".join(
+                [
+                    json.dumps(
+                        {
+                            "trajectory_id": "t1",
+                            "stage": 1,
+                            "attempt_id": "a1",
+                            "success": True,
+                            "evolution_state": "before",
+                        }
+                    ),
+                    json.dumps(
+                        {
+                            "trajectory_id": "t2",
+                            "stage": 1,
+                            "attempt_id": "a1",
+                            "success": False,
+                            "evolution_state": "before",
+                        }
+                    ),
+                    json.dumps(
+                        {
+                            "trajectory_id": "t3",
+                            "stage": "stage_3",
+                            "attempt_id": "a1",
+                            "success": "yes",
+                            "evolution_state": "after",
+                        }
+                    ),
+                    json.dumps(
+                        {
+                            "trajectory_id": "t4",
+                            "stage": "stage_3",
+                            "attempt_id": "a1",
+                            "success": "success",
+                            "evolution_state": "after",
+                        }
+                    ),
+                ]
+            )
+            + "\n",
+            encoding="utf-8",
+        )
+        execution_summary_path = tmp_path / "execution_summary.json"
+        subprocess.run(
+            [
+                sys.executable,
+                str(ROOT / "aggregate_code_execution.py"),
+                "--logs",
+                str(execution_logs),
+                "--output-json",
+                str(execution_summary_path),
+                "--output-csv",
+                str(tmp_path / "execution_summary.csv"),
+                "--strict",
+            ],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+        execution_summary = json.loads(execution_summary_path.read_text(encoding="utf-8"))
+        assert execution_summary["before_evolution_pct"] == 50.0
+        assert execution_summary["after_evolution_pct"] == 100.0
+        assert execution_summary["stage3_after_evolution_pct"] == 100.0
 
         expected_table1 = reported["table1_llm_idea_generation"]
         matching_actual = {
