@@ -75,9 +75,9 @@ def main() -> None:
     )
     assert "not possible from public artifacts alone" in gap_report["conclusion"]
     full_status = json.loads(full_status_json_path.read_text(encoding="utf-8"))
-    expected_success_ids = [1, 2, 3, 4, 5, 6, 8, 10, 11, 13, 15, 19, 20, 21, 23, 27, 28, 29]
-    expected_incomplete_ids = [7, 9, 12, 14, 16, 17, 18, 22, 24, 25, 26, 30]
-    assert full_status["full_trajectory_counts"]["successful_final_reports"] == 18
+    expected_success_ids = [1, 2, 3, 4, 5, 6, 7, 8, 10, 11, 13, 15, 19, 20, 21, 23, 27, 28, 29]
+    expected_incomplete_ids = [9, 12, 14, 16, 17, 18, 22, 24, 25, 26, 30]
+    assert full_status["full_trajectory_counts"]["successful_final_reports"] == 19
     assert full_status["audit"]["successful_query_ids"] == expected_success_ids
     assert full_status["audit"]["failed_or_incomplete_query_ids"] == expected_incomplete_ids
     for query_id in expected_success_ids:
@@ -89,8 +89,10 @@ def main() -> None:
     assert "Multi-Perspective" in full_status["successful_queries"]["query_03"]["final_report"]["title"]
     assert "TrialMatch-Agents" in full_status["successful_queries"]["query_04"]["final_report"]["title"]
     assert full_status["successful_queries"]["query_04"]["artifact_files"]["final_report.md"]["bytes"] >= 19000
-    assert full_status["audit"]["counts"]["success"] == 18
-    assert full_status["audit"]["counts"]["timeout"] == 11
+    assert "Multi-Hop Reasoning Ceiling" in full_status["successful_queries"]["query_07"]["final_report"]["title"]
+    assert full_status["successful_queries"]["query_07"]["artifact_files"]["final_report.md"]["bytes"] >= 23000
+    assert full_status["audit"]["counts"]["success"] == 19
+    assert full_status["audit"]["counts"]["timeout"] == 10
     assert full_status["audit"]["counts"]["failed"] == 1
     assert "missing" not in full_status["audit"]["counts"]
     assert full_status["incomplete_queries"]["query_24"]["status"] == "failed"
@@ -139,9 +141,9 @@ def main() -> None:
         "EvoScientist CLI outputs are normalized before judging",
         "Full trajectory audit is executable",
         "Full trajectory reruns are isolated by default",
-        "18 success, 11 timeout, 1 failed, 0 missing",
+        "19 success, 10 timeout, 1 failed, 0 missing",
         "full tool-enabled DeepSeek-backed sweep for all 30 paper queries",
-        "rerun only the non-successful query IDs: 7, 9, 12, 14, 16, 17, 18, 22, 24",
+        "rerun only the non-successful query IDs: 9, 12, 14, 16, 17, 18, 22, 24",
         "not a self-evolving system",
         "Ubuntu GPU Status",
     ]:

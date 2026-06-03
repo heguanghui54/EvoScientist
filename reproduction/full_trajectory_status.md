@@ -8,11 +8,11 @@ Audit status: `incomplete`
 
 | Status | Count |
 | --- | ---: |
-| success | 18 |
-| timeout | 11 |
+| success | 19 |
+| timeout | 10 |
 | failed | 1 |
 
-Successful query ids: `[1, 2, 3, 4, 5, 6, 8, 10, 11, 13, 15, 19, 20, 21, 23, 27, 28, 29]`
+Successful query ids: `[1, 2, 3, 4, 5, 6, 7, 8, 10, 11, 13, 15, 19, 20, 21, 23, 27, 28, 29]`
 
 ## Successful Full Trajectories
 
@@ -93,6 +93,19 @@ Command: `EVOSCI_QUERY_TIMEOUT=1200 EVOSCI_QUERY_EXTRA_ARGS='--query-ids 6,7,8,9
 
 - `final_report.md` exists and is 10,720 bytes.
 - isolated workspace was `runs/repro-query-06`.
+
+Query 7 status: `ok`
+
+Title: Breaking the Multi-Hop Reasoning Ceiling for Sub-500M LMs via Multi-Teacher Distillation and Inference-Time Verifier Scaling
+
+Output directory: `reproduction/artifacts/remote_fetch/full_trajectories/EvoScientist/query_07`
+
+Token usage: 90875 input / 7745 output
+
+Command: `EVOSCI_QUERY_TIMEOUT=1200 EVOSCI_QUERY_EXTRA_ARGS='--query-ids 6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30 --force-proposal --stream-logs --idle-timeout 600 --output-dir reproduction/artifacts/full_trajectories/EvoScientist' reproduction/ssh_ubuntu_run.sh batch-bg 30`
+
+- `final_report.md` exists and is 23,221 bytes.
+- isolated workspace was `runs/repro-query-07`.
 
 Query 8 status: `ok`
 
@@ -252,7 +265,6 @@ Command: `EVOSCI_QUERY_TIMEOUT=1200 EVOSCI_QUERY_EXTRA_ARGS='--query-ids 6,7,8,9
 
 ## Current Non-Successful Full Trajectories
 
-- Query 7: runner reported timeout
 - Query 9: runner reported timeout
 - Query 12: runner reported timeout
 - Query 14: runner reported timeout
@@ -266,8 +278,8 @@ Command: `EVOSCI_QUERY_TIMEOUT=1200 EVOSCI_QUERY_EXTRA_ARGS='--query-ids 6,7,8,9
 - Query 30: runner reported timeout
 
 ## Limitations
-- Queries 1, 2, 3, 4, 5, 6, 8, 10, 11, 13, 15, 19, 20, 21, 23, 27, 28, 29 have successful full tool-enabled trajectories with final_report.md.
-- Queries 7, 9, 12, 14, 16, 17, 18, 22, 24, 25, 26, 30 remain non-successful in the latest fetched audit snapshot.
+- Queries 1, 2, 3, 4, 5, 6, 7, 8, 10, 11, 13, 15, 19, 20, 21, 23, 27, 28, 29 have successful full tool-enabled trajectories with final_report.md.
+- Queries 9, 12, 14, 16, 17, 18, 22, 24, 25, 26, 30 remain non-successful in the latest fetched audit snapshot.
 - The run used DeepSeek configuration rather than the paper-matched Gemini/Claude setup.
 - Tavily search was unavailable, so the research-agent behavior may differ from paper settings.
 - This is still not the full 7-baseline paper-level Table 1 reproduction.
