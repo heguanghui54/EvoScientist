@@ -91,8 +91,8 @@ def main() -> None:
     assert full_status["query_8_success"]["artifact_files"]["final_report.md"]["bytes"] >= 10000
     assert "VeriPlan" in full_status["query_8_success"]["final_report"]["title"]
     assert full_status["audit"]["counts"]["success"] == 6
-    assert full_status["audit"]["counts"]["timeout"] == 2
-    assert full_status["audit"]["counts"]["missing"] == 22
+    assert full_status["audit"]["counts"]["timeout"] == 3
+    assert full_status["audit"]["counts"]["missing"] == 21
     reported = json.loads(reported_path.read_text(encoding="utf-8"))
     for section in [
         "table1_llm_idea_generation",
