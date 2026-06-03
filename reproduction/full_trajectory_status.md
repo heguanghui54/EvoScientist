@@ -8,11 +8,11 @@ Audit status: `incomplete`
 
 | Status | Count |
 | --- | ---: |
-| success | 22 |
-| timeout | 7 |
+| success | 23 |
+| timeout | 6 |
 | failed | 1 |
 
-Successful query ids: `[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 19, 20, 21, 23, 27, 28, 29]`
+Successful query ids: `[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 17, 19, 20, 21, 23, 27, 28, 29]`
 
 ## Successful Full Trajectories
 
@@ -211,6 +211,19 @@ Command: `EVOSCI_QUERY_TIMEOUT=1200 EVOSCI_QUERY_EXTRA_ARGS='--query-ids 6,7,8,9
 - `final_report.md` exists and is 13,452 bytes.
 - isolated workspace was `runs/repro-query-15`.
 
+Query 17 status: `ok`
+
+Title: Schema-Constrained Document-Level Event Extraction via Context-Grounded LLM Decoding
+
+Output directory: `reproduction/artifacts/remote_fetch/full_trajectories/EvoScientist/query_17`
+
+Token usage: 116239 input / 5446 output
+
+Command: `EVOSCI_QUERY_TIMEOUT=1200 EVOSCI_QUERY_EXTRA_ARGS='--query-ids 6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30 --force-proposal --stream-logs --idle-timeout 600 --output-dir reproduction/artifacts/full_trajectories/EvoScientist' reproduction/ssh_ubuntu_run.sh batch-bg 30`
+
+- `final_report.md` exists and is 15,237 bytes.
+- isolated workspace was `runs/repro-query-17`.
+
 Query 19 status: `ok`
 
 Title: Adaptive Pairwise Sampling for Cost-Efficient LLM Leaderboards
@@ -305,7 +318,6 @@ Command: `EVOSCI_QUERY_TIMEOUT=1200 EVOSCI_QUERY_EXTRA_ARGS='--query-ids 6,7,8,9
 ## Current Non-Successful Full Trajectories
 
 - Query 16: runner reported timeout
-- Query 17: runner reported timeout
 - Query 18: runner reported timeout
 - Query 22: runner reported timeout
 - Query 24: stderr indicates failure or manual termination
@@ -314,8 +326,8 @@ Command: `EVOSCI_QUERY_TIMEOUT=1200 EVOSCI_QUERY_EXTRA_ARGS='--query-ids 6,7,8,9
 - Query 30: runner reported timeout
 
 ## Limitations
-- Queries 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 19, 20, 21, 23, 27, 28, 29 have successful full tool-enabled trajectories with final_report.md.
-- Queries 16, 17, 18, 22, 24, 25, 26, 30 remain non-successful in the latest fetched audit snapshot.
+- Queries 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 17, 19, 20, 21, 23, 27, 28, 29 have successful full tool-enabled trajectories with final_report.md.
+- Queries 16, 18, 22, 24, 25, 26, 30 remain non-successful in the latest fetched audit snapshot.
 - The run used DeepSeek configuration rather than the paper-matched Gemini/Claude setup.
 - Tavily search was unavailable, so the research-agent behavior may differ from paper settings.
 - This is still not the full 7-baseline paper-level Table 1 reproduction.
