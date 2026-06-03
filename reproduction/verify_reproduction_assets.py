@@ -44,6 +44,7 @@ def main() -> None:
     for script in [
         "run_idea_generation.py",
         "run_direct_baseline.py",
+        "normalize_system_outputs.py",
         "build_pairwise_judge_inputs.py",
         "aggregate_judge_results.py",
         "run_offline_smoke.py",
@@ -72,6 +73,7 @@ def main() -> None:
         "DeepSeek-backed EvoScientist proposal-only outputs exist",
         "Target-system output coverage is complete for proposal-only mode",
         "Replacement-baseline judge pipeline is complete",
+        "EvoScientist CLI outputs are normalized before judging",
         "not a self-evolving system",
         "Ubuntu GPU Status",
     ]:

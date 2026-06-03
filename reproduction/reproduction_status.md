@@ -25,7 +25,8 @@ and paper-level experimental reproduction.
 | DeepSeek-backed EvoScientist proposal-only outputs exist | Ubuntu batch with `--proposal-only --stream-logs`; manifest has 30 `ok` outputs | Verified |
 | Target-system output coverage is complete for proposal-only mode | `audit_reproduction_artifacts.py --artifacts-root reproduction/artifacts/remote_fetch` reports EvoScientist 30/30 present | Verified |
 | Replacement direct-LLM baseline outputs exist | `Direct-DeepSeek` baseline has answer files for 30/30 paper queries | Verified |
-| Replacement-baseline judge pipeline is complete | EvoScientist vs `Direct-DeepSeek`: 60 swapped pairwise records, 60 DeepSeek judge outputs, aggregate table, audit complete | Verified |
+| Replacement-baseline judge pipeline is complete | Clean EvoScientist answers vs `Direct-DeepSeek`: 60 swapped pairwise records, 60 DeepSeek judge outputs, aggregate table, audit complete | Verified |
+| EvoScientist CLI outputs are normalized before judging | `normalize_system_outputs.py` writes clean `answer.txt` files from raw `stdout.txt` logs | Verified |
 
 ## Not Yet Paper-Level Reproduction
 
@@ -129,19 +130,19 @@ For the completed replacement-baseline comparison, the audit is complete:
 .venv/bin/python reproduction/audit_reproduction_artifacts.py \
   --artifacts-root reproduction/artifacts \
   --baseline Direct-DeepSeek \
-  --judge-inputs reproduction/artifacts/judge_inputs/evosci_vs_direct_deepseek.jsonl \
-  --judge-outputs reproduction/artifacts/judge_outputs/evosci_vs_direct_deepseek_deepseek.jsonl \
-  --aggregate-json reproduction/artifacts/tables/evosci_vs_direct_deepseek_deepseek.json
+  --judge-inputs reproduction/artifacts/judge_inputs/evosci_clean_vs_direct_deepseek.jsonl \
+  --judge-outputs reproduction/artifacts/judge_outputs/evosci_clean_vs_direct_deepseek_deepseek.jsonl \
+  --aggregate-json reproduction/artifacts/tables/evosci_clean_vs_direct_deepseek_deepseek.json
 ```
 
 Observed DeepSeek judge result from EvoScientist's perspective:
 
 | Baseline | Dimension | N | Win | Tie | Lose | Win % | Tie % | Lose % |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| Direct-DeepSeek | Clarity | 60 | 24 | 2 | 34 | 40.00 | 3.33 | 56.67 |
-| Direct-DeepSeek | Novelty | 60 | 50 | 1 | 9 | 83.33 | 1.67 | 15.00 |
-| Direct-DeepSeek | Feasibility | 60 | 17 | 1 | 42 | 28.33 | 1.67 | 70.00 |
-| Direct-DeepSeek | Relevance | 60 | 29 | 19 | 12 | 48.33 | 31.67 | 20.00 |
+| Direct-DeepSeek | Clarity | 60 | 27 | 5 | 28 | 45.00 | 8.33 | 46.67 |
+| Direct-DeepSeek | Novelty | 60 | 53 | 1 | 6 | 88.33 | 1.67 | 10.00 |
+| Direct-DeepSeek | Feasibility | 60 | 16 | 7 | 37 | 26.67 | 11.67 | 61.67 |
+| Direct-DeepSeek | Relevance | 60 | 25 | 27 | 8 | 41.67 | 45.00 | 13.33 |
 
 ## External Artifact Check
 

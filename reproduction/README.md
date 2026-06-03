@@ -166,6 +166,11 @@ execution, baselines, judge outputs, and ablations are still incomplete.
 Build pairwise judge inputs and aggregate judge results:
 
 ```bash
+.venv/bin/python reproduction/normalize_system_outputs.py \
+  --systems-root reproduction/artifacts/idea_outputs \
+  --system EvoScientist \
+  --overwrite
+
 .venv/bin/python reproduction/build_pairwise_judge_inputs.py \
   --systems-root reproduction/artifacts/idea_outputs \
   --baseline AI-Scientist-v2 \
@@ -196,6 +201,12 @@ It additionally supports OpenAI-compatible `--provider deepseek`, `--provider
 monica`, and `--provider openai-compatible`. The mock provider is for local
 parser/pipeline tests only; it is not a paper evaluation.
 
+`normalize_system_outputs.py` should be run before LLM judging when outputs come
+from the EvoScientist CLI. It strips loading messages, echoed prompts, rich
+thinking boxes, usage footers, and resume instructions, then writes clean
+`answer.txt` files. This prevents a judge from comparing Direct-LLM clean
+answers against raw terminal logs.
+
 Generate a reproducible replacement baseline:
 
 ```bash
@@ -217,19 +228,19 @@ The completed replacement-baseline comparison is:
 .venv/bin/python reproduction/build_pairwise_judge_inputs.py \
   --systems-root reproduction/artifacts/idea_outputs \
   --baseline Direct-DeepSeek \
-  --output reproduction/artifacts/judge_inputs/evosci_vs_direct_deepseek.jsonl
+  --output reproduction/artifacts/judge_inputs/evosci_clean_vs_direct_deepseek.jsonl
 
 .venv/bin/python reproduction/run_llm_judge.py \
   --provider deepseek \
   --model deepseek-v4-flash \
-  --input reproduction/artifacts/judge_inputs/evosci_vs_direct_deepseek.jsonl \
-  --output reproduction/artifacts/judge_outputs/evosci_vs_direct_deepseek_deepseek.jsonl \
+  --input reproduction/artifacts/judge_inputs/evosci_clean_vs_direct_deepseek.jsonl \
+  --output reproduction/artifacts/judge_outputs/evosci_clean_vs_direct_deepseek_deepseek.jsonl \
   --resume
 
 .venv/bin/python reproduction/aggregate_judge_results.py \
-  --input reproduction/artifacts/judge_outputs/evosci_vs_direct_deepseek_deepseek.jsonl \
-  --output-csv reproduction/artifacts/tables/evosci_vs_direct_deepseek_deepseek.csv \
-  --output-json reproduction/artifacts/tables/evosci_vs_direct_deepseek_deepseek.json
+  --input reproduction/artifacts/judge_outputs/evosci_clean_vs_direct_deepseek_deepseek.jsonl \
+  --output-csv reproduction/artifacts/tables/evosci_clean_vs_direct_deepseek_deepseek.csv \
+  --output-json reproduction/artifacts/tables/evosci_clean_vs_direct_deepseek_deepseek.json
 ```
 
 The audit for this replacement comparison is complete: 30 queries, one
@@ -239,10 +250,10 @@ from EvoScientist's perspective is:
 
 | Baseline | Dimension | N | Win | Tie | Lose | Win % | Tie % | Lose % |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| Direct-DeepSeek | Clarity | 60 | 24 | 2 | 34 | 40.00 | 3.33 | 56.67 |
-| Direct-DeepSeek | Novelty | 60 | 50 | 1 | 9 | 83.33 | 1.67 | 15.00 |
-| Direct-DeepSeek | Feasibility | 60 | 17 | 1 | 42 | 28.33 | 1.67 | 70.00 |
-| Direct-DeepSeek | Relevance | 60 | 29 | 19 | 12 | 48.33 | 31.67 | 20.00 |
+| Direct-DeepSeek | Clarity | 60 | 27 | 5 | 28 | 45.00 | 8.33 | 46.67 |
+| Direct-DeepSeek | Novelty | 60 | 53 | 1 | 6 | 88.33 | 1.67 | 10.00 |
+| Direct-DeepSeek | Feasibility | 60 | 16 | 7 | 37 | 26.67 | 11.67 | 61.67 |
+| Direct-DeepSeek | Relevance | 60 | 25 | 27 | 8 | 41.67 | 45.00 | 13.33 |
 
 Run an offline end-to-end smoke test of the evaluation pipeline:
 
