@@ -18,6 +18,23 @@
     ],
     "minimum_answer_bytes": 1000
   },
+  "import_tool": {
+    "script": "reproduction/import_baseline_outputs.py",
+    "supported_sources": [
+      "jsonl",
+      "directory"
+    ],
+    "jsonl_required_fields": [
+      "query_id or id",
+      "answer or output or text"
+    ],
+    "directory_supported_filenames": [
+      "query_01.md",
+      "query_01.txt",
+      "01.md",
+      "01.txt"
+    ]
+  },
   "candidate_baselines": [
     {
       "name": "Direct-DeepSeek",
@@ -84,6 +101,8 @@
   ],
   "commands": {
     "direct_deepseek_generate": ".venv/bin/python reproduction/run_direct_baseline.py --output-dir reproduction/artifacts/idea_outputs/Direct-DeepSeek",
+    "import_baseline_jsonl_template": ".venv/bin/python reproduction/import_baseline_outputs.py --system-name {baseline} --source {source_jsonl} --source-format jsonl --output-root reproduction/artifacts/idea_outputs --strict",
+    "import_baseline_directory_template": ".venv/bin/python reproduction/import_baseline_outputs.py --system-name {baseline} --source {source_dir} --source-format directory --output-root reproduction/artifacts/idea_outputs --strict",
     "build_judge_inputs_template": ".venv/bin/python reproduction/build_pairwise_judge_inputs.py --systems-root reproduction/artifacts/idea_outputs --baseline {baseline} --output reproduction/artifacts/judge_inputs/evosci_vs_{baseline_slug}.jsonl",
     "run_replacement_judge_template": ".venv/bin/python reproduction/run_llm_judge.py --provider deepseek --model deepseek-v4-flash --input reproduction/artifacts/judge_inputs/evosci_vs_{baseline_slug}.jsonl --output reproduction/artifacts/judge_outputs/evosci_vs_{baseline_slug}_deepseek.jsonl --resume",
     "aggregate_template": ".venv/bin/python reproduction/aggregate_judge_results.py --input reproduction/artifacts/judge_outputs/evosci_vs_{baseline_slug}_deepseek.jsonl --output-csv reproduction/artifacts/tables/evosci_vs_{baseline_slug}_deepseek.csv --output-json reproduction/artifacts/tables/evosci_vs_{baseline_slug}_deepseek.json",

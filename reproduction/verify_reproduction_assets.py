@@ -44,6 +44,7 @@ def main() -> None:
     for script in [
         "run_idea_generation.py",
         "run_direct_baseline.py",
+        "import_baseline_outputs.py",
         "normalize_system_outputs.py",
         "audit_full_trajectories.py",
         "refresh_full_trajectory_status.py",
@@ -100,6 +101,7 @@ def main() -> None:
     baseline_inventory_md = baseline_inventory_md_path.read_text(encoding="utf-8")
     assert "Raw baseline-output packages found: 0" in baseline_inventory_md
     replacement_protocol = json.loads(replacement_protocol_json_path.read_text(encoding="utf-8"))
+    assert replacement_protocol["import_tool"]["script"] == "reproduction/import_baseline_outputs.py"
     assert replacement_protocol["judge_protocol"]["records_per_baseline"] == 60
     assert replacement_protocol["candidate_baselines"][0]["name"] == "Direct-DeepSeek"
     assert replacement_protocol["candidate_baselines"][0]["status"] == "completed_replacement_baseline"
@@ -229,6 +231,56 @@ def main() -> None:
             text=True,
         )
         assert len(judge_inputs.read_text(encoding="utf-8").splitlines()) == 2
+
+        imported_jsonl = tmp_path / "imported.jsonl"
+        imported_jsonl.write_text(
+            json.dumps({
+                "query_id": 1,
+                "answer": "Imported baseline proposal with method, benchmark, and ablation details.",
+                "prompt": "Imported prompt",
+            })
+            + "\n",
+            encoding="utf-8",
+        )
+        subprocess.run(
+            [
+                sys.executable,
+                str(ROOT / "import_baseline_outputs.py"),
+                "--system-name",
+                "ImportedBaseline",
+                "--source",
+                str(imported_jsonl),
+                "--source-format",
+                "jsonl",
+                "--output-root",
+                str(systems),
+                "--limit",
+                "1",
+                "--min-chars",
+                "20",
+                "--strict",
+            ],
+            check=True,
+        )
+        imported_answer = systems / "ImportedBaseline" / "query_01" / "answer.txt"
+        assert imported_answer.is_file()
+        imported_judge_inputs = tmp_path / "imported_judge_inputs.jsonl"
+        subprocess.run(
+            [
+                sys.executable,
+                str(ROOT / "build_pairwise_judge_inputs.py"),
+                "--systems-root",
+                str(systems),
+                "--baseline",
+                "ImportedBaseline",
+                "--output",
+                str(imported_judge_inputs),
+                "--limit",
+                "1",
+            ],
+            check=True,
+        )
+        assert len(imported_judge_inputs.read_text(encoding="utf-8").splitlines()) == 2
 
         mock_judge_outputs = tmp_path / "mock_judge_outputs.jsonl"
         subprocess.run(

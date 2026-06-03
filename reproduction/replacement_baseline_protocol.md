@@ -41,6 +41,17 @@ Generate the completed replacement baseline:
 For another baseline after its outputs are normalized into the shared layout:
 
 ```bash
+.venv/bin/python reproduction/import_baseline_outputs.py \
+  --system-name {baseline} \
+  --source {source_jsonl_or_dir} \
+  --source-format jsonl \
+  --output-root reproduction/artifacts/idea_outputs \
+  --strict
+```
+
+Then build, judge, and aggregate:
+
+```bash
 .venv/bin/python reproduction/build_pairwise_judge_inputs.py \
   --systems-root reproduction/artifacts/idea_outputs \
   --baseline {baseline} \

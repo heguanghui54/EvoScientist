@@ -337,7 +337,8 @@ reproduction/replacement_baseline_protocol.md
 
 It defines the shared 30-query output layout, 60 swapped judge records per
 baseline, and the acceptance checks for extending the Direct-DeepSeek comparison
-to available baseline runners.
+to available baseline runners. External baseline exports can be normalized with
+`reproduction/import_baseline_outputs.py` before judging.
 
 Run an offline end-to-end smoke test of the evaluation pipeline:
 

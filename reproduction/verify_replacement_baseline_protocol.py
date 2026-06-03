@@ -18,6 +18,7 @@ ARTIFACTS = ROOT / "artifacts"
 def main() -> None:
     protocol = json.loads(PROTOCOL_JSON.read_text(encoding="utf-8"))
     assert protocol["query_set"]["query_count"] == 30
+    assert protocol["import_tool"]["script"] == "reproduction/import_baseline_outputs.py"
     assert protocol["query_set"]["require_verbatim_query"] is True
     assert protocol["judge_protocol"]["swapped_order"] is True
     assert protocol["judge_protocol"]["records_per_baseline"] == 60
