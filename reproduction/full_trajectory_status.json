@@ -63,19 +63,19 @@
     ]
   },
   "limitations": [
-    "Only queries 1 and 2 currently have successful full tool-enabled trajectories with final_report.md.",
+    "Only queries 1, 2, and 3 currently have successful full tool-enabled trajectories with final_report.md.",
     "The run used DeepSeek configuration rather than the paper-matched Gemini/Claude setup.",
     "Tavily search was unavailable, so the research-agent behavior may differ from paper settings.",
     "This is still not the full 7-baseline paper-level Table 1 reproduction."
   ],
   "full_trajectory_counts": {
-    "successful_final_reports": 2,
+    "successful_final_reports": 3,
     "attempted_queries": [
       1,
-      2
+      2,
+      3
     ],
     "pending_queries": [
-      3,
       4,
       5,
       6,
@@ -141,15 +141,15 @@
     "status": "incomplete",
     "query_count": 30,
     "counts": {
-      "success": 2,
-      "missing": 28
+      "success": 3,
+      "missing": 27
     },
     "successful_query_ids": [
       1,
-      2
+      2,
+      3
     ],
     "failed_or_incomplete_query_ids": [
-      3,
       4,
       5,
       6,
@@ -224,6 +224,64 @@
     "final_report": {
       "title": "TraceRoute: Execution-Trace-Guided Repository-Level Bug Repair with Structured Data Flow Prompts",
       "bytes": 12736,
+      "sections_detected": [
+        "Problem",
+        "Hypothesis",
+        "Method",
+        "Dataset",
+        "Benchmark",
+        "Evaluation",
+        "Baselines",
+        "Ablations",
+        "Failure"
+      ]
+    }
+  },
+  "query_3_success": {
+    "query_id": 3,
+    "topic": "LLM evaluation",
+    "goal": "Generate a research proposal on how to address the accuracy issues of automated evaluation for Large Language Models.",
+    "mode": "full tool-enabled with --force-proposal and isolated --mode run workspace",
+    "remote_host": "ubuntu-heshi",
+    "command": "EVOSCI_QUERY_TIMEOUT=1200 EVOSCI_QUERY_EXTRA_ARGS='--force-proposal --stream-logs --output-dir reproduction/artifacts/full_trajectories/EvoScientist' reproduction/ssh_ubuntu_run.sh query-bg 3",
+    "manifest_status": "ok",
+    "returncode": 0,
+    "thread_id": "1a49947f",
+    "workspace": "runs/repro-query-03",
+    "output_dir": "reproduction/artifacts/remote_fetch/full_trajectories/EvoScientist/query_03",
+    "artifact_files": {
+      "stdout.txt": {
+        "exists": true,
+        "bytes": 8789
+      },
+      "stderr.txt": {
+        "exists": true,
+        "bytes": 251
+      },
+      "prompt.txt": {
+        "exists": true,
+        "bytes": 721
+      },
+      "query.json": {
+        "exists": true,
+        "bytes": 173
+      },
+      "answer.txt": {
+        "exists": false,
+        "bytes": 0
+      },
+      "final_report.md": {
+        "exists": true,
+        "bytes": 14291
+      }
+    },
+    "usage": {
+      "input_tokens": 170254,
+      "output_tokens": 6251
+    },
+    "final_report": {
+      "title": "Research Proposal: Multi-Perspective Calibrated Ensemble for Debiased LLM-as-Judge Evaluation",
+      "bytes": 14291,
       "sections_detected": [
         "Problem",
         "Hypothesis",

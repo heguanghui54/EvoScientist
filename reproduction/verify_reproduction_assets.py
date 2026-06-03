@@ -77,13 +77,15 @@ def main() -> None:
     assert full_status["query_id"] == 1
     assert "CrossLingual-RAG" in full_status["final_report"]["title"]
     assert full_status["artifact_files"]["final_report.md"]["bytes"] >= 10000
-    assert full_status["full_trajectory_counts"]["successful_final_reports"] == 2
+    assert full_status["full_trajectory_counts"]["successful_final_reports"] == 3
     assert len(full_status["query_2_attempts"]) == 3
     assert "clarification" in full_status["query_2_attempts"][0]["result"]
     assert full_status["query_2_success"]["artifact_files"]["final_report.md"]["bytes"] >= 10000
     assert "TraceRoute" in full_status["query_2_success"]["final_report"]["title"]
-    assert full_status["audit"]["counts"]["success"] == 2
-    assert full_status["audit"]["counts"]["missing"] == 28
+    assert full_status["query_3_success"]["artifact_files"]["final_report.md"]["bytes"] >= 10000
+    assert "Multi-Perspective" in full_status["query_3_success"]["final_report"]["title"]
+    assert full_status["audit"]["counts"]["success"] == 3
+    assert full_status["audit"]["counts"]["missing"] == 27
     reported = json.loads(reported_path.read_text(encoding="utf-8"))
     for section in [
         "table1_llm_idea_generation",

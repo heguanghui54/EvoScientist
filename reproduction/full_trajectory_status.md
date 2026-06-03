@@ -8,10 +8,10 @@ Audit status: `incomplete`
 
 | Status | Count |
 | --- | ---: |
-| success | 2 |
-| missing | 28 |
+| success | 3 |
+| missing | 27 |
 
-Successful query ids: `[1, 2]`
+Successful query ids: `[1, 2, 3]`
 
 ## Successful Full Trajectories
 
@@ -59,6 +59,27 @@ EVOSCI_QUERY_TIMEOUT=1200 EVOSCI_QUERY_EXTRA_ARGS='--force-proposal --stream-log
 - manifest return code is 0.
 - isolated workspace was `runs/repro-query-02`.
 
+Query 3 status: `ok`
+
+Title: Research Proposal: Multi-Perspective Calibrated Ensemble for Debiased LLM-as-Judge Evaluation
+
+Output directory: `reproduction/artifacts/remote_fetch/full_trajectories/EvoScientist/query_03`
+
+Token usage: 170,254 input / 6,251 output
+
+## Query 3 Successful Command
+
+```bash
+EVOSCI_QUERY_TIMEOUT=1200 EVOSCI_QUERY_EXTRA_ARGS='--force-proposal --stream-logs --output-dir reproduction/artifacts/full_trajectories/EvoScientist' reproduction/ssh_ubuntu_run.sh query-bg 3
+```
+
+## Query 3 Evidence
+
+- `final_report.md` exists and is 14,291 bytes.
+- stdout reports `[Usage: 170,254 in · 6,251 out]`.
+- manifest return code is 0.
+- isolated workspace was `runs/repro-query-03`.
+
 ## Query 2 Attempts
 
 - Mode: full tool-enabled, original paper query
@@ -74,7 +95,7 @@ EVOSCI_QUERY_TIMEOUT=1200 EVOSCI_QUERY_EXTRA_ARGS='--force-proposal --stream-log
   Final report collected: True
 
 ## Limitations
-- Only queries 1 and 2 currently have successful full tool-enabled trajectories with final_report.md.
+- Only queries 1, 2, and 3 currently have successful full tool-enabled trajectories with final_report.md.
 - The run used DeepSeek configuration rather than the paper-matched Gemini/Claude setup.
 - Tavily search was unavailable, so the research-agent behavior may differ from paper settings.
 - This is still not the full 7-baseline paper-level Table 1 reproduction.
