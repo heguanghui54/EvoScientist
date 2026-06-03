@@ -98,7 +98,7 @@
     {
       "name": "K-Dense",
       "paper_role": "Table 1 baseline",
-      "public_entrypoint_status": "open_source_and_hosted_candidate",
+      "public_entrypoint_status": "local_web_api_adapter_candidate",
       "public_entrypoints": [
         {
           "label": "K-Dense GitHub organization",
@@ -106,13 +106,23 @@
           "evidence": "Public organization with scientific-agent tools and K-Dense BYOK repositories."
         },
         {
+          "label": "K-Dense BYOK local app",
+          "url": "https://github.com/K-Dense-AI/k-dense-byok",
+          "evidence": "Public local AI co-scientist app exposing an ADK chat endpoint that can be adapted for per-query replacement reruns."
+        },
+        {
           "label": "K-Dense hosted platform",
           "url": "https://k-dense.ai/",
           "evidence": "Hosted AI co-scientist platform with open-source scientific skills."
+        },
+        {
+          "label": "local runner probe",
+          "url": "reproduction/k_dense_baseline_probe.json",
+          "evidence": "Probe found a BYOK local Web/API adapter path through ADK /run_sse, but no paper raw Table 1 outputs."
         }
       ],
       "table1_raw_outputs_available": false,
-      "rerun_path": "Potential rerun candidate through hosted or open-source tooling, but requires account/setup and protocol alignment. No public EvoScientist Table 1 30-query outputs were found."
+      "rerun_path": "Plausible replacement rerun candidate through the K-Dense BYOK local app and its ADK /run_sse endpoint, but requires Python 3.13, OpenRouter/Gemini CLI setup, a pinned project/model protocol, and an output-capture adapter. No public EvoScientist Table 1 30-query outputs were found."
     }
   ],
   "summary": {

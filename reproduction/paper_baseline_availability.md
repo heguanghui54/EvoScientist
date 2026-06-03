@@ -27,7 +27,7 @@ records used by the paper.
 | AI Scientist-v2 | open_source_runner_candidate | `https://github.com/SakanaAI/AI-Scientist-v2`; `reproduction/ai_scientist_v2_baseline_probe.json` | no | Ideation replacement candidate: probe found `perform_ideation_temp_free.py`, but no paper raw outputs. |
 | Hypogenic | not_found | none found | no | Needs author-provided outputs, service access if applicable, or a substitute. |
 | Novix | hosted_or_commercial_candidate | `https://novix.science/chat` | no | Hosted rerun candidate, but needs account/service access and pinned protocol. |
-| K-Dense | open_source_and_hosted_candidate | `https://github.com/K-Dense-AI`; `https://k-dense.ai/` | no | Hosted/open-source rerun candidate, but needs setup and protocol alignment. |
+| K-Dense | local_web_api_adapter_candidate | `https://github.com/K-Dense-AI`; `https://github.com/K-Dense-AI/k-dense-byok`; `https://k-dense.ai/`; `reproduction/k_dense_baseline_probe.json` | no | Replacement candidate through the BYOK local app's ADK `/run_sse` endpoint, but needs Python 3.13, OpenRouter/Gemini CLI setup, pinned project/model protocol, and output capture. |
 
 ## Next Action
 

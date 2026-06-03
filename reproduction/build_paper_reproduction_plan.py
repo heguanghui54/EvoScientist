@@ -109,6 +109,19 @@ def table1_actions(components: dict[str, Any], protocol: dict[str, Any]) -> list
                 "bash /path/to/EvoScientist/reproduction/ai_scientist_v2_ideation_runbook/run_ai_scientist_v2_ideation.sh",
                 ".venv/bin/python reproduction/import_baseline_outputs.py --system-name 'AI Scientist-v2' --source reproduction/ai_scientist_v2_ideation_import_template.jsonl --source-format jsonl --output-root reproduction/artifacts/idea_outputs --strict",
             ]
+        if baseline == "K-Dense":
+            actions[-1]["probe"] = "reproduction/k_dense_baseline_probe.json"
+            actions[-1]["note"] = (
+                "Current probe found K-Dense has a BYOK local Web/API adapter through ADK "
+                "`/run_sse`, but it needs a pinned Python 3.13/OpenRouter/Gemini CLI setup "
+                "and is not paper-exact raw Table 1 evidence."
+            )
+            actions[-1]["replacement_run_template"] = [
+                "git clone https://github.com/K-Dense-AI/k-dense-byok $HOME/research/k-dense-byok && cd $HOME/research/k-dense-byok && git checkout 593c49b8e79c704c5979ec81c49f1791b5114083",
+                "./start.sh",
+                "# In a separate adapter process: create one ADK session per query, POST each query to /run_sse, and save final assistant text as outputs/evoscientist_table1_queries/k_dense/query_XX.md",
+                ".venv/bin/python reproduction/import_baseline_outputs.py --system-name K-Dense --source $HOME/research/k-dense-byok/outputs/evoscientist_table1_queries/k_dense --source-format directory --output-root reproduction/artifacts/idea_outputs --strict",
+            ]
     if not table1["judge_inputs"]["complete"] or not table1["judge_outputs"]["complete"]:
         actions.append(
             {

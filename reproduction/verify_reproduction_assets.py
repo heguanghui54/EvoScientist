@@ -58,6 +58,7 @@ def main() -> None:
         "build_internagent_qa_runbook.py",
         "probe_ai_scientist_v2_baseline.py",
         "build_ai_scientist_v2_ideation_runbook.py",
+        "probe_k_dense_baseline.py",
         "aggregate_human_labels.py",
         "aggregate_ablation_results.py",
         "aggregate_code_execution.py",
@@ -115,6 +116,7 @@ def main() -> None:
     baseline_inventory_md = baseline_inventory_md_path.read_text(encoding="utf-8")
     assert "Raw baseline-output packages found: 0" in baseline_inventory_md
     assert "ai_researcher_baseline_probe.json" in baseline_inventory_md
+    assert "k_dense_baseline_probe.json" in baseline_inventory_md
     ai_researcher_probe_json_path = ROOT / "ai_researcher_baseline_probe.json"
     ai_researcher_probe_md_path = ROOT / "ai_researcher_baseline_probe.md"
     assert ai_researcher_probe_json_path.is_file(), "missing AI-Researcher probe JSON"
@@ -181,6 +183,21 @@ def main() -> None:
     assert "AI Scientist-v2" in ai_scientist_runbook["import_command"]
     assert ai_scientist_runbook_sh_path.read_text(encoding="utf-8").count("perform_ideation_temp_free.py") == 30
     assert (ai_scientist_runbook_root / "topics" / "query_30.md").is_file()
+    k_dense_probe_json_path = ROOT / "k_dense_baseline_probe.json"
+    k_dense_probe_md_path = ROOT / "k_dense_baseline_probe.md"
+    assert k_dense_probe_json_path.is_file(), "missing K-Dense probe JSON"
+    assert k_dense_probe_md_path.is_file(), "missing K-Dense probe markdown"
+    k_dense_probe = json.loads(k_dense_probe_json_path.read_text(encoding="utf-8"))
+    assert k_dense_probe["baseline"] == "K-Dense"
+    assert k_dense_probe["evo_table1_drop_in_status"] == "local_web_api_adapter_candidate"
+    assert k_dense_probe["paper_exact_status"] == "not_paper_exact"
+    assert k_dense_probe["signals"]["hosted_platform_available"] is True
+    assert k_dense_probe["signals"]["byok_repo_available"] is True
+    assert k_dense_probe["signals"]["adk_run_sse_endpoint_available"] is True
+    assert k_dense_probe["signals"]["raw_table1_outputs_found"] is False
+    assert k_dense_probe["direct_30_query_runner_available"] is True
+    assert "/run_sse" in k_dense_probe["entrypoints"]["local_http_adapter"]
+    assert "local_web_api_adapter_candidate" in k_dense_probe_md_path.read_text(encoding="utf-8")
     replacement_protocol = json.loads(replacement_protocol_json_path.read_text(encoding="utf-8"))
     assert replacement_protocol["import_tool"]["script"] == "reproduction/import_baseline_outputs.py"
     assert replacement_protocol["judge_protocol"]["records_per_baseline"] == 60
@@ -213,6 +230,7 @@ def main() -> None:
     assert "internagent_qa_runbook.sh" in action_plan_md
     assert "ai_scientist_v2_baseline_probe.json" in action_plan_md
     assert "build_ai_scientist_v2_ideation_runbook.py" in action_plan_md
+    assert "k_dense_baseline_probe.json" in action_plan_md
     full_status = json.loads(full_status_json_path.read_text(encoding="utf-8"))
     expected_success_ids = list(range(1, 31))
     expected_incomplete_ids = []
@@ -302,6 +320,7 @@ def main() -> None:
         "InternAgent QA runbook is executable",
         "AI Scientist-v2 baseline probe is recorded",
         "AI Scientist-v2 ideation runbook is executable",
+        "K-Dense baseline probe is recorded",
         "Paper-level non-Table-1 artifact schemas are pinned",
         "Human-label aggregation is executable",
         "Ablation aggregation is executable",
