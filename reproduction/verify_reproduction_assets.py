@@ -75,9 +75,9 @@ def main() -> None:
     )
     assert "not possible from public artifacts alone" in gap_report["conclusion"]
     full_status = json.loads(full_status_json_path.read_text(encoding="utf-8"))
-    expected_success_ids = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 15, 19, 20, 21, 23, 27, 28, 29]
-    expected_incomplete_ids = [12, 14, 16, 17, 18, 22, 24, 25, 26, 30]
-    assert full_status["full_trajectory_counts"]["successful_final_reports"] == 20
+    expected_success_ids = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 15, 19, 20, 21, 23, 27, 28, 29]
+    expected_incomplete_ids = [14, 16, 17, 18, 22, 24, 25, 26, 30]
+    assert full_status["full_trajectory_counts"]["successful_final_reports"] == 21
     assert full_status["audit"]["successful_query_ids"] == expected_success_ids
     assert full_status["audit"]["failed_or_incomplete_query_ids"] == expected_incomplete_ids
     for query_id in expected_success_ids:
@@ -93,8 +93,10 @@ def main() -> None:
     assert full_status["successful_queries"]["query_07"]["artifact_files"]["final_report.md"]["bytes"] >= 23000
     assert "AToMP-Edge" in full_status["successful_queries"]["query_09"]["final_report"]["title"]
     assert full_status["successful_queries"]["query_09"]["artifact_files"]["final_report.md"]["bytes"] >= 11000
-    assert full_status["audit"]["counts"]["success"] == 20
-    assert full_status["audit"]["counts"]["timeout"] == 9
+    assert "Evidence-Conditioned Activation Steering" in full_status["successful_queries"]["query_12"]["final_report"]["title"]
+    assert full_status["successful_queries"]["query_12"]["artifact_files"]["final_report.md"]["bytes"] >= 14000
+    assert full_status["audit"]["counts"]["success"] == 21
+    assert full_status["audit"]["counts"]["timeout"] == 8
     assert full_status["audit"]["counts"]["failed"] == 1
     assert "missing" not in full_status["audit"]["counts"]
     assert full_status["incomplete_queries"]["query_24"]["status"] == "failed"
@@ -143,9 +145,9 @@ def main() -> None:
         "EvoScientist CLI outputs are normalized before judging",
         "Full trajectory audit is executable",
         "Full trajectory reruns are isolated by default",
-        "20 success, 9 timeout, 1 failed, 0 missing",
+        "21 success, 8 timeout, 1 failed, 0 missing",
         "full tool-enabled DeepSeek-backed sweep for all 30 paper queries",
-        "rerun only the non-successful query IDs: 12, 14, 16, 17, 18, 22, 24",
+        "rerun only the non-successful query IDs: 14, 16, 17, 18, 22, 24",
         "not a self-evolving system",
         "Ubuntu GPU Status",
     ]:

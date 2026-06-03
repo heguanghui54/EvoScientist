@@ -7,8 +7,8 @@
     "status": "incomplete",
     "query_count": 30,
     "counts": {
-      "success": 20,
-      "timeout": 9,
+      "success": 21,
+      "timeout": 8,
       "failed": 1
     },
     "successful_query_ids": [
@@ -23,6 +23,7 @@
       9,
       10,
       11,
+      12,
       13,
       15,
       19,
@@ -34,7 +35,6 @@
       29
     ],
     "failed_or_incomplete_query_ids": [
-      12,
       14,
       16,
       17,
@@ -47,7 +47,7 @@
     ]
   },
   "full_trajectory_counts": {
-    "successful_final_reports": 20,
+    "successful_final_reports": 21,
     "attempted_queries": [
       1,
       2,
@@ -718,6 +718,64 @@
         ]
       }
     },
+    "query_12": {
+      "query_id": 12,
+      "topic": "Factual consistency",
+      "mode": "full tool-enabled with isolated --mode run workspace",
+      "remote_host": "ubuntu-heshi",
+      "command": "EVOSCI_QUERY_TIMEOUT=1200 EVOSCI_QUERY_EXTRA_ARGS='--query-ids 6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30 --force-proposal --stream-logs --idle-timeout 600 --output-dir reproduction/artifacts/full_trajectories/EvoScientist' reproduction/ssh_ubuntu_run.sh batch-bg 30",
+      "manifest_status": "ok",
+      "thread_id": "22d330d7",
+      "workspace": "runs/repro-query-12",
+      "output_dir": "reproduction/artifacts/remote_fetch/full_trajectories/EvoScientist/query_12",
+      "artifact_files": {
+        "stdout.txt": {
+          "exists": true,
+          "bytes": 13019
+        },
+        "stderr.txt": {
+          "exists": true,
+          "bytes": 251
+        },
+        "answer.txt": {
+          "exists": false,
+          "bytes": 0
+        },
+        "final_report.md": {
+          "exists": true,
+          "bytes": 14279
+        },
+        "query.json": {
+          "exists": true,
+          "bytes": 161
+        }
+      },
+      "usage": {
+        "input_tokens": 776444,
+        "output_tokens": 12451
+      },
+      "trace_indicators": {
+        "tool_call_lines": 34,
+        "subagent_completion_lines": 0,
+        "mentions_research_agent": true,
+        "mentions_final_report_write": true
+      },
+      "final_report": {
+        "title": "Research Proposal: Evidence-Conditioned Activation Steering (ECAS) for Factual Consistency in Retrieval-Augmented Generation",
+        "bytes": 14279,
+        "sections_detected": [
+          "Problem",
+          "Hypothesis",
+          "Method",
+          "Dataset",
+          "Benchmark",
+          "Evaluation",
+          "Baselines",
+          "Ablations",
+          "Failure"
+        ]
+      }
+    },
     "query_13": {
       "query_id": 13,
       "topic": "Data synthesis",
@@ -1242,37 +1300,6 @@
     }
   },
   "incomplete_queries": {
-    "query_12": {
-      "query_id": 12,
-      "topic": "Factual consistency",
-      "status": "timeout",
-      "reason": "runner reported timeout",
-      "workspace": "runs/repro-query-12",
-      "output_dir": "reproduction/artifacts/remote_fetch/full_trajectories/EvoScientist/query_12",
-      "artifact_files": {
-        "stdout.txt": {
-          "exists": true,
-          "bytes": 1371
-        },
-        "stderr.txt": {
-          "exists": true,
-          "bytes": 305
-        },
-        "answer.txt": {
-          "exists": false,
-          "bytes": 0
-        },
-        "final_report.md": {
-          "exists": false,
-          "bytes": 0
-        },
-        "query.json": {
-          "exists": true,
-          "bytes": 161
-        }
-      },
-      "usage": null
-    },
     "query_14": {
       "query_id": 14,
       "topic": "Inference efficiency",
@@ -1557,8 +1584,8 @@
     }
   },
   "limitations": [
-    "Queries 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 15, 19, 20, 21, 23, 27, 28, 29 have successful full tool-enabled trajectories with final_report.md.",
-    "Queries 12, 14, 16, 17, 18, 22, 24, 25, 26, 30 remain non-successful in the latest fetched audit snapshot.",
+    "Queries 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 15, 19, 20, 21, 23, 27, 28, 29 have successful full tool-enabled trajectories with final_report.md.",
+    "Queries 14, 16, 17, 18, 22, 24, 25, 26, 30 remain non-successful in the latest fetched audit snapshot.",
     "The run used DeepSeek configuration rather than the paper-matched Gemini/Claude setup.",
     "Tavily search was unavailable, so the research-agent behavior may differ from paper settings.",
     "This is still not the full 7-baseline paper-level Table 1 reproduction."
