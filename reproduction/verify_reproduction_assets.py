@@ -77,15 +77,18 @@ def main() -> None:
     assert full_status["query_id"] == 1
     assert "CrossLingual-RAG" in full_status["final_report"]["title"]
     assert full_status["artifact_files"]["final_report.md"]["bytes"] >= 10000
-    assert full_status["full_trajectory_counts"]["successful_final_reports"] == 3
+    assert full_status["full_trajectory_counts"]["successful_final_reports"] == 4
     assert len(full_status["query_2_attempts"]) == 3
     assert "clarification" in full_status["query_2_attempts"][0]["result"]
     assert full_status["query_2_success"]["artifact_files"]["final_report.md"]["bytes"] >= 10000
     assert "TraceRoute" in full_status["query_2_success"]["final_report"]["title"]
     assert full_status["query_3_success"]["artifact_files"]["final_report.md"]["bytes"] >= 10000
     assert "Multi-Perspective" in full_status["query_3_success"]["final_report"]["title"]
-    assert full_status["audit"]["counts"]["success"] == 3
-    assert full_status["audit"]["counts"]["missing"] == 27
+    assert full_status["query_5_success"]["artifact_files"]["final_report.md"]["bytes"] >= 10000
+    assert "GroundedLit" in full_status["query_5_success"]["final_report"]["title"]
+    assert full_status["audit"]["counts"]["success"] == 4
+    assert full_status["audit"]["counts"]["incomplete"] == 2
+    assert full_status["audit"]["counts"]["missing"] == 24
     reported = json.loads(reported_path.read_text(encoding="utf-8"))
     for section in [
         "table1_llm_idea_generation",
@@ -98,6 +101,7 @@ def main() -> None:
     assert status_path.is_file(), "missing reproduction status matrix"
     status_text = status_path.read_text(encoding="utf-8")
     runner_text = (ROOT / "run_idea_generation.py").read_text(encoding="utf-8")
+    full_audit_text = (ROOT / "audit_full_trajectories.py").read_text(encoding="utf-8")
     assert "DEFAULT_COLLECT_FILES" in runner_text, "idea runner does not collect workspace outputs"
     assert "final_report.md" in runner_text, "idea runner does not collect final_report.md"
     assert "--force-proposal" in runner_text, "idea runner cannot force broad queries to proposal output"
@@ -110,6 +114,8 @@ def main() -> None:
     assert "run_workspace_dir" in runner_text, "idea runner does not collect from isolated run workspaces"
     assert "clear_artifact_files" in runner_text, "idea runner does not clear stale collected artifacts"
     assert "/final_report.md" in runner_text, "force-proposal prompt does not require final_report.md"
+    assert "response_region" in full_audit_text, "full trajectory audit may classify echoed prompts"
+    assert "Idle timed out after" in full_audit_text, "full trajectory audit does not detect idle timeouts"
     for needle in [
         "Verified Locally",
         "Not Yet Paper-Level Reproduction",

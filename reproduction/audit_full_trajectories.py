@@ -52,9 +52,19 @@ def usage_from_stdout(stdout: str) -> dict[str, int] | None:
     }
 
 
+def response_region(stdout: str) -> str:
+    """Return stdout content after the initial echoed prompt/workspace banner."""
+    lines = stdout.splitlines()
+    for idx, line in enumerate(lines):
+        if line.startswith("Workspace: "):
+            return "\n".join(lines[idx + 1 :])
+    return stdout
+
+
 def classify(qdir: Path) -> dict[str, Any]:
     stdout = read_text(qdir / "stdout.txt")
     stderr = read_text(qdir / "stderr.txt")
+    response = response_region(stdout)
     final_report = read_text(qdir / "final_report.md")
     answer = read_text(qdir / "answer.txt")
     candidate = final_report or answer
@@ -63,16 +73,23 @@ def classify(qdir: Path) -> dict[str, Any]:
     has_long_final = len(final_report.encode("utf-8")) >= 10000
     has_proposal_sections = len(set(sections)) >= 5
     asks_clarification = any(
-        phrase in stdout.lower()
+        phrase in response.lower()
         for phrase in [
             "what kind of problem",
             "which subarea",
             "or something else entirely",
-            "clarification",
+            "could you clarify",
+            "please clarify",
+            "need more information",
             "help me target",
         ]
     )
-    timed_out = "Timed out after" in stderr or "Timed out after" in stdout
+    timed_out = (
+        "Timed out after" in stderr
+        or "Timed out after" in stdout
+        or "Idle timed out after" in stderr
+        or "Idle timed out after" in stdout
+    )
     killed_or_failed = any(token in stderr.lower() for token in ["traceback", "killed", "error:"])
     success = has_final_report and has_long_final and has_proposal_sections
     if success:

@@ -1,5 +1,5 @@
 {
-  "date": "2026-06-03",
+  "date": "2026-06-04",
   "purpose": "Record full tool-enabled EvoScientist trajectory reproduction attempts for paper queries.",
   "query_id": 1,
   "topic": "Machine translation",
@@ -63,22 +63,23 @@
     ]
   },
   "limitations": [
-    "Only queries 1, 2, and 3 currently have successful full tool-enabled trajectories with final_report.md.",
+    "Only queries 1, 2, 3, and 5 currently have successful full tool-enabled trajectories with final_report.md.",
+    "Queries 4 and 6 currently have streamed startup artifacts but no qualifying final_report.md in the fetched audit snapshot.",
     "The run used DeepSeek configuration rather than the paper-matched Gemini/Claude setup.",
     "Tavily search was unavailable, so the research-agent behavior may differ from paper settings.",
     "This is still not the full 7-baseline paper-level Table 1 reproduction."
   ],
   "full_trajectory_counts": {
-    "successful_final_reports": 3,
+    "successful_final_reports": 4,
     "attempted_queries": [
       1,
       2,
-      3
-    ],
-    "pending_queries": [
+      3,
       4,
       5,
-      6,
+      6
+    ],
+    "pending_queries": [
       7,
       8,
       9,
@@ -141,17 +142,18 @@
     "status": "incomplete",
     "query_count": 30,
     "counts": {
-      "success": 3,
-      "missing": 27
+      "success": 4,
+      "incomplete": 2,
+      "missing": 24
     },
     "successful_query_ids": [
       1,
       2,
-      3
+      3,
+      5
     ],
     "failed_or_incomplete_query_ids": [
       4,
-      5,
       6,
       7,
       8,
@@ -293,6 +295,76 @@
         "Ablations",
         "Failure"
       ]
+    }
+  },
+  "query_5_success": {
+    "query_id": 5,
+    "topic": "Literature review automation",
+    "goal": "Generate a research proposal on automated literature review generation.",
+    "mode": "full tool-enabled with --force-proposal and isolated --mode run workspace",
+    "remote_host": "ubuntu-heshi",
+    "command": "EVOSCI_QUERY_TIMEOUT=1200 EVOSCI_QUERY_EXTRA_ARGS='--start-id 4 --force-proposal --stream-logs --idle-timeout 600 --output-dir reproduction/artifacts/full_trajectories/EvoScientist' reproduction/ssh_ubuntu_run.sh batch-bg 30",
+    "manifest_status": "ok",
+    "returncode": 0,
+    "thread_id": "c72d2b6a",
+    "workspace": "runs/repro-query-05",
+    "output_dir": "reproduction/artifacts/remote_fetch/full_trajectories/EvoScientist/query_05",
+    "artifact_files": {
+      "stdout.txt": {
+        "exists": true,
+        "bytes": 7165
+      },
+      "stderr.txt": {
+        "exists": true,
+        "bytes": 251
+      },
+      "prompt.txt": {
+        "exists": true,
+        "bytes": 675
+      },
+      "query.json": {
+        "exists": true,
+        "bytes": 141
+      },
+      "answer.txt": {
+        "exists": false,
+        "bytes": 0
+      },
+      "final_report.md": {
+        "exists": true,
+        "bytes": 14138
+      }
+    },
+    "usage": {
+      "input_tokens": 49368,
+      "output_tokens": 4371
+    },
+    "final_report": {
+      "title": "GroundedLit: Evidence-Anchored Structured Literature Review Generation",
+      "bytes": 14138,
+      "sections_detected": [
+        "Problem",
+        "Hypothesis",
+        "Method",
+        "Dataset",
+        "Benchmark",
+        "Evaluation",
+        "Baselines",
+        "Ablations",
+        "Failure"
+      ]
+    }
+  },
+  "incomplete_queries": {
+    "query_04": {
+      "status": "incomplete",
+      "reason": "stdout exists but no qualifying final_report.md was collected in the fetched audit snapshot",
+      "workspace": "runs/repro-query-04"
+    },
+    "query_06": {
+      "status": "incomplete",
+      "reason": "stdout exists but no qualifying final_report.md was collected in the fetched audit snapshot",
+      "workspace": "runs/repro-query-06"
     }
   }
 }

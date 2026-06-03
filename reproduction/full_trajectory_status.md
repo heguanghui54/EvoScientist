@@ -1,6 +1,6 @@
 # Full Trajectory Status
 
-Date: 2026-06-03
+Date: 2026-06-04
 
 ## Audit Summary
 
@@ -8,10 +8,11 @@ Audit status: `incomplete`
 
 | Status | Count |
 | --- | ---: |
-| success | 3 |
-| missing | 27 |
+| success | 4 |
+| incomplete | 2 |
+| missing | 24 |
 
-Successful query ids: `[1, 2, 3]`
+Successful query ids: `[1, 2, 3, 5]`
 
 ## Successful Full Trajectories
 
@@ -80,6 +81,32 @@ EVOSCI_QUERY_TIMEOUT=1200 EVOSCI_QUERY_EXTRA_ARGS='--force-proposal --stream-log
 - manifest return code is 0.
 - isolated workspace was `runs/repro-query-03`.
 
+Query 5 status: `ok`
+
+Title: GroundedLit: Evidence-Anchored Structured Literature Review Generation
+
+Output directory: `reproduction/artifacts/remote_fetch/full_trajectories/EvoScientist/query_05`
+
+Token usage: 49,368 input / 4,371 output
+
+## Query 5 Successful Command
+
+```bash
+EVOSCI_QUERY_TIMEOUT=1200 EVOSCI_QUERY_EXTRA_ARGS='--start-id 4 --force-proposal --stream-logs --idle-timeout 600 --output-dir reproduction/artifacts/full_trajectories/EvoScientist' reproduction/ssh_ubuntu_run.sh batch-bg 30
+```
+
+## Query 5 Evidence
+
+- `final_report.md` exists and is 14,138 bytes.
+- stdout reports `[Usage: 49,368 in · 4,371 out]`.
+- manifest return code is 0.
+- isolated workspace was `runs/repro-query-05`.
+
+## Current Incomplete Full Trajectories
+
+- Query 4: stdout exists, but no qualifying `final_report.md` was collected in the fetched audit snapshot.
+- Query 6: stdout exists, but no qualifying `final_report.md` was collected in the fetched audit snapshot.
+
 ## Query 2 Attempts
 
 - Mode: full tool-enabled, original paper query
@@ -95,7 +122,8 @@ EVOSCI_QUERY_TIMEOUT=1200 EVOSCI_QUERY_EXTRA_ARGS='--force-proposal --stream-log
   Final report collected: True
 
 ## Limitations
-- Only queries 1, 2, and 3 currently have successful full tool-enabled trajectories with final_report.md.
+- Only queries 1, 2, 3, and 5 currently have successful full tool-enabled trajectories with final_report.md.
+- Queries 4 and 6 currently have streamed startup artifacts but no qualifying final report in the fetched audit snapshot.
 - The run used DeepSeek configuration rather than the paper-matched Gemini/Claude setup.
 - Tavily search was unavailable, so the research-agent behavior may differ from paper settings.
 - This is still not the full 7-baseline paper-level Table 1 reproduction.
