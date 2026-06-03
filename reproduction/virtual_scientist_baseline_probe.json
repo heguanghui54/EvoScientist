@@ -1,0 +1,55 @@
+{
+  "date": "2026-06-04",
+  "baseline": "Virtual Scientist",
+  "sources": {
+    "repository": "https://github.com/open-sciencelab/Virtual-Scientists",
+    "website": "https://renqichen.github.io/Virtual-Scientists/",
+    "arxiv": "https://arxiv.org/abs/2410.09403",
+    "readme": "https://raw.githubusercontent.com/open-sciencelab/Virtual-Scientists/main/README.md",
+    "run_py": "https://raw.githubusercontent.com/open-sciencelab/Virtual-Scientists/main/sci_platform/run.py",
+    "platform_py": "https://raw.githubusercontent.com/open-sciencelab/Virtual-Scientists/main/sci_platform/sci_platform.py"
+  },
+  "files_checked": [
+    "README.md",
+    "sci_platform/run.py",
+    "sci_platform/sci_platform.py",
+    "requirements.txt",
+    "repository file tree"
+  ],
+  "github_tree_error": "HTTPError: HTTP Error 403: rate limit exceeded",
+  "direct_30_query_runner_available": false,
+  "evo_table1_drop_in_status": "open_source_platform_not_drop_in",
+  "paper_exact_status": "not_paper_exact",
+  "signals": {
+    "repo_available": true,
+    "arxiv_2410_09403_linked": true,
+    "run_py_available": true,
+    "data_required": true,
+    "ollama_models_required": true,
+    "faiss_required": true,
+    "hardcoded_data_paths_present": true,
+    "query_cli_available": false,
+    "dialogue_json_output_available": true,
+    "raw_table1_outputs_found": false
+  },
+  "entrypoints": {
+    "setup": "pip install -r requirements.txt; cd agentscope-main && pip install -e .",
+    "data": "Download AMiner-derived Papers, Embeddings, Authors, and adjacency.txt from the repository's Google Drive link and patch sci_platform/sci_platform.py paths.",
+    "models": "ollama serve; ollama pull llama3.1; ollama pull llama3.1:70b; ollama pull mxbai-embed-large",
+    "run": "cd sci_platform && python run.py --runs ... --team_limit ... --max_discuss_iteration ... --max_team_member ... --epochs ..."
+  },
+  "required_env_or_access": [
+    "AMiner-derived paper/author/embedding data package",
+    "FAISS index files and preferably GPU FAISS",
+    "Ollama llama3.1 8B/70B and mxbai-embed-large",
+    "Adapter design if mapping the 30 recovered EvoScientist natural-language queries into VirSci's team/ecosystem simulation"
+  ],
+  "reproduction_implication": "Virtual Scientist maps to the public VirSci/Virtual-Scientists repository. It is a runnable open-source scientific-collaboration platform, but it is not a drop-in runner for EvoScientist's 30 recovered natural-language Table 1 queries: the public entrypoint is a team-simulation run script that depends on AMiner-derived paper/author/embedding data, FAISS, Ollama models, and patched local paths. The repository does not provide the paper's raw Virtual Scientist Table 1 outputs.",
+  "next_actions": [
+    "For a replacement rerun, first decide a principled adapter from each recovered query to a VirSci simulation seed/topic.",
+    "Install the AMiner-derived data package and patch all local paths in sci_platform/sci_platform.py.",
+    "Run VirSci under a pinned team/epoch/model protocol and extract generated idea/abstract fields from dialogue JSON outputs.",
+    "Import extracted answers with import_baseline_outputs.py under system name Virtual Scientist.",
+    "Do not treat this as paper-exact unless the original 30-query raw outputs are obtained from the EvoScientist authors."
+  ]
+}

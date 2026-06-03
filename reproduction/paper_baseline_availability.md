@@ -12,15 +12,17 @@ records used by the paper.
 
 - Table 1 baselines checked: 7.
 - Raw baseline-output packages found: 0.
-- Runner or hosted candidates found: AI-Researcher, InternAgent,
+- Runner or hosted candidates found: Virtual Scientist, AI-Researcher, InternAgent,
   AI Scientist-v2, Hypogenic, Novix, K-Dense.
-- No reliable public runner found in the refreshed search: Virtual Scientist.
+- No reliable public runner found in the refreshed search: none; every named
+  baseline now has at least a public entrypoint or a hosted/platform candidate,
+  but none provides paper-exact raw outputs.
 
 ## Baseline Inventory
 
 | Baseline | Public entrypoint status | Public entrypoints | Raw Table 1 outputs found | Reproduction implication |
 | --- | --- | --- | --- | --- |
-| Virtual Scientist | not_found | none found | no | Needs author-provided outputs or a separately defined substitute. |
+| Virtual Scientist | open_source_platform_not_drop_in | `https://github.com/open-sciencelab/Virtual-Scientists`; `https://renqichen.github.io/Virtual-Scientists/`; `reproduction/virtual_scientist_baseline_probe.json` | no | VirSci is a runnable open-source platform, but needs AMiner/FAISS/Ollama setup and an adapter from the 30 recovered EvoScientist queries into its team-simulation workflow. |
 | AI-Researcher | open_source_runner_candidate | `https://github.com/hkuds/ai-researcher`; `reproduction/ai_researcher_baseline_probe.json`; `https://novix.science/chat` | no | Replacement candidate, but current probe found it is benchmark-instance based, not a drop-in runner for the 30 recovered EvoScientist queries. |
 | InternAgent | open_source_runner_candidate | `https://github.com/InternScience/InternAgent`; `reproduction/internagent_baseline_probe.json` | no | QA replacement candidate: probe found a one-shot `launch.py --mode qa --question ... --output ...` path, but no paper raw outputs. |
 | AI Scientist-v2 | open_source_runner_candidate | `https://github.com/SakanaAI/AI-Scientist-v2`; `reproduction/ai_scientist_v2_baseline_probe.json` | no | Ideation replacement candidate: probe found `perform_ideation_temp_free.py`, but no paper raw outputs. |

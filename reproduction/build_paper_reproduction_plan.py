@@ -81,6 +81,20 @@ def table1_actions(components: dict[str, Any], protocol: dict[str, Any]) -> list
                 ],
             }
         )
+        if baseline == "Virtual Scientist":
+            actions[-1]["probe"] = "reproduction/virtual_scientist_baseline_probe.json"
+            actions[-1]["note"] = (
+                "Current probe maps Virtual Scientist to VirSci/Virtual-Scientists. "
+                "It is a runnable open-source collaboration platform, but not a drop-in "
+                "runner for the 30 recovered EvoScientist queries."
+            )
+            actions[-1]["replacement_run_template"] = [
+                "git clone https://github.com/open-sciencelab/Virtual-Scientists $HOME/research/Virtual-Scientists",
+                "# Download the AMiner-derived Papers, Embeddings, Authors, and adjacency data linked in the VirSci README.",
+                "# Patch sci_platform/sci_platform.py paths and run Ollama llama3.1/mxbai-embed-large under a pinned adapter protocol.",
+                "# Extract generated idea/abstract fields from team_info/*_dialogue.json into outputs/evoscientist_table1_queries/virtual_scientist/query_XX.md",
+                ".venv/bin/python reproduction/import_baseline_outputs.py --system-name 'Virtual Scientist' --source $HOME/research/Virtual-Scientists/outputs/evoscientist_table1_queries/virtual_scientist --source-format directory --output-root reproduction/artifacts/idea_outputs --strict",
+            ]
         if baseline == "AI-Researcher":
             actions[-1]["probe"] = "reproduction/ai_researcher_baseline_probe.json"
             actions[-1]["note"] = (

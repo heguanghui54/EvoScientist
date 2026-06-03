@@ -6,10 +6,26 @@
     {
       "name": "Virtual Scientist",
       "paper_role": "Table 1 baseline",
-      "public_entrypoint_status": "not_found",
-      "public_entrypoints": [],
+      "public_entrypoint_status": "open_source_platform_not_drop_in",
+      "public_entrypoints": [
+        {
+          "label": "VirSci / Virtual Scientists repository",
+          "url": "https://github.com/open-sciencelab/Virtual-Scientists",
+          "evidence": "Public repository for VirSci, a multi-agent scientific collaboration platform for idea generation."
+        },
+        {
+          "label": "VirSci project website",
+          "url": "https://renqichen.github.io/Virtual-Scientists/",
+          "evidence": "Project website linked from the repository."
+        },
+        {
+          "label": "local runner probe",
+          "url": "reproduction/virtual_scientist_baseline_probe.json",
+          "evidence": "Probe found a runnable open-source platform, but not a drop-in runner for the 30 recovered EvoScientist Table 1 queries."
+        }
+      ],
       "table1_raw_outputs_available": false,
-      "rerun_path": "No reliable public runner or raw artifact package was found in the refreshed search. Reproduction requires either author-provided outputs or an independently specified substitute baseline."
+      "rerun_path": "Possible replacement rerun candidate only after designing an adapter from the 30 recovered natural-language queries into VirSci's team-simulation setup. Requires AMiner-derived data, FAISS/Ollama setup, and patched local paths. No public EvoScientist Table 1 raw outputs were found."
     },
     {
       "name": "AI-Researcher",
@@ -150,6 +166,7 @@
     "table1_baseline_count": 7,
     "raw_output_packages_found": 0,
     "runner_candidates_found": [
+      "Virtual Scientist",
       "AI-Researcher",
       "InternAgent",
       "AI Scientist-v2",
@@ -157,9 +174,7 @@
       "Novix",
       "K-Dense"
     ],
-    "no_reliable_public_runner_found": [
-      "Virtual Scientist"
-    ],
+    "no_reliable_public_runner_found": [],
     "next_reproduction_step": "Choose whether to import author-provided baseline outputs, run open-source/hosted baseline candidates under a pinned replacement protocol, or explicitly report that exact Table 1 reproduction remains impossible from public artifacts alone."
   }
 }

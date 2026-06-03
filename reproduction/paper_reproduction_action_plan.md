@@ -14,16 +14,17 @@ paper-level completion audit can pass.
 Required evidence: 30 answer.txt files under reproduction/artifacts/idea_outputs/Virtual Scientist/
 
 System: Virtual Scientist
+Probe: reproduction/virtual_scientist_baseline_probe.json
+Note: Current probe maps Virtual Scientist to VirSci/Virtual-Scientists. It is a runnable open-source collaboration platform, but not a drop-in runner for the 30 recovered EvoScientist queries.
 
 Commands:
 
 ```bash
-.venv/bin/python reproduction/import_baseline_outputs.py --system-name 'Virtual Scientist' --source {source_jsonl} --source-format jsonl --output-root reproduction/artifacts/idea_outputs --strict
-.venv/bin/python reproduction/import_baseline_outputs.py --system-name 'Virtual Scientist' --source {source_dir} --source-format directory --output-root reproduction/artifacts/idea_outputs --strict
-.venv/bin/python reproduction/build_pairwise_judge_inputs.py --systems-root reproduction/artifacts/idea_outputs --baseline 'Virtual Scientist' --output reproduction/artifacts/judge_inputs/evosci_vs_virtual_scientist.jsonl
-.venv/bin/python reproduction/run_llm_judge.py --provider deepseek --model deepseek-v4-flash --input reproduction/artifacts/judge_inputs/evosci_vs_virtual_scientist.jsonl --output reproduction/artifacts/judge_outputs/evosci_vs_virtual_scientist_deepseek.jsonl --resume
-.venv/bin/python reproduction/aggregate_judge_results.py --input reproduction/artifacts/judge_outputs/evosci_vs_virtual_scientist_deepseek.jsonl --output-csv reproduction/artifacts/tables/evosci_vs_virtual_scientist_deepseek.csv --output-json reproduction/artifacts/tables/evosci_vs_virtual_scientist_deepseek.json
-.venv/bin/python reproduction/audit_reproduction_artifacts.py --baseline 'Virtual Scientist' --judge-inputs reproduction/artifacts/judge_inputs/evosci_vs_virtual_scientist.jsonl --judge-outputs reproduction/artifacts/judge_outputs/evosci_vs_virtual_scientist_deepseek.jsonl --aggregate-json reproduction/artifacts/tables/evosci_vs_virtual_scientist_deepseek.json
+git clone https://github.com/open-sciencelab/Virtual-Scientists $HOME/research/Virtual-Scientists
+# Download the AMiner-derived Papers, Embeddings, Authors, and adjacency data linked in the VirSci README.
+# Patch sci_platform/sci_platform.py paths and run Ollama llama3.1/mxbai-embed-large under a pinned adapter protocol.
+# Extract generated idea/abstract fields from team_info/*_dialogue.json into outputs/evoscientist_table1_queries/virtual_scientist/query_XX.md
+.venv/bin/python reproduction/import_baseline_outputs.py --system-name 'Virtual Scientist' --source $HOME/research/Virtual-Scientists/outputs/evoscientist_table1_queries/virtual_scientist --source-format directory --output-root reproduction/artifacts/idea_outputs --strict
 ```
 
 ### 2. table1_llm_idea_generation / baseline_output_import_or_generation

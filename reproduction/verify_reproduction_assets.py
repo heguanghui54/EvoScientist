@@ -53,6 +53,7 @@ def main() -> None:
         "aggregate_judge_results.py",
         "run_offline_smoke.py",
         "run_llm_judge.py",
+        "probe_virtual_scientist_baseline.py",
         "probe_ai_researcher_baseline.py",
         "probe_internagent_baseline.py",
         "build_internagent_qa_runbook.py",
@@ -114,11 +115,14 @@ def main() -> None:
     ]
     assert baseline_inventory["summary"]["raw_output_packages_found"] == 0
     assert all(not item["table1_raw_outputs_available"] for item in baseline_inventory["baselines"])
+    assert "Virtual Scientist" in baseline_inventory["summary"]["runner_candidates_found"]
     assert "AI-Researcher" in baseline_inventory["summary"]["runner_candidates_found"]
     assert "Hypogenic" in baseline_inventory["summary"]["runner_candidates_found"]
+    assert "Virtual Scientist" not in baseline_inventory["summary"]["no_reliable_public_runner_found"]
     assert "Hypogenic" not in baseline_inventory["summary"]["no_reliable_public_runner_found"]
     baseline_inventory_md = baseline_inventory_md_path.read_text(encoding="utf-8")
     assert "Raw baseline-output packages found: 0" in baseline_inventory_md
+    assert "virtual_scientist_baseline_probe.json" in baseline_inventory_md
     assert "ai_researcher_baseline_probe.json" in baseline_inventory_md
     assert "hypogenic_baseline_probe.json" in baseline_inventory_md
     assert "novix_baseline_probe.json" in baseline_inventory_md
@@ -189,6 +193,24 @@ def main() -> None:
     assert "AI Scientist-v2" in ai_scientist_runbook["import_command"]
     assert ai_scientist_runbook_sh_path.read_text(encoding="utf-8").count("perform_ideation_temp_free.py") == 30
     assert (ai_scientist_runbook_root / "topics" / "query_30.md").is_file()
+    virtual_scientist_probe_json_path = ROOT / "virtual_scientist_baseline_probe.json"
+    virtual_scientist_probe_md_path = ROOT / "virtual_scientist_baseline_probe.md"
+    assert virtual_scientist_probe_json_path.is_file(), "missing Virtual Scientist probe JSON"
+    assert virtual_scientist_probe_md_path.is_file(), "missing Virtual Scientist probe markdown"
+    virtual_scientist_probe = json.loads(
+        virtual_scientist_probe_json_path.read_text(encoding="utf-8")
+    )
+    assert virtual_scientist_probe["baseline"] == "Virtual Scientist"
+    assert virtual_scientist_probe["evo_table1_drop_in_status"] == "open_source_platform_not_drop_in"
+    assert virtual_scientist_probe["paper_exact_status"] == "not_paper_exact"
+    assert virtual_scientist_probe["signals"]["repo_available"] is True
+    assert virtual_scientist_probe["signals"]["arxiv_2410_09403_linked"] is True
+    assert virtual_scientist_probe["signals"]["data_required"] is True
+    assert virtual_scientist_probe["signals"]["ollama_models_required"] is True
+    assert virtual_scientist_probe["signals"]["query_cli_available"] is False
+    assert virtual_scientist_probe["signals"]["raw_table1_outputs_found"] is False
+    assert virtual_scientist_probe["direct_30_query_runner_available"] is False
+    assert "open_source_platform_not_drop_in" in virtual_scientist_probe_md_path.read_text(encoding="utf-8")
     hypogenic_probe_json_path = ROOT / "hypogenic_baseline_probe.json"
     hypogenic_probe_md_path = ROOT / "hypogenic_baseline_probe.md"
     assert hypogenic_probe_json_path.is_file(), "missing Hypogenic probe JSON"
@@ -267,6 +289,7 @@ def main() -> None:
     assert "internagent_baseline_probe.json" in action_plan_md
     assert "build_internagent_qa_runbook.py" in action_plan_md
     assert "internagent_qa_runbook.sh" in action_plan_md
+    assert "virtual_scientist_baseline_probe.json" in action_plan_md
     assert "ai_scientist_v2_baseline_probe.json" in action_plan_md
     assert "build_ai_scientist_v2_ideation_runbook.py" in action_plan_md
     assert "hypogenic_baseline_probe.json" in action_plan_md
@@ -356,6 +379,7 @@ def main() -> None:
         "Target-system output coverage is complete for proposal-only mode",
         "Replacement-baseline judge pipeline is complete",
         "Replacement baseline protocol is pinned",
+        "Virtual Scientist baseline probe is recorded",
         "AI-Researcher baseline probe is recorded",
         "InternAgent baseline probe is recorded",
         "InternAgent QA runbook is executable",
