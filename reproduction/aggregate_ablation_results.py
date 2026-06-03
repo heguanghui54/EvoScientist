@@ -183,6 +183,7 @@ def main() -> None:
         "target_system_note": "Rows are from the ablation variant perspective, not EvoScientist perspective.",
         "tie_threshold": args.tie_threshold,
         "variants": {},
+        "baselines": {},
     }
     combined_rows = []
     missing = []
@@ -206,6 +207,7 @@ def main() -> None:
         combined["variants"][variant]["raw_records"] = summary["raw_records"]
         combined["variants"][variant]["usable_records"] = summary["usable_records"]
         combined["variants"][variant]["skipped"] = summary["skipped"]
+        combined["baselines"][comparison_name] = summary["baselines"][comparison_name]
         combined_rows.extend(rows)
         if summary["skipped"] or summary["usable_records"] == 0:
             partial.append(variant)

@@ -354,6 +354,8 @@ Table 3 ablation judge outputs can be aggregated with
 `reproduction/aggregate_ablation_results.py`.
 Figure 2 execution logs can be aggregated with
 `reproduction/aggregate_code_execution.py`.
+The current missing-evidence action plan can be regenerated with
+`reproduction/build_paper_reproduction_plan.py`.
 
 Run an offline end-to-end smoke test of the evaluation pipeline:
 

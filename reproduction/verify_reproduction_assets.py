@@ -56,6 +56,7 @@ def main() -> None:
         "aggregate_human_labels.py",
         "aggregate_ablation_results.py",
         "aggregate_code_execution.py",
+        "build_paper_reproduction_plan.py",
         "compare_reproduction_to_paper.py",
         "audit_reproduction_artifacts.py",
         "verify_replacement_baseline_protocol.py",
@@ -124,6 +125,17 @@ def main() -> None:
     assert paper_artifact_schema["schemas"]["code_execution"]["aggregator"] == "reproduction/aggregate_code_execution.py"
     paper_artifact_schema_md = paper_artifact_schema_md_path.read_text(encoding="utf-8")
     assert "Figure 2 Code Execution" in paper_artifact_schema_md
+    action_plan_json_path = ROOT / "paper_reproduction_action_plan.json"
+    action_plan_md_path = ROOT / "paper_reproduction_action_plan.md"
+    assert action_plan_json_path.is_file(), "missing paper reproduction action plan JSON"
+    assert action_plan_md_path.is_file(), "missing paper reproduction action plan markdown"
+    action_plan = json.loads(action_plan_json_path.read_text(encoding="utf-8"))
+    assert action_plan["status"] == "incomplete"
+    assert action_plan["action_count"] >= 4
+    assert "final_gate" in action_plan
+    action_plan_md = action_plan_md_path.read_text(encoding="utf-8")
+    assert "Paper Reproduction Action Plan" in action_plan_md
+    assert "gemini-3-flash" in action_plan_md
     full_status = json.loads(full_status_json_path.read_text(encoding="utf-8"))
     expected_success_ids = list(range(1, 31))
     expected_incomplete_ids = []
@@ -212,6 +224,7 @@ def main() -> None:
         "Human-label aggregation is executable",
         "Ablation aggregation is executable",
         "Code-execution aggregation is executable",
+        "Paper reproduction action plan is executable",
         "EvoScientist CLI outputs are normalized before judging",
         "Full trajectory audit is executable",
         "Full trajectory reruns are isolated by default",
@@ -516,7 +529,9 @@ def main() -> None:
         )
         ablation_summary = json.loads((ablations_root / "-IDE" / "aggregate.json").read_text(encoding="utf-8"))
         assert ablation_summary["baselines"]["-IDE vs EvoScientist"]["avg_gap"] == -100.0
-        assert set(json.loads(ablation_combined.read_text(encoding="utf-8"))["variants"]) == {"-IDE", "-IVE", "-all"}
+        ablation_combined_summary = json.loads(ablation_combined.read_text(encoding="utf-8"))
+        assert set(ablation_combined_summary["variants"]) == {"-IDE", "-IVE", "-all"}
+        assert "-IDE vs EvoScientist" in ablation_combined_summary["baselines"]
 
         execution_logs = tmp_path / "execution_logs.jsonl"
         execution_logs.write_text(
@@ -627,6 +642,26 @@ def main() -> None:
             capture_output=True,
             text=True,
         )
+
+        plan_json = tmp_path / "paper_reproduction_action_plan.json"
+        plan_md = tmp_path / "paper_reproduction_action_plan.md"
+        subprocess.run(
+            [
+                sys.executable,
+                str(ROOT / "build_paper_reproduction_plan.py"),
+                "--output-json",
+                str(plan_json),
+                "--output-md",
+                str(plan_md),
+            ],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+        generated_plan = json.loads(plan_json.read_text(encoding="utf-8"))
+        assert generated_plan["status"] == "incomplete"
+        assert generated_plan["action_count"] == action_plan["action_count"]
+        assert "'Virtual Scientist'" in plan_md.read_text(encoding="utf-8")
 
         audit_root = tmp_path / "audit_artifacts"
         audit_systems = audit_root / "idea_outputs"
