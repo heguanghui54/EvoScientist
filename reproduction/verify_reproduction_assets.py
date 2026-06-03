@@ -77,11 +77,12 @@ def main() -> None:
     assert full_status["query_id"] == 1
     assert "CrossLingual-RAG" in full_status["final_report"]["title"]
     assert full_status["artifact_files"]["final_report.md"]["bytes"] >= 10000
-    assert full_status["full_trajectory_counts"]["successful_final_reports"] == 1
-    assert len(full_status["query_2_attempts"]) == 2
+    assert full_status["full_trajectory_counts"]["successful_final_reports"] == 2
+    assert len(full_status["query_2_attempts"]) == 3
     assert "clarification" in full_status["query_2_attempts"][0]["result"]
-    assert full_status["audit"]["counts"]["success"] == 1
-    assert full_status["audit"]["counts"]["clarification"] == 1
+    assert full_status["query_2_success"]["artifact_files"]["final_report.md"]["bytes"] >= 10000
+    assert "TraceRoute" in full_status["query_2_success"]["final_report"]["title"]
+    assert full_status["audit"]["counts"]["success"] == 2
     assert full_status["audit"]["counts"]["missing"] == 28
     reported = json.loads(reported_path.read_text(encoding="utf-8"))
     for section in [
@@ -101,6 +102,8 @@ def main() -> None:
     assert "clear_workspace_files" in runner_text, "idea runner does not clear stale collected files"
     assert "--session-mode" in runner_text, "idea runner cannot control EvoSci session mode"
     assert '"run"' in runner_text and "--mode" in runner_text, "idea runner does not default to isolated run mode"
+    assert "run_workspace_dir" in runner_text, "idea runner does not collect from isolated run workspaces"
+    assert "clear_artifact_files" in runner_text, "idea runner does not clear stale collected artifacts"
     assert "/final_report.md" in runner_text, "force-proposal prompt does not require final_report.md"
     for needle in [
         "Verified Locally",

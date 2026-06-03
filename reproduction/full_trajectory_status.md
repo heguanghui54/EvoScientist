@@ -8,13 +8,12 @@ Audit status: `incomplete`
 
 | Status | Count |
 | --- | ---: |
-| success | 1 |
-| clarification | 1 |
+| success | 2 |
 | missing | 28 |
 
-Successful query ids: `[1]`
+Successful query ids: `[1, 2]`
 
-## Successful Full Trajectory
+## Successful Full Trajectories
 
 Query 1 status: `ok`
 
@@ -39,6 +38,27 @@ EVOSCI_QUERY_TIMEOUT=900 EVOSCI_QUERY_EXTRA_ARGS='--stream-logs --output-dir rep
 - stdout contains `write_file(/final_report.md)` and `research-agent` traces.
 - manifest return code is 0.
 
+Query 2 status: `ok`
+
+Title: TraceRoute: Execution-Trace-Guided Repository-Level Bug Repair with Structured Data Flow Prompts
+
+Output directory: `reproduction/artifacts/remote_fetch/full_trajectories/EvoScientist/query_02`
+
+Token usage: 154,979 input / 5,723 output
+
+## Query 2 Successful Command
+
+```bash
+EVOSCI_QUERY_TIMEOUT=1200 EVOSCI_QUERY_EXTRA_ARGS='--force-proposal --stream-logs --output-dir reproduction/artifacts/full_trajectories/EvoScientist' reproduction/ssh_ubuntu_run.sh query-bg 2
+```
+
+## Query 2 Evidence
+
+- `final_report.md` exists and is 12,736 bytes.
+- stdout reports `[Usage: 154,979 in · 5,723 out]`.
+- manifest return code is 0.
+- isolated workspace was `runs/repro-query-02`.
+
 ## Query 2 Attempts
 
 - Mode: full tool-enabled, original paper query
@@ -49,10 +69,12 @@ EVOSCI_QUERY_TIMEOUT=900 EVOSCI_QUERY_EXTRA_ARGS='--stream-logs --output-dir rep
   Result: hung with no stdout progress after startup; manually terminated after about 17 minutes
   Final report collected: False
 
+- Mode: full tool-enabled with --force-proposal, isolated --mode run, corrected artifact collection
+  Result: completed and produced a qualifying `final_report.md`
+  Final report collected: True
+
 ## Limitations
-- Only query 1 currently has a successful full tool-enabled trajectory with final_report.md.
-- Query 2 original full run asked for clarification instead of generating a proposal.
-- Query 2 force-proposal full run hung before producing content and was manually terminated.
+- Only queries 1 and 2 currently have successful full tool-enabled trajectories with final_report.md.
 - The run used DeepSeek configuration rather than the paper-matched Gemini/Claude setup.
 - Tavily search was unavailable, so the research-agent behavior may differ from paper settings.
 - This is still not the full 7-baseline paper-level Table 1 reproduction.

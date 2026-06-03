@@ -182,8 +182,8 @@ Audit full trajectories with:
   --output-json reproduction/artifacts/remote_fetch/full_trajectories/full_trajectory_audit.json
 ```
 
-The current full-trajectory audit is incomplete: 1 success, 1 clarification, and
-28 missing queries.
+The current full-trajectory audit is incomplete: 2 successes and 28 missing
+queries.
 
 For broad full-agent queries, use `--force-proposal` to prevent the agent from
 asking clarification questions instead of producing a proposal:
@@ -200,7 +200,8 @@ The SSH wrapper passes `EVOSCI_QUERY_TIMEOUT` through to the remote runner.
 the query artifact directory. Each query defaults to `EvoSci --mode run` with a
 deterministic name like `repro-query-02`, so reproduction batches do not silently
 reuse persistent daemon session state. Use `--session-mode daemon` only when
-intentionally debugging the persistent mode.
+intentionally debugging the persistent mode. In isolated mode, collected files
+are copied from `runs/repro-query-XX/` into the matching query artifact directory.
 
 Build pairwise judge inputs and aggregate judge results:
 

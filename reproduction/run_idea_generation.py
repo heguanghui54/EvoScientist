@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -66,10 +67,12 @@ def ensure_provider_configured() -> None:
         )
 
 
-def collect_workspace_files(qdir: Path, filenames: list[str]) -> list[dict[str, str | int]]:
+def collect_workspace_files(
+    qdir: Path, filenames: list[str], workspace_dir: Path
+) -> list[dict[str, str | int]]:
     collected = []
     for filename in filenames:
-        source = ROOT / filename
+        source = workspace_dir / filename
         if not source.is_file():
             continue
         destination = qdir / filename
@@ -84,11 +87,24 @@ def collect_workspace_files(qdir: Path, filenames: list[str]) -> list[dict[str, 
     return collected
 
 
-def clear_workspace_files(filenames: list[str]) -> None:
+def clear_workspace_files(filenames: list[str], workspace_dir: Path) -> None:
     for filename in filenames:
-        path = ROOT / filename
+        path = workspace_dir / filename
         if path.is_file():
             path.unlink()
+
+
+def clear_artifact_files(qdir: Path, filenames: list[str]) -> None:
+    for filename in filenames:
+        path = qdir / filename
+        if path.is_file():
+            path.unlink()
+
+
+def run_workspace_dir(query_id: int, session_mode: str, run_name_prefix: str) -> Path:
+    if session_mode == "run":
+        return ROOT / "runs" / f"{run_name_prefix}-{query_id:02d}"
+    return ROOT
 
 
 def main() -> None:
@@ -195,7 +211,13 @@ def main() -> None:
             )
         (qdir / "prompt.txt").write_text(prompt + "\n", encoding="utf-8")
         (qdir / "query.json").write_text(json.dumps(query, indent=2), encoding="utf-8")
-        clear_workspace_files(collect_files)
+        workspace_dir = run_workspace_dir(query["id"], args.session_mode, args.run_name_prefix)
+        if args.session_mode == "run" and workspace_dir.is_dir():
+            shutil.rmtree(workspace_dir)
+        clear_workspace_files(collect_files, ROOT)
+        if workspace_dir != ROOT:
+            clear_workspace_files(collect_files, workspace_dir)
+        clear_artifact_files(qdir, collect_files)
 
         entry = {"id": query["id"], "topic": query["topic"], "dir": str(qdir)}
         if args.dry_run:
@@ -268,7 +290,8 @@ def main() -> None:
             returncode = result.returncode
         entry["returncode"] = returncode
         entry["status"] = "ok" if returncode == 0 else "failed"
-        entry["collected_files"] = collect_workspace_files(qdir, collect_files)
+        entry["workspace_dir"] = str(workspace_dir)
+        entry["collected_files"] = collect_workspace_files(qdir, collect_files, workspace_dir)
         manifest["outputs"].append(entry)
 
     (args.output_dir / "manifest.json").write_text(

@@ -1,6 +1,6 @@
 {
   "date": "2026-06-03",
-  "purpose": "Record first full tool-enabled EvoScientist trajectory reproduction attempt for paper query 1.",
+  "purpose": "Record full tool-enabled EvoScientist trajectory reproduction attempts for paper queries.",
   "query_id": 1,
   "topic": "Machine translation",
   "goal": "Generate a research proposal on low-resource machine translation.",
@@ -63,21 +63,18 @@
     ]
   },
   "limitations": [
-    "Only query 1 currently has a successful full tool-enabled trajectory with final_report.md.",
-    "Query 2 original full run asked for clarification instead of generating a proposal.",
-    "Query 2 force-proposal full run hung before producing content and was manually terminated.",
+    "Only queries 1 and 2 currently have successful full tool-enabled trajectories with final_report.md.",
     "The run used DeepSeek configuration rather than the paper-matched Gemini/Claude setup.",
     "Tavily search was unavailable, so the research-agent behavior may differ from paper settings.",
     "This is still not the full 7-baseline paper-level Table 1 reproduction."
   ],
   "full_trajectory_counts": {
-    "successful_final_reports": 1,
+    "successful_final_reports": 2,
     "attempted_queries": [
       1,
       2
     ],
     "pending_queries": [
-      2,
       3,
       4,
       5,
@@ -125,22 +122,33 @@
       "final_report_collected": false,
       "thread_id": "d00064c1",
       "evidence": "remote status showed process running and only startup prompt in stdout"
+    },
+    {
+      "mode": "full tool-enabled with --force-proposal, isolated --mode run, corrected artifact collection",
+      "result": "completed and produced a qualifying final_report.md in runs/repro-query-02",
+      "returncode": 0,
+      "final_report_collected": true,
+      "thread_id": "eb03b304",
+      "usage": {
+        "input_tokens": 154979,
+        "output_tokens": 5723
+      },
+      "evidence": "reproduction/artifacts/remote_fetch/full_trajectories/EvoScientist/query_02/final_report.md"
     }
   ],
   "audit": {
-    "generated_from": "reproduction/artifacts/remote_fetch/full_trajectories/full_trajectory_audit.json",
+    "generated_from": "reproduction/artifacts/remote_fetch/full_trajectories/full_trajectory_audit_latest.json",
     "status": "incomplete",
     "query_count": 30,
     "counts": {
-      "success": 1,
-      "clarification": 1,
+      "success": 2,
       "missing": 28
     },
     "successful_query_ids": [
-      1
+      1,
+      2
     ],
     "failed_or_incomplete_query_ids": [
-      2,
       3,
       4,
       5,
@@ -170,5 +178,63 @@
       29,
       30
     ]
+  },
+  "query_2_success": {
+    "query_id": 2,
+    "topic": "Software engineering",
+    "goal": "Help me generate a research proposal on AI for software engineering.",
+    "mode": "full tool-enabled with --force-proposal and isolated --mode run workspace",
+    "remote_host": "ubuntu-heshi",
+    "command": "EVOSCI_QUERY_TIMEOUT=1200 EVOSCI_QUERY_EXTRA_ARGS='--force-proposal --stream-logs --output-dir reproduction/artifacts/full_trajectories/EvoScientist' reproduction/ssh_ubuntu_run.sh query-bg 2",
+    "manifest_status": "ok",
+    "returncode": 0,
+    "thread_id": "eb03b304",
+    "workspace": "runs/repro-query-02",
+    "output_dir": "reproduction/artifacts/remote_fetch/full_trajectories/EvoScientist/query_02",
+    "artifact_files": {
+      "stdout.txt": {
+        "exists": true,
+        "bytes": 8044
+      },
+      "stderr.txt": {
+        "exists": true,
+        "bytes": 251
+      },
+      "prompt.txt": {
+        "exists": true,
+        "bytes": 672
+      },
+      "query.json": {
+        "exists": true,
+        "bytes": 130
+      },
+      "answer.txt": {
+        "exists": false,
+        "bytes": 0
+      },
+      "final_report.md": {
+        "exists": true,
+        "bytes": 12736
+      }
+    },
+    "usage": {
+      "input_tokens": 154979,
+      "output_tokens": 5723
+    },
+    "final_report": {
+      "title": "TraceRoute: Execution-Trace-Guided Repository-Level Bug Repair with Structured Data Flow Prompts",
+      "bytes": 12736,
+      "sections_detected": [
+        "Problem",
+        "Hypothesis",
+        "Method",
+        "Dataset",
+        "Benchmark",
+        "Evaluation",
+        "Baselines",
+        "Ablations",
+        "Failure"
+      ]
+    }
   }
 }
