@@ -97,8 +97,8 @@ def main() -> None:
     assert full_status["query_13_success"]["artifact_files"]["final_report.md"]["bytes"] >= 10000
     assert "ExeCoT" in full_status["query_13_success"]["final_report"]["title"]
     assert full_status["audit"]["counts"]["success"] == 9
-    assert full_status["audit"]["counts"]["timeout"] == 4
-    assert full_status["audit"]["counts"]["missing"] == 17
+    assert full_status["audit"]["counts"]["timeout"] == 5
+    assert full_status["audit"]["counts"]["missing"] == 16
     reported = json.loads(reported_path.read_text(encoding="utf-8"))
     for section in [
         "table1_llm_idea_generation",
