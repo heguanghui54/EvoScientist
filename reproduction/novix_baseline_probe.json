@@ -1,0 +1,63 @@
+{
+  "date": "2026-06-04",
+  "baseline": "Novix",
+  "sources": {
+    "hosted_chat": "https://novix.science/chat",
+    "home": "https://novix.science/",
+    "frontend_bundle": "https://novix.science/static/js/index-B5bYYKuJ.js",
+    "ai_researcher_repository": "https://github.com/HKUDS/AI-Researcher",
+    "ai_researcher_readme": "https://raw.githubusercontent.com/HKUDS/AI-Researcher/main/README.md"
+  },
+  "files_checked": [
+    "https://novix.science/",
+    "https://novix.science/chat",
+    "https://novix.science/static/js/index-B5bYYKuJ.js",
+    "https://raw.githubusercontent.com/HKUDS/AI-Researcher/main/README.md",
+    "GitHub repository search for Novix science AI-Researcher"
+  ],
+  "github_repo_hits": [
+    {
+      "full_name": "HKUDS/AI-Researcher",
+      "html_url": "https://github.com/HKUDS/AI-Researcher",
+      "description": "[NeurIPS2025] \"AI-Researcher: Autonomous Scientific Innovation\" -- A production-ready version: https://novix.science/chat"
+    }
+  ],
+  "direct_30_query_runner_available": false,
+  "evo_table1_drop_in_status": "hosted_ui_adapter_candidate",
+  "paper_exact_status": "not_paper_exact",
+  "signals": {
+    "hosted_chat_available": true,
+    "product_features_available": true,
+    "same_as_ai_researcher": true,
+    "ai_researcher_readme_links_novix": false,
+    "independent_public_novix_repo_found": false,
+    "login_required_signals": true,
+    "visible_task_api_in_frontend_bundle": true,
+    "public_batch_api_docs_found": false,
+    "raw_table1_outputs_found": false
+  },
+  "visible_product_endpoints": [
+    "/user/login",
+    "/chat_session/create",
+    "/task/create_task",
+    "/task/submit_user_question",
+    "/call_agent",
+    "/agents"
+  ],
+  "entrypoints": {
+    "hosted_chat": "https://novix.science/chat",
+    "linked_open_source_system": "https://github.com/HKUDS/AI-Researcher"
+  },
+  "required_env_or_access": [
+    "Novix account/session if running the hosted product",
+    "Pinned UI/API capture protocol if using browser or frontend endpoints",
+    "Alternative: use the open AI-Researcher probe/runbook rather than treating Novix as a separate open-source runner"
+  ],
+  "reproduction_implication": "Novix is a hosted AI co-scientist product and public materials link its open-source lineage to HKUDS/AI-Researcher. The visible frontend bundle contains login, chat session, and task endpoints, but no public batch API documentation or raw EvoScientist Table 1 outputs were found. Novix can only be a replacement rerun candidate through a pinned account/browser/API-capture protocol; it is not a paper-exact public artifact.",
+  "next_actions": [
+    "If Novix access is available, define a pinned hosted-run protocol with account state, model defaults, and one fresh session per recovered query.",
+    "Capture final assistant answers for all 30 queries into reproduction/artifacts/idea_outputs/Novix/query_XX/answer.txt.",
+    "If hosted access is not available, use AI-Researcher public-runner evidence instead and report Novix as non-reproducible from public artifacts alone.",
+    "Judge any imported Novix outputs through the existing swapped pairwise judge pipeline."
+  ]
+}

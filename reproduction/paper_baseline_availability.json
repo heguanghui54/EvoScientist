@@ -84,16 +84,21 @@
     {
       "name": "Novix",
       "paper_role": "Table 1 baseline",
-      "public_entrypoint_status": "hosted_or_commercial_candidate",
+      "public_entrypoint_status": "hosted_ui_adapter_candidate",
       "public_entrypoints": [
         {
           "label": "Novix hosted platform",
           "url": "https://novix.science/chat",
           "evidence": "Hosted production version linked from AI-Researcher public materials."
+        },
+        {
+          "label": "local hosted-product probe",
+          "url": "reproduction/novix_baseline_probe.json",
+          "evidence": "Probe found a hosted UI with login/session/task endpoints and no independent public batch runner or raw EvoScientist Table 1 outputs."
         }
       ],
       "table1_raw_outputs_available": false,
-      "rerun_path": "Potential hosted rerun candidate, but requires account/service access and a pinned protocol. No public EvoScientist Table 1 30-query outputs were found."
+      "rerun_path": "Potential hosted replacement rerun candidate, but requires Novix account/session access plus a pinned browser or API-capture protocol. No independent open-source Novix runner, public batch API documentation, or public EvoScientist Table 1 30-query outputs were found."
     },
     {
       "name": "K-Dense",

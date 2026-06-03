@@ -109,6 +109,19 @@ def table1_actions(components: dict[str, Any], protocol: dict[str, Any]) -> list
                 "bash /path/to/EvoScientist/reproduction/ai_scientist_v2_ideation_runbook/run_ai_scientist_v2_ideation.sh",
                 ".venv/bin/python reproduction/import_baseline_outputs.py --system-name 'AI Scientist-v2' --source reproduction/ai_scientist_v2_ideation_import_template.jsonl --source-format jsonl --output-root reproduction/artifacts/idea_outputs --strict",
             ]
+        if baseline == "Novix":
+            actions[-1]["probe"] = "reproduction/novix_baseline_probe.json"
+            actions[-1]["note"] = (
+                "Current probe found Novix is a hosted UI adapter candidate linked to "
+                "AI-Researcher, with visible login/session/task endpoints but no public "
+                "batch runner or raw Table 1 outputs."
+            )
+            actions[-1]["replacement_run_template"] = [
+                "# With Novix account access: open https://novix.science/chat under a pinned browser/profile state.",
+                "# Submit one recovered query per fresh session and capture the final assistant answer plus session metadata.",
+                "# Save outputs as $HOME/research/novix/outputs/evoscientist_table1_queries/novix/query_XX.md",
+                ".venv/bin/python reproduction/import_baseline_outputs.py --system-name Novix --source $HOME/research/novix/outputs/evoscientist_table1_queries/novix --source-format directory --output-root reproduction/artifacts/idea_outputs --strict",
+            ]
         if baseline == "K-Dense":
             actions[-1]["probe"] = "reproduction/k_dense_baseline_probe.json"
             actions[-1]["note"] = (

@@ -352,6 +352,11 @@ The 30-query InternAgent QA replacement-baseline runbook is recorded in
 The AI Scientist-v2 ideation replacement-baseline probe and runbook are recorded
 in `reproduction/ai_scientist_v2_baseline_probe.md` and
 `reproduction/ai_scientist_v2_ideation_runbook/`.
+The Novix hosted replacement-baseline fit check is recorded in
+`reproduction/novix_baseline_probe.json` and
+`reproduction/novix_baseline_probe.md`; it identifies a hosted UI/account
+adapter path, not an independent public batch runner or paper-exact raw Table 1
+outputs.
 The K-Dense hosted/BYOK replacement-baseline fit check is recorded in
 `reproduction/k_dense_baseline_probe.json` and
 `reproduction/k_dense_baseline_probe.md`; it identifies an ADK `/run_sse`

@@ -58,6 +58,7 @@ def main() -> None:
         "build_internagent_qa_runbook.py",
         "probe_ai_scientist_v2_baseline.py",
         "build_ai_scientist_v2_ideation_runbook.py",
+        "probe_novix_baseline.py",
         "probe_k_dense_baseline.py",
         "aggregate_human_labels.py",
         "aggregate_ablation_results.py",
@@ -116,6 +117,7 @@ def main() -> None:
     baseline_inventory_md = baseline_inventory_md_path.read_text(encoding="utf-8")
     assert "Raw baseline-output packages found: 0" in baseline_inventory_md
     assert "ai_researcher_baseline_probe.json" in baseline_inventory_md
+    assert "novix_baseline_probe.json" in baseline_inventory_md
     assert "k_dense_baseline_probe.json" in baseline_inventory_md
     ai_researcher_probe_json_path = ROOT / "ai_researcher_baseline_probe.json"
     ai_researcher_probe_md_path = ROOT / "ai_researcher_baseline_probe.md"
@@ -183,6 +185,22 @@ def main() -> None:
     assert "AI Scientist-v2" in ai_scientist_runbook["import_command"]
     assert ai_scientist_runbook_sh_path.read_text(encoding="utf-8").count("perform_ideation_temp_free.py") == 30
     assert (ai_scientist_runbook_root / "topics" / "query_30.md").is_file()
+    novix_probe_json_path = ROOT / "novix_baseline_probe.json"
+    novix_probe_md_path = ROOT / "novix_baseline_probe.md"
+    assert novix_probe_json_path.is_file(), "missing Novix probe JSON"
+    assert novix_probe_md_path.is_file(), "missing Novix probe markdown"
+    novix_probe = json.loads(novix_probe_json_path.read_text(encoding="utf-8"))
+    assert novix_probe["baseline"] == "Novix"
+    assert novix_probe["evo_table1_drop_in_status"] == "hosted_ui_adapter_candidate"
+    assert novix_probe["paper_exact_status"] == "not_paper_exact"
+    assert novix_probe["signals"]["hosted_chat_available"] is True
+    assert novix_probe["signals"]["same_as_ai_researcher"] is True
+    assert novix_probe["signals"]["independent_public_novix_repo_found"] is False
+    assert novix_probe["signals"]["public_batch_api_docs_found"] is False
+    assert novix_probe["signals"]["raw_table1_outputs_found"] is False
+    assert novix_probe["direct_30_query_runner_available"] is False
+    assert "/task/submit_user_question" in novix_probe["visible_product_endpoints"]
+    assert "hosted_ui_adapter_candidate" in novix_probe_md_path.read_text(encoding="utf-8")
     k_dense_probe_json_path = ROOT / "k_dense_baseline_probe.json"
     k_dense_probe_md_path = ROOT / "k_dense_baseline_probe.md"
     assert k_dense_probe_json_path.is_file(), "missing K-Dense probe JSON"
@@ -230,6 +248,7 @@ def main() -> None:
     assert "internagent_qa_runbook.sh" in action_plan_md
     assert "ai_scientist_v2_baseline_probe.json" in action_plan_md
     assert "build_ai_scientist_v2_ideation_runbook.py" in action_plan_md
+    assert "novix_baseline_probe.json" in action_plan_md
     assert "k_dense_baseline_probe.json" in action_plan_md
     full_status = json.loads(full_status_json_path.read_text(encoding="utf-8"))
     expected_success_ids = list(range(1, 31))
@@ -320,6 +339,7 @@ def main() -> None:
         "InternAgent QA runbook is executable",
         "AI Scientist-v2 baseline probe is recorded",
         "AI Scientist-v2 ideation runbook is executable",
+        "Novix baseline probe is recorded",
         "K-Dense baseline probe is recorded",
         "Paper-level non-Table-1 artifact schemas are pinned",
         "Human-label aggregation is executable",

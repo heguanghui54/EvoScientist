@@ -26,7 +26,7 @@ records used by the paper.
 | InternAgent | open_source_runner_candidate | `https://github.com/InternScience/InternAgent`; `reproduction/internagent_baseline_probe.json` | no | QA replacement candidate: probe found a one-shot `launch.py --mode qa --question ... --output ...` path, but no paper raw outputs. |
 | AI Scientist-v2 | open_source_runner_candidate | `https://github.com/SakanaAI/AI-Scientist-v2`; `reproduction/ai_scientist_v2_baseline_probe.json` | no | Ideation replacement candidate: probe found `perform_ideation_temp_free.py`, but no paper raw outputs. |
 | Hypogenic | not_found | none found | no | Needs author-provided outputs, service access if applicable, or a substitute. |
-| Novix | hosted_or_commercial_candidate | `https://novix.science/chat` | no | Hosted rerun candidate, but needs account/service access and pinned protocol. |
+| Novix | hosted_ui_adapter_candidate | `https://novix.science/chat`; `reproduction/novix_baseline_probe.json` | no | Hosted UI replacement candidate, but needs Novix account/session access plus a pinned browser or API-capture protocol; no independent public batch runner or raw paper outputs were found. |
 | K-Dense | local_web_api_adapter_candidate | `https://github.com/K-Dense-AI`; `https://github.com/K-Dense-AI/k-dense-byok`; `https://k-dense.ai/`; `reproduction/k_dense_baseline_probe.json` | no | Replacement candidate through the BYOK local app's ADK `/run_sse` endpoint, but needs Python 3.13, OpenRouter/Gemini CLI setup, pinned project/model protocol, and output capture. |
 
 ## Next Action

@@ -99,16 +99,16 @@ Commands:
 Required evidence: 30 answer.txt files under reproduction/artifacts/idea_outputs/Novix/
 
 System: Novix
+Probe: reproduction/novix_baseline_probe.json
+Note: Current probe found Novix is a hosted UI adapter candidate linked to AI-Researcher, with visible login/session/task endpoints but no public batch runner or raw Table 1 outputs.
 
 Commands:
 
 ```bash
-.venv/bin/python reproduction/import_baseline_outputs.py --system-name Novix --source {source_jsonl} --source-format jsonl --output-root reproduction/artifacts/idea_outputs --strict
-.venv/bin/python reproduction/import_baseline_outputs.py --system-name Novix --source {source_dir} --source-format directory --output-root reproduction/artifacts/idea_outputs --strict
-.venv/bin/python reproduction/build_pairwise_judge_inputs.py --systems-root reproduction/artifacts/idea_outputs --baseline Novix --output reproduction/artifacts/judge_inputs/evosci_vs_novix.jsonl
-.venv/bin/python reproduction/run_llm_judge.py --provider deepseek --model deepseek-v4-flash --input reproduction/artifacts/judge_inputs/evosci_vs_novix.jsonl --output reproduction/artifacts/judge_outputs/evosci_vs_novix_deepseek.jsonl --resume
-.venv/bin/python reproduction/aggregate_judge_results.py --input reproduction/artifacts/judge_outputs/evosci_vs_novix_deepseek.jsonl --output-csv reproduction/artifacts/tables/evosci_vs_novix_deepseek.csv --output-json reproduction/artifacts/tables/evosci_vs_novix_deepseek.json
-.venv/bin/python reproduction/audit_reproduction_artifacts.py --baseline Novix --judge-inputs reproduction/artifacts/judge_inputs/evosci_vs_novix.jsonl --judge-outputs reproduction/artifacts/judge_outputs/evosci_vs_novix_deepseek.jsonl --aggregate-json reproduction/artifacts/tables/evosci_vs_novix_deepseek.json
+# With Novix account access: open https://novix.science/chat under a pinned browser/profile state.
+# Submit one recovered query per fresh session and capture the final assistant answer plus session metadata.
+# Save outputs as $HOME/research/novix/outputs/evoscientist_table1_queries/novix/query_XX.md
+.venv/bin/python reproduction/import_baseline_outputs.py --system-name Novix --source $HOME/research/novix/outputs/evoscientist_table1_queries/novix --source-format directory --output-root reproduction/artifacts/idea_outputs --strict
 ```
 
 ### 7. table1_llm_idea_generation / baseline_output_import_or_generation
