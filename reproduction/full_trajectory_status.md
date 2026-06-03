@@ -8,11 +8,11 @@ Audit status: `incomplete`
 
 | Status | Count |
 | --- | ---: |
-| success | 13 |
-| timeout | 8 |
-| missing | 9 |
+| success | 14 |
+| timeout | 9 |
+| missing | 7 |
 
-Successful query ids: `[1, 2, 3, 5, 6, 8, 10, 11, 13, 15, 19, 20, 21]`
+Successful query ids: `[1, 2, 3, 5, 6, 8, 10, 11, 13, 15, 19, 20, 21, 23]`
 
 ## Successful Full Trajectories
 
@@ -249,6 +249,21 @@ Token usage: 179,223 input / 6,316 output
 - manifest return code is 0.
 - isolated workspace was `runs/repro-query-21`.
 
+Query 23 status: `ok`
+
+Title: Research Proposal: CodeSemEval - A Deep Semantic Evaluation Framework for Code LLMs
+
+Output directory: `reproduction/artifacts/remote_fetch/full_trajectories/EvoScientist/query_23`
+
+Token usage: 49,883 input / 5,374 output
+
+## Query 23 Evidence
+
+- `final_report.md` exists and is 16,680 bytes.
+- stdout reports `[Usage: 49,883 in · 5,374 out]`.
+- manifest return code is 0.
+- isolated workspace was `runs/repro-query-23`.
+
 ## Current Non-Successful Full Trajectories
 
 - Query 4: runner reported idle timeout after 600 seconds without log growth.
@@ -259,6 +274,7 @@ Token usage: 179,223 input / 6,316 output
 - Query 16: runner reported idle timeout after 600 seconds without log growth.
 - Query 17: runner reported idle timeout after 600 seconds without log growth.
 - Query 18: runner reported idle timeout after 600 seconds without log growth.
+- Query 22: runner reported idle timeout after 600 seconds without log growth.
 
 ## Query 2 Attempts
 
@@ -275,8 +291,8 @@ Token usage: 179,223 input / 6,316 output
   Final report collected: True
 
 ## Limitations
-- Only queries 1, 2, 3, 5, 6, 8, 10, 11, 13, 15, 19, 20, and 21 currently have successful full tool-enabled trajectories with final_report.md.
-- Queries 4, 7, 9, 12, 14, 16, 17, and 18 idle-timed-out after 600 seconds without log growth in the fetched audit snapshot.
+- Only queries 1, 2, 3, 5, 6, 8, 10, 11, 13, 15, 19, 20, 21, and 23 currently have successful full tool-enabled trajectories with final_report.md.
+- Queries 4, 7, 9, 12, 14, 16, 17, 18, and 22 idle-timed-out after 600 seconds without log growth in the fetched audit snapshot.
 - The run used DeepSeek configuration rather than the paper-matched Gemini/Claude setup.
 - Tavily search was unavailable, so the research-agent behavior may differ from paper settings.
 - This is still not the full 7-baseline paper-level Table 1 reproduction.
