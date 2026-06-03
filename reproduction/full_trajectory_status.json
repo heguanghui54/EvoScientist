@@ -126,5 +126,49 @@
       "thread_id": "d00064c1",
       "evidence": "remote status showed process running and only startup prompt in stdout"
     }
-  ]
+  ],
+  "audit": {
+    "generated_from": "reproduction/artifacts/remote_fetch/full_trajectories/full_trajectory_audit.json",
+    "status": "incomplete",
+    "query_count": 30,
+    "counts": {
+      "success": 1,
+      "clarification": 1,
+      "missing": 28
+    },
+    "successful_query_ids": [
+      1
+    ],
+    "failed_or_incomplete_query_ids": [
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23,
+      24,
+      25,
+      26,
+      27,
+      28,
+      29,
+      30
+    ]
+  }
 }

@@ -2,6 +2,18 @@
 
 Date: 2026-06-03
 
+## Audit Summary
+
+Audit status: `incomplete`
+
+| Status | Count |
+| --- | ---: |
+| success | 1 |
+| clarification | 1 |
+| missing | 28 |
+
+Successful query ids: `[1]`
+
 ## Successful Full Trajectory
 
 Query 1 status: `ok`

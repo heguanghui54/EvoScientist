@@ -174,6 +174,17 @@ reproduction/full_trajectory_status.md
 reproduction/full_trajectory_status.json
 ```
 
+Audit full trajectories with:
+
+```bash
+.venv/bin/python reproduction/audit_full_trajectories.py \
+  --full-root reproduction/artifacts/remote_fetch/full_trajectories/EvoScientist \
+  --output-json reproduction/artifacts/remote_fetch/full_trajectories/full_trajectory_audit.json
+```
+
+The current full-trajectory audit is incomplete: 1 success, 1 clarification, and
+28 missing queries.
+
 For broad full-agent queries, use `--force-proposal` to prevent the agent from
 asking clarification questions instead of producing a proposal:
 
