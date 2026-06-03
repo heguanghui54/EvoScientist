@@ -63,7 +63,7 @@
     ]
   },
   "limitations": [
-    "Only queries 1, 2, 3, 5, 6, 8, 10, 11, 13, 15, 19, 20, 21, 23, 27, and 28 currently have successful full tool-enabled trajectories with final_report.md.",
+    "Only queries 1, 2, 3, 5, 6, 8, 10, 11, 13, 15, 19, 20, 21, 23, 27, 28, and 29 currently have successful full tool-enabled trajectories with final_report.md.",
     "Queries 4, 7, 9, 12, 14, 16, 17, 18, 22, 25, and 26 idle-timed-out after 600 seconds without log growth in the fetched audit snapshot.",
     "Query 24 failed with APIConnectionError after partial research-agent progress and no final_report.md; the stuck child process was terminated so the batch could continue.",
     "The run used DeepSeek configuration rather than the paper-matched Gemini/Claude setup.",
@@ -71,7 +71,7 @@
     "This is still not the full 7-baseline paper-level Table 1 reproduction."
   ],
   "full_trajectory_counts": {
-    "successful_final_reports": 16,
+    "successful_final_reports": 17,
     "attempted_queries": [
       1,
       2,
@@ -100,10 +100,10 @@
       25,
       26,
       27,
-      28
+      28,
+      29
     ],
     "pending_queries": [
-      29,
       30
     ]
   },
@@ -143,10 +143,10 @@
     "status": "incomplete",
     "query_count": 30,
     "counts": {
-      "success": 16,
+      "success": 17,
       "timeout": 11,
       "failed": 1,
-      "missing": 2
+      "missing": 1
     },
     "successful_query_ids": [
       1,
@@ -164,7 +164,8 @@
       21,
       23,
       27,
-      28
+      28,
+      29
     ],
     "failed_or_incomplete_query_ids": [
       4,
@@ -179,7 +180,6 @@
       25,
       26,
       24,
-      29,
       30
     ]
   },
@@ -1121,6 +1121,64 @@
     "final_report": {
       "title": "Preference Bias Amplification: Measuring and Mitigating Western Cultural Bias in DPO-Based LLM Alignment",
       "bytes": 12259,
+      "sections_detected": [
+        "Problem",
+        "Hypothesis",
+        "Method",
+        "Dataset",
+        "Benchmark",
+        "Evaluation",
+        "Baselines",
+        "Ablations",
+        "Failure"
+      ]
+    }
+  },
+  "query_29_success": {
+    "query_id": 29,
+    "topic": "Alignment",
+    "goal": "Generate a research proposal on value alignment for AI agents.",
+    "mode": "full tool-enabled with --force-proposal and isolated --mode run workspace",
+    "remote_host": "ubuntu-heshi",
+    "command": "EVOSCI_QUERY_TIMEOUT=1200 EVOSCI_QUERY_EXTRA_ARGS='--query-ids 6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30 --force-proposal --stream-logs --idle-timeout 600 --output-dir reproduction/artifacts/full_trajectories/EvoScientist' reproduction/ssh_ubuntu_run.sh batch-bg 30",
+    "manifest_status": "ok",
+    "returncode": 0,
+    "thread_id": "0abad5a0",
+    "workspace": "runs/repro-query-29",
+    "output_dir": "reproduction/artifacts/remote_fetch/full_trajectories/EvoScientist/query_29",
+    "artifact_files": {
+      "stdout.txt": {
+        "exists": true,
+        "bytes": 9882
+      },
+      "stderr.txt": {
+        "exists": true,
+        "bytes": 251
+      },
+      "prompt.txt": {
+        "exists": true,
+        "bytes": 666
+      },
+      "query.json": {
+        "exists": true,
+        "bytes": 114
+      },
+      "answer.txt": {
+        "exists": false,
+        "bytes": 0
+      },
+      "final_report.md": {
+        "exists": true,
+        "bytes": 17955
+      }
+    },
+    "usage": {
+      "input_tokens": 314073,
+      "output_tokens": 8549
+    },
+    "final_report": {
+      "title": "Detecting and Mitigating Specification Gaming in RLHF-Aligned Language Models via Adversarial Reward Probing",
+      "bytes": 17955,
       "sections_detected": [
         "Problem",
         "Hypothesis",
