@@ -163,11 +163,9 @@ This is evidence that the agent/API path works across the paper query set, but
 it is not yet a full paper-matched EvoScientist trajectory because tool
 execution, baselines, judge outputs, and ablations are still incomplete.
 
-One full tool-enabled EvoScientist trajectory has also been run for query 1 in a
-separate output directory. It produced a 16,755-byte `final_report.md` titled
-"CrossLingual-RAG: Cross-Lingual Retrieval-Augmented Generation for Extremely
-Low-Resource Machine Translation" and completed with return code 0. The tracked
-status report is:
+Full tool-enabled EvoScientist attempts have also been run and fetched for all
+30 recovered paper queries in a separate output directory. The tracked status
+report is:
 
 ```text
 reproduction/full_trajectory_status.md
@@ -183,7 +181,9 @@ Audit full trajectories with:
 ```
 
 The current full-trajectory audit is incomplete: 17 successes, 12 timeouts, and
-1 failed query. No full-trajectory query artifacts are still missing.
+1 failed query. No full-trajectory query artifacts are still missing. This is
+real agent evidence, but it is not yet 30/30 successful paper-matched
+EvoScientist coverage.
 
 For broad full-agent queries, use `--force-proposal` to prevent the agent from
 asking clarification questions instead of producing a proposal:
@@ -357,9 +357,13 @@ EVOSCI_QUERY_EXTRA_ARGS='--proposal-only --stream-logs' \
   reproduction/ssh_ubuntu_run.sh query-bg 1
 ```
 
-The remaining blocker is paper-level coverage: full 30-query EvoScientist
-outputs, seven baseline systems, real judge outputs, human labels, code
-execution logs, and ablation runs.
+Full tool-enabled DeepSeek-backed attempts now exist for all 30 recovered paper
+queries. The audit has 17 qualifying `final_report.md` successes, 12 idle
+timeouts, and 1 APIConnectionError failure, with no missing query artifacts.
+
+The remaining blocker is paper-level coverage: 30/30 successful paper-matched
+EvoScientist outputs, seven baseline systems, real judge outputs, human labels,
+code execution logs, and ablation runs.
 
 ## What Is Needed for Paper-Level Reproduction
 
@@ -368,9 +372,9 @@ To reproduce the paper experiments rather than only the software system:
 - paper-matched LLM provider access if exact model reproduction is required,
   especially the paper's Gemini/Claude/Gemini-judge setup;
 - optionally a Tavily key for web-search-based research-agent behavior;
-- full tool-enabled EvoScientist trajectories for all 30 recovered paper queries
-  (currently only query 1 has a successful full trajectory; query 2 full attempts
-  are documented as clarification/hang failures);
+- full successful tool-enabled EvoScientist trajectories for all 30 recovered
+  paper queries; current full attempts cover all 30, but only 17 have qualifying
+  final reports, 12 timed out, and 1 failed with `APIConnectionError`;
 - baseline outputs for the seven paper systems, or runnable baseline setups;
 - the LLM-as-judge prompt/input pairs and model access for `gemini-3-flash`;
 - human-evaluation labels if reproducing the human agreement numbers;

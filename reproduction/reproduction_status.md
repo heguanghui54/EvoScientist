@@ -35,7 +35,7 @@ and paper-level experimental reproduction.
 
 | Requirement | Missing Evidence | Current Blocker |
 | --- | --- | --- |
-| Full EvoScientist trajectories for all 30 paper queries | Real tool-enabled RA/EA/EMA trajectory logs per query | Proposal-only outputs exist for 30/30; full tool-enabled query 1 exists; queries 2-30 still pending |
+| Full successful EvoScientist trajectories for all 30 paper queries | Qualifying `final_report.md` outputs for every paper query, plus paper-matched RA/EA/EMA behavior | Full tool-enabled attempts have been fetched for all 30; current audit is 17 success, 12 timeout, 1 failed, 0 missing under DeepSeek without Tavily, so 30/30 successful paper-matched trajectories are not yet reproduced |
 | Paper-matched model settings | Gemini-2.5-Pro, Claude-4.5-Haiku, Gemini judge access | DeepSeek smoke works, but paper-matched Gemini/Claude credentials are not configured in EvoScientist |
 | Literature-retrieval behavior | Semantic Scholar/Tavily-backed run logs | No search key/tool configuration for live agent run |
 | Paper baseline comparison outputs | Virtual Scientist, AI-Researcher, InternAgent, AI Scientist-v2, Hypogenic, Novix, K-Dense outputs | Original baseline outputs are not included in public repo; a stated replacement baseline `Direct-DeepSeek` has been run |
@@ -70,41 +70,35 @@ Remote target:
   real agent smoke test
 - Verified: batch query 1..30 completed as a real DeepSeek-backed proposal-only
   run with `--proposal-only --stream-logs`
-- Verified: query 1 completed as a full tool-enabled trajectory with a saved
-  `final_report.md`; status is tracked in `reproduction/full_trajectory_status.md`
-- Query 2 full attempts are tracked as failures: original full run asked for
-  clarification; `--force-proposal` run hung before producing content and was
-  manually terminated
+- Verified: full tool-enabled DeepSeek-backed sweep for all 30 paper queries
+  has completed and been fetched; current audit is 17 success, 12 timeout,
+  1 failed, 0 missing
+- Final full-trajectory status is tracked in
+  `reproduction/full_trajectory_status.md` and
+  `reproduction/full_trajectory_status.json`
+- Verified: no remote `run_idea_generation.py` or `EvoSci --mode run` process
+  remained after the query-30 timeout was recorded
 - Local fetched summary:
   `reproduction/artifacts/remote_fetch/idea_outputs/EvoScientist/PROPOSAL_SUMMARY.md`
-- Note: this confirms the API/agent path across the paper query set, but it
-  intentionally avoids shell/tool execution and is not the paper's full
-  RA/EA/EMA trajectory
+- Note: this confirms the API/agent path across the paper query set and records
+  real full-trajectory attempts, but it is still not the paper's exact
+  Gemini/Claude/Tavily setup and does not provide 30/30 successful final reports
 - Harness note: the reproduction harness is not a self-evolving system. It is
   an audit/evaluation scaffold around EvoScientist, which is the self-evolving
   agent under test.
 
 ## Next Real Experiment Step
 
-For the low-cost pilot path:
+The next paper-level step is not another all-query sweep. It is baseline and
+judge coverage: import or generate the seven paper baseline outputs
+(`Virtual Scientist`, `AI-Researcher`, `InternAgent`, `AI Scientist-v2`,
+`Hypogenic`, `Novix`, and `K-Dense`) into the system-output layout documented
+in `build_pairwise_judge_inputs.py`, or explicitly define a replacement-baseline
+experiment.
 
-```bash
-EVOSCI_QUERY_EXTRA_ARGS='--proposal-only --stream-logs' \
-  reproduction/ssh_ubuntu_run.sh batch-bg 30
-reproduction/ssh_ubuntu_run.sh status
-reproduction/ssh_ubuntu_run.sh fetch
-```
-
-For the fuller EvoScientist path:
-
-```bash
-bash reproduction/run_preflight.sh --with-agent
-.venv/bin/python reproduction/run_idea_generation.py --query-id 1
-```
-
-If the full first query succeeds within budget, expand to all 30 queries and
-then run/import baseline outputs into the system-output layout documented in
-`build_pairwise_judge_inputs.py`.
+If the immediate goal is to improve EvoScientist full-trajectory coverage first,
+rerun only the non-successful query IDs: 4, 7, 9, 12, 14, 16, 17, 18, 22, 24,
+25, 26, and 30, ideally with a changed provider/search/timeout configuration.
 
 Then run the real judge and aggregation steps:
 

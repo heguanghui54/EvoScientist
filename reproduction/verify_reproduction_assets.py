@@ -156,6 +156,9 @@ def main() -> None:
         "EvoScientist CLI outputs are normalized before judging",
         "Full trajectory audit is executable",
         "Full trajectory reruns are isolated by default",
+        "17 success, 12 timeout, 1 failed, 0 missing",
+        "full tool-enabled DeepSeek-backed sweep for all 30 paper queries",
+        "rerun only the non-successful query IDs: 4, 7, 9, 12, 14, 16, 17, 18, 22, 24",
         "not a self-evolving system",
         "Ubuntu GPU Status",
     ]:
