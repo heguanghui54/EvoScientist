@@ -22,13 +22,18 @@
           "evidence": "Public repository for AI-Researcher, described as an autonomous scientific innovation system."
         },
         {
+          "label": "local runner probe",
+          "url": "reproduction/ai_researcher_baseline_probe.json",
+          "evidence": "Probe found the public runner is benchmark-instance based and not a drop-in runner for the 30 recovered EvoScientist Table 1 queries."
+        },
+        {
           "label": "Novix hosted production version",
           "url": "https://novix.science/chat",
           "evidence": "Linked from the AI-Researcher repository as a production-ready hosted version."
         }
       ],
       "table1_raw_outputs_available": false,
-      "rerun_path": "Possible rerun candidate, but it needs separate environment setup and prompt/protocol alignment. The public repository does not provide EvoScientist Table 1 30-query outputs."
+      "rerun_path": "Possible replacement rerun candidate, but the public entrypoint is benchmark-instance based and not a drop-in runner for the 30 recovered EvoScientist Table 1 natural-language queries. Requires a pinned adapter or author-provided outputs."
     },
     {
       "name": "InternAgent",

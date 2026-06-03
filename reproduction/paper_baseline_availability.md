@@ -22,7 +22,7 @@ records used by the paper.
 | Baseline | Public entrypoint status | Public entrypoints | Raw Table 1 outputs found | Reproduction implication |
 | --- | --- | --- | --- | --- |
 | Virtual Scientist | not_found | none found | no | Needs author-provided outputs or a separately defined substitute. |
-| AI-Researcher | open_source_runner_candidate | `https://github.com/hkuds/ai-researcher`; `https://novix.science/chat` | no | Runnable candidate, but requires setup, prompt alignment, and new outputs. |
+| AI-Researcher | open_source_runner_candidate | `https://github.com/hkuds/ai-researcher`; `reproduction/ai_researcher_baseline_probe.json`; `https://novix.science/chat` | no | Replacement candidate, but current probe found it is benchmark-instance based, not a drop-in runner for the 30 recovered EvoScientist queries. |
 | InternAgent | open_source_runner_candidate | `https://github.com/InternScience/InternAgent` | no | Runnable candidate, but requires setup, prompt alignment, and new outputs. |
 | AI Scientist-v2 | open_source_runner_candidate | `https://github.com/SakanaAI/AI-Scientist-v2` | no | Runnable candidate, but requires setup, prompt alignment, and new outputs. |
 | Hypogenic | not_found | none found | no | Needs author-provided outputs, service access if applicable, or a substitute. |

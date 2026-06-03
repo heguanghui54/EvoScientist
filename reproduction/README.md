@@ -339,6 +339,9 @@ It defines the shared 30-query output layout, 60 swapped judge records per
 baseline, and the acceptance checks for extending the Direct-DeepSeek comparison
 to available baseline runners. External baseline exports can be normalized with
 `reproduction/import_baseline_outputs.py` before judging.
+The current AI-Researcher public-runner fit check is recorded in
+`reproduction/ai_researcher_baseline_probe.json` and
+`reproduction/ai_researcher_baseline_probe.md`.
 
 The remaining Table 2/Table 3/Figure 2 artifact schemas are pinned in:
 

@@ -81,6 +81,12 @@ def table1_actions(components: dict[str, Any], protocol: dict[str, Any]) -> list
                 ],
             }
         )
+        if baseline == "AI-Researcher":
+            actions[-1]["probe"] = "reproduction/ai_researcher_baseline_probe.json"
+            actions[-1]["note"] = (
+                "Current probe found the public AI-Researcher runner is benchmark-instance based, "
+                "not a drop-in runner for the 30 recovered EvoScientist queries."
+            )
     if not table1["judge_inputs"]["complete"] or not table1["judge_outputs"]["complete"]:
         actions.append(
             {
@@ -210,7 +216,7 @@ def render_markdown(plan: dict[str, Any]) -> str:
                 "",
             ]
         )
-        for key in ["system", "missing_files", "missing_variants", "note"]:
+        for key in ["system", "missing_files", "missing_variants", "probe", "note"]:
             if key in action and action[key]:
                 value = action[key]
                 if isinstance(value, list):

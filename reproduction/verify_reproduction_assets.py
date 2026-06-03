@@ -53,6 +53,7 @@ def main() -> None:
         "aggregate_judge_results.py",
         "run_offline_smoke.py",
         "run_llm_judge.py",
+        "probe_ai_researcher_baseline.py",
         "aggregate_human_labels.py",
         "aggregate_ablation_results.py",
         "aggregate_code_execution.py",
@@ -109,6 +110,19 @@ def main() -> None:
     assert "AI-Researcher" in baseline_inventory["summary"]["runner_candidates_found"]
     baseline_inventory_md = baseline_inventory_md_path.read_text(encoding="utf-8")
     assert "Raw baseline-output packages found: 0" in baseline_inventory_md
+    assert "ai_researcher_baseline_probe.json" in baseline_inventory_md
+    ai_researcher_probe_json_path = ROOT / "ai_researcher_baseline_probe.json"
+    ai_researcher_probe_md_path = ROOT / "ai_researcher_baseline_probe.md"
+    assert ai_researcher_probe_json_path.is_file(), "missing AI-Researcher probe JSON"
+    assert ai_researcher_probe_md_path.is_file(), "missing AI-Researcher probe markdown"
+    ai_researcher_probe = json.loads(ai_researcher_probe_json_path.read_text(encoding="utf-8"))
+    assert ai_researcher_probe["baseline"] == "AI-Researcher"
+    assert ai_researcher_probe["evo_table1_drop_in_status"] == "not_drop_in"
+    assert ai_researcher_probe["signals"]["benchmark_instance_required"] is True
+    assert ai_researcher_probe["signals"]["docker_required"] is True
+    assert ai_researcher_probe["direct_30_query_runner_available"] is False
+    assert "benchmark-instance based" in ai_researcher_probe["reproduction_implication"]
+    assert "not_drop_in" in ai_researcher_probe_md_path.read_text(encoding="utf-8")
     replacement_protocol = json.loads(replacement_protocol_json_path.read_text(encoding="utf-8"))
     assert replacement_protocol["import_tool"]["script"] == "reproduction/import_baseline_outputs.py"
     assert replacement_protocol["judge_protocol"]["records_per_baseline"] == 60
@@ -220,6 +234,7 @@ def main() -> None:
         "Target-system output coverage is complete for proposal-only mode",
         "Replacement-baseline judge pipeline is complete",
         "Replacement baseline protocol is pinned",
+        "AI-Researcher baseline probe is recorded",
         "Paper-level non-Table-1 artifact schemas are pinned",
         "Human-label aggregation is executable",
         "Ablation aggregation is executable",

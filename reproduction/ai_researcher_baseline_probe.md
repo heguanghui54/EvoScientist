@@ -1,0 +1,46 @@
+# AI-Researcher Baseline Probe
+
+Date: 2026-06-04
+Source: https://github.com/HKUDS/AI-Researcher
+Checked HEAD: `f9a6f8480860c193afff600eeffe3defcee8a978`
+
+Drop-in EvoScientist Table 1 runner: `not_drop_in`
+
+## Finding
+
+AI-Researcher is a plausible replacement-baseline runner, but the public entrypoint is benchmark-instance based and not a direct runner for the 30 natural-language EvoScientist Table 1 queries. A paper-exact rerun would require a pinned adapter that maps each recovered query to an AI-Researcher benchmark instance or author-provided raw outputs.
+
+## Signals
+
+- benchmark_instance_required: True
+- docker_required: True
+- reference_papers_required: True
+- idea_count_loop: True
+- missing_required_paths: []
+
+## Entrypoints
+
+- web_gui: python web_ai_researcher.py
+- main_function: main_ai_researcher(input, reference, mode)
+- modes: Detailed Idea Description, Reference-Based Ideation, Paper Generation Agent
+- idea_runner: research_agent/run_infer_idea.py
+
+## Required Environment
+
+- `CATEGORY`
+- `INSTANCE_ID`
+- `TASK_LEVEL`
+- `CONTAINER_NAME`
+- `WORKPLACE_NAME`
+- `CACHE_PATH`
+- `PORT`
+- `MAX_ITER_TIMES`
+- `OPENROUTER_API_KEY`
+- `GITHUB_AI_TOKEN`
+
+## Next Actions
+
+- Do not count the public AI-Researcher repository as paper Table 1 evidence by itself.
+- If using AI-Researcher as a replacement baseline, create per-query benchmark instance JSON files and record the adapter protocol.
+- Run the external system in an isolated checkout/container, then import outputs with reproduction/import_baseline_outputs.py.
+- Judge imported outputs through the existing swapped pairwise judge pipeline.

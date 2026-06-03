@@ -31,6 +31,8 @@ Commands:
 Required evidence: 30 answer.txt files under reproduction/artifacts/idea_outputs/AI-Researcher/
 
 System: AI-Researcher
+Probe: reproduction/ai_researcher_baseline_probe.json
+Note: Current probe found the public AI-Researcher runner is benchmark-instance based, not a drop-in runner for the 30 recovered EvoScientist queries.
 
 Commands:
 
