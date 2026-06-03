@@ -75,9 +75,9 @@ def main() -> None:
     )
     assert "not possible from public artifacts alone" in gap_report["conclusion"]
     full_status = json.loads(full_status_json_path.read_text(encoding="utf-8"))
-    expected_success_ids = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 17, 18, 19, 20, 21, 22, 23, 25, 26, 27, 28, 29, 30]
-    expected_incomplete_ids = [16, 24]
-    assert full_status["full_trajectory_counts"]["successful_final_reports"] == 28
+    expected_success_ids = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30]
+    expected_incomplete_ids = [16]
+    assert full_status["full_trajectory_counts"]["successful_final_reports"] == 29
     assert full_status["audit"]["successful_query_ids"] == expected_success_ids
     assert full_status["audit"]["failed_or_incomplete_query_ids"] == expected_incomplete_ids
     for query_id in expected_success_ids:
@@ -103,17 +103,18 @@ def main() -> None:
     assert full_status["successful_queries"]["query_18"]["artifact_files"]["final_report.md"]["bytes"] >= 17000
     assert "CommentTrojan" in full_status["successful_queries"]["query_22"]["final_report"]["title"]
     assert full_status["successful_queries"]["query_22"]["artifact_files"]["final_report.md"]["bytes"] >= 15000
+    assert "DeCIR-RAG" in full_status["successful_queries"]["query_24"]["final_report"]["title"]
+    assert full_status["successful_queries"]["query_24"]["artifact_files"]["final_report.md"]["bytes"] >= 22000
     assert "Conflict-Aware Multi-Hop Reasoning" in full_status["successful_queries"]["query_25"]["final_report"]["title"]
     assert full_status["successful_queries"]["query_25"]["artifact_files"]["final_report.md"]["bytes"] >= 17000
     assert "Dynamic Alignment-based Curriculum Selection" in full_status["successful_queries"]["query_26"]["final_report"]["title"]
     assert full_status["successful_queries"]["query_26"]["artifact_files"]["final_report.md"]["bytes"] >= 14000
     assert "UniAudio-MoE" in full_status["successful_queries"]["query_30"]["final_report"]["title"]
     assert full_status["successful_queries"]["query_30"]["artifact_files"]["final_report.md"]["bytes"] >= 18000
-    assert full_status["audit"]["counts"]["success"] == 28
+    assert full_status["audit"]["counts"]["success"] == 29
     assert full_status["audit"]["counts"]["timeout"] == 1
-    assert full_status["audit"]["counts"]["failed"] == 1
+    assert full_status["audit"]["counts"].get("failed", 0) == 0
     assert "missing" not in full_status["audit"]["counts"]
-    assert full_status["incomplete_queries"]["query_24"]["status"] == "failed"
     reported = json.loads(reported_path.read_text(encoding="utf-8"))
     for section in [
         "table1_llm_idea_generation",
@@ -156,9 +157,9 @@ def main() -> None:
         "EvoScientist CLI outputs are normalized before judging",
         "Full trajectory audit is executable",
         "Full trajectory reruns are isolated by default",
-        "28 success, 1 timeout, 1 failed, 0 missing",
+        "29 success, 1 timeout, 0 failed, 0 missing",
         "full tool-enabled DeepSeek-backed sweep for all 30 paper queries",
-        "rerun only the non-successful query IDs: 16 and 24",
+        "rerun only the non-successful query ID: 16",
         "not a self-evolving system",
         "Ubuntu GPU Status",
     ]:
