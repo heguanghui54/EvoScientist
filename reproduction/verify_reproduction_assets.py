@@ -43,6 +43,7 @@ def main() -> None:
     assert not missing, f"missing paper assets: {missing}"
     for script in [
         "run_idea_generation.py",
+        "run_direct_baseline.py",
         "build_pairwise_judge_inputs.py",
         "aggregate_judge_results.py",
         "run_offline_smoke.py",
@@ -70,6 +71,8 @@ def main() -> None:
         "Not Yet Paper-Level Reproduction",
         "DeepSeek-backed EvoScientist proposal-only outputs exist",
         "Target-system output coverage is complete for proposal-only mode",
+        "Replacement-baseline judge pipeline is complete",
+        "not a self-evolving system",
         "Ubuntu GPU Status",
     ]:
         assert needle in status_text, f"missing status detail: {needle}"

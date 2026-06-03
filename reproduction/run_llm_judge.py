@@ -7,6 +7,9 @@ JSONL compatible with `aggregate_judge_results.py`.
 Supported providers:
 - google: uses GOOGLE_API_KEY and google-genai.
 - openai: uses OPENAI_API_KEY and openai.chat.completions.
+- deepseek: uses DEEPSEEK_API_KEY/DEEPSEEK_BASE_URL through OpenAI-compatible chat.
+- monica: uses MONICA_API_KEY/MONICA_BASE_URL through OpenAI-compatible chat.
+- openai-compatible: uses API_KEY/BASE_URL through OpenAI-compatible chat.
 - mock: deterministic local scoring for parser/pipeline tests only.
 """
 
@@ -23,6 +26,7 @@ from typing import Any
 
 
 ROOT = Path(__file__).resolve().parent
+ENV_FILE = Path.home() / ".codex" / "env"
 DIMENSIONS = ["Clarity", "Novelty", "Feasibility", "Relevance"]
 SYSTEM_PROMPT = (
     "You are an AI analysis engine specializing in the comparative evaluation "
@@ -30,6 +34,22 @@ SYSTEM_PROMPT = (
     "comparison based on a user's research goal and two competing AI-generated "
     "ideas."
 )
+
+
+def load_env_file(path: Path = ENV_FILE) -> None:
+    if not path.is_file():
+        return
+    for raw_line in path.read_text(encoding="utf-8").splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        if line.startswith("export "):
+            line = line[len("export ") :].strip()
+        key, value = line.split("=", 1)
+        key = key.strip()
+        value = value.strip().strip("'\"")
+        if key and key not in os.environ:
+            os.environ[key] = value
 
 
 def make_user_prompt(record: dict[str, Any]) -> str:
@@ -173,6 +193,35 @@ def call_openai(record: dict[str, Any], model: str, temperature: float) -> dict[
     return extract_json_object(content)
 
 
+def call_openai_compatible(
+    record: dict[str, Any],
+    model: str,
+    temperature: float,
+    api_key_env: str,
+    base_url_env: str,
+) -> dict[str, Any]:
+    api_key = os.environ.get(api_key_env)
+    base_url = os.environ.get(base_url_env)
+    if not api_key:
+        raise RuntimeError(f"{api_key_env} is not set")
+    if not base_url:
+        raise RuntimeError(f"{base_url_env} is not set")
+    from openai import OpenAI
+
+    client = OpenAI(api_key=api_key, base_url=base_url)
+    response = client.chat.completions.create(
+        model=model,
+        temperature=temperature,
+        response_format={"type": "json_object"},
+        messages=[
+            {"role": "system", "content": SYSTEM_PROMPT},
+            {"role": "user", "content": make_user_prompt(record)},
+        ],
+    )
+    content = response.choices[0].message.content or ""
+    return extract_json_object(content)
+
+
 def judge_record(
     record: dict[str, Any],
     provider: str,
@@ -185,6 +234,16 @@ def judge_record(
         payload = call_google(record, model, temperature)
     elif provider == "openai":
         payload = call_openai(record, model, temperature)
+    elif provider == "deepseek":
+        payload = call_openai_compatible(
+            record, model, temperature, "DEEPSEEK_API_KEY", "DEEPSEEK_BASE_URL"
+        )
+    elif provider == "monica":
+        payload = call_openai_compatible(
+            record, model, temperature, "MONICA_API_KEY", "MONICA_BASE_URL"
+        )
+    elif provider == "openai-compatible":
+        payload = call_openai_compatible(record, model, temperature, "API_KEY", "BASE_URL")
     else:
         raise ValueError(f"unsupported provider: {provider}")
     validate_scores(payload)
@@ -216,7 +275,11 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--input", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
-    parser.add_argument("--provider", choices=["google", "openai", "mock"], default="google")
+    parser.add_argument(
+        "--provider",
+        choices=["google", "openai", "deepseek", "monica", "openai-compatible", "mock"],
+        default="google",
+    )
     parser.add_argument("--model", default=None)
     parser.add_argument("--temperature", type=float, default=0.0)
     parser.add_argument("--limit", type=int, default=None)
@@ -227,8 +290,12 @@ def main() -> None:
     default_models = {
         "google": "gemini-3-flash",
         "openai": "gpt-5-mini",
+        "deepseek": "deepseek-v4-flash",
+        "monica": "gpt-5-mini",
+        "openai-compatible": "gpt-5-mini",
         "mock": "mock-judge-v1",
     }
+    load_env_file()
     model = args.model or default_models[args.provider]
     args.output.parent.mkdir(parents=True, exist_ok=True)
     done = load_done(args.output) if args.resume else set()

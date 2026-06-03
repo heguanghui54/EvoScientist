@@ -19,6 +19,11 @@ sub-agent prompts, and built-in skills. It does not include a standalone
 `experiments/` package with the paper's full query set, baseline outputs, LLM
 judge inputs, human labels, or leaderboard submission artifacts.
 
+This reproduction harness is not itself a self-evolving research system. It is
+the experiment scaffold: query recovery, output layout, baseline generation,
+pairwise judge inputs, scoring, aggregation, and audit checks. EvoScientist is
+the self-evolving agent under test; the harness measures it.
+
 ## Completed Locally
 
 All commands below were run from:
@@ -187,8 +192,57 @@ Build pairwise judge inputs and aggregate judge results:
 ```
 
 `run_llm_judge.py` also supports `--provider openai` and `--provider mock`.
-The mock provider is for local parser/pipeline tests only; it is not a paper
-evaluation.
+It additionally supports OpenAI-compatible `--provider deepseek`, `--provider
+monica`, and `--provider openai-compatible`. The mock provider is for local
+parser/pipeline tests only; it is not a paper evaluation.
+
+Generate a reproducible replacement baseline:
+
+```bash
+.venv/bin/python reproduction/run_direct_baseline.py \
+  --limit 30 \
+  --resume \
+  --output-dir reproduction/artifacts/idea_outputs/Direct-DeepSeek
+```
+
+`Direct-DeepSeek` is not one of the paper's seven original baselines. It is a
+plain direct-LLM control that uses the same recovered queries without
+EvoScientist's agent graph, memory, evolution, tools, or shell access. It lets
+the evaluation pipeline produce a real, auditable comparison while the original
+baseline outputs remain unavailable.
+
+The completed replacement-baseline comparison is:
+
+```bash
+.venv/bin/python reproduction/build_pairwise_judge_inputs.py \
+  --systems-root reproduction/artifacts/idea_outputs \
+  --baseline Direct-DeepSeek \
+  --output reproduction/artifacts/judge_inputs/evosci_vs_direct_deepseek.jsonl
+
+.venv/bin/python reproduction/run_llm_judge.py \
+  --provider deepseek \
+  --model deepseek-v4-flash \
+  --input reproduction/artifacts/judge_inputs/evosci_vs_direct_deepseek.jsonl \
+  --output reproduction/artifacts/judge_outputs/evosci_vs_direct_deepseek_deepseek.jsonl \
+  --resume
+
+.venv/bin/python reproduction/aggregate_judge_results.py \
+  --input reproduction/artifacts/judge_outputs/evosci_vs_direct_deepseek_deepseek.jsonl \
+  --output-csv reproduction/artifacts/tables/evosci_vs_direct_deepseek_deepseek.csv \
+  --output-json reproduction/artifacts/tables/evosci_vs_direct_deepseek_deepseek.json
+```
+
+The audit for this replacement comparison is complete: 30 queries, one
+replacement baseline, 60 swapped-order pairwise judge records, 60 DeepSeek judge
+outputs, and a Win/Tie/Lose aggregate table. The observed DeepSeek-judge table
+from EvoScientist's perspective is:
+
+| Baseline | Dimension | N | Win | Tie | Lose | Win % | Tie % | Lose % |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Direct-DeepSeek | Clarity | 60 | 24 | 2 | 34 | 40.00 | 3.33 | 56.67 |
+| Direct-DeepSeek | Novelty | 60 | 50 | 1 | 9 | 83.33 | 1.67 | 15.00 |
+| Direct-DeepSeek | Feasibility | 60 | 17 | 1 | 42 | 28.33 | 1.67 | 70.00 |
+| Direct-DeepSeek | Relevance | 60 | 29 | 19 | 12 | 48.33 | 31.67 | 20.00 |
 
 Run an offline end-to-end smoke test of the evaluation pipeline:
 
@@ -247,8 +301,8 @@ To reproduce the paper experiments rather than only the software system:
 - paper-matched LLM provider access if exact model reproduction is required,
   especially the paper's Gemini/Claude/Gemini-judge setup;
 - optionally a Tavily key for web-search-based research-agent behavior;
-- real EvoScientist outputs for all 30 recovered paper queries;
-- baseline outputs for the seven compared systems, or runnable baseline setups;
+- full tool-enabled EvoScientist trajectories for all 30 recovered paper queries;
+- baseline outputs for the seven paper systems, or runnable baseline setups;
 - the LLM-as-judge prompt/input pairs and model access for `gemini-3-flash`;
 - human-evaluation labels if reproducing the human agreement numbers;
 - a defined budget, because full idea generation, code execution, pairwise

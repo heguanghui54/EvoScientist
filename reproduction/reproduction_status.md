@@ -24,6 +24,8 @@ and paper-level experimental reproduction.
 | Offline end-to-end evaluation plumbing works | `run_offline_smoke.py`; `SMOKE_REPORT.md` | Verified |
 | DeepSeek-backed EvoScientist proposal-only outputs exist | Ubuntu batch with `--proposal-only --stream-logs`; manifest has 30 `ok` outputs | Verified |
 | Target-system output coverage is complete for proposal-only mode | `audit_reproduction_artifacts.py --artifacts-root reproduction/artifacts/remote_fetch` reports EvoScientist 30/30 present | Verified |
+| Replacement direct-LLM baseline outputs exist | `Direct-DeepSeek` baseline has answer files for 30/30 paper queries | Verified |
+| Replacement-baseline judge pipeline is complete | EvoScientist vs `Direct-DeepSeek`: 60 swapped pairwise records, 60 DeepSeek judge outputs, aggregate table, audit complete | Verified |
 
 ## Not Yet Paper-Level Reproduction
 
@@ -32,8 +34,8 @@ and paper-level experimental reproduction.
 | Full EvoScientist trajectories for all 30 paper queries | Real tool-enabled RA/EA/EMA trajectory logs per query | Proposal-only outputs exist for 30/30; full tool-enabled run still pending |
 | Paper-matched model settings | Gemini-2.5-Pro, Claude-4.5-Haiku, Gemini judge access | DeepSeek smoke works, but paper-matched Gemini/Claude credentials are not configured in EvoScientist |
 | Literature-retrieval behavior | Semantic Scholar/Tavily-backed run logs | No search key/tool configuration for live agent run |
-| Baseline comparison outputs | Virtual Scientist, AI-Researcher, InternAgent, AI Scientist-v2, Hypogenic, Novix, K-Dense outputs | Not included in public repo; must run/import separately |
-| LLM-as-judge numeric table | Real judge JSONL from `gemini-3-flash` or equivalent stated replacement | Runner exists; DeepSeek/Monica env is available, Gemini judge key still not confirmed |
+| Paper baseline comparison outputs | Virtual Scientist, AI-Researcher, InternAgent, AI Scientist-v2, Hypogenic, Novix, K-Dense outputs | Original baseline outputs are not included in public repo; a stated replacement baseline `Direct-DeepSeek` has been run |
+| Paper LLM-as-judge numeric table | Real judge JSONL from `gemini-3-flash` for the seven paper baselines | DeepSeek judge table exists for the replacement baseline; Gemini judge key still not confirmed |
 | Human agreement numbers | PhD annotator labels | Not public in this checkout |
 | Code-generation success table | Generated code trajectories and execution logs | Requires real proposal generation first |
 | Ablation table | Runs with IDE/IVE/all removed or equivalent toggles | Requires real agent runs and ablation implementation plan |
@@ -69,6 +71,9 @@ Remote target:
 - Note: this confirms the API/agent path across the paper query set, but it
   intentionally avoids shell/tool execution and is not the paper's full
   RA/EA/EMA trajectory
+- Harness note: the reproduction harness is not a self-evolving system. It is
+  an audit/evaluation scaffold around EvoScientist, which is the self-evolving
+  agent under test.
 
 ## Next Real Experiment Step
 
@@ -117,6 +122,26 @@ Then run the real judge and aggregation steps:
 
 The current real artifact audit is still incomplete. For Table 1 it expects 420
 pairwise judge records: 30 queries x 7 baselines x 2 swapped orders.
+
+For the completed replacement-baseline comparison, the audit is complete:
+
+```bash
+.venv/bin/python reproduction/audit_reproduction_artifacts.py \
+  --artifacts-root reproduction/artifacts \
+  --baseline Direct-DeepSeek \
+  --judge-inputs reproduction/artifacts/judge_inputs/evosci_vs_direct_deepseek.jsonl \
+  --judge-outputs reproduction/artifacts/judge_outputs/evosci_vs_direct_deepseek_deepseek.jsonl \
+  --aggregate-json reproduction/artifacts/tables/evosci_vs_direct_deepseek_deepseek.json
+```
+
+Observed DeepSeek judge result from EvoScientist's perspective:
+
+| Baseline | Dimension | N | Win | Tie | Lose | Win % | Tie % | Lose % |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Direct-DeepSeek | Clarity | 60 | 24 | 2 | 34 | 40.00 | 3.33 | 56.67 |
+| Direct-DeepSeek | Novelty | 60 | 50 | 1 | 9 | 83.33 | 1.67 | 15.00 |
+| Direct-DeepSeek | Feasibility | 60 | 17 | 1 | 42 | 28.33 | 1.67 | 70.00 |
+| Direct-DeepSeek | Relevance | 60 | 29 | 19 | 12 | 48.33 | 31.67 | 20.00 |
 
 ## External Artifact Check
 
