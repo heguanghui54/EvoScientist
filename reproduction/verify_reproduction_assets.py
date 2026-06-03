@@ -46,6 +46,8 @@ def main() -> None:
         "run_direct_baseline.py",
         "normalize_system_outputs.py",
         "audit_full_trajectories.py",
+        "refresh_full_trajectory_status.py",
+        "audit_paper_level_completion.py",
         "build_pairwise_judge_inputs.py",
         "aggregate_judge_results.py",
         "run_offline_smoke.py",
@@ -73,47 +75,22 @@ def main() -> None:
     )
     assert "not possible from public artifacts alone" in gap_report["conclusion"]
     full_status = json.loads(full_status_json_path.read_text(encoding="utf-8"))
-    assert full_status["manifest_status"] == "ok"
-    assert full_status["query_id"] == 1
-    assert "CrossLingual-RAG" in full_status["final_report"]["title"]
-    assert full_status["artifact_files"]["final_report.md"]["bytes"] >= 10000
-    assert full_status["full_trajectory_counts"]["successful_final_reports"] == 17
-    assert len(full_status["query_2_attempts"]) == 3
-    assert "clarification" in full_status["query_2_attempts"][0]["result"]
-    assert full_status["query_2_success"]["artifact_files"]["final_report.md"]["bytes"] >= 10000
-    assert "TraceRoute" in full_status["query_2_success"]["final_report"]["title"]
-    assert full_status["query_3_success"]["artifact_files"]["final_report.md"]["bytes"] >= 10000
-    assert "Multi-Perspective" in full_status["query_3_success"]["final_report"]["title"]
-    assert full_status["query_5_success"]["artifact_files"]["final_report.md"]["bytes"] >= 10000
-    assert "GroundedLit" in full_status["query_5_success"]["final_report"]["title"]
-    assert full_status["query_6_success"]["artifact_files"]["final_report.md"]["bytes"] >= 10000
-    assert "Low-Resource ASR" in full_status["query_6_success"]["final_report"]["title"]
-    assert full_status["query_8_success"]["artifact_files"]["final_report.md"]["bytes"] >= 10000
-    assert "VeriPlan" in full_status["query_8_success"]["final_report"]["title"]
-    assert full_status["query_10_success"]["artifact_files"]["final_report.md"]["bytes"] >= 10000
-    assert "Text-to-SQL" in full_status["query_10_success"]["final_report"]["title"]
-    assert full_status["query_11_success"]["artifact_files"]["final_report.md"]["bytes"] >= 10000
-    assert "Capability Graph" in full_status["query_11_success"]["final_report"]["title"]
-    assert full_status["query_13_success"]["artifact_files"]["final_report.md"]["bytes"] >= 10000
-    assert "ExeCoT" in full_status["query_13_success"]["final_report"]["title"]
-    assert full_status["query_15_success"]["artifact_files"]["final_report.md"]["bytes"] >= 10000
-    assert "Context-Adaptive Gender Debiasing" in full_status["query_15_success"]["final_report"]["title"]
-    assert full_status["query_19_success"]["artifact_files"]["final_report.md"]["bytes"] >= 10000
-    assert "Cost-Efficient LLM Leaderboards" in full_status["query_19_success"]["final_report"]["title"]
-    assert full_status["query_20_success"]["artifact_files"]["final_report.md"]["bytes"] >= 10000
-    assert "Multi-Axis Decomposed Evaluation Framework" in full_status["query_20_success"]["final_report"]["title"]
-    assert full_status["query_21_success"]["artifact_files"]["final_report.md"]["bytes"] >= 10000
-    assert "False-Positive Disparities" in full_status["query_21_success"]["final_report"]["title"]
-    assert full_status["query_23_success"]["artifact_files"]["final_report.md"]["bytes"] >= 10000
-    assert "CodeSemEval" in full_status["query_23_success"]["final_report"]["title"]
-    assert full_status["query_27_success"]["artifact_files"]["final_report.md"]["bytes"] >= 10000
-    assert "Position-Decontaminated Attention" in full_status["query_27_success"]["final_report"]["title"]
-    assert full_status["query_28_success"]["artifact_files"]["final_report.md"]["bytes"] >= 10000
-    assert "Preference Bias Amplification" in full_status["query_28_success"]["final_report"]["title"]
-    assert full_status["query_29_success"]["artifact_files"]["final_report.md"]["bytes"] >= 10000
-    assert "Specification Gaming" in full_status["query_29_success"]["final_report"]["title"]
-    assert full_status["audit"]["counts"]["success"] == 17
-    assert full_status["audit"]["counts"]["timeout"] == 12
+    expected_success_ids = [1, 2, 3, 4, 5, 6, 8, 10, 11, 13, 15, 19, 20, 21, 23, 27, 28, 29]
+    expected_incomplete_ids = [7, 9, 12, 14, 16, 17, 18, 22, 24, 25, 26, 30]
+    assert full_status["full_trajectory_counts"]["successful_final_reports"] == 18
+    assert full_status["audit"]["successful_query_ids"] == expected_success_ids
+    assert full_status["audit"]["failed_or_incomplete_query_ids"] == expected_incomplete_ids
+    for query_id in expected_success_ids:
+        item = full_status["successful_queries"][f"query_{query_id:02d}"]
+        assert item["artifact_files"]["final_report.md"]["bytes"] >= 10000
+        assert item["final_report"]["title"], f"missing title for query {query_id}"
+    assert "CrossLingual-RAG" in full_status["successful_queries"]["query_01"]["final_report"]["title"]
+    assert "TraceRoute" in full_status["successful_queries"]["query_02"]["final_report"]["title"]
+    assert "Multi-Perspective" in full_status["successful_queries"]["query_03"]["final_report"]["title"]
+    assert "TrialMatch-Agents" in full_status["successful_queries"]["query_04"]["final_report"]["title"]
+    assert full_status["successful_queries"]["query_04"]["artifact_files"]["final_report.md"]["bytes"] >= 19000
+    assert full_status["audit"]["counts"]["success"] == 18
+    assert full_status["audit"]["counts"]["timeout"] == 11
     assert full_status["audit"]["counts"]["failed"] == 1
     assert "missing" not in full_status["audit"]["counts"]
     assert full_status["incomplete_queries"]["query_24"]["status"] == "failed"
@@ -162,9 +139,9 @@ def main() -> None:
         "EvoScientist CLI outputs are normalized before judging",
         "Full trajectory audit is executable",
         "Full trajectory reruns are isolated by default",
-        "17 success, 12 timeout, 1 failed, 0 missing",
+        "18 success, 11 timeout, 1 failed, 0 missing",
         "full tool-enabled DeepSeek-backed sweep for all 30 paper queries",
-        "rerun only the non-successful query IDs: 4, 7, 9, 12, 14, 16, 17, 18, 22, 24",
+        "rerun only the non-successful query IDs: 7, 9, 12, 14, 16, 17, 18, 22, 24",
         "not a self-evolving system",
         "Ubuntu GPU Status",
     ]:

@@ -180,7 +180,13 @@ Audit full trajectories with:
   --output-json reproduction/artifacts/remote_fetch/full_trajectories/full_trajectory_audit.json
 ```
 
-The current full-trajectory audit is incomplete: 17 successes, 12 timeouts, and
+Refresh the tracked full-trajectory status files from the latest audit snapshot:
+
+```bash
+.venv/bin/python reproduction/refresh_full_trajectory_status.py
+```
+
+The current full-trajectory audit is incomplete: 18 successes, 11 timeouts, and
 1 failed query. No full-trajectory query artifacts are still missing. This is
 real agent evidence, but it is not yet 30/30 successful paper-matched
 EvoScientist coverage.
@@ -349,7 +355,7 @@ evaluation, Table 3 ablations, and Figure 2 code-execution evidence:
 ```
 
 The latest completion audit is intentionally `incomplete`: full trajectory
-attempts exist for all 30 queries, but only 17 have qualifying final reports,
+attempts exist for all 30 queries, but only 18 have qualifying final reports,
 and the raw paper baseline, judge, human-label, ablation, and code-execution
 artifacts are still absent.
 
@@ -373,7 +379,7 @@ EVOSCI_QUERY_EXTRA_ARGS='--proposal-only --stream-logs' \
 ```
 
 Full tool-enabled DeepSeek-backed attempts now exist for all 30 recovered paper
-queries. The audit has 17 qualifying `final_report.md` successes, 12 idle
+queries. The audit has 18 qualifying `final_report.md` successes, 11 idle
 timeouts, and 1 APIConnectionError failure, with no missing query artifacts.
 
 The remaining blocker is paper-level coverage: 30/30 successful paper-matched
@@ -388,8 +394,8 @@ To reproduce the paper experiments rather than only the software system:
   especially the paper's Gemini/Claude/Gemini-judge setup;
 - optionally a Tavily key for web-search-based research-agent behavior;
 - full successful tool-enabled EvoScientist trajectories for all 30 recovered
-  paper queries; current full attempts cover all 30, but only 17 have qualifying
-  final reports, 12 timed out, and 1 failed with `APIConnectionError`;
+  paper queries; current full attempts cover all 30, but only 18 have qualifying
+  final reports, 11 timed out, and 1 failed with `APIConnectionError`;
 - baseline outputs for the seven paper systems, or runnable baseline setups;
 - the LLM-as-judge prompt/input pairs and model access for `gemini-3-flash`;
 - human-evaluation labels if reproducing the human agreement numbers;

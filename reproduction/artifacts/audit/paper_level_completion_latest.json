@@ -7,14 +7,13 @@
       "status_file": "reproduction/full_trajectory_status.json",
       "exists": true,
       "query_count": 30,
-      "success_count": 17,
+      "success_count": 18,
       "counts": {
-        "success": 17,
-        "timeout": 12,
+        "success": 18,
+        "timeout": 11,
         "failed": 1
       },
       "failed_or_incomplete_query_ids": [
-        4,
         7,
         9,
         12,

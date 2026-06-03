@@ -1,77 +1,53 @@
 {
   "date": "2026-06-04",
   "purpose": "Record full tool-enabled EvoScientist trajectory reproduction attempts for paper queries.",
-  "query_id": 1,
-  "topic": "Machine translation",
-  "goal": "Generate a research proposal on low-resource machine translation.",
-  "mode": "full tool-enabled EvoScientist run, not proposal-only",
   "remote_host": "ubuntu-heshi",
-  "command": "EVOSCI_QUERY_TIMEOUT=900 EVOSCI_QUERY_EXTRA_ARGS='--stream-logs --output-dir reproduction/artifacts/full_trajectories/EvoScientist' reproduction/ssh_ubuntu_run.sh query-bg 1",
-  "manifest_status": "ok",
-  "returncode": 0,
-  "thread_id": "044b14e9",
-  "output_dir": "reproduction/artifacts/remote_fetch/full_trajectories/EvoScientist/query_01",
-  "artifact_files": {
-    "stdout.txt": {
-      "exists": true,
-      "bytes": 10847
+  "audit": {
+    "generated_from": "reproduction/artifacts/remote_fetch/full_trajectories/full_trajectory_audit_latest.json",
+    "status": "incomplete",
+    "query_count": 30,
+    "counts": {
+      "success": 18,
+      "timeout": 11,
+      "failed": 1
     },
-    "stderr.txt": {
-      "exists": true,
-      "bytes": 251
-    },
-    "prompt.txt": {
-      "exists": true,
-      "bytes": 66
-    },
-    "query.json": {
-      "exists": true,
-      "bytes": 126
-    },
-    "answer.txt": {
-      "exists": true,
-      "bytes": 4208
-    },
-    "final_report.md": {
-      "exists": true,
-      "bytes": 16755
-    }
-  },
-  "usage": {
-    "input_tokens": 433923,
-    "output_tokens": 10123
-  },
-  "trace_indicators": {
-    "tool_call_lines": 25,
-    "subagent_completion_lines": 2,
-    "mentions_research_agent": true,
-    "mentions_final_report_write": true
-  },
-  "final_report": {
-    "title": "CrossLingual-RAG: Cross-Lingual Retrieval-Augmented Generation for Extremely Low-Resource Machine Translation",
-    "bytes": 16755,
-    "sections_detected": [
-      "Summary & Goals",
-      "Related Work & Gaps",
-      "Proposed Method",
-      "Experimental Design",
-      "Evaluation Protocol",
-      "Risks & Mitigations",
-      "Timeline",
-      "Contributions",
-      "References"
+    "successful_query_ids": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      8,
+      10,
+      11,
+      13,
+      15,
+      19,
+      20,
+      21,
+      23,
+      27,
+      28,
+      29
+    ],
+    "failed_or_incomplete_query_ids": [
+      7,
+      9,
+      12,
+      14,
+      16,
+      17,
+      18,
+      22,
+      24,
+      25,
+      26,
+      30
     ]
   },
-  "limitations": [
-    "Queries 1, 2, 3, 5, 6, 8, 10, 11, 13, 15, 19, 20, 21, 23, 27, 28, and 29 have successful full tool-enabled trajectories with final_report.md.",
-    "Queries 4, 7, 9, 12, 14, 16, 17, 18, 22, 25, 26, and 30 idle-timed-out after 600 seconds without log growth in the fetched audit snapshot.",
-    "Query 24 failed with APIConnectionError after partial research-agent progress and no final_report.md; the stuck child process was terminated so the batch could continue.",
-    "The run used DeepSeek configuration rather than the paper-matched Gemini/Claude setup.",
-    "Tavily search was unavailable, so the research-agent behavior may differ from paper settings.",
-    "This is still not the full 7-baseline paper-level Table 1 reproduction."
-  ],
   "full_trajectory_counts": {
-    "successful_final_reports": 17,
+    "successful_final_reports": 18,
     "attempted_queries": [
       1,
       2,
@@ -106,1093 +82,1431 @@
     ],
     "pending_queries": []
   },
-  "query_2_attempts": [
-    {
-      "mode": "full tool-enabled, original paper query",
-      "result": "returned clarification request, not a proposal",
-      "returncode": 0,
-      "final_report_collected": false,
-      "thread_id": "9698ee49",
-      "evidence": "reproduction/artifacts/remote_fetch/full_trajectories/EvoScientist/query_02/stdout.txt before force-proposal rerun"
+  "successful_queries": {
+    "query_01": {
+      "query_id": 1,
+      "topic": "Machine translation",
+      "mode": "full tool-enabled with isolated --mode run workspace",
+      "remote_host": "ubuntu-heshi",
+      "command": "EVOSCI_QUERY_TIMEOUT=900 EVOSCI_QUERY_EXTRA_ARGS='--stream-logs --output-dir reproduction/artifacts/full_trajectories/EvoScientist' reproduction/ssh_ubuntu_run.sh query-bg 1",
+      "manifest_status": "ok",
+      "thread_id": "044b14e9",
+      "workspace": "EvoScientist-repro",
+      "output_dir": "reproduction/artifacts/remote_fetch/full_trajectories/EvoScientist/query_01",
+      "artifact_files": {
+        "stdout.txt": {
+          "exists": true,
+          "bytes": 10847
+        },
+        "stderr.txt": {
+          "exists": true,
+          "bytes": 251
+        },
+        "answer.txt": {
+          "exists": true,
+          "bytes": 4208
+        },
+        "final_report.md": {
+          "exists": true,
+          "bytes": 16755
+        },
+        "query.json": {
+          "exists": true,
+          "bytes": 126
+        }
+      },
+      "usage": {
+        "input_tokens": 433923,
+        "output_tokens": 10123
+      },
+      "trace_indicators": {
+        "tool_call_lines": 25,
+        "subagent_completion_lines": 2,
+        "mentions_research_agent": true,
+        "mentions_final_report_write": true
+      },
+      "final_report": {
+        "title": "CrossLingual-RAG: Cross-Lingual Retrieval-Augmented Generation for Extremely Low-Resource Machine Translation",
+        "bytes": 16755,
+        "sections_detected": [
+          "Problem",
+          "Method",
+          "Benchmark",
+          "Evaluation",
+          "Baselines",
+          "Ablations",
+          "Risks"
+        ]
+      }
     },
-    {
-      "mode": "full tool-enabled with --force-proposal",
-      "result": "hung with no stdout progress after startup; manually terminated after about 17 minutes",
-      "remote_pid": "353333",
-      "child_pid": "353335",
-      "final_report_collected": false,
-      "thread_id": "d00064c1",
-      "evidence": "remote status showed process running and only startup prompt in stdout"
-    },
-    {
-      "mode": "full tool-enabled with --force-proposal, isolated --mode run, corrected artifact collection",
-      "result": "completed and produced a qualifying final_report.md in runs/repro-query-02",
-      "returncode": 0,
-      "final_report_collected": true,
+    "query_02": {
+      "query_id": 2,
+      "topic": "Software engineering",
+      "mode": "full tool-enabled with isolated --mode run workspace",
+      "remote_host": "ubuntu-heshi",
+      "command": "EVOSCI_QUERY_TIMEOUT=1200 EVOSCI_QUERY_EXTRA_ARGS='--force-proposal --stream-logs --output-dir reproduction/artifacts/full_trajectories/EvoScientist' reproduction/ssh_ubuntu_run.sh query-bg 2",
+      "manifest_status": "ok",
       "thread_id": "eb03b304",
+      "workspace": "runs/repro-query-02",
+      "output_dir": "reproduction/artifacts/remote_fetch/full_trajectories/EvoScientist/query_02",
+      "artifact_files": {
+        "stdout.txt": {
+          "exists": true,
+          "bytes": 8044
+        },
+        "stderr.txt": {
+          "exists": true,
+          "bytes": 251
+        },
+        "answer.txt": {
+          "exists": false,
+          "bytes": 0
+        },
+        "final_report.md": {
+          "exists": true,
+          "bytes": 12736
+        },
+        "query.json": {
+          "exists": true,
+          "bytes": 130
+        }
+      },
       "usage": {
         "input_tokens": 154979,
         "output_tokens": 5723
       },
-      "evidence": "reproduction/artifacts/remote_fetch/full_trajectories/EvoScientist/query_02/final_report.md"
-    }
-  ],
-  "audit": {
-    "generated_from": "reproduction/artifacts/remote_fetch/full_trajectories/full_trajectory_audit_latest.json",
-    "status": "incomplete",
-    "query_count": 30,
-    "counts": {
-      "success": 17,
-      "timeout": 12,
-      "failed": 1
-    },
-    "successful_query_ids": [
-      1,
-      2,
-      3,
-      5,
-      6,
-      8,
-      10,
-      11,
-      13,
-      15,
-      19,
-      20,
-      21,
-      23,
-      27,
-      28,
-      29
-    ],
-    "failed_or_incomplete_query_ids": [
-      4,
-      7,
-      9,
-      12,
-      14,
-      16,
-      17,
-      18,
-      22,
-      25,
-      26,
-      30,
-      24
-    ]
-  },
-  "query_2_success": {
-    "query_id": 2,
-    "topic": "Software engineering",
-    "goal": "Help me generate a research proposal on AI for software engineering.",
-    "mode": "full tool-enabled with --force-proposal and isolated --mode run workspace",
-    "remote_host": "ubuntu-heshi",
-    "command": "EVOSCI_QUERY_TIMEOUT=1200 EVOSCI_QUERY_EXTRA_ARGS='--force-proposal --stream-logs --output-dir reproduction/artifacts/full_trajectories/EvoScientist' reproduction/ssh_ubuntu_run.sh query-bg 2",
-    "manifest_status": "ok",
-    "returncode": 0,
-    "thread_id": "eb03b304",
-    "workspace": "runs/repro-query-02",
-    "output_dir": "reproduction/artifacts/remote_fetch/full_trajectories/EvoScientist/query_02",
-    "artifact_files": {
-      "stdout.txt": {
-        "exists": true,
-        "bytes": 8044
+      "trace_indicators": {
+        "tool_call_lines": 8,
+        "subagent_completion_lines": 2,
+        "mentions_research_agent": true,
+        "mentions_final_report_write": true
       },
-      "stderr.txt": {
-        "exists": true,
-        "bytes": 251
-      },
-      "prompt.txt": {
-        "exists": true,
-        "bytes": 672
-      },
-      "query.json": {
-        "exists": true,
-        "bytes": 130
-      },
-      "answer.txt": {
-        "exists": false,
-        "bytes": 0
-      },
-      "final_report.md": {
-        "exists": true,
-        "bytes": 12736
+      "final_report": {
+        "title": "TraceRoute: Execution-Trace-Guided Repository-Level Bug Repair with Structured Data Flow Prompts",
+        "bytes": 12736,
+        "sections_detected": [
+          "Problem",
+          "Hypothesis",
+          "Method",
+          "Dataset",
+          "Benchmark",
+          "Evaluation",
+          "Baselines",
+          "Ablations",
+          "Failure"
+        ]
       }
     },
-    "usage": {
-      "input_tokens": 154979,
-      "output_tokens": 5723
-    },
-    "final_report": {
-      "title": "TraceRoute: Execution-Trace-Guided Repository-Level Bug Repair with Structured Data Flow Prompts",
-      "bytes": 12736,
-      "sections_detected": [
-        "Problem",
-        "Hypothesis",
-        "Method",
-        "Dataset",
-        "Benchmark",
-        "Evaluation",
-        "Baselines",
-        "Ablations",
-        "Failure"
-      ]
-    }
-  },
-  "query_3_success": {
-    "query_id": 3,
-    "topic": "LLM evaluation",
-    "goal": "Generate a research proposal on how to address the accuracy issues of automated evaluation for Large Language Models.",
-    "mode": "full tool-enabled with --force-proposal and isolated --mode run workspace",
-    "remote_host": "ubuntu-heshi",
-    "command": "EVOSCI_QUERY_TIMEOUT=1200 EVOSCI_QUERY_EXTRA_ARGS='--force-proposal --stream-logs --output-dir reproduction/artifacts/full_trajectories/EvoScientist' reproduction/ssh_ubuntu_run.sh query-bg 3",
-    "manifest_status": "ok",
-    "returncode": 0,
-    "thread_id": "1a49947f",
-    "workspace": "runs/repro-query-03",
-    "output_dir": "reproduction/artifacts/remote_fetch/full_trajectories/EvoScientist/query_03",
-    "artifact_files": {
-      "stdout.txt": {
-        "exists": true,
-        "bytes": 8789
+    "query_03": {
+      "query_id": 3,
+      "topic": "LLM evaluation",
+      "mode": "full tool-enabled with isolated --mode run workspace",
+      "remote_host": "ubuntu-heshi",
+      "command": "EVOSCI_QUERY_TIMEOUT=1200 EVOSCI_QUERY_EXTRA_ARGS='--force-proposal --stream-logs --output-dir reproduction/artifacts/full_trajectories/EvoScientist' reproduction/ssh_ubuntu_run.sh query-bg 3",
+      "manifest_status": "ok",
+      "thread_id": "1a49947f",
+      "workspace": "runs/repro-query-03",
+      "output_dir": "reproduction/artifacts/remote_fetch/full_trajectories/EvoScientist/query_03",
+      "artifact_files": {
+        "stdout.txt": {
+          "exists": true,
+          "bytes": 8789
+        },
+        "stderr.txt": {
+          "exists": true,
+          "bytes": 251
+        },
+        "answer.txt": {
+          "exists": false,
+          "bytes": 0
+        },
+        "final_report.md": {
+          "exists": true,
+          "bytes": 14291
+        },
+        "query.json": {
+          "exists": true,
+          "bytes": 173
+        }
       },
-      "stderr.txt": {
-        "exists": true,
-        "bytes": 251
+      "usage": {
+        "input_tokens": 170254,
+        "output_tokens": 6251
       },
-      "prompt.txt": {
-        "exists": true,
-        "bytes": 721
+      "trace_indicators": {
+        "tool_call_lines": 9,
+        "subagent_completion_lines": 2,
+        "mentions_research_agent": true,
+        "mentions_final_report_write": true
       },
-      "query.json": {
-        "exists": true,
-        "bytes": 173
-      },
-      "answer.txt": {
-        "exists": false,
-        "bytes": 0
-      },
-      "final_report.md": {
-        "exists": true,
-        "bytes": 14291
+      "final_report": {
+        "title": "Research Proposal: Multi-Perspective Calibrated Ensemble for Debiased LLM-as-Judge Evaluation",
+        "bytes": 14291,
+        "sections_detected": [
+          "Problem",
+          "Hypothesis",
+          "Method",
+          "Dataset",
+          "Benchmark",
+          "Evaluation",
+          "Baselines",
+          "Ablations",
+          "Failure"
+        ]
       }
     },
-    "usage": {
-      "input_tokens": 170254,
-      "output_tokens": 6251
-    },
-    "final_report": {
-      "title": "Research Proposal: Multi-Perspective Calibrated Ensemble for Debiased LLM-as-Judge Evaluation",
-      "bytes": 14291,
-      "sections_detected": [
-        "Problem",
-        "Hypothesis",
-        "Method",
-        "Dataset",
-        "Benchmark",
-        "Evaluation",
-        "Baselines",
-        "Ablations",
-        "Failure"
-      ]
-    }
-  },
-  "query_5_success": {
-    "query_id": 5,
-    "topic": "Literature review automation",
-    "goal": "Generate a research proposal on automated literature review generation.",
-    "mode": "full tool-enabled with --force-proposal and isolated --mode run workspace",
-    "remote_host": "ubuntu-heshi",
-    "command": "EVOSCI_QUERY_TIMEOUT=1200 EVOSCI_QUERY_EXTRA_ARGS='--start-id 4 --force-proposal --stream-logs --idle-timeout 600 --output-dir reproduction/artifacts/full_trajectories/EvoScientist' reproduction/ssh_ubuntu_run.sh batch-bg 30",
-    "manifest_status": "ok",
-    "returncode": 0,
-    "thread_id": "c72d2b6a",
-    "workspace": "runs/repro-query-05",
-    "output_dir": "reproduction/artifacts/remote_fetch/full_trajectories/EvoScientist/query_05",
-    "artifact_files": {
-      "stdout.txt": {
-        "exists": true,
-        "bytes": 7165
+    "query_04": {
+      "query_id": 4,
+      "topic": "Healthcare agents",
+      "mode": "full tool-enabled with isolated --mode run workspace",
+      "remote_host": "ubuntu-heshi",
+      "command": "EVOSCI_QUERY_TIMEOUT=2400 EVOSCI_QUERY_EXTRA_ARGS='--query-id 4 --force-proposal --stream-logs --idle-timeout 900 --output-dir reproduction/artifacts/full_trajectories/EvoScientist' reproduction/ssh_ubuntu_run.sh query-bg 4",
+      "manifest_status": "ok",
+      "thread_id": "3791c12f",
+      "workspace": "runs/repro-query-04",
+      "output_dir": "reproduction/artifacts/remote_fetch/full_trajectories/EvoScientist/query_04",
+      "artifact_files": {
+        "stdout.txt": {
+          "exists": true,
+          "bytes": 15076
+        },
+        "stderr.txt": {
+          "exists": true,
+          "bytes": 251
+        },
+        "answer.txt": {
+          "exists": false,
+          "bytes": 0
+        },
+        "final_report.md": {
+          "exists": true,
+          "bytes": 19644
+        },
+        "query.json": {
+          "exists": true,
+          "bytes": 123
+        }
       },
-      "stderr.txt": {
-        "exists": true,
-        "bytes": 251
+      "usage": {
+        "input_tokens": 1085500,
+        "output_tokens": 13270
       },
-      "prompt.txt": {
-        "exists": true,
-        "bytes": 675
+      "trace_indicators": {
+        "tool_call_lines": 47,
+        "subagent_completion_lines": 0,
+        "mentions_research_agent": true,
+        "mentions_final_report_write": true
       },
-      "query.json": {
-        "exists": true,
-        "bytes": 141
-      },
-      "answer.txt": {
-        "exists": false,
-        "bytes": 0
-      },
-      "final_report.md": {
-        "exists": true,
-        "bytes": 14138
+      "final_report": {
+        "title": "TrialMatch-Agents: A Multi-Agent Framework for Explainable Clinical Trial Eligibility Matching via Specialized Criterion Decomposition",
+        "bytes": 19644,
+        "sections_detected": [
+          "Problem",
+          "Hypothesis",
+          "Method",
+          "Dataset",
+          "Benchmark",
+          "Evaluation",
+          "Baselines",
+          "Ablations",
+          "Failure"
+        ]
       }
     },
-    "usage": {
-      "input_tokens": 49368,
-      "output_tokens": 4371
+    "query_05": {
+      "query_id": 5,
+      "topic": "Literature review automation",
+      "mode": "full tool-enabled with isolated --mode run workspace",
+      "remote_host": "ubuntu-heshi",
+      "command": "EVOSCI_QUERY_TIMEOUT=1200 EVOSCI_QUERY_EXTRA_ARGS='--query-ids 6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30 --force-proposal --stream-logs --idle-timeout 600 --output-dir reproduction/artifacts/full_trajectories/EvoScientist' reproduction/ssh_ubuntu_run.sh batch-bg 30",
+      "manifest_status": "ok",
+      "thread_id": "d2150f5e",
+      "workspace": "runs/repro-query-05",
+      "output_dir": "reproduction/artifacts/remote_fetch/full_trajectories/EvoScientist/query_05",
+      "artifact_files": {
+        "stdout.txt": {
+          "exists": true,
+          "bytes": 8819
+        },
+        "stderr.txt": {
+          "exists": true,
+          "bytes": 251
+        },
+        "answer.txt": {
+          "exists": false,
+          "bytes": 0
+        },
+        "final_report.md": {
+          "exists": true,
+          "bytes": 21137
+        },
+        "query.json": {
+          "exists": true,
+          "bytes": 141
+        }
+      },
+      "usage": {
+        "input_tokens": 166660,
+        "output_tokens": 6978
+      },
+      "trace_indicators": {
+        "tool_call_lines": 11,
+        "subagent_completion_lines": 0,
+        "mentions_research_agent": true,
+        "mentions_final_report_write": true
+      },
+      "final_report": {
+        "title": "Citation-Structured Related Work Generation via Heterogeneous Graph-Aware Decoding",
+        "bytes": 21137,
+        "sections_detected": [
+          "Problem",
+          "Method",
+          "Dataset",
+          "Benchmark",
+          "Evaluation",
+          "Baselines",
+          "Ablations",
+          "Failure"
+        ]
+      }
     },
-    "final_report": {
-      "title": "GroundedLit: Evidence-Anchored Structured Literature Review Generation",
-      "bytes": 14138,
-      "sections_detected": [
-        "Problem",
-        "Hypothesis",
-        "Method",
-        "Dataset",
-        "Benchmark",
-        "Evaluation",
-        "Baselines",
-        "Ablations",
-        "Failure"
-      ]
+    "query_06": {
+      "query_id": 6,
+      "topic": "Speech recognition",
+      "mode": "full tool-enabled with isolated --mode run workspace",
+      "remote_host": "ubuntu-heshi",
+      "command": "EVOSCI_QUERY_TIMEOUT=1200 EVOSCI_QUERY_EXTRA_ARGS='--query-ids 6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30 --force-proposal --stream-logs --idle-timeout 600 --output-dir reproduction/artifacts/full_trajectories/EvoScientist' reproduction/ssh_ubuntu_run.sh batch-bg 30",
+      "manifest_status": "ok",
+      "thread_id": "6cf9124b",
+      "workspace": "runs/repro-query-06",
+      "output_dir": "reproduction/artifacts/remote_fetch/full_trajectories/EvoScientist/query_06",
+      "artifact_files": {
+        "stdout.txt": {
+          "exists": true,
+          "bytes": 7729
+        },
+        "stderr.txt": {
+          "exists": true,
+          "bytes": 251
+        },
+        "answer.txt": {
+          "exists": false,
+          "bytes": 0
+        },
+        "final_report.md": {
+          "exists": true,
+          "bytes": 10720
+        },
+        "query.json": {
+          "exists": true,
+          "bytes": 124
+        }
+      },
+      "usage": {
+        "input_tokens": 86612,
+        "output_tokens": 4395
+      },
+      "trace_indicators": {
+        "tool_call_lines": 5,
+        "subagent_completion_lines": 0,
+        "mentions_research_agent": true,
+        "mentions_final_report_write": true
+      },
+      "final_report": {
+        "title": "Research Proposal: Selective Pseudo-Labeling with Adapter-Based Fine-Tuning for Extremely Low-Resource ASR",
+        "bytes": 10720,
+        "sections_detected": [
+          "Problem",
+          "Hypothesis",
+          "Method",
+          "Dataset",
+          "Benchmark",
+          "Evaluation",
+          "Baselines",
+          "Ablations",
+          "Failure"
+        ]
+      }
+    },
+    "query_08": {
+      "query_id": 8,
+      "topic": "AI agents",
+      "mode": "full tool-enabled with isolated --mode run workspace",
+      "remote_host": "ubuntu-heshi",
+      "command": "EVOSCI_QUERY_TIMEOUT=1200 EVOSCI_QUERY_EXTRA_ARGS='--query-ids 6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30 --force-proposal --stream-logs --idle-timeout 600 --output-dir reproduction/artifacts/full_trajectories/EvoScientist' reproduction/ssh_ubuntu_run.sh batch-bg 30",
+      "manifest_status": "ok",
+      "thread_id": "45fdf914",
+      "workspace": "runs/repro-query-08",
+      "output_dir": "reproduction/artifacts/remote_fetch/full_trajectories/EvoScientist/query_08",
+      "artifact_files": {
+        "stdout.txt": {
+          "exists": true,
+          "bytes": 7818
+        },
+        "stderr.txt": {
+          "exists": true,
+          "bytes": 251
+        },
+        "answer.txt": {
+          "exists": false,
+          "bytes": 0
+        },
+        "final_report.md": {
+          "exists": true,
+          "bytes": 12569
+        },
+        "query.json": {
+          "exists": true,
+          "bytes": 115
+        }
+      },
+      "usage": {
+        "input_tokens": 86739,
+        "output_tokens": 5207
+      },
+      "trace_indicators": {
+        "tool_call_lines": 5,
+        "subagent_completion_lines": 0,
+        "mentions_research_agent": true,
+        "mentions_final_report_write": true
+      },
+      "final_report": {
+        "title": "VeriPlan: Verifier-Gated Replanning for Reliable Multi-Step Agent Reasoning",
+        "bytes": 12569,
+        "sections_detected": [
+          "Problem",
+          "Hypothesis",
+          "Method",
+          "Dataset",
+          "Benchmark",
+          "Evaluation",
+          "Baselines",
+          "Ablations",
+          "Failure"
+        ]
+      }
+    },
+    "query_10": {
+      "query_id": 10,
+      "topic": "Text-to-SQL",
+      "mode": "full tool-enabled with isolated --mode run workspace",
+      "remote_host": "ubuntu-heshi",
+      "command": "EVOSCI_QUERY_TIMEOUT=1200 EVOSCI_QUERY_EXTRA_ARGS='--query-ids 6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30 --force-proposal --stream-logs --idle-timeout 600 --output-dir reproduction/artifacts/full_trajectories/EvoScientist' reproduction/ssh_ubuntu_run.sh batch-bg 30",
+      "manifest_status": "ok",
+      "thread_id": "45264ad9",
+      "workspace": "runs/repro-query-10",
+      "output_dir": "reproduction/artifacts/remote_fetch/full_trajectories/EvoScientist/query_10",
+      "artifact_files": {
+        "stdout.txt": {
+          "exists": true,
+          "bytes": 8746
+        },
+        "stderr.txt": {
+          "exists": true,
+          "bytes": 251
+        },
+        "answer.txt": {
+          "exists": false,
+          "bytes": 0
+        },
+        "final_report.md": {
+          "exists": true,
+          "bytes": 18447
+        },
+        "query.json": {
+          "exists": true,
+          "bytes": 106
+        }
+      },
+      "usage": {
+        "input_tokens": 182687,
+        "output_tokens": 7774
+      },
+      "trace_indicators": {
+        "tool_call_lines": 9,
+        "subagent_completion_lines": 0,
+        "mentions_research_agent": true,
+        "mentions_final_report_write": true
+      },
+      "final_report": {
+        "title": "Research Proposal: Semantically Decomposed Text-to-SQL with Skeleton-Based Compositional Generalization",
+        "bytes": 18447,
+        "sections_detected": [
+          "Problem",
+          "Hypothesis",
+          "Method",
+          "Dataset",
+          "Benchmark",
+          "Evaluation",
+          "Baselines",
+          "Ablations",
+          "Failure"
+        ]
+      }
+    },
+    "query_11": {
+      "query_id": 11,
+      "topic": "LLM capabilities",
+      "mode": "full tool-enabled with isolated --mode run workspace",
+      "remote_host": "ubuntu-heshi",
+      "command": "EVOSCI_QUERY_TIMEOUT=1200 EVOSCI_QUERY_EXTRA_ARGS='--query-ids 6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30 --force-proposal --stream-logs --idle-timeout 600 --output-dir reproduction/artifacts/full_trajectories/EvoScientist' reproduction/ssh_ubuntu_run.sh batch-bg 30",
+      "manifest_status": "ok",
+      "thread_id": "ed0e0f7e",
+      "workspace": "runs/repro-query-11",
+      "output_dir": "reproduction/artifacts/remote_fetch/full_trajectories/EvoScientist/query_11",
+      "artifact_files": {
+        "stdout.txt": {
+          "exists": true,
+          "bytes": 10446
+        },
+        "stderr.txt": {
+          "exists": true,
+          "bytes": 251
+        },
+        "answer.txt": {
+          "exists": false,
+          "bytes": 0
+        },
+        "final_report.md": {
+          "exists": true,
+          "bytes": 19843
+        },
+        "query.json": {
+          "exists": true,
+          "bytes": 143
+        }
+      },
+      "usage": {
+        "input_tokens": 174586,
+        "output_tokens": 8234
+      },
+      "trace_indicators": {
+        "tool_call_lines": 6,
+        "subagent_completion_lines": 2,
+        "mentions_research_agent": true,
+        "mentions_final_report_write": true
+      },
+      "final_report": {
+        "title": "Decoding the Capability Graph: Causal Decomposition of Knowledge, Reasoning, and Code Generation in LLMs",
+        "bytes": 19843,
+        "sections_detected": [
+          "Problem",
+          "Hypothesis",
+          "Method",
+          "Dataset",
+          "Benchmark",
+          "Evaluation",
+          "Baselines",
+          "Ablations",
+          "Failure"
+        ]
+      }
+    },
+    "query_13": {
+      "query_id": 13,
+      "topic": "Data synthesis",
+      "mode": "full tool-enabled with isolated --mode run workspace",
+      "remote_host": "ubuntu-heshi",
+      "command": "EVOSCI_QUERY_TIMEOUT=1200 EVOSCI_QUERY_EXTRA_ARGS='--query-ids 6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30 --force-proposal --stream-logs --idle-timeout 600 --output-dir reproduction/artifacts/full_trajectories/EvoScientist' reproduction/ssh_ubuntu_run.sh batch-bg 30",
+      "manifest_status": "ok",
+      "thread_id": "7b818701",
+      "workspace": "runs/repro-query-13",
+      "output_dir": "reproduction/artifacts/remote_fetch/full_trajectories/EvoScientist/query_13",
+      "artifact_files": {
+        "stdout.txt": {
+          "exists": true,
+          "bytes": 8006
+        },
+        "stderr.txt": {
+          "exists": true,
+          "bytes": 251
+        },
+        "answer.txt": {
+          "exists": false,
+          "bytes": 0
+        },
+        "final_report.md": {
+          "exists": true,
+          "bytes": 13159
+        },
+        "query.json": {
+          "exists": true,
+          "bytes": 118
+        }
+      },
+      "usage": {
+        "input_tokens": 134427,
+        "output_tokens": 5906
+      },
+      "trace_indicators": {
+        "tool_call_lines": 6,
+        "subagent_completion_lines": 2,
+        "mentions_research_agent": true,
+        "mentions_final_report_write": true
+      },
+      "final_report": {
+        "title": "ExeCoT: Execution-Grounded Chain-of-Thought Synthesis for Code Reasoning via Self-Play",
+        "bytes": 13159,
+        "sections_detected": [
+          "Problem",
+          "Hypothesis",
+          "Method",
+          "Dataset",
+          "Benchmark",
+          "Evaluation",
+          "Baselines",
+          "Ablations",
+          "Failure"
+        ]
+      }
+    },
+    "query_15": {
+      "query_id": 15,
+      "topic": "Machine translation",
+      "mode": "full tool-enabled with isolated --mode run workspace",
+      "remote_host": "ubuntu-heshi",
+      "command": "EVOSCI_QUERY_TIMEOUT=1200 EVOSCI_QUERY_EXTRA_ARGS='--query-ids 6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30 --force-proposal --stream-logs --idle-timeout 600 --output-dir reproduction/artifacts/full_trajectories/EvoScientist' reproduction/ssh_ubuntu_run.sh batch-bg 30",
+      "manifest_status": "ok",
+      "thread_id": "5785546d",
+      "workspace": "runs/repro-query-15",
+      "output_dir": "reproduction/artifacts/remote_fetch/full_trajectories/EvoScientist/query_15",
+      "artifact_files": {
+        "stdout.txt": {
+          "exists": true,
+          "bytes": 6617
+        },
+        "stderr.txt": {
+          "exists": true,
+          "bytes": 354
+        },
+        "answer.txt": {
+          "exists": false,
+          "bytes": 0
+        },
+        "final_report.md": {
+          "exists": true,
+          "bytes": 13452
+        },
+        "query.json": {
+          "exists": true,
+          "bytes": 127
+        }
+      },
+      "usage": {
+        "input_tokens": 29993,
+        "output_tokens": 1066
+      },
+      "trace_indicators": {
+        "tool_call_lines": 1,
+        "subagent_completion_lines": 2,
+        "mentions_research_agent": true,
+        "mentions_final_report_write": false
+      },
+      "final_report": {
+        "title": "Research Proposal: Context-Adaptive Gender Debiasing (CAGED) for Neural Machine Translation",
+        "bytes": 13452,
+        "sections_detected": [
+          "Problem",
+          "Hypothesis",
+          "Method",
+          "Dataset",
+          "Benchmark",
+          "Evaluation",
+          "Baselines",
+          "Ablations",
+          "Failure"
+        ]
+      }
+    },
+    "query_19": {
+      "query_id": 19,
+      "topic": "Evaluation leaderboards",
+      "mode": "full tool-enabled with isolated --mode run workspace",
+      "remote_host": "ubuntu-heshi",
+      "command": "EVOSCI_QUERY_TIMEOUT=1200 EVOSCI_QUERY_EXTRA_ARGS='--query-ids 6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30 --force-proposal --stream-logs --idle-timeout 600 --output-dir reproduction/artifacts/full_trajectories/EvoScientist' reproduction/ssh_ubuntu_run.sh batch-bg 30",
+      "manifest_status": "ok",
+      "thread_id": "40f21e6b",
+      "workspace": "runs/repro-query-19",
+      "output_dir": "reproduction/artifacts/remote_fetch/full_trajectories/EvoScientist/query_19",
+      "artifact_files": {
+        "stdout.txt": {
+          "exists": true,
+          "bytes": 7967
+        },
+        "stderr.txt": {
+          "exists": true,
+          "bytes": 251
+        },
+        "answer.txt": {
+          "exists": false,
+          "bytes": 0
+        },
+        "final_report.md": {
+          "exists": true,
+          "bytes": 13639
+        },
+        "query.json": {
+          "exists": true,
+          "bytes": 157
+        }
+      },
+      "usage": {
+        "input_tokens": 87128,
+        "output_tokens": 5191
+      },
+      "trace_indicators": {
+        "tool_call_lines": 6,
+        "subagent_completion_lines": 0,
+        "mentions_research_agent": true,
+        "mentions_final_report_write": true
+      },
+      "final_report": {
+        "title": "Adaptive Pairwise Sampling for Cost-Efficient LLM Leaderboards",
+        "bytes": 13639,
+        "sections_detected": [
+          "Problem",
+          "Hypothesis",
+          "Method",
+          "Dataset",
+          "Benchmark",
+          "Evaluation",
+          "Baselines",
+          "Ablations",
+          "Failure"
+        ]
+      }
+    },
+    "query_20": {
+      "query_id": 20,
+      "topic": "Text generation",
+      "mode": "full tool-enabled with isolated --mode run workspace",
+      "remote_host": "ubuntu-heshi",
+      "command": "EVOSCI_QUERY_TIMEOUT=1200 EVOSCI_QUERY_EXTRA_ARGS='--query-ids 6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30 --force-proposal --stream-logs --idle-timeout 600 --output-dir reproduction/artifacts/full_trajectories/EvoScientist' reproduction/ssh_ubuntu_run.sh batch-bg 30",
+      "manifest_status": "ok",
+      "thread_id": "2f2947c3",
+      "workspace": "runs/repro-query-20",
+      "output_dir": "reproduction/artifacts/remote_fetch/full_trajectories/EvoScientist/query_20",
+      "artifact_files": {
+        "stdout.txt": {
+          "exists": true,
+          "bytes": 10278
+        },
+        "stderr.txt": {
+          "exists": true,
+          "bytes": 251
+        },
+        "answer.txt": {
+          "exists": false,
+          "bytes": 0
+        },
+        "final_report.md": {
+          "exists": true,
+          "bytes": 20182
+        },
+        "query.json": {
+          "exists": true,
+          "bytes": 137
+        }
+      },
+      "usage": {
+        "input_tokens": 184418,
+        "output_tokens": 7767
+      },
+      "trace_indicators": {
+        "tool_call_lines": 9,
+        "subagent_completion_lines": 2,
+        "mentions_research_agent": true,
+        "mentions_final_report_write": true
+      },
+      "final_report": {
+        "title": "MADEF: A Multi-Axis Decomposed Evaluation Framework for Diversity in Open-Ended Text Generation",
+        "bytes": 20182,
+        "sections_detected": [
+          "Problem",
+          "Hypothesis",
+          "Method",
+          "Dataset",
+          "Benchmark",
+          "Evaluation",
+          "Baselines",
+          "Ablations",
+          "Failure"
+        ]
+      }
+    },
+    "query_21": {
+      "query_id": 21,
+      "topic": "Content detection",
+      "mode": "full tool-enabled with isolated --mode run workspace",
+      "remote_host": "ubuntu-heshi",
+      "command": "EVOSCI_QUERY_TIMEOUT=1200 EVOSCI_QUERY_EXTRA_ARGS='--query-ids 6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30 --force-proposal --stream-logs --idle-timeout 600 --output-dir reproduction/artifacts/full_trajectories/EvoScientist' reproduction/ssh_ubuntu_run.sh batch-bg 30",
+      "manifest_status": "ok",
+      "thread_id": "7f303640",
+      "workspace": "runs/repro-query-21",
+      "output_dir": "reproduction/artifacts/remote_fetch/full_trajectories/EvoScientist/query_21",
+      "artifact_files": {
+        "stdout.txt": {
+          "exists": true,
+          "bytes": 9631
+        },
+        "stderr.txt": {
+          "exists": true,
+          "bytes": 251
+        },
+        "answer.txt": {
+          "exists": false,
+          "bytes": 0
+        },
+        "final_report.md": {
+          "exists": true,
+          "bytes": 14376
+        },
+        "query.json": {
+          "exists": true,
+          "bytes": 157
+        }
+      },
+      "usage": {
+        "input_tokens": 179223,
+        "output_tokens": 6316
+      },
+      "trace_indicators": {
+        "tool_call_lines": 7,
+        "subagent_completion_lines": 3,
+        "mentions_research_agent": true,
+        "mentions_final_report_write": true
+      },
+      "final_report": {
+        "title": "Fairness-Aware Stylometric Ensemble (FASE): Reducing Demographic False-Positive Disparities in AI-Generated Text Detection",
+        "bytes": 14376,
+        "sections_detected": [
+          "Problem",
+          "Hypothesis",
+          "Method",
+          "Dataset",
+          "Benchmark",
+          "Evaluation",
+          "Baselines",
+          "Ablations",
+          "Failure"
+        ]
+      }
+    },
+    "query_23": {
+      "query_id": 23,
+      "topic": "Code LLM evaluation",
+      "mode": "full tool-enabled with isolated --mode run workspace",
+      "remote_host": "ubuntu-heshi",
+      "command": "EVOSCI_QUERY_TIMEOUT=1200 EVOSCI_QUERY_EXTRA_ARGS='--query-ids 6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30 --force-proposal --stream-logs --idle-timeout 600 --output-dir reproduction/artifacts/full_trajectories/EvoScientist' reproduction/ssh_ubuntu_run.sh batch-bg 30",
+      "manifest_status": "ok",
+      "thread_id": "67ac5fd2",
+      "workspace": "runs/repro-query-23",
+      "output_dir": "reproduction/artifacts/remote_fetch/full_trajectories/EvoScientist/query_23",
+      "artifact_files": {
+        "stdout.txt": {
+          "exists": true,
+          "bytes": 8998
+        },
+        "stderr.txt": {
+          "exists": true,
+          "bytes": 251
+        },
+        "answer.txt": {
+          "exists": false,
+          "bytes": 0
+        },
+        "final_report.md": {
+          "exists": true,
+          "bytes": 16680
+        },
+        "query.json": {
+          "exists": true,
+          "bytes": 149
+        }
+      },
+      "usage": {
+        "input_tokens": 49883,
+        "output_tokens": 5374
+      },
+      "trace_indicators": {
+        "tool_call_lines": 2,
+        "subagent_completion_lines": 0,
+        "mentions_research_agent": true,
+        "mentions_final_report_write": true
+      },
+      "final_report": {
+        "title": "Research Proposal: CodeSemEval \u2014 A Deep Semantic Evaluation Framework for Code LLMs",
+        "bytes": 16680,
+        "sections_detected": [
+          "Problem",
+          "Hypothesis",
+          "Method",
+          "Dataset",
+          "Benchmark",
+          "Evaluation",
+          "Baselines",
+          "Ablations",
+          "Failure"
+        ]
+      }
+    },
+    "query_27": {
+      "query_id": 27,
+      "topic": "Long-context understanding",
+      "mode": "full tool-enabled with isolated --mode run workspace",
+      "remote_host": "ubuntu-heshi",
+      "command": "EVOSCI_QUERY_TIMEOUT=1200 EVOSCI_QUERY_EXTRA_ARGS='--query-ids 6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30 --force-proposal --stream-logs --idle-timeout 600 --output-dir reproduction/artifacts/full_trajectories/EvoScientist' reproduction/ssh_ubuntu_run.sh batch-bg 30",
+      "manifest_status": "ok",
+      "thread_id": "6cd18f3a",
+      "workspace": "runs/repro-query-27",
+      "output_dir": "reproduction/artifacts/remote_fetch/full_trajectories/EvoScientist/query_27",
+      "artifact_files": {
+        "stdout.txt": {
+          "exists": true,
+          "bytes": 9127
+        },
+        "stderr.txt": {
+          "exists": true,
+          "bytes": 251
+        },
+        "answer.txt": {
+          "exists": false,
+          "bytes": 0
+        },
+        "final_report.md": {
+          "exists": true,
+          "bytes": 15229
+        },
+        "query.json": {
+          "exists": true,
+          "bytes": 172
+        }
+      },
+      "usage": {
+        "input_tokens": 82645,
+        "output_tokens": 7620
+      },
+      "trace_indicators": {
+        "tool_call_lines": 5,
+        "subagent_completion_lines": 0,
+        "mentions_research_agent": true,
+        "mentions_final_report_write": true
+      },
+      "final_report": {
+        "title": "Position-Decontaminated Attention (PDA): Training-Free Mitigation of Position Bias in Long-Context LLMs",
+        "bytes": 15229,
+        "sections_detected": [
+          "Problem",
+          "Hypothesis",
+          "Method",
+          "Dataset",
+          "Benchmark",
+          "Evaluation",
+          "Baselines",
+          "Ablations",
+          "Failure"
+        ]
+      }
+    },
+    "query_28": {
+      "query_id": 28,
+      "topic": "Alignment",
+      "mode": "full tool-enabled with isolated --mode run workspace",
+      "remote_host": "ubuntu-heshi",
+      "command": "EVOSCI_QUERY_TIMEOUT=1200 EVOSCI_QUERY_EXTRA_ARGS='--query-ids 6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30 --force-proposal --stream-logs --idle-timeout 600 --output-dir reproduction/artifacts/full_trajectories/EvoScientist' reproduction/ssh_ubuntu_run.sh batch-bg 30",
+      "manifest_status": "ok",
+      "thread_id": "dd70b7d7",
+      "workspace": "runs/repro-query-28",
+      "output_dir": "reproduction/artifacts/remote_fetch/full_trajectories/EvoScientist/query_28",
+      "artifact_files": {
+        "stdout.txt": {
+          "exists": true,
+          "bytes": 8042
+        },
+        "stderr.txt": {
+          "exists": true,
+          "bytes": 251
+        },
+        "answer.txt": {
+          "exists": false,
+          "bytes": 0
+        },
+        "final_report.md": {
+          "exists": true,
+          "bytes": 12259
+        },
+        "query.json": {
+          "exists": true,
+          "bytes": 135
+        }
+      },
+      "usage": {
+        "input_tokens": 93296,
+        "output_tokens": 5082
+      },
+      "trace_indicators": {
+        "tool_call_lines": 4,
+        "subagent_completion_lines": 2,
+        "mentions_research_agent": true,
+        "mentions_final_report_write": true
+      },
+      "final_report": {
+        "title": "Preference Bias Amplification: Measuring and Mitigating Western Cultural Bias in DPO-Based LLM Alignment",
+        "bytes": 12259,
+        "sections_detected": [
+          "Problem",
+          "Hypothesis",
+          "Method",
+          "Dataset",
+          "Benchmark",
+          "Evaluation",
+          "Baselines",
+          "Ablations",
+          "Failure"
+        ]
+      }
+    },
+    "query_29": {
+      "query_id": 29,
+      "topic": "Alignment",
+      "mode": "full tool-enabled with isolated --mode run workspace",
+      "remote_host": "ubuntu-heshi",
+      "command": "EVOSCI_QUERY_TIMEOUT=1200 EVOSCI_QUERY_EXTRA_ARGS='--query-ids 6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30 --force-proposal --stream-logs --idle-timeout 600 --output-dir reproduction/artifacts/full_trajectories/EvoScientist' reproduction/ssh_ubuntu_run.sh batch-bg 30",
+      "manifest_status": "ok",
+      "thread_id": "0abad5a0",
+      "workspace": "runs/repro-query-29",
+      "output_dir": "reproduction/artifacts/remote_fetch/full_trajectories/EvoScientist/query_29",
+      "artifact_files": {
+        "stdout.txt": {
+          "exists": true,
+          "bytes": 9882
+        },
+        "stderr.txt": {
+          "exists": true,
+          "bytes": 251
+        },
+        "answer.txt": {
+          "exists": false,
+          "bytes": 0
+        },
+        "final_report.md": {
+          "exists": true,
+          "bytes": 17955
+        },
+        "query.json": {
+          "exists": true,
+          "bytes": 114
+        }
+      },
+      "usage": {
+        "input_tokens": 314073,
+        "output_tokens": 8549
+      },
+      "trace_indicators": {
+        "tool_call_lines": 12,
+        "subagent_completion_lines": 2,
+        "mentions_research_agent": true,
+        "mentions_final_report_write": true
+      },
+      "final_report": {
+        "title": "Detecting and Mitigating Specification Gaming in RLHF-Aligned Language Models via Adversarial Reward Probing",
+        "bytes": 17955,
+        "sections_detected": [
+          "Problem",
+          "Hypothesis",
+          "Method",
+          "Dataset",
+          "Benchmark",
+          "Evaluation",
+          "Baselines",
+          "Ablations",
+          "Failure"
+        ]
+      }
     }
   },
   "incomplete_queries": {
-    "query_04": {
-      "status": "timeout",
-      "reason": "runner reported idle timeout after 600 seconds without log growth",
-      "workspace": "runs/repro-query-04"
-    },
     "query_07": {
+      "query_id": 7,
+      "topic": "Model efficiency",
       "status": "timeout",
-      "reason": "runner reported idle timeout after 600 seconds without log growth",
-      "workspace": "runs/repro-query-07"
+      "reason": "runner reported timeout",
+      "workspace": "runs/repro-query-07",
+      "output_dir": "reproduction/artifacts/remote_fetch/full_trajectories/EvoScientist/query_07",
+      "artifact_files": {
+        "stdout.txt": {
+          "exists": true,
+          "bytes": 1358
+        },
+        "stderr.txt": {
+          "exists": true,
+          "bytes": 305
+        },
+        "answer.txt": {
+          "exists": false,
+          "bytes": 0
+        },
+        "final_report.md": {
+          "exists": false,
+          "bytes": 0
+        },
+        "query.json": {
+          "exists": true,
+          "bytes": 143
+        }
+      },
+      "usage": null
     },
     "query_09": {
+      "query_id": 9,
+      "topic": "Model deployment",
       "status": "timeout",
-      "reason": "runner reported idle timeout after 600 seconds without log growth",
-      "workspace": "runs/repro-query-09"
+      "reason": "runner reported timeout",
+      "workspace": "runs/repro-query-09",
+      "output_dir": "reproduction/artifacts/remote_fetch/full_trajectories/EvoScientist/query_09",
+      "artifact_files": {
+        "stdout.txt": {
+          "exists": true,
+          "bytes": 1372
+        },
+        "stderr.txt": {
+          "exists": true,
+          "bytes": 305
+        },
+        "answer.txt": {
+          "exists": false,
+          "bytes": 0
+        },
+        "final_report.md": {
+          "exists": false,
+          "bytes": 0
+        },
+        "query.json": {
+          "exists": true,
+          "bytes": 157
+        }
+      },
+      "usage": null
     },
     "query_12": {
+      "query_id": 12,
+      "topic": "Factual consistency",
       "status": "timeout",
-      "reason": "runner reported idle timeout after 600 seconds without log growth",
-      "workspace": "runs/repro-query-12"
+      "reason": "runner reported timeout",
+      "workspace": "runs/repro-query-12",
+      "output_dir": "reproduction/artifacts/remote_fetch/full_trajectories/EvoScientist/query_12",
+      "artifact_files": {
+        "stdout.txt": {
+          "exists": true,
+          "bytes": 1371
+        },
+        "stderr.txt": {
+          "exists": true,
+          "bytes": 305
+        },
+        "answer.txt": {
+          "exists": false,
+          "bytes": 0
+        },
+        "final_report.md": {
+          "exists": false,
+          "bytes": 0
+        },
+        "query.json": {
+          "exists": true,
+          "bytes": 161
+        }
+      },
+      "usage": null
     },
     "query_14": {
+      "query_id": 14,
+      "topic": "Inference efficiency",
       "status": "timeout",
-      "reason": "runner reported idle timeout after 600 seconds without log growth",
-      "workspace": "runs/repro-query-14"
+      "reason": "runner reported timeout",
+      "workspace": "runs/repro-query-14",
+      "output_dir": "reproduction/artifacts/remote_fetch/full_trajectories/EvoScientist/query_14",
+      "artifact_files": {
+        "stdout.txt": {
+          "exists": true,
+          "bytes": 1362
+        },
+        "stderr.txt": {
+          "exists": true,
+          "bytes": 305
+        },
+        "answer.txt": {
+          "exists": false,
+          "bytes": 0
+        },
+        "final_report.md": {
+          "exists": false,
+          "bytes": 0
+        },
+        "query.json": {
+          "exists": true,
+          "bytes": 153
+        }
+      },
+      "usage": null
     },
     "query_16": {
+      "query_id": 16,
+      "topic": "Knowledge injection",
       "status": "timeout",
-      "reason": "runner reported idle timeout after 600 seconds without log growth",
-      "workspace": "runs/repro-query-16"
+      "reason": "runner reported timeout",
+      "workspace": "runs/repro-query-16",
+      "output_dir": "reproduction/artifacts/remote_fetch/full_trajectories/EvoScientist/query_16",
+      "artifact_files": {
+        "stdout.txt": {
+          "exists": true,
+          "bytes": 1395
+        },
+        "stderr.txt": {
+          "exists": true,
+          "bytes": 305
+        },
+        "answer.txt": {
+          "exists": false,
+          "bytes": 0
+        },
+        "final_report.md": {
+          "exists": false,
+          "bytes": 0
+        },
+        "query.json": {
+          "exists": true,
+          "bytes": 184
+        }
+      },
+      "usage": null
     },
     "query_17": {
+      "query_id": 17,
+      "topic": "Information extraction",
       "status": "timeout",
-      "reason": "runner reported idle timeout after 600 seconds without log growth",
-      "workspace": "runs/repro-query-17"
-    },
-    "query_4": {
-      "status": "timeout",
-      "reason": "runner reported idle timeout after 600 seconds without log growth",
-      "workspace": "runs/repro-query-04"
-    },
-    "query_7": {
-      "status": "timeout",
-      "reason": "runner reported idle timeout after 600 seconds without log growth",
-      "workspace": "runs/repro-query-07"
-    },
-    "query_9": {
-      "status": "timeout",
-      "reason": "runner reported idle timeout after 600 seconds without log growth",
-      "workspace": "runs/repro-query-09"
+      "reason": "runner reported timeout",
+      "workspace": "runs/repro-query-17",
+      "output_dir": "reproduction/artifacts/remote_fetch/full_trajectories/EvoScientist/query_17",
+      "artifact_files": {
+        "stdout.txt": {
+          "exists": true,
+          "bytes": 1337
+        },
+        "stderr.txt": {
+          "exists": true,
+          "bytes": 305
+        },
+        "answer.txt": {
+          "exists": false,
+          "bytes": 0
+        },
+        "final_report.md": {
+          "exists": false,
+          "bytes": 0
+        },
+        "query.json": {
+          "exists": true,
+          "bytes": 130
+        }
+      },
+      "usage": null
     },
     "query_18": {
+      "query_id": 18,
+      "topic": "UX evaluation",
       "status": "timeout",
-      "reason": "runner reported idle timeout after 600 seconds without log growth",
-      "workspace": "runs/repro-query-18"
+      "reason": "runner reported timeout",
+      "workspace": "runs/repro-query-18",
+      "output_dir": "reproduction/artifacts/remote_fetch/full_trajectories/EvoScientist/query_18",
+      "artifact_files": {
+        "stdout.txt": {
+          "exists": true,
+          "bytes": 1358
+        },
+        "stderr.txt": {
+          "exists": true,
+          "bytes": 305
+        },
+        "answer.txt": {
+          "exists": false,
+          "bytes": 0
+        },
+        "final_report.md": {
+          "exists": false,
+          "bytes": 0
+        },
+        "query.json": {
+          "exists": true,
+          "bytes": 141
+        }
+      },
+      "usage": null
     },
     "query_22": {
+      "query_id": 22,
+      "topic": "Code LLM security",
       "status": "timeout",
-      "reason": "runner reported idle timeout after 600 seconds without log growth",
-      "workspace": "runs/repro-query-22"
+      "reason": "runner reported timeout",
+      "workspace": "runs/repro-query-22",
+      "output_dir": "reproduction/artifacts/remote_fetch/full_trajectories/EvoScientist/query_22",
+      "artifact_files": {
+        "stdout.txt": {
+          "exists": true,
+          "bytes": 1330
+        },
+        "stderr.txt": {
+          "exists": true,
+          "bytes": 305
+        },
+        "answer.txt": {
+          "exists": false,
+          "bytes": 0
+        },
+        "final_report.md": {
+          "exists": false,
+          "bytes": 0
+        },
+        "query.json": {
+          "exists": true,
+          "bytes": 118
+        }
+      },
+      "usage": null
     },
     "query_24": {
+      "query_id": 24,
+      "topic": "RAG",
       "status": "failed",
-      "reason": "APIConnectionError after partial research-agent progress; no qualifying final_report.md was produced",
+      "reason": "stderr indicates failure or manual termination",
       "workspace": "runs/repro-query-24",
+      "output_dir": "reproduction/artifacts/remote_fetch/full_trajectories/EvoScientist/query_24",
+      "artifact_files": {
+        "stdout.txt": {
+          "exists": true,
+          "bytes": 52133
+        },
+        "stderr.txt": {
+          "exists": true,
+          "bytes": 128118
+        },
+        "answer.txt": {
+          "exists": false,
+          "bytes": 0
+        },
+        "final_report.md": {
+          "exists": false,
+          "bytes": 0
+        },
+        "query.json": {
+          "exists": true,
+          "bytes": 157
+        }
+      },
       "usage": {
         "input_tokens": 29921,
         "output_tokens": 904
       }
     },
     "query_25": {
+      "query_id": 25,
+      "topic": "Multi-source reasoning",
       "status": "timeout",
-      "reason": "runner reported idle timeout after 600 seconds without log growth",
-      "workspace": "runs/repro-query-25"
+      "reason": "runner reported timeout",
+      "workspace": "runs/repro-query-25",
+      "output_dir": "reproduction/artifacts/remote_fetch/full_trajectories/EvoScientist/query_25",
+      "artifact_files": {
+        "stdout.txt": {
+          "exists": true,
+          "bytes": 1353
+        },
+        "stderr.txt": {
+          "exists": true,
+          "bytes": 305
+        },
+        "answer.txt": {
+          "exists": false,
+          "bytes": 0
+        },
+        "final_report.md": {
+          "exists": false,
+          "bytes": 0
+        },
+        "query.json": {
+          "exists": true,
+          "bytes": 145
+        }
+      },
+      "usage": null
     },
     "query_26": {
+      "query_id": 26,
+      "topic": "Data filtering",
       "status": "timeout",
-      "reason": "runner reported idle timeout after 600 seconds without log growth",
-      "workspace": "runs/repro-query-26"
+      "reason": "runner reported timeout",
+      "workspace": "runs/repro-query-26",
+      "output_dir": "reproduction/artifacts/remote_fetch/full_trajectories/EvoScientist/query_26",
+      "artifact_files": {
+        "stdout.txt": {
+          "exists": true,
+          "bytes": 1366
+        },
+        "stderr.txt": {
+          "exists": true,
+          "bytes": 305
+        },
+        "answer.txt": {
+          "exists": false,
+          "bytes": 0
+        },
+        "final_report.md": {
+          "exists": false,
+          "bytes": 0
+        },
+        "query.json": {
+          "exists": true,
+          "bytes": 150
+        }
+      },
+      "usage": null
     },
     "query_30": {
+      "query_id": 30,
+      "topic": "Audio foundation models",
       "status": "timeout",
-      "reason": "runner reported idle timeout after 600 seconds without log growth",
-      "workspace": "runs/repro-query-30"
+      "reason": "runner reported timeout",
+      "workspace": "runs/repro-query-30",
+      "output_dir": "reproduction/artifacts/remote_fetch/full_trajectories/EvoScientist/query_30",
+      "artifact_files": {
+        "stdout.txt": {
+          "exists": true,
+          "bytes": 1353
+        },
+        "stderr.txt": {
+          "exists": true,
+          "bytes": 305
+        },
+        "answer.txt": {
+          "exists": false,
+          "bytes": 0
+        },
+        "final_report.md": {
+          "exists": false,
+          "bytes": 0
+        },
+        "query.json": {
+          "exists": true,
+          "bytes": 146
+        }
+      },
+      "usage": null
     }
   },
-  "query_6_success": {
-    "query_id": 6,
-    "topic": "Speech recognition",
-    "goal": "Generate a research proposal on low-resource speech recognition.",
-    "mode": "full tool-enabled with --force-proposal and isolated --mode run workspace",
-    "remote_host": "ubuntu-heshi",
-    "command": "EVOSCI_QUERY_TIMEOUT=1200 EVOSCI_QUERY_EXTRA_ARGS='--query-ids 6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30 --force-proposal --stream-logs --idle-timeout 600 --output-dir reproduction/artifacts/full_trajectories/EvoScientist' reproduction/ssh_ubuntu_run.sh batch-bg 30",
-    "manifest_status": "ok",
-    "returncode": 0,
-    "thread_id": "6cf9124b",
-    "workspace": "runs/repro-query-06",
-    "output_dir": "reproduction/artifacts/remote_fetch/full_trajectories/EvoScientist/query_06",
-    "artifact_files": {
-      "stdout.txt": {
-        "exists": true,
-        "bytes": 7729
-      },
-      "stderr.txt": {
-        "exists": true,
-        "bytes": 251
-      },
-      "prompt.txt": {
-        "exists": true,
-        "bytes": 668
-      },
-      "query.json": {
-        "exists": true,
-        "bytes": 124
-      },
-      "answer.txt": {
-        "exists": false,
-        "bytes": 0
-      },
-      "final_report.md": {
-        "exists": true,
-        "bytes": 10720
-      }
-    },
-    "usage": {
-      "input_tokens": 86612,
-      "output_tokens": 4395
-    },
-    "final_report": {
-      "title": "Research Proposal: Selective Pseudo-Labeling with Adapter-Based Fine-Tuning for Extremely Low-Resource ASR",
-      "bytes": 10720,
-      "sections_detected": [
-        "Problem",
-        "Hypothesis",
-        "Method",
-        "Dataset",
-        "Benchmark",
-        "Evaluation",
-        "Baselines",
-        "Ablations",
-        "Failure"
-      ]
-    }
-  },
-  "query_8_success": {
-    "query_id": 8,
-    "topic": "AI agents",
-    "goal": "Generate a research proposal on complex reasoning for AI agents.",
-    "mode": "full tool-enabled with --force-proposal and isolated --mode run workspace",
-    "remote_host": "ubuntu-heshi",
-    "command": "EVOSCI_QUERY_TIMEOUT=1200 EVOSCI_QUERY_EXTRA_ARGS='--query-ids 6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30 --force-proposal --stream-logs --idle-timeout 600 --output-dir reproduction/artifacts/full_trajectories/EvoScientist' reproduction/ssh_ubuntu_run.sh batch-bg 30",
-    "manifest_status": "ok",
-    "returncode": 0,
-    "thread_id": "45fdf914",
-    "workspace": "runs/repro-query-08",
-    "output_dir": "reproduction/artifacts/remote_fetch/full_trajectories/EvoScientist/query_08",
-    "artifact_files": {
-      "stdout.txt": {
-        "exists": true,
-        "bytes": 7818
-      },
-      "stderr.txt": {
-        "exists": true,
-        "bytes": 251
-      },
-      "prompt.txt": {
-        "exists": true,
-        "bytes": 668
-      },
-      "query.json": {
-        "exists": true,
-        "bytes": 115
-      },
-      "answer.txt": {
-        "exists": false,
-        "bytes": 0
-      },
-      "final_report.md": {
-        "exists": true,
-        "bytes": 12569
-      }
-    },
-    "usage": {
-      "input_tokens": 86739,
-      "output_tokens": 5207
-    },
-    "final_report": {
-      "title": "VeriPlan: Verifier-Gated Replanning for Reliable Multi-Step Agent Reasoning",
-      "bytes": 12569,
-      "sections_detected": [
-        "Problem",
-        "Hypothesis",
-        "Method",
-        "Dataset",
-        "Benchmark",
-        "Evaluation",
-        "Baselines",
-        "Ablations",
-        "Failure"
-      ]
-    }
-  },
-  "query_10_success": {
-    "query_id": 10,
-    "topic": "Text-to-SQL",
-    "goal": "Help me generate a research proposal on Text-to-SQL.",
-    "mode": "full tool-enabled with --force-proposal and isolated --mode run workspace",
-    "remote_host": "ubuntu-heshi",
-    "command": "EVOSCI_QUERY_TIMEOUT=1200 EVOSCI_QUERY_EXTRA_ARGS='--query-ids 6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30 --force-proposal --stream-logs --idle-timeout 600 --output-dir reproduction/artifacts/full_trajectories/EvoScientist' reproduction/ssh_ubuntu_run.sh batch-bg 30",
-    "manifest_status": "ok",
-    "returncode": 0,
-    "thread_id": "45264ad9",
-    "workspace": "runs/repro-query-10",
-    "output_dir": "reproduction/artifacts/remote_fetch/full_trajectories/EvoScientist/query_10",
-    "artifact_files": {
-      "stdout.txt": {
-        "exists": true,
-        "bytes": 8746
-      },
-      "stderr.txt": {
-        "exists": true,
-        "bytes": 251
-      },
-      "prompt.txt": {
-        "exists": true,
-        "bytes": 656
-      },
-      "query.json": {
-        "exists": true,
-        "bytes": 106
-      },
-      "answer.txt": {
-        "exists": false,
-        "bytes": 0
-      },
-      "final_report.md": {
-        "exists": true,
-        "bytes": 18447
-      }
-    },
-    "usage": {
-      "input_tokens": 182687,
-      "output_tokens": 7774
-    },
-    "final_report": {
-      "title": "Research Proposal: Semantically Decomposed Text-to-SQL with Skeleton-Based Compositional Generalization",
-      "bytes": 18447,
-      "sections_detected": [
-        "Problem",
-        "Hypothesis",
-        "Method",
-        "Dataset",
-        "Benchmark",
-        "Evaluation",
-        "Baselines",
-        "Ablations",
-        "Failure"
-      ]
-    }
-  },
-  "query_11_success": {
-    "query_id": 11,
-    "topic": "LLM capabilities",
-    "goal": "Generate a research proposal on the decoupling of Large Language Model capabilities.",
-    "mode": "full tool-enabled with --force-proposal and isolated --mode run workspace",
-    "remote_host": "ubuntu-heshi",
-    "command": "EVOSCI_QUERY_TIMEOUT=1200 EVOSCI_QUERY_EXTRA_ARGS='--query-ids 6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30 --force-proposal --stream-logs --idle-timeout 600 --output-dir reproduction/artifacts/full_trajectories/EvoScientist' reproduction/ssh_ubuntu_run.sh batch-bg 30",
-    "manifest_status": "ok",
-    "returncode": 0,
-    "thread_id": "ed0e0f7e",
-    "workspace": "runs/repro-query-11",
-    "output_dir": "reproduction/artifacts/remote_fetch/full_trajectories/EvoScientist/query_11",
-    "artifact_files": {
-      "stdout.txt": {
-        "exists": true,
-        "bytes": 10446
-      },
-      "stderr.txt": {
-        "exists": true,
-        "bytes": 251
-      },
-      "prompt.txt": {
-        "exists": true,
-        "bytes": 688
-      },
-      "query.json": {
-        "exists": true,
-        "bytes": 143
-      },
-      "answer.txt": {
-        "exists": false,
-        "bytes": 0
-      },
-      "final_report.md": {
-        "exists": true,
-        "bytes": 19843
-      }
-    },
-    "usage": {
-      "input_tokens": 174586,
-      "output_tokens": 8234
-    },
-    "final_report": {
-      "title": "Decoding the Capability Graph: Causal Decomposition of Knowledge, Reasoning, and Code Generation in LLMs",
-      "bytes": 19843,
-      "sections_detected": [
-        "Problem",
-        "Hypothesis",
-        "Method",
-        "Dataset",
-        "Benchmark",
-        "Evaluation",
-        "Baselines",
-        "Ablations",
-        "Failure"
-      ]
-    }
-  },
-  "query_13_success": {
-    "query_id": 13,
-    "topic": "Data synthesis",
-    "goal": "Generate a research proposal on data synthesis for code LLMs.",
-    "mode": "full tool-enabled with --force-proposal and isolated --mode run workspace",
-    "remote_host": "ubuntu-heshi",
-    "command": "EVOSCI_QUERY_TIMEOUT=1200 EVOSCI_QUERY_EXTRA_ARGS='--query-ids 6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30 --force-proposal --stream-logs --idle-timeout 600 --output-dir reproduction/artifacts/full_trajectories/EvoScientist' reproduction/ssh_ubuntu_run.sh batch-bg 30",
-    "manifest_status": "ok",
-    "returncode": 0,
-    "thread_id": "7b818701",
-    "workspace": "runs/repro-query-13",
-    "output_dir": "reproduction/artifacts/remote_fetch/full_trajectories/EvoScientist/query_13",
-    "artifact_files": {
-      "stdout.txt": {
-        "exists": true,
-        "bytes": 8006
-      },
-      "stderr.txt": {
-        "exists": true,
-        "bytes": 251
-      },
-      "prompt.txt": {
-        "exists": true,
-        "bytes": 665
-      },
-      "query.json": {
-        "exists": true,
-        "bytes": 118
-      },
-      "answer.txt": {
-        "exists": false,
-        "bytes": 0
-      },
-      "final_report.md": {
-        "exists": true,
-        "bytes": 13159
-      }
-    },
-    "usage": {
-      "input_tokens": 134427,
-      "output_tokens": 5906
-    },
-    "final_report": {
-      "title": "ExeCoT: Execution-Grounded Chain-of-Thought Synthesis for Code Reasoning via Self-Play",
-      "bytes": 13159,
-      "sections_detected": [
-        "Problem",
-        "Hypothesis",
-        "Method",
-        "Dataset",
-        "Benchmark",
-        "Evaluation",
-        "Baselines",
-        "Ablations",
-        "Failure"
-      ]
-    }
-  },
-  "query_15_success": {
-    "query_id": 15,
-    "topic": "Machine translation",
-    "goal": "Generate a research proposal on debiasing in machine translation.",
-    "mode": "full tool-enabled with --force-proposal and isolated --mode run workspace",
-    "remote_host": "ubuntu-heshi",
-    "command": "EVOSCI_QUERY_TIMEOUT=1200 EVOSCI_QUERY_EXTRA_ARGS='--query-ids 6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30 --force-proposal --stream-logs --idle-timeout 600 --output-dir reproduction/artifacts/full_trajectories/EvoScientist' reproduction/ssh_ubuntu_run.sh batch-bg 30",
-    "manifest_status": "ok",
-    "returncode": 0,
-    "thread_id": "5785546d",
-    "workspace": "runs/repro-query-15",
-    "output_dir": "reproduction/artifacts/remote_fetch/full_trajectories/EvoScientist/query_15",
-    "artifact_files": {
-      "stdout.txt": {
-        "exists": true,
-        "bytes": 6617
-      },
-      "stderr.txt": {
-        "exists": true,
-        "bytes": 354
-      },
-      "prompt.txt": {
-        "exists": true,
-        "bytes": 669
-      },
-      "query.json": {
-        "exists": true,
-        "bytes": 127
-      },
-      "answer.txt": {
-        "exists": false,
-        "bytes": 0
-      },
-      "final_report.md": {
-        "exists": true,
-        "bytes": 13452
-      }
-    },
-    "usage": {
-      "input_tokens": 29993,
-      "output_tokens": 1066
-    },
-    "final_report": {
-      "title": "Research Proposal: Context-Adaptive Gender Debiasing (CAGED) for Neural Machine Translation",
-      "bytes": 13452,
-      "sections_detected": [
-        "Problem",
-        "Hypothesis",
-        "Method",
-        "Dataset",
-        "Benchmark",
-        "Evaluation",
-        "Baselines",
-        "Ablations",
-        "Failure"
-      ]
-    }
-  },
-  "query_19_success": {
-    "query_id": 19,
-    "topic": "Evaluation leaderboards",
-    "goal": "Generate a research proposal on how to construct efficient leaderboards for LLM evaluation.",
-    "mode": "full tool-enabled with --force-proposal and isolated --mode run workspace",
-    "remote_host": "ubuntu-heshi",
-    "command": "EVOSCI_QUERY_TIMEOUT=1200 EVOSCI_QUERY_EXTRA_ARGS='--query-ids 6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30 --force-proposal --stream-logs --idle-timeout 600 --output-dir reproduction/artifacts/full_trajectories/EvoScientist' reproduction/ssh_ubuntu_run.sh batch-bg 30",
-    "manifest_status": "ok",
-    "returncode": 0,
-    "thread_id": "40f21e6b",
-    "workspace": "runs/repro-query-19",
-    "output_dir": "reproduction/artifacts/remote_fetch/full_trajectories/EvoScientist/query_19",
-    "artifact_files": {
-      "stdout.txt": {
-        "exists": true,
-        "bytes": 7967
-      },
-      "stderr.txt": {
-        "exists": true,
-        "bytes": 251
-      },
-      "prompt.txt": {
-        "exists": true,
-        "bytes": 695
-      },
-      "query.json": {
-        "exists": true,
-        "bytes": 157
-      },
-      "answer.txt": {
-        "exists": false,
-        "bytes": 0
-      },
-      "final_report.md": {
-        "exists": true,
-        "bytes": 13639
-      }
-    },
-    "usage": {
-      "input_tokens": 87128,
-      "output_tokens": 5191
-    },
-    "final_report": {
-      "title": "Adaptive Pairwise Sampling for Cost-Efficient LLM Leaderboards",
-      "bytes": 13639,
-      "sections_detected": [
-        "Problem",
-        "Hypothesis",
-        "Method",
-        "Dataset",
-        "Benchmark",
-        "Evaluation",
-        "Baselines",
-        "Ablations",
-        "Failure"
-      ]
-    }
-  },
-  "query_20_success": {
-    "query_id": 20,
-    "topic": "Text generation",
-    "goal": "Generate a research proposal on the evaluation of diversity in text generation.",
-    "mode": "full tool-enabled with --force-proposal and isolated --mode run workspace",
-    "remote_host": "ubuntu-heshi",
-    "command": "EVOSCI_QUERY_TIMEOUT=1200 EVOSCI_QUERY_EXTRA_ARGS='--query-ids 6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30 --force-proposal --stream-logs --idle-timeout 600 --output-dir reproduction/artifacts/full_trajectories/EvoScientist' reproduction/ssh_ubuntu_run.sh batch-bg 30",
-    "manifest_status": "ok",
-    "returncode": 0,
-    "thread_id": "2f2947c3",
-    "workspace": "runs/repro-query-20",
-    "output_dir": "reproduction/artifacts/remote_fetch/full_trajectories/EvoScientist/query_20",
-    "artifact_files": {
-      "stdout.txt": {
-        "exists": true,
-        "bytes": 10278
-      },
-      "stderr.txt": {
-        "exists": true,
-        "bytes": 251
-      },
-      "prompt.txt": {
-        "exists": true,
-        "bytes": 683
-      },
-      "query.json": {
-        "exists": true,
-        "bytes": 137
-      },
-      "answer.txt": {
-        "exists": false,
-        "bytes": 0
-      },
-      "final_report.md": {
-        "exists": true,
-        "bytes": 20182
-      }
-    },
-    "usage": {
-      "input_tokens": 184418,
-      "output_tokens": 7767
-    },
-    "final_report": {
-      "title": "MADEF: A Multi-Axis Decomposed Evaluation Framework for Diversity in Open-Ended Text Generation",
-      "bytes": 20182,
-      "sections_detected": [
-        "Problem",
-        "Hypothesis",
-        "Method",
-        "Dataset",
-        "Benchmark",
-        "Evaluation",
-        "Baselines",
-        "Ablations",
-        "Failure"
-      ]
-    }
-  },
-  "query_21_success": {
-    "query_id": 21,
-    "topic": "Content detection",
-    "goal": "Generate a research proposal on how to address false positives in AI-generated content detection.",
-    "mode": "full tool-enabled with --force-proposal and isolated --mode run workspace",
-    "remote_host": "ubuntu-heshi",
-    "command": "EVOSCI_QUERY_TIMEOUT=1200 EVOSCI_QUERY_EXTRA_ARGS='--query-ids 6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30 --force-proposal --stream-logs --idle-timeout 600 --output-dir reproduction/artifacts/full_trajectories/EvoScientist' reproduction/ssh_ubuntu_run.sh batch-bg 30",
-    "manifest_status": "ok",
-    "returncode": 0,
-    "thread_id": "7f303640",
-    "workspace": "runs/repro-query-21",
-    "output_dir": "reproduction/artifacts/remote_fetch/full_trajectories/EvoScientist/query_21",
-    "artifact_files": {
-      "stdout.txt": {
-        "exists": true,
-        "bytes": 9631
-      },
-      "stderr.txt": {
-        "exists": true,
-        "bytes": 251
-      },
-      "prompt.txt": {
-        "exists": true,
-        "bytes": 701
-      },
-      "query.json": {
-        "exists": true,
-        "bytes": 157
-      },
-      "answer.txt": {
-        "exists": false,
-        "bytes": 0
-      },
-      "final_report.md": {
-        "exists": true,
-        "bytes": 14376
-      }
-    },
-    "usage": {
-      "input_tokens": 179223,
-      "output_tokens": 6316
-    },
-    "final_report": {
-      "title": "Fairness-Aware Stylometric Ensemble (FASE): Reducing Demographic False-Positive Disparities in AI-Generated Text Detection",
-      "bytes": 14376,
-      "sections_detected": [
-        "Problem",
-        "Hypothesis",
-        "Method",
-        "Dataset",
-        "Benchmark",
-        "Evaluation",
-        "Baselines",
-        "Ablations",
-        "Failure"
-      ]
-    }
-  },
-  "query_23_success": {
-    "query_id": 23,
-    "topic": "Code LLM evaluation",
-    "goal": "Generate a research proposal on how to build a deep evaluation framework for code LLMs.",
-    "mode": "full tool-enabled with --force-proposal and isolated --mode run workspace",
-    "remote_host": "ubuntu-heshi",
-    "command": "EVOSCI_QUERY_TIMEOUT=1200 EVOSCI_QUERY_EXTRA_ARGS='--query-ids 6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30 --force-proposal --stream-logs --idle-timeout 600 --output-dir reproduction/artifacts/full_trajectories/EvoScientist' reproduction/ssh_ubuntu_run.sh batch-bg 30",
-    "manifest_status": "ok",
-    "returncode": 0,
-    "thread_id": "67ac5fd2",
-    "workspace": "runs/repro-query-23",
-    "output_dir": "reproduction/artifacts/remote_fetch/full_trajectories/EvoScientist/query_23",
-    "artifact_files": {
-      "stdout.txt": {
-        "exists": true,
-        "bytes": 8998
-      },
-      "stderr.txt": {
-        "exists": true,
-        "bytes": 251
-      },
-      "prompt.txt": {
-        "exists": true,
-        "bytes": 691
-      },
-      "query.json": {
-        "exists": true,
-        "bytes": 149
-      },
-      "answer.txt": {
-        "exists": false,
-        "bytes": 0
-      },
-      "final_report.md": {
-        "exists": true,
-        "bytes": 16680
-      }
-    },
-    "usage": {
-      "input_tokens": 49883,
-      "output_tokens": 5374
-    },
-    "final_report": {
-      "title": "Research Proposal: CodeSemEval — A Deep Semantic Evaluation Framework for Code LLMs",
-      "bytes": 16680,
-      "sections_detected": [
-        "Problem",
-        "Hypothesis",
-        "Method",
-        "Dataset",
-        "Benchmark",
-        "Evaluation",
-        "Baselines",
-        "Ablations",
-        "Failure"
-      ]
-    }
-  },
-  "query_27_success": {
-    "query_id": 27,
-    "topic": "Long-context understanding",
-    "goal": "Generate a research proposal on how to enhance the long-context understanding of Large Language Models.",
-    "mode": "full tool-enabled with --force-proposal and isolated --mode run workspace",
-    "remote_host": "ubuntu-heshi",
-    "command": "EVOSCI_QUERY_TIMEOUT=1200 EVOSCI_QUERY_EXTRA_ARGS='--query-ids 6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30 --force-proposal --stream-logs --idle-timeout 600 --output-dir reproduction/artifacts/full_trajectories/EvoScientist' reproduction/ssh_ubuntu_run.sh batch-bg 30",
-    "manifest_status": "ok",
-    "returncode": 0,
-    "thread_id": "6cd18f3a",
-    "workspace": "runs/repro-query-27",
-    "output_dir": "reproduction/artifacts/remote_fetch/full_trajectories/EvoScientist/query_27",
-    "artifact_files": {
-      "stdout.txt": {
-        "exists": true,
-        "bytes": 9127
-      },
-      "stderr.txt": {
-        "exists": true,
-        "bytes": 251
-      },
-      "prompt.txt": {
-        "exists": true,
-        "bytes": 707
-      },
-      "query.json": {
-        "exists": true,
-        "bytes": 172
-      },
-      "answer.txt": {
-        "exists": false,
-        "bytes": 0
-      },
-      "final_report.md": {
-        "exists": true,
-        "bytes": 15229
-      }
-    },
-    "usage": {
-      "input_tokens": 82645,
-      "output_tokens": 7620
-    },
-    "final_report": {
-      "title": "Position-Decontaminated Attention (PDA): Training-Free Mitigation of Position Bias in Long-Context LLMs",
-      "bytes": 15229,
-      "sections_detected": [
-        "Problem",
-        "Hypothesis",
-        "Method",
-        "Dataset",
-        "Benchmark",
-        "Evaluation",
-        "Baselines",
-        "Ablations",
-        "Failure"
-      ]
-    }
-  },
-  "query_28_success": {
-    "query_id": 28,
-    "topic": "Alignment",
-    "goal": "Generate a research proposal on cross-cultural alignment for Large Language Models.",
-    "mode": "full tool-enabled with --force-proposal and isolated --mode run workspace",
-    "remote_host": "ubuntu-heshi",
-    "command": "EVOSCI_QUERY_TIMEOUT=1200 EVOSCI_QUERY_EXTRA_ARGS='--query-ids 6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30 --force-proposal --stream-logs --idle-timeout 600 --output-dir reproduction/artifacts/full_trajectories/EvoScientist' reproduction/ssh_ubuntu_run.sh batch-bg 30",
-    "manifest_status": "ok",
-    "returncode": 0,
-    "thread_id": "dd70b7d7",
-    "workspace": "runs/repro-query-28",
-    "output_dir": "reproduction/artifacts/remote_fetch/full_trajectories/EvoScientist/query_28",
-    "artifact_files": {
-      "stdout.txt": {
-        "exists": true,
-        "bytes": 8042
-      },
-      "stderr.txt": {
-        "exists": true,
-        "bytes": 251
-      },
-      "prompt.txt": {
-        "exists": true,
-        "bytes": 687
-      },
-      "query.json": {
-        "exists": true,
-        "bytes": 135
-      },
-      "answer.txt": {
-        "exists": false,
-        "bytes": 0
-      },
-      "final_report.md": {
-        "exists": true,
-        "bytes": 12259
-      }
-    },
-    "usage": {
-      "input_tokens": 93296,
-      "output_tokens": 5082
-    },
-    "final_report": {
-      "title": "Preference Bias Amplification: Measuring and Mitigating Western Cultural Bias in DPO-Based LLM Alignment",
-      "bytes": 12259,
-      "sections_detected": [
-        "Problem",
-        "Hypothesis",
-        "Method",
-        "Dataset",
-        "Benchmark",
-        "Evaluation",
-        "Baselines",
-        "Ablations",
-        "Failure"
-      ]
-    }
-  },
-  "query_29_success": {
-    "query_id": 29,
-    "topic": "Alignment",
-    "goal": "Generate a research proposal on value alignment for AI agents.",
-    "mode": "full tool-enabled with --force-proposal and isolated --mode run workspace",
-    "remote_host": "ubuntu-heshi",
-    "command": "EVOSCI_QUERY_TIMEOUT=1200 EVOSCI_QUERY_EXTRA_ARGS='--query-ids 6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30 --force-proposal --stream-logs --idle-timeout 600 --output-dir reproduction/artifacts/full_trajectories/EvoScientist' reproduction/ssh_ubuntu_run.sh batch-bg 30",
-    "manifest_status": "ok",
-    "returncode": 0,
-    "thread_id": "0abad5a0",
-    "workspace": "runs/repro-query-29",
-    "output_dir": "reproduction/artifacts/remote_fetch/full_trajectories/EvoScientist/query_29",
-    "artifact_files": {
-      "stdout.txt": {
-        "exists": true,
-        "bytes": 9882
-      },
-      "stderr.txt": {
-        "exists": true,
-        "bytes": 251
-      },
-      "prompt.txt": {
-        "exists": true,
-        "bytes": 666
-      },
-      "query.json": {
-        "exists": true,
-        "bytes": 114
-      },
-      "answer.txt": {
-        "exists": false,
-        "bytes": 0
-      },
-      "final_report.md": {
-        "exists": true,
-        "bytes": 17955
-      }
-    },
-    "usage": {
-      "input_tokens": 314073,
-      "output_tokens": 8549
-    },
-    "final_report": {
-      "title": "Detecting and Mitigating Specification Gaming in RLHF-Aligned Language Models via Adversarial Reward Probing",
-      "bytes": 17955,
-      "sections_detected": [
-        "Problem",
-        "Hypothesis",
-        "Method",
-        "Dataset",
-        "Benchmark",
-        "Evaluation",
-        "Baselines",
-        "Ablations",
-        "Failure"
-      ]
-    }
-  }
+  "limitations": [
+    "Queries 1, 2, 3, 4, 5, 6, 8, 10, 11, 13, 15, 19, 20, 21, 23, 27, 28, 29 have successful full tool-enabled trajectories with final_report.md.",
+    "Queries 7, 9, 12, 14, 16, 17, 18, 22, 24, 25, 26, 30 remain non-successful in the latest fetched audit snapshot.",
+    "The run used DeepSeek configuration rather than the paper-matched Gemini/Claude setup.",
+    "Tavily search was unavailable, so the research-agent behavior may differ from paper settings.",
+    "This is still not the full 7-baseline paper-level Table 1 reproduction."
+  ]
 }
