@@ -63,8 +63,8 @@
     ]
   },
   "limitations": [
-    "Only queries 1, 2, 3, 5, 6, 8, 10, 11, 13, 15, 19, 20, 21, 23, 27, 28, and 29 currently have successful full tool-enabled trajectories with final_report.md.",
-    "Queries 4, 7, 9, 12, 14, 16, 17, 18, 22, 25, and 26 idle-timed-out after 600 seconds without log growth in the fetched audit snapshot.",
+    "Queries 1, 2, 3, 5, 6, 8, 10, 11, 13, 15, 19, 20, 21, 23, 27, 28, and 29 have successful full tool-enabled trajectories with final_report.md.",
+    "Queries 4, 7, 9, 12, 14, 16, 17, 18, 22, 25, 26, and 30 idle-timed-out after 600 seconds without log growth in the fetched audit snapshot.",
     "Query 24 failed with APIConnectionError after partial research-agent progress and no final_report.md; the stuck child process was terminated so the batch could continue.",
     "The run used DeepSeek configuration rather than the paper-matched Gemini/Claude setup.",
     "Tavily search was unavailable, so the research-agent behavior may differ from paper settings.",
@@ -101,11 +101,10 @@
       26,
       27,
       28,
-      29
-    ],
-    "pending_queries": [
+      29,
       30
-    ]
+    ],
+    "pending_queries": []
   },
   "query_2_attempts": [
     {
@@ -144,9 +143,8 @@
     "query_count": 30,
     "counts": {
       "success": 17,
-      "timeout": 11,
-      "failed": 1,
-      "missing": 1
+      "timeout": 12,
+      "failed": 1
     },
     "successful_query_ids": [
       1,
@@ -179,8 +177,8 @@
       22,
       25,
       26,
-      24,
-      30
+      30,
+      24
     ]
   },
   "query_2_success": {
@@ -436,6 +434,11 @@
       "status": "timeout",
       "reason": "runner reported idle timeout after 600 seconds without log growth",
       "workspace": "runs/repro-query-26"
+    },
+    "query_30": {
+      "status": "timeout",
+      "reason": "runner reported idle timeout after 600 seconds without log growth",
+      "workspace": "runs/repro-query-30"
     }
   },
   "query_6_success": {

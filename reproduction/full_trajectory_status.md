@@ -9,9 +9,8 @@ Audit status: `incomplete`
 | Status | Count |
 | --- | ---: |
 | success | 17 |
-| timeout | 11 |
+| timeout | 12 |
 | failed | 1 |
-| missing | 1 |
 
 Successful query ids: `[1, 2, 3, 5, 6, 8, 10, 11, 13, 15, 19, 20, 21, 23, 27, 28, 29]`
 
@@ -324,6 +323,7 @@ Token usage: 314,073 input / 8,549 output
 - Query 24: APIConnectionError after partial research-agent progress; no qualifying `final_report.md` was produced.
 - Query 25: runner reported idle timeout after 600 seconds without log growth.
 - Query 26: runner reported idle timeout after 600 seconds without log growth.
+- Query 30: runner reported idle timeout after 600 seconds without log growth.
 
 ## Query 2 Attempts
 
@@ -340,8 +340,8 @@ Token usage: 314,073 input / 8,549 output
   Final report collected: True
 
 ## Limitations
-- Only queries 1, 2, 3, 5, 6, 8, 10, 11, 13, 15, 19, 20, 21, 23, 27, 28, and 29 currently have successful full tool-enabled trajectories with final_report.md.
-- Queries 4, 7, 9, 12, 14, 16, 17, 18, 22, 25, and 26 idle-timed-out after 600 seconds without log growth in the fetched audit snapshot.
+- Queries 1, 2, 3, 5, 6, 8, 10, 11, 13, 15, 19, 20, 21, 23, 27, 28, and 29 have successful full tool-enabled trajectories with final_report.md.
+- Queries 4, 7, 9, 12, 14, 16, 17, 18, 22, 25, 26, and 30 idle-timed-out after 600 seconds without log growth in the fetched audit snapshot.
 - Query 24 failed with APIConnectionError after partial research-agent progress and no final_report.md; the stuck child process was terminated so the batch could continue.
 - The run used DeepSeek configuration rather than the paper-matched Gemini/Claude setup.
 - Tavily search was unavailable, so the research-agent behavior may differ from paper settings.

@@ -113,12 +113,13 @@ def main() -> None:
     assert full_status["query_29_success"]["artifact_files"]["final_report.md"]["bytes"] >= 10000
     assert "Specification Gaming" in full_status["query_29_success"]["final_report"]["title"]
     assert full_status["audit"]["counts"]["success"] == 17
-    assert full_status["audit"]["counts"]["timeout"] == 11
+    assert full_status["audit"]["counts"]["timeout"] == 12
     assert full_status["audit"]["counts"]["failed"] == 1
-    assert full_status["audit"]["counts"]["missing"] == 1
+    assert "missing" not in full_status["audit"]["counts"]
     assert full_status["incomplete_queries"]["query_24"]["status"] == "failed"
     assert full_status["incomplete_queries"]["query_25"]["status"] == "timeout"
     assert full_status["incomplete_queries"]["query_26"]["status"] == "timeout"
+    assert full_status["incomplete_queries"]["query_30"]["status"] == "timeout"
     reported = json.loads(reported_path.read_text(encoding="utf-8"))
     for section in [
         "table1_llm_idea_generation",
