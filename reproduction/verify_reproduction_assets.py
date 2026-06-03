@@ -77,7 +77,7 @@ def main() -> None:
     assert full_status["query_id"] == 1
     assert "CrossLingual-RAG" in full_status["final_report"]["title"]
     assert full_status["artifact_files"]["final_report.md"]["bytes"] >= 10000
-    assert full_status["full_trajectory_counts"]["successful_final_reports"] == 6
+    assert full_status["full_trajectory_counts"]["successful_final_reports"] == 8
     assert len(full_status["query_2_attempts"]) == 3
     assert "clarification" in full_status["query_2_attempts"][0]["result"]
     assert full_status["query_2_success"]["artifact_files"]["final_report.md"]["bytes"] >= 10000
@@ -90,9 +90,13 @@ def main() -> None:
     assert "Low-Resource ASR" in full_status["query_6_success"]["final_report"]["title"]
     assert full_status["query_8_success"]["artifact_files"]["final_report.md"]["bytes"] >= 10000
     assert "VeriPlan" in full_status["query_8_success"]["final_report"]["title"]
-    assert full_status["audit"]["counts"]["success"] == 6
+    assert full_status["query_10_success"]["artifact_files"]["final_report.md"]["bytes"] >= 10000
+    assert "Text-to-SQL" in full_status["query_10_success"]["final_report"]["title"]
+    assert full_status["query_11_success"]["artifact_files"]["final_report.md"]["bytes"] >= 10000
+    assert "Capability Graph" in full_status["query_11_success"]["final_report"]["title"]
+    assert full_status["audit"]["counts"]["success"] == 8
     assert full_status["audit"]["counts"]["timeout"] == 3
-    assert full_status["audit"]["counts"]["missing"] == 21
+    assert full_status["audit"]["counts"]["missing"] == 19
     reported = json.loads(reported_path.read_text(encoding="utf-8"))
     for section in [
         "table1_llm_idea_generation",

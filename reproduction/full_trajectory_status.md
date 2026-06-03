@@ -8,11 +8,11 @@ Audit status: `incomplete`
 
 | Status | Count |
 | --- | ---: |
-| success | 6 |
+| success | 8 |
 | timeout | 3 |
-| missing | 21 |
+| missing | 19 |
 
-Successful query ids: `[1, 2, 3, 5, 6, 8]`
+Successful query ids: `[1, 2, 3, 5, 6, 8, 10, 11]`
 
 ## Successful Full Trajectories
 
@@ -144,6 +144,36 @@ EVOSCI_QUERY_TIMEOUT=1200 EVOSCI_QUERY_EXTRA_ARGS='--query-ids 6,7,8,9,10,11,12,
 - manifest return code is 0.
 - isolated workspace was `runs/repro-query-08`.
 
+Query 10 status: `ok`
+
+Title: Research Proposal: Semantically Decomposed Text-to-SQL with Skeleton-Based Compositional Generalization
+
+Output directory: `reproduction/artifacts/remote_fetch/full_trajectories/EvoScientist/query_10`
+
+Token usage: 182,687 input / 7,774 output
+
+## Query 10 Evidence
+
+- `final_report.md` exists and is 18,447 bytes.
+- stdout reports `[Usage: 182,687 in · 7,774 out]`.
+- manifest return code is 0.
+- isolated workspace was `runs/repro-query-10`.
+
+Query 11 status: `ok`
+
+Title: Decoding the Capability Graph: Causal Decomposition of Knowledge, Reasoning, and Code Generation in LLMs
+
+Output directory: `reproduction/artifacts/remote_fetch/full_trajectories/EvoScientist/query_11`
+
+Token usage: 174,586 input / 8,234 output
+
+## Query 11 Evidence
+
+- `final_report.md` exists and is 19,843 bytes.
+- stdout reports `[Usage: 174,586 in · 8,234 out]`.
+- manifest return code is 0.
+- isolated workspace was `runs/repro-query-11`.
+
 ## Current Non-Successful Full Trajectories
 
 - Query 4: runner reported idle timeout after 600 seconds without log growth.
@@ -165,7 +195,7 @@ EVOSCI_QUERY_TIMEOUT=1200 EVOSCI_QUERY_EXTRA_ARGS='--query-ids 6,7,8,9,10,11,12,
   Final report collected: True
 
 ## Limitations
-- Only queries 1, 2, 3, 5, 6, and 8 currently have successful full tool-enabled trajectories with final_report.md.
+- Only queries 1, 2, 3, 5, 6, 8, 10, and 11 currently have successful full tool-enabled trajectories with final_report.md.
 - Queries 4, 7, and 9 idle-timed-out after 600 seconds without log growth in the fetched audit snapshot.
 - The run used DeepSeek configuration rather than the paper-matched Gemini/Claude setup.
 - Tavily search was unavailable, so the research-agent behavior may differ from paper settings.
