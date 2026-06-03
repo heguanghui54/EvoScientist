@@ -8,12 +8,12 @@ Audit status: `incomplete`
 
 | Status | Count |
 | --- | ---: |
-| success | 15 |
+| success | 16 |
 | timeout | 11 |
 | failed | 1 |
-| missing | 3 |
+| missing | 2 |
 
-Successful query ids: `[1, 2, 3, 5, 6, 8, 10, 11, 13, 15, 19, 20, 21, 23, 27]`
+Successful query ids: `[1, 2, 3, 5, 6, 8, 10, 11, 13, 15, 19, 20, 21, 23, 27, 28]`
 
 ## Successful Full Trajectories
 
@@ -280,6 +280,21 @@ Token usage: 82,645 input / 7,620 output
 - manifest return code is 0.
 - isolated workspace was `runs/repro-query-27`.
 
+Query 28 status: `ok`
+
+Title: Preference Bias Amplification: Measuring and Mitigating Western Cultural Bias in DPO-Based LLM Alignment
+
+Output directory: `reproduction/artifacts/remote_fetch/full_trajectories/EvoScientist/query_28`
+
+Token usage: 93,296 input / 5,082 output
+
+## Query 28 Evidence
+
+- `final_report.md` exists and is 12,259 bytes.
+- stdout reports `[Usage: 93,296 in · 5,082 out]`.
+- manifest return code is 0.
+- isolated workspace was `runs/repro-query-28`.
+
 ## Current Non-Successful Full Trajectories
 
 - Query 4: runner reported idle timeout after 600 seconds without log growth.
@@ -310,7 +325,7 @@ Token usage: 82,645 input / 7,620 output
   Final report collected: True
 
 ## Limitations
-- Only queries 1, 2, 3, 5, 6, 8, 10, 11, 13, 15, 19, 20, 21, 23, and 27 currently have successful full tool-enabled trajectories with final_report.md.
+- Only queries 1, 2, 3, 5, 6, 8, 10, 11, 13, 15, 19, 20, 21, 23, 27, and 28 currently have successful full tool-enabled trajectories with final_report.md.
 - Queries 4, 7, 9, 12, 14, 16, 17, 18, 22, 25, and 26 idle-timed-out after 600 seconds without log growth in the fetched audit snapshot.
 - Query 24 failed with APIConnectionError after partial research-agent progress and no final_report.md; the stuck child process was terminated so the batch could continue.
 - The run used DeepSeek configuration rather than the paper-matched Gemini/Claude setup.
