@@ -25,7 +25,7 @@ and paper-level experimental reproduction.
 | DeepSeek-backed EvoScientist proposal-only outputs exist | Ubuntu batch with `--proposal-only --stream-logs`; manifest has 30 `ok` outputs | Verified |
 | Target-system output coverage is complete for proposal-only mode | `audit_reproduction_artifacts.py --artifacts-root reproduction/artifacts/remote_fetch` reports EvoScientist 30/30 present | Verified |
 | Full tool-enabled EvoScientist trajectory exists for query 1 | `full_trajectory_status.json`; final report title: "CrossLingual-RAG: Cross-Lingual Retrieval-Augmented Generation for Extremely Low-Resource Machine Translation" | Verified |
-| Full trajectory audit is executable | `audit_full_trajectories.py`; current audit counts: 19 success, 10 timeout, 1 failed, 0 missing | Verified |
+| Full trajectory audit is executable | `audit_full_trajectories.py`; current audit counts: 20 success, 9 timeout, 1 failed, 0 missing | Verified |
 | Full trajectory reruns are isolated by default | `run_idea_generation.py` now uses `EvoSci --mode run --name repro-query-XX` unless `--session-mode daemon` is explicitly requested | Verified |
 | Replacement direct-LLM baseline outputs exist | `Direct-DeepSeek` baseline has answer files for 30/30 paper queries | Verified |
 | Replacement-baseline judge pipeline is complete | Clean EvoScientist answers vs `Direct-DeepSeek`: 60 swapped pairwise records, 60 DeepSeek judge outputs, aggregate table, audit complete | Verified |
@@ -35,7 +35,7 @@ and paper-level experimental reproduction.
 
 | Requirement | Missing Evidence | Current Blocker |
 | --- | --- | --- |
-| Full successful EvoScientist trajectories for all 30 paper queries | Qualifying `final_report.md` outputs for every paper query, plus paper-matched RA/EA/EMA behavior | Full tool-enabled attempts have been fetched for all 30; current audit is 19 success, 10 timeout, 1 failed, 0 missing under DeepSeek without Tavily, so 30/30 successful paper-matched trajectories are not yet reproduced |
+| Full successful EvoScientist trajectories for all 30 paper queries | Qualifying `final_report.md` outputs for every paper query, plus paper-matched RA/EA/EMA behavior | Full tool-enabled attempts have been fetched for all 30; current audit is 20 success, 9 timeout, 1 failed, 0 missing under DeepSeek without Tavily, so 30/30 successful paper-matched trajectories are not yet reproduced |
 | Paper-matched model settings | Gemini-2.5-Pro, Claude-4.5-Haiku, Gemini judge access | DeepSeek smoke works, but paper-matched Gemini/Claude credentials are not configured in EvoScientist |
 | Literature-retrieval behavior | Semantic Scholar/Tavily-backed run logs | No search key/tool configuration for live agent run |
 | Paper baseline comparison outputs | Virtual Scientist, AI-Researcher, InternAgent, AI Scientist-v2, Hypogenic, Novix, K-Dense outputs | Original baseline outputs are not included in public repo; a stated replacement baseline `Direct-DeepSeek` has been run |
@@ -71,7 +71,7 @@ Remote target:
 - Verified: batch query 1..30 completed as a real DeepSeek-backed proposal-only
   run with `--proposal-only --stream-logs`
 - Verified: full tool-enabled DeepSeek-backed sweep for all 30 paper queries
-  has completed and been fetched; current audit is 19 success, 10 timeout,
+  has completed and been fetched; current audit is 20 success, 9 timeout,
   1 failed, 0 missing
 - Final full-trajectory status is tracked in
   `reproduction/full_trajectory_status.md` and
@@ -97,8 +97,8 @@ in `build_pairwise_judge_inputs.py`, or explicitly define a replacement-baseline
 experiment.
 
 If the immediate goal is to improve EvoScientist full-trajectory coverage first,
-rerun only the non-successful query IDs: 9, 12, 14, 16, 17, 18, 22, 24, 25, 26,
-and 30, ideally with a changed provider/search/timeout configuration.
+rerun only the non-successful query IDs: 12, 14, 16, 17, 18, 22, 24, 25, 26, and
+30, ideally with a changed provider/search/timeout configuration.
 
 Then run the real judge and aggregation steps:
 
