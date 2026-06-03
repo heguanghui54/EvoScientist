@@ -75,9 +75,9 @@ def main() -> None:
     )
     assert "not possible from public artifacts alone" in gap_report["conclusion"]
     full_status = json.loads(full_status_json_path.read_text(encoding="utf-8"))
-    expected_success_ids = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 17, 18, 19, 20, 21, 22, 23, 25, 27, 28, 29]
-    expected_incomplete_ids = [16, 24, 26, 30]
-    assert full_status["full_trajectory_counts"]["successful_final_reports"] == 26
+    expected_success_ids = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 17, 18, 19, 20, 21, 22, 23, 25, 26, 27, 28, 29]
+    expected_incomplete_ids = [16, 24, 30]
+    assert full_status["full_trajectory_counts"]["successful_final_reports"] == 27
     assert full_status["audit"]["successful_query_ids"] == expected_success_ids
     assert full_status["audit"]["failed_or_incomplete_query_ids"] == expected_incomplete_ids
     for query_id in expected_success_ids:
@@ -105,13 +105,13 @@ def main() -> None:
     assert full_status["successful_queries"]["query_22"]["artifact_files"]["final_report.md"]["bytes"] >= 15000
     assert "Conflict-Aware Multi-Hop Reasoning" in full_status["successful_queries"]["query_25"]["final_report"]["title"]
     assert full_status["successful_queries"]["query_25"]["artifact_files"]["final_report.md"]["bytes"] >= 17000
-    assert full_status["audit"]["counts"]["success"] == 26
-    assert full_status["audit"]["counts"]["timeout"] == 3
+    assert "Dynamic Alignment-based Curriculum Selection" in full_status["successful_queries"]["query_26"]["final_report"]["title"]
+    assert full_status["successful_queries"]["query_26"]["artifact_files"]["final_report.md"]["bytes"] >= 14000
+    assert full_status["audit"]["counts"]["success"] == 27
+    assert full_status["audit"]["counts"]["timeout"] == 2
     assert full_status["audit"]["counts"]["failed"] == 1
     assert "missing" not in full_status["audit"]["counts"]
     assert full_status["incomplete_queries"]["query_24"]["status"] == "failed"
-    assert full_status["incomplete_queries"]["query_26"]["status"] == "timeout"
-    assert full_status["incomplete_queries"]["query_26"]["status"] == "timeout"
     assert full_status["incomplete_queries"]["query_30"]["status"] == "timeout"
     reported = json.loads(reported_path.read_text(encoding="utf-8"))
     for section in [
@@ -155,9 +155,9 @@ def main() -> None:
         "EvoScientist CLI outputs are normalized before judging",
         "Full trajectory audit is executable",
         "Full trajectory reruns are isolated by default",
-        "26 success, 3 timeout, 1 failed, 0 missing",
+        "27 success, 2 timeout, 1 failed, 0 missing",
         "full tool-enabled DeepSeek-backed sweep for all 30 paper queries",
-        "rerun only the non-successful query IDs: 16, 24, 26",
+        "rerun only the non-successful query IDs: 16, 24, and 30",
         "not a self-evolving system",
         "Ubuntu GPU Status",
     ]:
