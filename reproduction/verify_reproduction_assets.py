@@ -77,7 +77,7 @@ def main() -> None:
     assert full_status["query_id"] == 1
     assert "CrossLingual-RAG" in full_status["final_report"]["title"]
     assert full_status["artifact_files"]["final_report.md"]["bytes"] >= 10000
-    assert full_status["full_trajectory_counts"]["successful_final_reports"] == 14
+    assert full_status["full_trajectory_counts"]["successful_final_reports"] == 15
     assert len(full_status["query_2_attempts"]) == 3
     assert "clarification" in full_status["query_2_attempts"][0]["result"]
     assert full_status["query_2_success"]["artifact_files"]["final_report.md"]["bytes"] >= 10000
@@ -106,12 +106,15 @@ def main() -> None:
     assert "False-Positive Disparities" in full_status["query_21_success"]["final_report"]["title"]
     assert full_status["query_23_success"]["artifact_files"]["final_report.md"]["bytes"] >= 10000
     assert "CodeSemEval" in full_status["query_23_success"]["final_report"]["title"]
-    assert full_status["audit"]["counts"]["success"] == 14
-    assert full_status["audit"]["counts"]["timeout"] == 10
+    assert full_status["query_27_success"]["artifact_files"]["final_report.md"]["bytes"] >= 10000
+    assert "Position-Decontaminated Attention" in full_status["query_27_success"]["final_report"]["title"]
+    assert full_status["audit"]["counts"]["success"] == 15
+    assert full_status["audit"]["counts"]["timeout"] == 11
     assert full_status["audit"]["counts"]["failed"] == 1
-    assert full_status["audit"]["counts"]["missing"] == 5
+    assert full_status["audit"]["counts"]["missing"] == 3
     assert full_status["incomplete_queries"]["query_24"]["status"] == "failed"
     assert full_status["incomplete_queries"]["query_25"]["status"] == "timeout"
+    assert full_status["incomplete_queries"]["query_26"]["status"] == "timeout"
     reported = json.loads(reported_path.read_text(encoding="utf-8"))
     for section in [
         "table1_llm_idea_generation",

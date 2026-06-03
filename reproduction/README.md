@@ -182,8 +182,8 @@ Audit full trajectories with:
   --output-json reproduction/artifacts/remote_fetch/full_trajectories/full_trajectory_audit.json
 ```
 
-The current full-trajectory audit is incomplete: 14 successes, 10 timeouts, 1
-failed query, and 5 missing queries.
+The current full-trajectory audit is incomplete: 15 successes, 11 timeouts, 1
+failed query, and 3 missing queries.
 
 For broad full-agent queries, use `--force-proposal` to prevent the agent from
 asking clarification questions instead of producing a proposal:
