@@ -16,6 +16,18 @@ Root: `reproduction/artifacts/human_evaluation`
   `dimension`, and `winner`.
 - `aggregate.json`: needs a `baselines` object with per-baseline dimensions.
 - Valid winners: `assistant_1`, `assistant_2`, `tie`.
+- Aggregator: `reproduction/aggregate_human_labels.py`.
+
+Example:
+
+```bash
+.venv/bin/python reproduction/aggregate_human_labels.py \
+  --inputs reproduction/artifacts/human_evaluation/inputs.jsonl \
+  --labels reproduction/artifacts/human_evaluation/labels.jsonl \
+  --output-csv reproduction/artifacts/human_evaluation/aggregate.csv \
+  --output-json reproduction/artifacts/human_evaluation/aggregate.json \
+  --strict
+```
 
 ## Table 3 Ablations
 

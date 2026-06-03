@@ -53,6 +53,7 @@ def main() -> None:
         "aggregate_judge_results.py",
         "run_offline_smoke.py",
         "run_llm_judge.py",
+        "aggregate_human_labels.py",
         "compare_reproduction_to_paper.py",
         "audit_reproduction_artifacts.py",
         "verify_replacement_baseline_protocol.py",
@@ -114,6 +115,7 @@ def main() -> None:
     assert "exact Table 1 reproduction" in replacement_protocol_md
     paper_artifact_schema = json.loads(paper_artifact_schema_json_path.read_text(encoding="utf-8"))
     assert "human_evaluation" in paper_artifact_schema["schemas"]
+    assert paper_artifact_schema["schemas"]["human_evaluation"]["aggregator"] == "reproduction/aggregate_human_labels.py"
     assert "ablation" in paper_artifact_schema["schemas"]
     assert "code_execution" in paper_artifact_schema["schemas"]
     paper_artifact_schema_md = paper_artifact_schema_md_path.read_text(encoding="utf-8")
@@ -203,6 +205,7 @@ def main() -> None:
         "Replacement-baseline judge pipeline is complete",
         "Replacement baseline protocol is pinned",
         "Paper-level non-Table-1 artifact schemas are pinned",
+        "Human-label aggregation is executable",
         "EvoScientist CLI outputs are normalized before judging",
         "Full trajectory audit is executable",
         "Full trajectory reruns are isolated by default",
@@ -380,6 +383,61 @@ def main() -> None:
         )
         summary = json.loads(table_json.read_text(encoding="utf-8"))
         assert summary["baselines"]["BaselineA"]["avg_gap"] == 100.0
+
+        human_inputs = tmp_path / "human_inputs.jsonl"
+        human_inputs.write_text(
+            json.dumps(
+                {
+                    "comparison_id": "h01",
+                    "query_id": 1,
+                    "baseline": "BaselineA",
+                    "assistant_1_system": "EvoScientist",
+                    "assistant_2_system": "BaselineA",
+                    "answer_a": "Detailed proposal",
+                    "answer_b": "Generic proposal",
+                    "dimensions": ["Clarity", "Novelty", "Feasibility", "Relevance"],
+                }
+            )
+            + "\n",
+            encoding="utf-8",
+        )
+        human_labels = tmp_path / "human_labels.jsonl"
+        human_labels.write_text(
+            "\n".join(
+                json.dumps(
+                    {
+                        "comparison_id": "h01",
+                        "annotator_id": "ann1",
+                        "dimension": dim,
+                        "winner": "assistant_1",
+                    }
+                )
+                for dim in ["Clarity", "Novelty", "Feasibility", "Relevance"]
+            )
+            + "\n",
+            encoding="utf-8",
+        )
+        human_aggregate = tmp_path / "human_aggregate.json"
+        subprocess.run(
+            [
+                sys.executable,
+                str(ROOT / "aggregate_human_labels.py"),
+                "--inputs",
+                str(human_inputs),
+                "--labels",
+                str(human_labels),
+                "--output-csv",
+                str(tmp_path / "human_aggregate.csv"),
+                "--output-json",
+                str(human_aggregate),
+                "--strict",
+            ],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+        human_summary = json.loads(human_aggregate.read_text(encoding="utf-8"))
+        assert human_summary["baselines"]["BaselineA"]["avg_gap"] == 100.0
 
         expected_table1 = reported["table1_llm_idea_generation"]
         matching_actual = {

@@ -16,7 +16,8 @@
           "baseline_required_fields": ["dimensions"]
         }
       },
-      "valid_winners": ["assistant_1", "assistant_2", "tie"]
+      "valid_winners": ["assistant_1", "assistant_2", "tie"],
+      "aggregator": "reproduction/aggregate_human_labels.py"
     },
     "ablation": {
       "root": "reproduction/artifacts/ablations",

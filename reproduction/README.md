@@ -349,6 +349,7 @@ reproduction/paper_artifact_schema.md
 
 They define the minimum fields for human labels, ablation judge records, and
 code-execution logs before those artifacts can satisfy the paper-level audit.
+Human labels can be aggregated with `reproduction/aggregate_human_labels.py`.
 
 Run an offline end-to-end smoke test of the evaluation pipeline:
 
