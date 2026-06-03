@@ -64,7 +64,7 @@
   },
   "limitations": [
     "Only queries 1, 2, 3, 5, and 6 currently have successful full tool-enabled trajectories with final_report.md.",
-    "Query 4 idle-timed-out after 600 seconds without log growth in the fetched audit snapshot.",
+    "Queries 4 and 7 idle-timed-out after 600 seconds without log growth in the fetched audit snapshot.",
     "The run used DeepSeek configuration rather than the paper-matched Gemini/Claude setup.",
     "Tavily search was unavailable, so the research-agent behavior may differ from paper settings.",
     "This is still not the full 7-baseline paper-level Table 1 reproduction."
@@ -77,10 +77,10 @@
       3,
       4,
       5,
-      6
+      6,
+      7
     ],
     "pending_queries": [
-      7,
       8,
       9,
       10,
@@ -143,8 +143,8 @@
     "query_count": 30,
     "counts": {
       "success": 5,
-      "timeout": 1,
-      "missing": 24
+      "timeout": 2,
+      "missing": 23
     },
     "successful_query_ids": [
       1,
@@ -360,6 +360,11 @@
       "status": "timeout",
       "reason": "runner reported idle timeout after 600 seconds without log growth",
       "workspace": "runs/repro-query-04"
+    },
+    "query_07": {
+      "status": "timeout",
+      "reason": "runner reported idle timeout after 600 seconds without log growth",
+      "workspace": "runs/repro-query-07"
     }
   },
   "query_6_success": {

@@ -9,8 +9,8 @@ Audit status: `incomplete`
 | Status | Count |
 | --- | ---: |
 | success | 5 |
-| timeout | 1 |
-| missing | 24 |
+| timeout | 2 |
+| missing | 23 |
 
 Successful query ids: `[1, 2, 3, 5, 6]`
 
@@ -126,6 +126,7 @@ EVOSCI_QUERY_TIMEOUT=1200 EVOSCI_QUERY_EXTRA_ARGS='--query-ids 6,7,8,9,10,11,12,
 ## Current Non-Successful Full Trajectories
 
 - Query 4: runner reported idle timeout after 600 seconds without log growth.
+- Query 7: runner reported idle timeout after 600 seconds without log growth.
 
 ## Query 2 Attempts
 
@@ -143,7 +144,7 @@ EVOSCI_QUERY_TIMEOUT=1200 EVOSCI_QUERY_EXTRA_ARGS='--query-ids 6,7,8,9,10,11,12,
 
 ## Limitations
 - Only queries 1, 2, 3, 5, and 6 currently have successful full tool-enabled trajectories with final_report.md.
-- Query 4 idle-timed-out after 600 seconds without log growth in the fetched audit snapshot.
+- Queries 4 and 7 idle-timed-out after 600 seconds without log growth in the fetched audit snapshot.
 - The run used DeepSeek configuration rather than the paper-matched Gemini/Claude setup.
 - Tavily search was unavailable, so the research-agent behavior may differ from paper settings.
 - This is still not the full 7-baseline paper-level Table 1 reproduction.
