@@ -182,8 +182,8 @@ Audit full trajectories with:
   --output-json reproduction/artifacts/remote_fetch/full_trajectories/full_trajectory_audit.json
 ```
 
-The current full-trajectory audit is incomplete: 4 successes, 2 incomplete
-queries, and 24 missing queries.
+The current full-trajectory audit is incomplete: 5 successes, 1 timeout, and 24
+missing queries.
 
 For broad full-agent queries, use `--force-proposal` to prevent the agent from
 asking clarification questions instead of producing a proposal:
@@ -199,6 +199,14 @@ To continue the remaining paper queries without rerunning successful queries:
 ```bash
 EVOSCI_QUERY_TIMEOUT=1200 \
 EVOSCI_QUERY_EXTRA_ARGS='--start-id 4 --force-proposal --stream-logs --idle-timeout 600 --output-dir reproduction/artifacts/full_trajectories/EvoScientist' \
+  reproduction/ssh_ubuntu_run.sh batch-bg 30
+```
+
+After query 5 succeeds, continue without rerunning successful queries:
+
+```bash
+EVOSCI_QUERY_TIMEOUT=1200 \
+EVOSCI_QUERY_EXTRA_ARGS='--query-ids 6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30 --force-proposal --stream-logs --idle-timeout 600 --output-dir reproduction/artifacts/full_trajectories/EvoScientist' \
   reproduction/ssh_ubuntu_run.sh batch-bg 30
 ```
 

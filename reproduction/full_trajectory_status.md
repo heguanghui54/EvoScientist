@@ -8,11 +8,11 @@ Audit status: `incomplete`
 
 | Status | Count |
 | --- | ---: |
-| success | 4 |
-| incomplete | 2 |
+| success | 5 |
+| timeout | 1 |
 | missing | 24 |
 
-Successful query ids: `[1, 2, 3, 5]`
+Successful query ids: `[1, 2, 3, 5, 6]`
 
 ## Successful Full Trajectories
 
@@ -102,10 +102,30 @@ EVOSCI_QUERY_TIMEOUT=1200 EVOSCI_QUERY_EXTRA_ARGS='--start-id 4 --force-proposal
 - manifest return code is 0.
 - isolated workspace was `runs/repro-query-05`.
 
-## Current Incomplete Full Trajectories
+Query 6 status: `ok`
 
-- Query 4: stdout exists, but no qualifying `final_report.md` was collected in the fetched audit snapshot.
-- Query 6: stdout exists, but no qualifying `final_report.md` was collected in the fetched audit snapshot.
+Title: Research Proposal: Selective Pseudo-Labeling with Adapter-Based Fine-Tuning for Extremely Low-Resource ASR
+
+Output directory: `reproduction/artifacts/remote_fetch/full_trajectories/EvoScientist/query_06`
+
+Token usage: 86,612 input / 4,395 output
+
+## Query 6 Successful Command
+
+```bash
+EVOSCI_QUERY_TIMEOUT=1200 EVOSCI_QUERY_EXTRA_ARGS='--query-ids 6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30 --force-proposal --stream-logs --idle-timeout 600 --output-dir reproduction/artifacts/full_trajectories/EvoScientist' reproduction/ssh_ubuntu_run.sh batch-bg 30
+```
+
+## Query 6 Evidence
+
+- `final_report.md` exists and is 10,720 bytes.
+- stdout reports `[Usage: 86,612 in · 4,395 out]`.
+- manifest return code is 0.
+- isolated workspace was `runs/repro-query-06`.
+
+## Current Non-Successful Full Trajectories
+
+- Query 4: runner reported idle timeout after 600 seconds without log growth.
 
 ## Query 2 Attempts
 
@@ -122,8 +142,8 @@ EVOSCI_QUERY_TIMEOUT=1200 EVOSCI_QUERY_EXTRA_ARGS='--start-id 4 --force-proposal
   Final report collected: True
 
 ## Limitations
-- Only queries 1, 2, 3, and 5 currently have successful full tool-enabled trajectories with final_report.md.
-- Queries 4 and 6 currently have streamed startup artifacts but no qualifying final report in the fetched audit snapshot.
+- Only queries 1, 2, 3, 5, and 6 currently have successful full tool-enabled trajectories with final_report.md.
+- Query 4 idle-timed-out after 600 seconds without log growth in the fetched audit snapshot.
 - The run used DeepSeek configuration rather than the paper-matched Gemini/Claude setup.
 - Tavily search was unavailable, so the research-agent behavior may differ from paper settings.
 - This is still not the full 7-baseline paper-level Table 1 reproduction.

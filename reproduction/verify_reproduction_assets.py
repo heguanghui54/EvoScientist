@@ -77,7 +77,7 @@ def main() -> None:
     assert full_status["query_id"] == 1
     assert "CrossLingual-RAG" in full_status["final_report"]["title"]
     assert full_status["artifact_files"]["final_report.md"]["bytes"] >= 10000
-    assert full_status["full_trajectory_counts"]["successful_final_reports"] == 4
+    assert full_status["full_trajectory_counts"]["successful_final_reports"] == 5
     assert len(full_status["query_2_attempts"]) == 3
     assert "clarification" in full_status["query_2_attempts"][0]["result"]
     assert full_status["query_2_success"]["artifact_files"]["final_report.md"]["bytes"] >= 10000
@@ -86,8 +86,10 @@ def main() -> None:
     assert "Multi-Perspective" in full_status["query_3_success"]["final_report"]["title"]
     assert full_status["query_5_success"]["artifact_files"]["final_report.md"]["bytes"] >= 10000
     assert "GroundedLit" in full_status["query_5_success"]["final_report"]["title"]
-    assert full_status["audit"]["counts"]["success"] == 4
-    assert full_status["audit"]["counts"]["incomplete"] == 2
+    assert full_status["query_6_success"]["artifact_files"]["final_report.md"]["bytes"] >= 10000
+    assert "Low-Resource ASR" in full_status["query_6_success"]["final_report"]["title"]
+    assert full_status["audit"]["counts"]["success"] == 5
+    assert full_status["audit"]["counts"]["timeout"] == 1
     assert full_status["audit"]["counts"]["missing"] == 24
     reported = json.loads(reported_path.read_text(encoding="utf-8"))
     for section in [
