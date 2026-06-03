@@ -203,24 +203,33 @@ def main() -> None:
             manifest["outputs"].append(entry)
             continue
 
-        cmd = [
-            str(evosci),
-            "--mode",
-            args.session_mode,
-            "--workdir",
-            str(ROOT),
-            "-p",
-            prompt,
-            "--ui",
-            "cli",
-            "--auto-mode",
-            "--no-thinking",
-        ]
+        cmd = [str(evosci)]
         if args.session_mode == "run":
-            cmd[1:1] = [
-                "--name",
-                f"{args.run_name_prefix}-{query['id']:02d}",
+            cmd.extend(
+                [
+                    "--mode",
+                    "run",
+                    "--name",
+                    f"{args.run_name_prefix}-{query['id']:02d}",
+                ]
+            )
+        else:
+            cmd.extend(
+                [
+                    "--workdir",
+                    str(ROOT),
+                ]
+            )
+        cmd.extend(
+            [
+                "-p",
+                prompt,
+                "--ui",
+                "cli",
+                "--auto-mode",
+                "--no-thinking",
             ]
+        )
         stdout_path = qdir / "stdout.txt"
         stderr_path = qdir / "stderr.txt"
         if args.stream_logs:
