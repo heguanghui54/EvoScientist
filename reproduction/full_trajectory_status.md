@@ -8,11 +8,11 @@ Audit status: `incomplete`
 
 | Status | Count |
 | --- | ---: |
-| success | 11 |
+| success | 13 |
 | timeout | 8 |
-| missing | 11 |
+| missing | 9 |
 
-Successful query ids: `[1, 2, 3, 5, 6, 8, 10, 11, 13, 15, 19]`
+Successful query ids: `[1, 2, 3, 5, 6, 8, 10, 11, 13, 15, 19, 20, 21]`
 
 ## Successful Full Trajectories
 
@@ -219,6 +219,36 @@ Token usage: 87,128 input / 5,191 output
 - manifest return code is 0.
 - isolated workspace was `runs/repro-query-19`.
 
+Query 20 status: `ok`
+
+Title: MADEF: A Multi-Axis Decomposed Evaluation Framework for Diversity in Open-Ended Text Generation
+
+Output directory: `reproduction/artifacts/remote_fetch/full_trajectories/EvoScientist/query_20`
+
+Token usage: 184,418 input / 7,767 output
+
+## Query 20 Evidence
+
+- `final_report.md` exists and is 20,182 bytes.
+- stdout reports `[Usage: 184,418 in · 7,767 out]`.
+- manifest return code is 0.
+- isolated workspace was `runs/repro-query-20`.
+
+Query 21 status: `ok`
+
+Title: Fairness-Aware Stylometric Ensemble (FASE): Reducing Demographic False-Positive Disparities in AI-Generated Text Detection
+
+Output directory: `reproduction/artifacts/remote_fetch/full_trajectories/EvoScientist/query_21`
+
+Token usage: 179,223 input / 6,316 output
+
+## Query 21 Evidence
+
+- `final_report.md` exists and is 14,376 bytes.
+- stdout reports `[Usage: 179,223 in · 6,316 out]`.
+- manifest return code is 0.
+- isolated workspace was `runs/repro-query-21`.
+
 ## Current Non-Successful Full Trajectories
 
 - Query 4: runner reported idle timeout after 600 seconds without log growth.
@@ -245,7 +275,7 @@ Token usage: 87,128 input / 5,191 output
   Final report collected: True
 
 ## Limitations
-- Only queries 1, 2, 3, 5, 6, 8, 10, 11, 13, 15, and 19 currently have successful full tool-enabled trajectories with final_report.md.
+- Only queries 1, 2, 3, 5, 6, 8, 10, 11, 13, 15, 19, 20, and 21 currently have successful full tool-enabled trajectories with final_report.md.
 - Queries 4, 7, 9, 12, 14, 16, 17, and 18 idle-timed-out after 600 seconds without log growth in the fetched audit snapshot.
 - The run used DeepSeek configuration rather than the paper-matched Gemini/Claude setup.
 - Tavily search was unavailable, so the research-agent behavior may differ from paper settings.
