@@ -8,11 +8,11 @@ Audit status: `incomplete`
 
 | Status | Count |
 | --- | ---: |
-| success | 21 |
-| timeout | 8 |
+| success | 22 |
+| timeout | 7 |
 | failed | 1 |
 
-Successful query ids: `[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 15, 19, 20, 21, 23, 27, 28, 29]`
+Successful query ids: `[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 19, 20, 21, 23, 27, 28, 29]`
 
 ## Successful Full Trajectories
 
@@ -185,6 +185,19 @@ Command: `EVOSCI_QUERY_TIMEOUT=1200 EVOSCI_QUERY_EXTRA_ARGS='--query-ids 6,7,8,9
 - `final_report.md` exists and is 13,159 bytes.
 - isolated workspace was `runs/repro-query-13`.
 
+Query 14 status: `ok`
+
+Title: AdaSpec: Adaptive Speculation via Difficulty-Gated Multi-Strategy Selection for LLM Inference Acceleration
+
+Output directory: `reproduction/artifacts/remote_fetch/full_trajectories/EvoScientist/query_14`
+
+Token usage: 47730 input / 1786 output
+
+Command: `EVOSCI_QUERY_TIMEOUT=1200 EVOSCI_QUERY_EXTRA_ARGS='--query-ids 6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30 --force-proposal --stream-logs --idle-timeout 600 --output-dir reproduction/artifacts/full_trajectories/EvoScientist' reproduction/ssh_ubuntu_run.sh batch-bg 30`
+
+- `final_report.md` exists and is 18,206 bytes.
+- isolated workspace was `runs/repro-query-14`.
+
 Query 15 status: `ok`
 
 Title: Research Proposal: Context-Adaptive Gender Debiasing (CAGED) for Neural Machine Translation
@@ -291,7 +304,6 @@ Command: `EVOSCI_QUERY_TIMEOUT=1200 EVOSCI_QUERY_EXTRA_ARGS='--query-ids 6,7,8,9
 
 ## Current Non-Successful Full Trajectories
 
-- Query 14: runner reported timeout
 - Query 16: runner reported timeout
 - Query 17: runner reported timeout
 - Query 18: runner reported timeout
@@ -302,8 +314,8 @@ Command: `EVOSCI_QUERY_TIMEOUT=1200 EVOSCI_QUERY_EXTRA_ARGS='--query-ids 6,7,8,9
 - Query 30: runner reported timeout
 
 ## Limitations
-- Queries 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 15, 19, 20, 21, 23, 27, 28, 29 have successful full tool-enabled trajectories with final_report.md.
-- Queries 14, 16, 17, 18, 22, 24, 25, 26, 30 remain non-successful in the latest fetched audit snapshot.
+- Queries 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 19, 20, 21, 23, 27, 28, 29 have successful full tool-enabled trajectories with final_report.md.
+- Queries 16, 17, 18, 22, 24, 25, 26, 30 remain non-successful in the latest fetched audit snapshot.
 - The run used DeepSeek configuration rather than the paper-matched Gemini/Claude setup.
 - Tavily search was unavailable, so the research-agent behavior may differ from paper settings.
 - This is still not the full 7-baseline paper-level Table 1 reproduction.
