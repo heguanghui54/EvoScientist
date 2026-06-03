@@ -82,16 +82,16 @@ bash /path/to/EvoScientist/reproduction/ai_scientist_v2_ideation_runbook/run_ai_
 Required evidence: 30 answer.txt files under reproduction/artifacts/idea_outputs/Hypogenic/
 
 System: Hypogenic
+Probe: reproduction/hypogenic_baseline_probe.json
+Note: Current probe found Hypogenic has a hosted Assistant/IdeaHub/Arena platform and generated competition repositories, but no public batch runner or raw Table 1 outputs.
 
 Commands:
 
 ```bash
-.venv/bin/python reproduction/import_baseline_outputs.py --system-name Hypogenic --source {source_jsonl} --source-format jsonl --output-root reproduction/artifacts/idea_outputs --strict
-.venv/bin/python reproduction/import_baseline_outputs.py --system-name Hypogenic --source {source_dir} --source-format directory --output-root reproduction/artifacts/idea_outputs --strict
-.venv/bin/python reproduction/build_pairwise_judge_inputs.py --systems-root reproduction/artifacts/idea_outputs --baseline Hypogenic --output reproduction/artifacts/judge_inputs/evosci_vs_hypogenic.jsonl
-.venv/bin/python reproduction/run_llm_judge.py --provider deepseek --model deepseek-v4-flash --input reproduction/artifacts/judge_inputs/evosci_vs_hypogenic.jsonl --output reproduction/artifacts/judge_outputs/evosci_vs_hypogenic_deepseek.jsonl --resume
-.venv/bin/python reproduction/aggregate_judge_results.py --input reproduction/artifacts/judge_outputs/evosci_vs_hypogenic_deepseek.jsonl --output-csv reproduction/artifacts/tables/evosci_vs_hypogenic_deepseek.csv --output-json reproduction/artifacts/tables/evosci_vs_hypogenic_deepseek.json
-.venv/bin/python reproduction/audit_reproduction_artifacts.py --baseline Hypogenic --judge-inputs reproduction/artifacts/judge_inputs/evosci_vs_hypogenic.jsonl --judge-outputs reproduction/artifacts/judge_outputs/evosci_vs_hypogenic_deepseek.jsonl --aggregate-json reproduction/artifacts/tables/evosci_vs_hypogenic_deepseek.json
+# With Hypogenic account access: open https://hypogenic.ai/chat under a pinned browser/profile state.
+# Submit one recovered query per fresh Assistant session and capture the final answer plus session metadata.
+# Save outputs as $HOME/research/hypogenic/outputs/evoscientist_table1_queries/hypogenic/query_XX.md
+.venv/bin/python reproduction/import_baseline_outputs.py --system-name Hypogenic --source $HOME/research/hypogenic/outputs/evoscientist_table1_queries/hypogenic --source-format directory --output-root reproduction/artifacts/idea_outputs --strict
 ```
 
 ### 6. table1_llm_idea_generation / baseline_output_import_or_generation

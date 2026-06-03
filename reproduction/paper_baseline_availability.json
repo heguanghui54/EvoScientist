@@ -76,10 +76,26 @@
     {
       "name": "Hypogenic",
       "paper_role": "Table 1 baseline",
-      "public_entrypoint_status": "not_found",
-      "public_entrypoints": [],
+      "public_entrypoint_status": "hosted_competition_adapter_candidate",
+      "public_entrypoints": [
+        {
+          "label": "Hypogenic hosted platform",
+          "url": "https://hypogenic.ai/",
+          "evidence": "Public hosted science platform with Assistant, IdeaHub, and Arena."
+        },
+        {
+          "label": "Hypogenic Arena",
+          "url": "https://hypogenic.ai/arena",
+          "evidence": "Public weekly Agents4Science idea competition page."
+        },
+        {
+          "label": "local hosted-platform probe",
+          "url": "reproduction/hypogenic_baseline_probe.json",
+          "evidence": "Probe found hosted Assistant/Arena access and generated competition repositories, but no standalone batch runner or raw EvoScientist Table 1 outputs."
+        }
+      ],
       "table1_raw_outputs_available": false,
-      "rerun_path": "No reliable public runner or raw artifact package was found in the refreshed search. Reproduction requires author-provided outputs, service access if applicable, or an independently specified substitute baseline."
+      "rerun_path": "Potential hosted replacement rerun candidate through Hypogenic Assistant, but requires account/session access plus a pinned UI/browser capture protocol. Public generated competition repositories are related examples, not EvoScientist Table 1 raw outputs."
     },
     {
       "name": "Novix",
@@ -137,12 +153,12 @@
       "AI-Researcher",
       "InternAgent",
       "AI Scientist-v2",
+      "Hypogenic",
       "Novix",
       "K-Dense"
     ],
     "no_reliable_public_runner_found": [
-      "Virtual Scientist",
-      "Hypogenic"
+      "Virtual Scientist"
     ],
     "next_reproduction_step": "Choose whether to import author-provided baseline outputs, run open-source/hosted baseline candidates under a pinned replacement protocol, or explicitly report that exact Table 1 reproduction remains impossible from public artifacts alone."
   }

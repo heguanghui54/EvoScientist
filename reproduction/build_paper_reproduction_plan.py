@@ -109,6 +109,19 @@ def table1_actions(components: dict[str, Any], protocol: dict[str, Any]) -> list
                 "bash /path/to/EvoScientist/reproduction/ai_scientist_v2_ideation_runbook/run_ai_scientist_v2_ideation.sh",
                 ".venv/bin/python reproduction/import_baseline_outputs.py --system-name 'AI Scientist-v2' --source reproduction/ai_scientist_v2_ideation_import_template.jsonl --source-format jsonl --output-root reproduction/artifacts/idea_outputs --strict",
             ]
+        if baseline == "Hypogenic":
+            actions[-1]["probe"] = "reproduction/hypogenic_baseline_probe.json"
+            actions[-1]["note"] = (
+                "Current probe found Hypogenic has a hosted Assistant/IdeaHub/Arena "
+                "platform and generated competition repositories, but no public batch "
+                "runner or raw Table 1 outputs."
+            )
+            actions[-1]["replacement_run_template"] = [
+                "# With Hypogenic account access: open https://hypogenic.ai/chat under a pinned browser/profile state.",
+                "# Submit one recovered query per fresh Assistant session and capture the final answer plus session metadata.",
+                "# Save outputs as $HOME/research/hypogenic/outputs/evoscientist_table1_queries/hypogenic/query_XX.md",
+                ".venv/bin/python reproduction/import_baseline_outputs.py --system-name Hypogenic --source $HOME/research/hypogenic/outputs/evoscientist_table1_queries/hypogenic --source-format directory --output-root reproduction/artifacts/idea_outputs --strict",
+            ]
         if baseline == "Novix":
             actions[-1]["probe"] = "reproduction/novix_baseline_probe.json"
             actions[-1]["note"] = (

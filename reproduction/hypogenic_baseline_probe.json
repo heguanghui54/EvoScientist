@@ -1,0 +1,66 @@
+{
+  "date": "2026-06-04",
+  "baseline": "Hypogenic",
+  "sources": {
+    "home": "https://hypogenic.ai/",
+    "chat": "https://hypogenic.ai/chat",
+    "arena": "https://hypogenic.ai/arena",
+    "weekly_blog": "https://hypogenic.ai/blog/weekly-entry-260309"
+  },
+  "files_checked": [
+    "https://hypogenic.ai/",
+    "https://hypogenic.ai/arena",
+    "https://hypogenic.ai/blog/weekly-entry-260309",
+    "https://hypogenic.ai/chat",
+    "GitHub repository search for Hypogenic AI scientist"
+  ],
+  "github_search_error": null,
+  "github_repo_hits": [],
+  "hypogenic_generated_repo_examples": [
+    "Hypogenic-AI/incontext-if-then-2dae-claude",
+    "Hypogenic-AI/incontext-if-then-31c6-codex",
+    "Hypogenic-AI/inctx-if-then-capacity-6ce0-gemini",
+    "Hypogenic-AI/live-salmon-ai-test-19cc-claude",
+    "Hypogenic-AI/live-salmon-ai-test-4361-gemini",
+    "Hypogenic-AI/live-salmon-ai-test-7d56-codex",
+    "Hypogenic-AI/lying-style-nlp-0448-claude",
+    "Hypogenic-AI/lying-style-nlp-92c9-codex",
+    "Hypogenic-AI/lying-style-nlp-9950-gemini"
+  ],
+  "direct_30_query_runner_available": false,
+  "evo_table1_drop_in_status": "hosted_competition_adapter_candidate",
+  "paper_exact_status": "not_paper_exact",
+  "signals": {
+    "hosted_platform_available": true,
+    "assistant_link_available": true,
+    "ideahub_available": true,
+    "arena_available": true,
+    "sign_in_required_signal": true,
+    "chat_requires_access_or_redirects": true,
+    "generated_repos_available": true,
+    "public_runner_repo_found": false,
+    "raw_table1_outputs_found": false
+  },
+  "entrypoints": {
+    "hosted_home": "https://hypogenic.ai/",
+    "hosted_chat": "https://hypogenic.ai/chat",
+    "competition_arena": "https://hypogenic.ai/arena",
+    "generated_repo_examples": [
+      "Hypogenic-AI/incontext-if-then-2dae-claude",
+      "Hypogenic-AI/incontext-if-then-31c6-codex",
+      "Hypogenic-AI/inctx-if-then-capacity-6ce0-gemini"
+    ]
+  },
+  "required_env_or_access": [
+    "Hypogenic account/session if running the hosted Assistant",
+    "Pinned UI/browser capture protocol for one fresh session per recovered query",
+    "Separate interpretation if using generated competition repositories, because they are public examples rather than the paper's Table 1 baseline outputs"
+  ],
+  "reproduction_implication": "Hypogenic has a public hosted science platform with Assistant, IdeaHub, Arena, and public competition-generated repositories. The checked public materials do not provide a standalone batch runner or the raw 30-query EvoScientist Table 1 outputs. It can only be treated as a hosted replacement rerun candidate with account/session capture, not as paper-exact public evidence.",
+  "next_actions": [
+    "If Hypogenic access is available, define a pinned hosted-run protocol with account state and one fresh Assistant session per recovered query.",
+    "Capture final answers for all 30 queries into reproduction/artifacts/idea_outputs/Hypogenic/query_XX/answer.txt.",
+    "If access is not available, keep Hypogenic as non-reproducible from public artifacts alone and report only generated competition repositories as related examples.",
+    "Judge any imported Hypogenic outputs through the existing swapped pairwise judge pipeline."
+  ]
+}

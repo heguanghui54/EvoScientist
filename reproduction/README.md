@@ -352,6 +352,11 @@ The 30-query InternAgent QA replacement-baseline runbook is recorded in
 The AI Scientist-v2 ideation replacement-baseline probe and runbook are recorded
 in `reproduction/ai_scientist_v2_baseline_probe.md` and
 `reproduction/ai_scientist_v2_ideation_runbook/`.
+The Hypogenic hosted replacement-baseline fit check is recorded in
+`reproduction/hypogenic_baseline_probe.json` and
+`reproduction/hypogenic_baseline_probe.md`; it identifies a hosted
+Assistant/IdeaHub/Arena adapter path plus related generated repositories, not
+paper-exact raw Table 1 outputs.
 The Novix hosted replacement-baseline fit check is recorded in
 `reproduction/novix_baseline_probe.json` and
 `reproduction/novix_baseline_probe.md`; it identifies a hosted UI/account
