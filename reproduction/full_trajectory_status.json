@@ -7,8 +7,8 @@
     "status": "incomplete",
     "query_count": 30,
     "counts": {
-      "success": 27,
-      "timeout": 2,
+      "success": 28,
+      "timeout": 1,
       "failed": 1
     },
     "successful_query_ids": [
@@ -38,16 +38,16 @@
       26,
       27,
       28,
-      29
+      29,
+      30
     ],
     "failed_or_incomplete_query_ids": [
       16,
-      24,
-      30
+      24
     ]
   },
   "full_trajectory_counts": {
-    "successful_final_reports": 27,
+    "successful_final_reports": 28,
     "attempted_queries": [
       1,
       2,
@@ -1645,6 +1645,64 @@
           "Failure"
         ]
       }
+    },
+    "query_30": {
+      "query_id": 30,
+      "topic": "Audio foundation models",
+      "mode": "full tool-enabled with isolated --mode run workspace",
+      "remote_host": "ubuntu-heshi",
+      "command": "EVOSCI_QUERY_TIMEOUT=1200 EVOSCI_QUERY_EXTRA_ARGS='--query-ids 6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30 --force-proposal --stream-logs --idle-timeout 600 --output-dir reproduction/artifacts/full_trajectories/EvoScientist' reproduction/ssh_ubuntu_run.sh batch-bg 30",
+      "manifest_status": "ok",
+      "thread_id": "6dc85e4c",
+      "workspace": "runs/repro-query-30",
+      "output_dir": "reproduction/artifacts/remote_fetch/full_trajectories/EvoScientist/query_30",
+      "artifact_files": {
+        "stdout.txt": {
+          "exists": true,
+          "bytes": 7820
+        },
+        "stderr.txt": {
+          "exists": true,
+          "bytes": 251
+        },
+        "answer.txt": {
+          "exists": false,
+          "bytes": 0
+        },
+        "final_report.md": {
+          "exists": true,
+          "bytes": 18630
+        },
+        "query.json": {
+          "exists": true,
+          "bytes": 146
+        }
+      },
+      "usage": {
+        "input_tokens": 260034,
+        "output_tokens": 8221
+      },
+      "trace_indicators": {
+        "tool_call_lines": 20,
+        "subagent_completion_lines": 0,
+        "mentions_research_agent": true,
+        "mentions_final_report_write": true
+      },
+      "final_report": {
+        "title": "UniAudio-MoE: Modality-Aware Mixture-of-Experts for General-Purpose Audio Representation Learning",
+        "bytes": 18630,
+        "sections_detected": [
+          "Problem",
+          "Hypothesis",
+          "Method",
+          "Dataset",
+          "Benchmark",
+          "Evaluation",
+          "Baselines",
+          "Ablations",
+          "Failure"
+        ]
+      }
     }
   },
   "incomplete_queries": {
@@ -1712,42 +1770,11 @@
         "input_tokens": 29921,
         "output_tokens": 904
       }
-    },
-    "query_30": {
-      "query_id": 30,
-      "topic": "Audio foundation models",
-      "status": "timeout",
-      "reason": "runner reported timeout",
-      "workspace": "runs/repro-query-30",
-      "output_dir": "reproduction/artifacts/remote_fetch/full_trajectories/EvoScientist/query_30",
-      "artifact_files": {
-        "stdout.txt": {
-          "exists": true,
-          "bytes": 1353
-        },
-        "stderr.txt": {
-          "exists": true,
-          "bytes": 305
-        },
-        "answer.txt": {
-          "exists": false,
-          "bytes": 0
-        },
-        "final_report.md": {
-          "exists": false,
-          "bytes": 0
-        },
-        "query.json": {
-          "exists": true,
-          "bytes": 146
-        }
-      },
-      "usage": null
     }
   },
   "limitations": [
-    "Queries 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 17, 18, 19, 20, 21, 22, 23, 25, 26, 27, 28, 29 have successful full tool-enabled trajectories with final_report.md.",
-    "Queries 16, 24, 30 remain non-successful in the latest fetched audit snapshot.",
+    "Queries 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 17, 18, 19, 20, 21, 22, 23, 25, 26, 27, 28, 29, 30 have successful full tool-enabled trajectories with final_report.md.",
+    "Queries 16, 24 remain non-successful in the latest fetched audit snapshot.",
     "The run used DeepSeek configuration rather than the paper-matched Gemini/Claude setup.",
     "Tavily search was unavailable, so the research-agent behavior may differ from paper settings.",
     "This is still not the full 7-baseline paper-level Table 1 reproduction."

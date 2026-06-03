@@ -7,16 +7,15 @@
       "status_file": "reproduction/full_trajectory_status.json",
       "exists": true,
       "query_count": 30,
-      "success_count": 27,
+      "success_count": 28,
       "counts": {
-        "success": 27,
-        "timeout": 2,
+        "success": 28,
+        "timeout": 1,
         "failed": 1
       },
       "failed_or_incomplete_query_ids": [
         16,
-        24,
-        30
+        24
       ],
       "complete": false,
       "reason": "full trajectory attempts exist, but not every query has a qualifying final report"
