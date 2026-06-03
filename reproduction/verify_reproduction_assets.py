@@ -77,7 +77,7 @@ def main() -> None:
     assert full_status["query_id"] == 1
     assert "CrossLingual-RAG" in full_status["final_report"]["title"]
     assert full_status["artifact_files"]["final_report.md"]["bytes"] >= 10000
-    assert full_status["full_trajectory_counts"]["successful_final_reports"] == 8
+    assert full_status["full_trajectory_counts"]["successful_final_reports"] == 9
     assert len(full_status["query_2_attempts"]) == 3
     assert "clarification" in full_status["query_2_attempts"][0]["result"]
     assert full_status["query_2_success"]["artifact_files"]["final_report.md"]["bytes"] >= 10000
@@ -94,9 +94,11 @@ def main() -> None:
     assert "Text-to-SQL" in full_status["query_10_success"]["final_report"]["title"]
     assert full_status["query_11_success"]["artifact_files"]["final_report.md"]["bytes"] >= 10000
     assert "Capability Graph" in full_status["query_11_success"]["final_report"]["title"]
-    assert full_status["audit"]["counts"]["success"] == 8
+    assert full_status["query_13_success"]["artifact_files"]["final_report.md"]["bytes"] >= 10000
+    assert "ExeCoT" in full_status["query_13_success"]["final_report"]["title"]
+    assert full_status["audit"]["counts"]["success"] == 9
     assert full_status["audit"]["counts"]["timeout"] == 4
-    assert full_status["audit"]["counts"]["missing"] == 18
+    assert full_status["audit"]["counts"]["missing"] == 17
     reported = json.loads(reported_path.read_text(encoding="utf-8"))
     for section in [
         "table1_llm_idea_generation",

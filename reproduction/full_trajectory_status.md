@@ -8,11 +8,11 @@ Audit status: `incomplete`
 
 | Status | Count |
 | --- | ---: |
-| success | 8 |
+| success | 9 |
 | timeout | 4 |
-| missing | 18 |
+| missing | 17 |
 
-Successful query ids: `[1, 2, 3, 5, 6, 8, 10, 11]`
+Successful query ids: `[1, 2, 3, 5, 6, 8, 10, 11, 13]`
 
 ## Successful Full Trajectories
 
@@ -174,6 +174,21 @@ Token usage: 174,586 input / 8,234 output
 - manifest return code is 0.
 - isolated workspace was `runs/repro-query-11`.
 
+Query 13 status: `ok`
+
+Title: ExeCoT: Execution-Grounded Chain-of-Thought Synthesis for Code Reasoning via Self-Play
+
+Output directory: `reproduction/artifacts/remote_fetch/full_trajectories/EvoScientist/query_13`
+
+Token usage: 134,427 input / 5,906 output
+
+## Query 13 Evidence
+
+- `final_report.md` exists and is 13,690 bytes.
+- stdout reports `[Usage: 134,427 in · 5,906 out]`.
+- manifest return code is 0.
+- isolated workspace was `runs/repro-query-13`.
+
 ## Current Non-Successful Full Trajectories
 
 - Query 4: runner reported idle timeout after 600 seconds without log growth.
@@ -196,7 +211,7 @@ Token usage: 174,586 input / 8,234 output
   Final report collected: True
 
 ## Limitations
-- Only queries 1, 2, 3, 5, 6, 8, 10, and 11 currently have successful full tool-enabled trajectories with final_report.md.
+- Only queries 1, 2, 3, 5, 6, 8, 10, 11, and 13 currently have successful full tool-enabled trajectories with final_report.md.
 - Queries 4, 7, 9, and 12 idle-timed-out after 600 seconds without log growth in the fetched audit snapshot.
 - The run used DeepSeek configuration rather than the paper-matched Gemini/Claude setup.
 - Tavily search was unavailable, so the research-agent behavior may differ from paper settings.
