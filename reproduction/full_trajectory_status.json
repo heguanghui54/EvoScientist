@@ -7,8 +7,8 @@
     "status": "incomplete",
     "query_count": 30,
     "counts": {
-      "success": 25,
-      "timeout": 4,
+      "success": 26,
+      "timeout": 3,
       "failed": 1
     },
     "successful_query_ids": [
@@ -34,6 +34,7 @@
       21,
       22,
       23,
+      25,
       27,
       28,
       29
@@ -41,13 +42,12 @@
     "failed_or_incomplete_query_ids": [
       16,
       24,
-      25,
       26,
       30
     ]
   },
   "full_trajectory_counts": {
-    "successful_final_reports": 25,
+    "successful_final_reports": 26,
     "attempted_queries": [
       1,
       2,
@@ -1356,6 +1356,64 @@
         ]
       }
     },
+    "query_25": {
+      "query_id": 25,
+      "topic": "Multi-source reasoning",
+      "mode": "full tool-enabled with isolated --mode run workspace",
+      "remote_host": "ubuntu-heshi",
+      "command": "EVOSCI_QUERY_TIMEOUT=1200 EVOSCI_QUERY_EXTRA_ARGS='--query-ids 6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30 --force-proposal --stream-logs --idle-timeout 600 --output-dir reproduction/artifacts/full_trajectories/EvoScientist' reproduction/ssh_ubuntu_run.sh batch-bg 30",
+      "manifest_status": "ok",
+      "thread_id": "9ae4af0e",
+      "workspace": "runs/repro-query-25",
+      "output_dir": "reproduction/artifacts/remote_fetch/full_trajectories/EvoScientist/query_25",
+      "artifact_files": {
+        "stdout.txt": {
+          "exists": true,
+          "bytes": 8164
+        },
+        "stderr.txt": {
+          "exists": true,
+          "bytes": 251
+        },
+        "answer.txt": {
+          "exists": false,
+          "bytes": 0
+        },
+        "final_report.md": {
+          "exists": true,
+          "bytes": 17318
+        },
+        "query.json": {
+          "exists": true,
+          "bytes": 145
+        }
+      },
+      "usage": {
+        "input_tokens": 79465,
+        "output_tokens": 5729
+      },
+      "trace_indicators": {
+        "tool_call_lines": 4,
+        "subagent_completion_lines": 0,
+        "mentions_research_agent": true,
+        "mentions_final_report_write": true
+      },
+      "final_report": {
+        "title": "Research Proposal: Conflict-Aware Multi-Hop Reasoning (CAMHR)",
+        "bytes": 17318,
+        "sections_detected": [
+          "Problem",
+          "Hypothesis",
+          "Method",
+          "Dataset",
+          "Benchmark",
+          "Evaluation",
+          "Baselines",
+          "Ablations",
+          "Failure"
+        ]
+      }
+    },
     "query_27": {
       "query_id": 27,
       "topic": "Long-context understanding",
@@ -1597,37 +1655,6 @@
         "output_tokens": 904
       }
     },
-    "query_25": {
-      "query_id": 25,
-      "topic": "Multi-source reasoning",
-      "status": "timeout",
-      "reason": "runner reported timeout",
-      "workspace": "runs/repro-query-25",
-      "output_dir": "reproduction/artifacts/remote_fetch/full_trajectories/EvoScientist/query_25",
-      "artifact_files": {
-        "stdout.txt": {
-          "exists": true,
-          "bytes": 1353
-        },
-        "stderr.txt": {
-          "exists": true,
-          "bytes": 305
-        },
-        "answer.txt": {
-          "exists": false,
-          "bytes": 0
-        },
-        "final_report.md": {
-          "exists": false,
-          "bytes": 0
-        },
-        "query.json": {
-          "exists": true,
-          "bytes": 145
-        }
-      },
-      "usage": null
-    },
     "query_26": {
       "query_id": 26,
       "topic": "Data filtering",
@@ -1692,8 +1719,8 @@
     }
   },
   "limitations": [
-    "Queries 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 17, 18, 19, 20, 21, 22, 23, 27, 28, 29 have successful full tool-enabled trajectories with final_report.md.",
-    "Queries 16, 24, 25, 26, 30 remain non-successful in the latest fetched audit snapshot.",
+    "Queries 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 17, 18, 19, 20, 21, 22, 23, 25, 27, 28, 29 have successful full tool-enabled trajectories with final_report.md.",
+    "Queries 16, 24, 26, 30 remain non-successful in the latest fetched audit snapshot.",
     "The run used DeepSeek configuration rather than the paper-matched Gemini/Claude setup.",
     "Tavily search was unavailable, so the research-agent behavior may differ from paper settings.",
     "This is still not the full 7-baseline paper-level Table 1 reproduction."
