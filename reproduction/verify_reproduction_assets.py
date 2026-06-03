@@ -58,8 +58,12 @@ def main() -> None:
     assert reported_path.is_file(), "missing paper reported results"
     gap_json_path = ROOT / "public_artifact_gap_report.json"
     gap_md_path = ROOT / "public_artifact_gap_report.md"
+    full_status_json_path = ROOT / "full_trajectory_status.json"
+    full_status_md_path = ROOT / "full_trajectory_status.md"
     assert gap_json_path.is_file(), "missing public artifact gap report JSON"
     assert gap_md_path.is_file(), "missing public artifact gap report markdown"
+    assert full_status_json_path.is_file(), "missing full trajectory status JSON"
+    assert full_status_md_path.is_file(), "missing full trajectory status markdown"
     gap_report = json.loads(gap_json_path.read_text(encoding="utf-8"))
     assert gap_report["checked_sources"], "gap report has no checked sources"
     assert (
@@ -67,6 +71,11 @@ def main() -> None:
         == "30 queries x 7 baselines x 2 swapped orders = 420 records"
     )
     assert "not possible from public artifacts alone" in gap_report["conclusion"]
+    full_status = json.loads(full_status_json_path.read_text(encoding="utf-8"))
+    assert full_status["manifest_status"] == "ok"
+    assert full_status["query_id"] == 1
+    assert "CrossLingual-RAG" in full_status["final_report"]["title"]
+    assert full_status["artifact_files"]["final_report.md"]["bytes"] >= 10000
     reported = json.loads(reported_path.read_text(encoding="utf-8"))
     for section in [
         "table1_llm_idea_generation",

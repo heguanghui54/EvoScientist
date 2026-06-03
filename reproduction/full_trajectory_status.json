@@ -1,0 +1,71 @@
+{
+  "date": "2026-06-03",
+  "purpose": "Record first full tool-enabled EvoScientist trajectory reproduction attempt for paper query 1.",
+  "query_id": 1,
+  "topic": "Machine translation",
+  "goal": "Generate a research proposal on low-resource machine translation.",
+  "mode": "full tool-enabled EvoScientist run, not proposal-only",
+  "remote_host": "ubuntu-heshi",
+  "command": "EVOSCI_QUERY_TIMEOUT=900 EVOSCI_QUERY_EXTRA_ARGS='--stream-logs --output-dir reproduction/artifacts/full_trajectories/EvoScientist' reproduction/ssh_ubuntu_run.sh query-bg 1",
+  "manifest_status": "ok",
+  "returncode": 0,
+  "thread_id": "044b14e9",
+  "output_dir": "reproduction/artifacts/remote_fetch/full_trajectories/EvoScientist/query_01",
+  "artifact_files": {
+    "stdout.txt": {
+      "exists": true,
+      "bytes": 10847
+    },
+    "stderr.txt": {
+      "exists": true,
+      "bytes": 251
+    },
+    "prompt.txt": {
+      "exists": true,
+      "bytes": 66
+    },
+    "query.json": {
+      "exists": true,
+      "bytes": 126
+    },
+    "answer.txt": {
+      "exists": true,
+      "bytes": 4208
+    },
+    "final_report.md": {
+      "exists": true,
+      "bytes": 16755
+    }
+  },
+  "usage": {
+    "input_tokens": 433923,
+    "output_tokens": 10123
+  },
+  "trace_indicators": {
+    "tool_call_lines": 25,
+    "subagent_completion_lines": 2,
+    "mentions_research_agent": true,
+    "mentions_final_report_write": true
+  },
+  "final_report": {
+    "title": "CrossLingual-RAG: Cross-Lingual Retrieval-Augmented Generation for Extremely Low-Resource Machine Translation",
+    "bytes": 16755,
+    "sections_detected": [
+      "Summary & Goals",
+      "Related Work & Gaps",
+      "Proposed Method",
+      "Experimental Design",
+      "Evaluation Protocol",
+      "Risks & Mitigations",
+      "Timeline",
+      "Contributions",
+      "References"
+    ]
+  },
+  "limitations": [
+    "Only query 1 has a full tool-enabled trajectory so far; the remaining 29 paper queries are proposal-only.",
+    "The run used DeepSeek configuration rather than the paper-matched Gemini/Claude setup.",
+    "Tavily search was unavailable, so the research-agent behavior may differ from paper settings.",
+    "This is still not the full 7-baseline paper-level Table 1 reproduction."
+  ]
+}

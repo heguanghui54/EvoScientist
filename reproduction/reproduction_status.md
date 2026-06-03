@@ -24,6 +24,7 @@ and paper-level experimental reproduction.
 | Offline end-to-end evaluation plumbing works | `run_offline_smoke.py`; `SMOKE_REPORT.md` | Verified |
 | DeepSeek-backed EvoScientist proposal-only outputs exist | Ubuntu batch with `--proposal-only --stream-logs`; manifest has 30 `ok` outputs | Verified |
 | Target-system output coverage is complete for proposal-only mode | `audit_reproduction_artifacts.py --artifacts-root reproduction/artifacts/remote_fetch` reports EvoScientist 30/30 present | Verified |
+| Full tool-enabled EvoScientist trajectory exists for query 1 | `full_trajectory_status.json`; final report title: "CrossLingual-RAG: Cross-Lingual Retrieval-Augmented Generation for Extremely Low-Resource Machine Translation" | Verified |
 | Replacement direct-LLM baseline outputs exist | `Direct-DeepSeek` baseline has answer files for 30/30 paper queries | Verified |
 | Replacement-baseline judge pipeline is complete | Clean EvoScientist answers vs `Direct-DeepSeek`: 60 swapped pairwise records, 60 DeepSeek judge outputs, aggregate table, audit complete | Verified |
 | EvoScientist CLI outputs are normalized before judging | `normalize_system_outputs.py` writes clean `answer.txt` files from raw `stdout.txt` logs | Verified |
@@ -32,7 +33,7 @@ and paper-level experimental reproduction.
 
 | Requirement | Missing Evidence | Current Blocker |
 | --- | --- | --- |
-| Full EvoScientist trajectories for all 30 paper queries | Real tool-enabled RA/EA/EMA trajectory logs per query | Proposal-only outputs exist for 30/30; full tool-enabled run still pending |
+| Full EvoScientist trajectories for all 30 paper queries | Real tool-enabled RA/EA/EMA trajectory logs per query | Proposal-only outputs exist for 30/30; full tool-enabled query 1 exists; queries 2-30 still pending |
 | Paper-matched model settings | Gemini-2.5-Pro, Claude-4.5-Haiku, Gemini judge access | DeepSeek smoke works, but paper-matched Gemini/Claude credentials are not configured in EvoScientist |
 | Literature-retrieval behavior | Semantic Scholar/Tavily-backed run logs | No search key/tool configuration for live agent run |
 | Paper baseline comparison outputs | Virtual Scientist, AI-Researcher, InternAgent, AI Scientist-v2, Hypogenic, Novix, K-Dense outputs | Original baseline outputs are not included in public repo; a stated replacement baseline `Direct-DeepSeek` has been run |
@@ -67,6 +68,8 @@ Remote target:
   real agent smoke test
 - Verified: batch query 1..30 completed as a real DeepSeek-backed proposal-only
   run with `--proposal-only --stream-logs`
+- Verified: query 1 completed as a full tool-enabled trajectory with a saved
+  `final_report.md`; status is tracked in `reproduction/full_trajectory_status.md`
 - Local fetched summary:
   `reproduction/artifacts/remote_fetch/idea_outputs/EvoScientist/PROPOSAL_SUMMARY.md`
 - Note: this confirms the API/agent path across the paper query set, but it

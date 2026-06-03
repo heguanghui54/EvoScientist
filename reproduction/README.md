@@ -163,6 +163,17 @@ This is evidence that the agent/API path works across the paper query set, but
 it is not yet a full paper-matched EvoScientist trajectory because tool
 execution, baselines, judge outputs, and ablations are still incomplete.
 
+One full tool-enabled EvoScientist trajectory has also been run for query 1 in a
+separate output directory. It produced a 16,755-byte `final_report.md` titled
+"CrossLingual-RAG: Cross-Lingual Retrieval-Augmented Generation for Extremely
+Low-Resource Machine Translation" and completed with return code 0. The tracked
+status report is:
+
+```text
+reproduction/full_trajectory_status.md
+reproduction/full_trajectory_status.json
+```
+
 Build pairwise judge inputs and aggregate judge results:
 
 ```bash
@@ -312,7 +323,8 @@ To reproduce the paper experiments rather than only the software system:
 - paper-matched LLM provider access if exact model reproduction is required,
   especially the paper's Gemini/Claude/Gemini-judge setup;
 - optionally a Tavily key for web-search-based research-agent behavior;
-- full tool-enabled EvoScientist trajectories for all 30 recovered paper queries;
+- full tool-enabled EvoScientist trajectories for all 30 recovered paper queries
+  (currently only query 1 has a full trajectory);
 - baseline outputs for the seven paper systems, or runnable baseline setups;
 - the LLM-as-judge prompt/input pairs and model access for `gemini-3-flash`;
 - human-evaluation labels if reproducing the human agreement numbers;
