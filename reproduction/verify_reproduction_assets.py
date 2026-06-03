@@ -99,8 +99,8 @@ def main() -> None:
     assert full_status["query_15_success"]["artifact_files"]["final_report.md"]["bytes"] >= 10000
     assert "Context-Adaptive Gender Debiasing" in full_status["query_15_success"]["final_report"]["title"]
     assert full_status["audit"]["counts"]["success"] == 10
-    assert full_status["audit"]["counts"]["timeout"] == 6
-    assert full_status["audit"]["counts"]["missing"] == 14
+    assert full_status["audit"]["counts"]["timeout"] == 7
+    assert full_status["audit"]["counts"]["missing"] == 13
     reported = json.loads(reported_path.read_text(encoding="utf-8"))
     for section in [
         "table1_llm_idea_generation",
