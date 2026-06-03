@@ -643,6 +643,26 @@ def main() -> None:
             text=True,
         )
 
+        matching_figure2_path = tmp_path / "matching_figure2.json"
+        matching_figure2_path.write_text(
+            json.dumps(reported["figure2_code_execution"], indent=2),
+            encoding="utf-8",
+        )
+        subprocess.run(
+            [
+                sys.executable,
+                str(ROOT / "compare_reproduction_to_paper.py"),
+                "--actual-json",
+                str(matching_figure2_path),
+                "--section",
+                "figure2_code_execution",
+                "--require-all",
+            ],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+
         plan_json = tmp_path / "paper_reproduction_action_plan.json"
         plan_md = tmp_path / "paper_reproduction_action_plan.md"
         subprocess.run(

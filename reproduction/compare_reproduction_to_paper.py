@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Compare reproduced aggregate tables against the paper-reported results."""
+"""Compare reproduced aggregate artifacts against paper-reported results."""
 
 from __future__ import annotations
 
@@ -12,6 +12,7 @@ from typing import Any
 ROOT = Path(__file__).resolve().parent
 DEFAULT_EXPECTED = ROOT / "paper_reported_results.json"
 METRICS = ["win_pct", "tie_pct", "lose_pct"]
+SCALAR_SKIP_KEYS = {"metric", "judge", "target_system_note", "dimensions", "baselines"}
 
 
 def load_json(path: Path) -> dict[str, Any]:
@@ -22,7 +23,7 @@ def metric_delta(actual: float, expected: float) -> float:
     return round(float(actual) - float(expected), 4)
 
 
-def compare(
+def compare_table(
     *,
     actual: dict[str, Any],
     expected_section: dict[str, Any],
@@ -97,6 +98,69 @@ def compare(
             )
 
     return rows, failures
+
+
+def compare_scalars(
+    *,
+    actual: dict[str, Any],
+    expected_section: dict[str, Any],
+    tolerance: float,
+    require_all: bool,
+) -> tuple[list[dict[str, Any]], list[str]]:
+    rows = []
+    failures = []
+    expected_metrics = {
+        key: value
+        for key, value in expected_section.items()
+        if key not in SCALAR_SKIP_KEYS and isinstance(value, int | float)
+    }
+    for metric, expected_value in expected_metrics.items():
+        if metric not in actual:
+            message = f"missing metric: {metric}"
+            if require_all:
+                failures.append(message)
+            rows.append({"metric": metric, "status": "missing", "detail": message})
+            continue
+        delta = metric_delta(actual[metric], expected_value)
+        ok = abs(delta) <= tolerance
+        if not ok:
+            failures.append(
+                f"{metric}: actual={actual[metric]} expected={expected_value} delta={delta}"
+            )
+        rows.append(
+            {
+                "metric": metric,
+                "actual": actual[metric],
+                "expected": expected_value,
+                "delta": delta,
+                "status": "ok" if ok else "fail",
+            }
+        )
+    if require_all and not expected_metrics:
+        failures.append("expected section contains no comparable scalar metrics")
+    return rows, failures
+
+
+def compare(
+    *,
+    actual: dict[str, Any],
+    expected_section: dict[str, Any],
+    tolerance: float,
+    require_all: bool,
+) -> tuple[list[dict[str, Any]], list[str]]:
+    if "baselines" in expected_section:
+        return compare_table(
+            actual=actual,
+            expected_section=expected_section,
+            tolerance=tolerance,
+            require_all=require_all,
+        )
+    return compare_scalars(
+        actual=actual,
+        expected_section=expected_section,
+        tolerance=tolerance,
+        require_all=require_all,
+    )
 
 
 def main() -> None:
