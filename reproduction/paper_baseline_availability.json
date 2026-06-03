@@ -44,10 +44,15 @@
           "label": "InternScience/InternAgent",
           "url": "https://github.com/InternScience/InternAgent",
           "evidence": "Public repository for InternAgent-1.5, described as a unified agentic framework for autonomous scientific discovery."
+        },
+        {
+          "label": "local runner probe",
+          "url": "reproduction/internagent_baseline_probe.json",
+          "evidence": "Probe found a one-shot QA CLI that can accept each recovered query and write an answer file, but this is replacement-only rather than paper-exact output."
         }
       ],
       "table1_raw_outputs_available": false,
-      "rerun_path": "Possible rerun candidate, but it needs separate environment setup and prompt/protocol alignment. The public repository does not provide EvoScientist Table 1 30-query outputs."
+      "rerun_path": "Plausible replacement rerun candidate via `python launch.py --mode qa --question ... --output ...`, but the public repository does not provide the paper's raw InternAgent Table 1 outputs."
     },
     {
       "name": "AI Scientist-v2",

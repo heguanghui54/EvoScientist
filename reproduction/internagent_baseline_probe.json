@@ -1,0 +1,49 @@
+{
+  "date": "2026-06-04",
+  "baseline": "InternAgent",
+  "source": "https://github.com/InternScience/InternAgent",
+  "checked_head": "e341f8f181e6d337317c6bc2cddae6391b1f0390",
+  "files_checked": [
+    "README.md",
+    "launch.py",
+    "launch_qa.py",
+    "launch_discovery.py",
+    ".env.example",
+    "repository file tree"
+  ],
+  "direct_30_query_runner_available": true,
+  "evo_table1_drop_in_status": "qa_drop_in_candidate",
+  "paper_exact_status": "not_paper_exact",
+  "signals": {
+    "qa_cli_available": true,
+    "master_qa_available": true,
+    "discovery_task_based": true,
+    "required_openai_compatible_key": true,
+    "anthropic_required_for_experiment_backend": true,
+    "missing_required_paths": []
+  },
+  "entrypoints": {
+    "qa": "python launch_qa.py --question '...' --output answer.md",
+    "master_qa": "python launch.py --mode qa --question '...' --output answer.md",
+    "discovery": "python launch.py --mode discovery --task AutoDebug --exp_backend claudecode"
+  },
+  "required_env": [
+    "OPENAI_API_KEY",
+    "OPENAI_API_BASE_URL",
+    "OPENAI_BASE_URL",
+    "ANTHROPIC_API_KEY for claudecode experiment backend"
+  ],
+  "replacement_run_template": {
+    "checkout": "git clone https://github.com/InternScience/InternAgent.git {external_checkout}",
+    "install": "conda create -n InternAgent python=3.11 && conda activate InternAgent && pip install -r requirements.txt",
+    "per_query": "python launch.py --mode qa --question {question_json} --output {answer_path}",
+    "import_outputs": ".venv/bin/python reproduction/import_baseline_outputs.py --system-name InternAgent --source {answers_dir} --source-format directory --output-root reproduction/artifacts/idea_outputs --strict"
+  },
+  "reproduction_implication": "InternAgent exposes a one-shot QA CLI that can accept each recovered EvoScientist query and write an answer file, making it a plausible replacement-baseline candidate. This still does not provide the raw InternAgent outputs used by the EvoScientist paper, nor does it match the paper's exact model/tool/judge setup without a pinned rerun protocol.",
+  "next_actions": [
+    "Use the QA CLI only as a replacement-baseline rerun path, not paper-exact Table 1 evidence.",
+    "Run each of the 30 recovered queries in an isolated InternAgent checkout and save query_XX.md files.",
+    "Import the saved answers with reproduction/import_baseline_outputs.py under system name InternAgent.",
+    "Judge imported outputs through the existing swapped pairwise judge pipeline."
+  ]
+}

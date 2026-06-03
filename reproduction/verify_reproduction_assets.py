@@ -54,6 +54,7 @@ def main() -> None:
         "run_offline_smoke.py",
         "run_llm_judge.py",
         "probe_ai_researcher_baseline.py",
+        "probe_internagent_baseline.py",
         "aggregate_human_labels.py",
         "aggregate_ablation_results.py",
         "aggregate_code_execution.py",
@@ -123,6 +124,18 @@ def main() -> None:
     assert ai_researcher_probe["direct_30_query_runner_available"] is False
     assert "benchmark-instance based" in ai_researcher_probe["reproduction_implication"]
     assert "not_drop_in" in ai_researcher_probe_md_path.read_text(encoding="utf-8")
+    internagent_probe_json_path = ROOT / "internagent_baseline_probe.json"
+    internagent_probe_md_path = ROOT / "internagent_baseline_probe.md"
+    assert internagent_probe_json_path.is_file(), "missing InternAgent probe JSON"
+    assert internagent_probe_md_path.is_file(), "missing InternAgent probe markdown"
+    internagent_probe = json.loads(internagent_probe_json_path.read_text(encoding="utf-8"))
+    assert internagent_probe["baseline"] == "InternAgent"
+    assert internagent_probe["evo_table1_drop_in_status"] == "qa_drop_in_candidate"
+    assert internagent_probe["paper_exact_status"] == "not_paper_exact"
+    assert internagent_probe["signals"]["qa_cli_available"] is True
+    assert internagent_probe["direct_30_query_runner_available"] is True
+    assert "launch.py --mode qa" in internagent_probe["entrypoints"]["master_qa"]
+    assert "qa_drop_in_candidate" in internagent_probe_md_path.read_text(encoding="utf-8")
     replacement_protocol = json.loads(replacement_protocol_json_path.read_text(encoding="utf-8"))
     assert replacement_protocol["import_tool"]["script"] == "reproduction/import_baseline_outputs.py"
     assert replacement_protocol["judge_protocol"]["records_per_baseline"] == 60
@@ -150,6 +163,8 @@ def main() -> None:
     action_plan_md = action_plan_md_path.read_text(encoding="utf-8")
     assert "Paper Reproduction Action Plan" in action_plan_md
     assert "gemini-3-flash" in action_plan_md
+    assert "internagent_baseline_probe.json" in action_plan_md
+    assert "launch.py --mode qa" in action_plan_md
     full_status = json.loads(full_status_json_path.read_text(encoding="utf-8"))
     expected_success_ids = list(range(1, 31))
     expected_incomplete_ids = []
@@ -235,6 +250,7 @@ def main() -> None:
         "Replacement-baseline judge pipeline is complete",
         "Replacement baseline protocol is pinned",
         "AI-Researcher baseline probe is recorded",
+        "InternAgent baseline probe is recorded",
         "Paper-level non-Table-1 artifact schemas are pinned",
         "Human-label aggregation is executable",
         "Ablation aggregation is executable",

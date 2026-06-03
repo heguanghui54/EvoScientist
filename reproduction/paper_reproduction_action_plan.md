@@ -50,16 +50,16 @@ Commands:
 Required evidence: 30 answer.txt files under reproduction/artifacts/idea_outputs/InternAgent/
 
 System: InternAgent
+Probe: reproduction/internagent_baseline_probe.json
+Note: Current probe found InternAgent has a one-shot QA CLI suitable for a replacement baseline rerun, but it is not paper-exact raw Table 1 evidence.
 
 Commands:
 
 ```bash
-.venv/bin/python reproduction/import_baseline_outputs.py --system-name InternAgent --source {source_jsonl} --source-format jsonl --output-root reproduction/artifacts/idea_outputs --strict
-.venv/bin/python reproduction/import_baseline_outputs.py --system-name InternAgent --source {source_dir} --source-format directory --output-root reproduction/artifacts/idea_outputs --strict
-.venv/bin/python reproduction/build_pairwise_judge_inputs.py --systems-root reproduction/artifacts/idea_outputs --baseline InternAgent --output reproduction/artifacts/judge_inputs/evosci_vs_internagent.jsonl
-.venv/bin/python reproduction/run_llm_judge.py --provider deepseek --model deepseek-v4-flash --input reproduction/artifacts/judge_inputs/evosci_vs_internagent.jsonl --output reproduction/artifacts/judge_outputs/evosci_vs_internagent_deepseek.jsonl --resume
-.venv/bin/python reproduction/aggregate_judge_results.py --input reproduction/artifacts/judge_outputs/evosci_vs_internagent_deepseek.jsonl --output-csv reproduction/artifacts/tables/evosci_vs_internagent_deepseek.csv --output-json reproduction/artifacts/tables/evosci_vs_internagent_deepseek.json
-.venv/bin/python reproduction/audit_reproduction_artifacts.py --baseline InternAgent --judge-inputs reproduction/artifacts/judge_inputs/evosci_vs_internagent.jsonl --judge-outputs reproduction/artifacts/judge_outputs/evosci_vs_internagent_deepseek.jsonl --aggregate-json reproduction/artifacts/tables/evosci_vs_internagent_deepseek.json
+git clone https://github.com/InternScience/InternAgent.git {external_checkout}
+cd {external_checkout} && conda create -n InternAgent python=3.11 && conda activate InternAgent && pip install -r requirements.txt
+python launch.py --mode qa --question {query_json_string} --output {answers_dir}/query_{id:02d}.md
+.venv/bin/python reproduction/import_baseline_outputs.py --system-name InternAgent --source {answers_dir} --source-format directory --output-root reproduction/artifacts/idea_outputs --strict
 ```
 
 ### 4. table1_llm_idea_generation / baseline_output_import_or_generation

@@ -87,6 +87,18 @@ def table1_actions(components: dict[str, Any], protocol: dict[str, Any]) -> list
                 "Current probe found the public AI-Researcher runner is benchmark-instance based, "
                 "not a drop-in runner for the 30 recovered EvoScientist queries."
             )
+        if baseline == "InternAgent":
+            actions[-1]["probe"] = "reproduction/internagent_baseline_probe.json"
+            actions[-1]["note"] = (
+                "Current probe found InternAgent has a one-shot QA CLI suitable for a replacement "
+                "baseline rerun, but it is not paper-exact raw Table 1 evidence."
+            )
+            actions[-1]["replacement_run_template"] = [
+                "git clone https://github.com/InternScience/InternAgent.git {external_checkout}",
+                "cd {external_checkout} && conda create -n InternAgent python=3.11 && conda activate InternAgent && pip install -r requirements.txt",
+                "python launch.py --mode qa --question {query_json_string} --output {answers_dir}/query_{id:02d}.md",
+                ".venv/bin/python reproduction/import_baseline_outputs.py --system-name InternAgent --source {answers_dir} --source-format directory --output-root reproduction/artifacts/idea_outputs --strict",
+            ]
     if not table1["judge_inputs"]["complete"] or not table1["judge_outputs"]["complete"]:
         actions.append(
             {
@@ -222,7 +234,7 @@ def render_markdown(plan: dict[str, Any]) -> str:
                 if isinstance(value, list):
                     value = ", ".join(value)
                 lines.append(f"{key.replace('_', ' ').title()}: {value}")
-        commands = action.get("commands") or action.get("command_templates") or []
+        commands = action.get("replacement_run_template") or action.get("commands") or action.get("command_templates") or []
         commands = [cmd for cmd in commands if cmd]
         if commands:
             lines.extend(["", "Commands:", "", "```bash"])

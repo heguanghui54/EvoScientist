@@ -31,6 +31,7 @@ and paper-level experimental reproduction.
 | Replacement-baseline judge pipeline is complete | Clean EvoScientist answers vs `Direct-DeepSeek`: 60 swapped pairwise records, 60 DeepSeek judge outputs, aggregate table, audit complete | Verified |
 | Replacement baseline protocol is pinned | `replacement_baseline_protocol.json` and `verify_replacement_baseline_protocol.py` define and validate the substitute baseline rerun path | Verified |
 | AI-Researcher baseline probe is recorded | `ai_researcher_baseline_probe.json` records that the public runner is benchmark-instance based, not a drop-in runner for the 30 recovered queries | Verified |
+| InternAgent baseline probe is recorded | `internagent_baseline_probe.json` records a QA CLI replacement-baseline path and its paper-exact limitations | Verified |
 | Paper-level non-Table-1 artifact schemas are pinned | `paper_artifact_schema.json` and `verify_paper_artifact_schema.py` define Table 2 human-label, Table 3 ablation, and Figure 2 code-execution evidence schemas | Verified |
 | Human-label aggregation is executable | `aggregate_human_labels.py` converts Table 2 human labels into Win/Tie/Lose aggregate JSON/CSV | Verified |
 | Ablation aggregation is executable | `aggregate_ablation_results.py` converts Table 3 variant judge outputs into variant-perspective Win/Tie/Lose aggregate JSON/CSV | Verified |

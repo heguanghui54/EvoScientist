@@ -342,6 +342,9 @@ to available baseline runners. External baseline exports can be normalized with
 The current AI-Researcher public-runner fit check is recorded in
 `reproduction/ai_researcher_baseline_probe.json` and
 `reproduction/ai_researcher_baseline_probe.md`.
+The current InternAgent public-runner fit check is recorded in
+`reproduction/internagent_baseline_probe.json` and
+`reproduction/internagent_baseline_probe.md`.
 
 The remaining Table 2/Table 3/Figure 2 artifact schemas are pinned in:
 
