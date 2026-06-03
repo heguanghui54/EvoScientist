@@ -328,6 +328,17 @@ It distinguishes public runner or hosted candidates from the raw 30-query
 baseline outputs required by Table 1. As of the refreshed check on 2026-06-04,
 zero raw Table 1 baseline-output packages were found.
 
+The replacement-baseline rerun protocol is pinned in:
+
+```text
+reproduction/replacement_baseline_protocol.json
+reproduction/replacement_baseline_protocol.md
+```
+
+It defines the shared 30-query output layout, 60 swapped judge records per
+baseline, and the acceptance checks for extending the Direct-DeepSeek comparison
+to available baseline runners.
+
 Run an offline end-to-end smoke test of the evaluation pipeline:
 
 ```bash

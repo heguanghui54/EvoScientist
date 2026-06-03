@@ -54,6 +54,7 @@ def main() -> None:
         "run_llm_judge.py",
         "compare_reproduction_to_paper.py",
         "audit_reproduction_artifacts.py",
+        "verify_replacement_baseline_protocol.py",
     ]:
         assert (ROOT / script).is_file(), f"missing script: {script}"
     assert (ROOT / "judge_prompt_template.md").is_file(), "missing judge prompt template"
@@ -63,12 +64,16 @@ def main() -> None:
     gap_md_path = ROOT / "public_artifact_gap_report.md"
     baseline_inventory_json_path = ROOT / "paper_baseline_availability.json"
     baseline_inventory_md_path = ROOT / "paper_baseline_availability.md"
+    replacement_protocol_json_path = ROOT / "replacement_baseline_protocol.json"
+    replacement_protocol_md_path = ROOT / "replacement_baseline_protocol.md"
     full_status_json_path = ROOT / "full_trajectory_status.json"
     full_status_md_path = ROOT / "full_trajectory_status.md"
     assert gap_json_path.is_file(), "missing public artifact gap report JSON"
     assert gap_md_path.is_file(), "missing public artifact gap report markdown"
     assert baseline_inventory_json_path.is_file(), "missing baseline availability inventory JSON"
     assert baseline_inventory_md_path.is_file(), "missing baseline availability inventory markdown"
+    assert replacement_protocol_json_path.is_file(), "missing replacement baseline protocol JSON"
+    assert replacement_protocol_md_path.is_file(), "missing replacement baseline protocol markdown"
     assert full_status_json_path.is_file(), "missing full trajectory status JSON"
     assert full_status_md_path.is_file(), "missing full trajectory status markdown"
     gap_report = json.loads(gap_json_path.read_text(encoding="utf-8"))
@@ -94,6 +99,12 @@ def main() -> None:
     assert "AI-Researcher" in baseline_inventory["summary"]["runner_candidates_found"]
     baseline_inventory_md = baseline_inventory_md_path.read_text(encoding="utf-8")
     assert "Raw baseline-output packages found: 0" in baseline_inventory_md
+    replacement_protocol = json.loads(replacement_protocol_json_path.read_text(encoding="utf-8"))
+    assert replacement_protocol["judge_protocol"]["records_per_baseline"] == 60
+    assert replacement_protocol["candidate_baselines"][0]["name"] == "Direct-DeepSeek"
+    assert replacement_protocol["candidate_baselines"][0]["status"] == "completed_replacement_baseline"
+    replacement_protocol_md = replacement_protocol_md_path.read_text(encoding="utf-8")
+    assert "exact Table 1 reproduction" in replacement_protocol_md
     full_status = json.loads(full_status_json_path.read_text(encoding="utf-8"))
     expected_success_ids = list(range(1, 31))
     expected_incomplete_ids = []
@@ -176,6 +187,7 @@ def main() -> None:
         "DeepSeek-backed EvoScientist proposal-only outputs exist",
         "Target-system output coverage is complete for proposal-only mode",
         "Replacement-baseline judge pipeline is complete",
+        "Replacement baseline protocol is pinned",
         "EvoScientist CLI outputs are normalized before judging",
         "Full trajectory audit is executable",
         "Full trajectory reruns are isolated by default",

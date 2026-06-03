@@ -29,6 +29,7 @@ and paper-level experimental reproduction.
 | Full trajectory reruns are isolated by default | `run_idea_generation.py` now uses `EvoSci --mode run --name repro-query-XX` unless `--session-mode daemon` is explicitly requested | Verified |
 | Replacement direct-LLM baseline outputs exist | `Direct-DeepSeek` baseline has answer files for 30/30 paper queries | Verified |
 | Replacement-baseline judge pipeline is complete | Clean EvoScientist answers vs `Direct-DeepSeek`: 60 swapped pairwise records, 60 DeepSeek judge outputs, aggregate table, audit complete | Verified |
+| Replacement baseline protocol is pinned | `replacement_baseline_protocol.json` and `verify_replacement_baseline_protocol.py` define and validate the substitute baseline rerun path | Verified |
 | EvoScientist CLI outputs are normalized before judging | `normalize_system_outputs.py` writes clean `answer.txt` files from raw `stdout.txt` logs | Verified |
 
 ## Not Yet Paper-Level Reproduction

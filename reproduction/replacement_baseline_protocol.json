@@ -1,0 +1,92 @@
+{
+  "date": "2026-06-04",
+  "purpose": "Define the executable replacement-baseline protocol when the paper's original seven baseline outputs are unavailable.",
+  "scope_note": "This protocol is not an exact Table 1 reproduction unless the same seven baseline outputs and Gemini-3-flash judge records from the paper are imported. It is a pinned substitute protocol for rerunning available systems under the recovered 30-query evaluation.",
+  "query_set": {
+    "path": "reproduction/queries.json",
+    "query_count": 30,
+    "input_field": "goal",
+    "require_verbatim_query": true
+  },
+  "output_layout": {
+    "systems_root": "reproduction/artifacts/idea_outputs",
+    "per_query_answer": "reproduction/artifacts/idea_outputs/{system}/query_{id:02d}/answer.txt",
+    "required_query_files": [
+      "answer.txt",
+      "query.json",
+      "prompt.txt"
+    ],
+    "minimum_answer_bytes": 1000
+  },
+  "candidate_baselines": [
+    {
+      "name": "Direct-DeepSeek",
+      "status": "completed_replacement_baseline",
+      "source": "reproduction/run_direct_baseline.py",
+      "outputs": "reproduction/artifacts/idea_outputs/Direct-DeepSeek",
+      "judge_inputs": "reproduction/artifacts/judge_inputs/evosci_clean_vs_direct_deepseek.jsonl",
+      "judge_outputs": "reproduction/artifacts/judge_outputs/evosci_clean_vs_direct_deepseek_deepseek.jsonl",
+      "aggregate": "reproduction/artifacts/tables/evosci_clean_vs_direct_deepseek_deepseek.json",
+      "paper_exact": false
+    },
+    {
+      "name": "AI-Researcher",
+      "status": "runner_candidate",
+      "source": "https://github.com/hkuds/ai-researcher",
+      "paper_exact": false,
+      "next_action": "Install in an isolated checkout, feed the 30 verbatim queries, normalize outputs into the shared layout, then judge against EvoScientist."
+    },
+    {
+      "name": "InternAgent",
+      "status": "runner_candidate",
+      "source": "https://github.com/InternScience/InternAgent",
+      "paper_exact": false,
+      "next_action": "Install in an isolated checkout, feed the 30 verbatim queries, normalize outputs into the shared layout, then judge against EvoScientist."
+    },
+    {
+      "name": "AI Scientist-v2",
+      "status": "runner_candidate",
+      "source": "https://github.com/SakanaAI/AI-Scientist-v2",
+      "paper_exact": false,
+      "next_action": "Install in an isolated checkout, feed the 30 verbatim queries, normalize outputs into the shared layout, then judge against EvoScientist."
+    },
+    {
+      "name": "Novix",
+      "status": "hosted_candidate",
+      "source": "https://novix.science/chat",
+      "paper_exact": false,
+      "next_action": "Use only if service access and a stable export path are available; normalize exported answers into the shared layout."
+    },
+    {
+      "name": "K-Dense",
+      "status": "runner_or_hosted_candidate",
+      "source": "https://github.com/K-Dense-AI",
+      "paper_exact": false,
+      "next_action": "Use hosted or open-source tooling if access/setup succeeds; normalize exported answers into the shared layout."
+    }
+  ],
+  "judge_protocol": {
+    "builder": "reproduction/build_pairwise_judge_inputs.py",
+    "runner": "reproduction/run_llm_judge.py",
+    "aggregator": "reproduction/aggregate_judge_results.py",
+    "swapped_order": true,
+    "records_per_baseline": 60,
+    "paper_exact_judge": "gemini-3-flash",
+    "replacement_judge": "deepseek-v4-flash"
+  },
+  "acceptance_checks": [
+    "Every selected baseline has 30 non-empty answer.txt files under the shared system-output layout.",
+    "Each answer is generated from the verbatim recovered query goal and records the prompt used.",
+    "Pairwise judge inputs contain 60 swapped records per selected baseline.",
+    "Judge outputs cover every comparison_id in the generated judge inputs.",
+    "Aggregate JSON contains Clarity, Novelty, Feasibility, and Relevance for each selected baseline.",
+    "The report states whether the comparison is paper-exact or replacement-only."
+  ],
+  "commands": {
+    "direct_deepseek_generate": ".venv/bin/python reproduction/run_direct_baseline.py --output-dir reproduction/artifacts/idea_outputs/Direct-DeepSeek",
+    "build_judge_inputs_template": ".venv/bin/python reproduction/build_pairwise_judge_inputs.py --systems-root reproduction/artifacts/idea_outputs --baseline {baseline} --output reproduction/artifacts/judge_inputs/evosci_vs_{baseline_slug}.jsonl",
+    "run_replacement_judge_template": ".venv/bin/python reproduction/run_llm_judge.py --provider deepseek --model deepseek-v4-flash --input reproduction/artifacts/judge_inputs/evosci_vs_{baseline_slug}.jsonl --output reproduction/artifacts/judge_outputs/evosci_vs_{baseline_slug}_deepseek.jsonl --resume",
+    "aggregate_template": ".venv/bin/python reproduction/aggregate_judge_results.py --input reproduction/artifacts/judge_outputs/evosci_vs_{baseline_slug}_deepseek.jsonl --output-csv reproduction/artifacts/tables/evosci_vs_{baseline_slug}_deepseek.csv --output-json reproduction/artifacts/tables/evosci_vs_{baseline_slug}_deepseek.json",
+    "audit_template": ".venv/bin/python reproduction/audit_reproduction_artifacts.py --baseline {baseline} --judge-inputs reproduction/artifacts/judge_inputs/evosci_vs_{baseline_slug}.jsonl --judge-outputs reproduction/artifacts/judge_outputs/evosci_vs_{baseline_slug}_deepseek.jsonl --aggregate-json reproduction/artifacts/tables/evosci_vs_{baseline_slug}_deepseek.json"
+  }
+}
