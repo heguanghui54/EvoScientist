@@ -12,7 +12,7 @@ are present in the checkout.
 
 | Component | Status | Evidence |
 | --- | --- | --- |
-| Full trajectories | incomplete | 29/30 successful final reports; non-success IDs: 16 |
+| Full trajectories | complete | 30/30 successful final reports; non-success IDs: none |
 | Table 1 LLM judge | incomplete | expected 420 pairwise records; missing baseline outputs: Virtual Scientist, AI-Researcher, InternAgent, AI Scientist-v2, Hypogenic, Novix, K-Dense |
 | Table 2 human eval | incomplete | missing files: inputs.jsonl, labels.jsonl, aggregate.json |
 | Table 3 ablation | incomplete | missing variants: -IDE, -IVE, -all |
@@ -20,7 +20,6 @@ are present in the checkout.
 
 ## Blocking Items
 
-- incomplete: full_trajectories
 - incomplete: table1_llm_idea_generation
 - incomplete: table2_human_idea_generation
 - incomplete: table3_ablation_idea_generation

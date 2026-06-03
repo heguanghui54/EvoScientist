@@ -4,14 +4,13 @@ Date: 2026-06-04
 
 ## Audit Summary
 
-Audit status: `incomplete`
+Audit status: `complete`
 
 | Status | Count |
 | --- | ---: |
-| success | 29 |
-| timeout | 1 |
+| success | 30 |
 
-Successful query ids: `[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30]`
+Successful query ids: `[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30]`
 
 ## Successful Full Trajectories
 
@@ -210,6 +209,19 @@ Command: `EVOSCI_QUERY_TIMEOUT=1200 EVOSCI_QUERY_EXTRA_ARGS='--query-ids 6,7,8,9
 - `final_report.md` exists and is 13,452 bytes.
 - isolated workspace was `runs/repro-query-15`.
 
+Query 16 status: `ok`
+
+Title: Structured vs. Unstructured Knowledge Injection in Biomedical LLMs:
+
+Output directory: `reproduction/artifacts/remote_fetch/full_trajectories/EvoScientist/query_16`
+
+Token usage: 155834 input / 5710 output
+
+Command: `EVOSCI_QUERY_TIMEOUT=1200 EVOSCI_QUERY_EXTRA_ARGS='--query-ids 6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30 --force-proposal --stream-logs --idle-timeout 600 --output-dir reproduction/artifacts/full_trajectories/EvoScientist' reproduction/ssh_ubuntu_run.sh batch-bg 30`
+
+- `final_report.md` exists and is 13,228 bytes.
+- isolated workspace was `runs/repro-query-16`.
+
 Query 17 status: `ok`
 
 Title: Schema-Constrained Document-Level Event Extraction via Context-Grounded LLM Decoding
@@ -394,11 +406,10 @@ Command: `EVOSCI_QUERY_TIMEOUT=1200 EVOSCI_QUERY_EXTRA_ARGS='--query-ids 6,7,8,9
 
 ## Current Non-Successful Full Trajectories
 
-- Query 16: runner reported timeout
 
 ## Limitations
-- Queries 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30 have successful full tool-enabled trajectories with final_report.md.
-- Queries 16 remain non-successful in the latest fetched audit snapshot.
+- Queries 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30 have successful full tool-enabled trajectories with final_report.md.
+- Queries  remain non-successful in the latest fetched audit snapshot.
 - The run used DeepSeek configuration rather than the paper-matched Gemini/Claude setup.
 - Tavily search was unavailable, so the research-agent behavior may differ from paper settings.
 - This is still not the full 7-baseline paper-level Table 1 reproduction.

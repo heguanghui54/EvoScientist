@@ -75,9 +75,9 @@ def main() -> None:
     )
     assert "not possible from public artifacts alone" in gap_report["conclusion"]
     full_status = json.loads(full_status_json_path.read_text(encoding="utf-8"))
-    expected_success_ids = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30]
-    expected_incomplete_ids = [16]
-    assert full_status["full_trajectory_counts"]["successful_final_reports"] == 29
+    expected_success_ids = list(range(1, 31))
+    expected_incomplete_ids = []
+    assert full_status["full_trajectory_counts"]["successful_final_reports"] == 30
     assert full_status["audit"]["successful_query_ids"] == expected_success_ids
     assert full_status["audit"]["failed_or_incomplete_query_ids"] == expected_incomplete_ids
     for query_id in expected_success_ids:
@@ -97,6 +97,8 @@ def main() -> None:
     assert full_status["successful_queries"]["query_12"]["artifact_files"]["final_report.md"]["bytes"] >= 14000
     assert "AdaSpec" in full_status["successful_queries"]["query_14"]["final_report"]["title"]
     assert full_status["successful_queries"]["query_14"]["artifact_files"]["final_report.md"]["bytes"] >= 18000
+    assert "Structured vs. Unstructured Knowledge Injection" in full_status["successful_queries"]["query_16"]["final_report"]["title"]
+    assert full_status["successful_queries"]["query_16"]["artifact_files"]["final_report.md"]["bytes"] >= 13000
     assert "Schema-Constrained Document-Level Event Extraction" in full_status["successful_queries"]["query_17"]["final_report"]["title"]
     assert full_status["successful_queries"]["query_17"]["artifact_files"]["final_report.md"]["bytes"] >= 15000
     assert "Uncertainty Communication Format" in full_status["successful_queries"]["query_18"]["final_report"]["title"]
@@ -111,8 +113,8 @@ def main() -> None:
     assert full_status["successful_queries"]["query_26"]["artifact_files"]["final_report.md"]["bytes"] >= 14000
     assert "UniAudio-MoE" in full_status["successful_queries"]["query_30"]["final_report"]["title"]
     assert full_status["successful_queries"]["query_30"]["artifact_files"]["final_report.md"]["bytes"] >= 18000
-    assert full_status["audit"]["counts"]["success"] == 29
-    assert full_status["audit"]["counts"]["timeout"] == 1
+    assert full_status["audit"]["counts"]["success"] == 30
+    assert full_status["audit"]["counts"].get("timeout", 0) == 0
     assert full_status["audit"]["counts"].get("failed", 0) == 0
     assert "missing" not in full_status["audit"]["counts"]
     reported = json.loads(reported_path.read_text(encoding="utf-8"))
@@ -157,9 +159,9 @@ def main() -> None:
         "EvoScientist CLI outputs are normalized before judging",
         "Full trajectory audit is executable",
         "Full trajectory reruns are isolated by default",
-        "29 success, 1 timeout, 0 failed, 0 missing",
+        "30 success, 0 timeout, 0 failed, 0 missing",
         "full tool-enabled DeepSeek-backed sweep for all 30 paper queries",
-        "rerun only the non-successful query ID: 16",
+        "Full-trajectory coverage no longer needs another rerun",
         "not a self-evolving system",
         "Ubuntu GPU Status",
     ]:

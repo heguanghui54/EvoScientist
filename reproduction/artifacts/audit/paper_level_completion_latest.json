@@ -7,16 +7,13 @@
       "status_file": "reproduction/full_trajectory_status.json",
       "exists": true,
       "query_count": 30,
-      "success_count": 29,
+      "success_count": 30,
       "counts": {
-        "success": 29,
-        "timeout": 1
+        "success": 30
       },
-      "failed_or_incomplete_query_ids": [
-        16
-      ],
-      "complete": false,
-      "reason": "full trajectory attempts exist, but not every query has a qualifying final report"
+      "failed_or_incomplete_query_ids": [],
+      "complete": true,
+      "reason": "30/30 full trajectories have qualifying final reports"
     },
     "table1_llm_idea_generation": {
       "paper_table": "Table 1 LLM idea-generation evaluation",
@@ -1348,7 +1345,6 @@
     }
   },
   "blocking_items": [
-    "incomplete: full_trajectories",
     "incomplete: table1_llm_idea_generation",
     "incomplete: table2_human_idea_generation",
     "incomplete: table3_ablation_idea_generation",

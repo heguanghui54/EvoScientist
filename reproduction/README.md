@@ -186,10 +186,10 @@ Refresh the tracked full-trajectory status files from the latest audit snapshot:
 .venv/bin/python reproduction/refresh_full_trajectory_status.py
 ```
 
-The current full-trajectory audit is incomplete: 29 successes and 1 timeout.
-No full-trajectory query artifacts are still missing. This is
-real agent evidence, but it is not yet 30/30 successful paper-matched
-EvoScientist coverage.
+The current full-trajectory audit is complete: all 30 recovered paper queries
+now have qualifying `final_report.md` outputs. This is real DeepSeek-backed
+agent evidence, but it is still not a paper-level reproduction of the original
+Gemini/Claude/Tavily baseline and judge setup.
 
 For broad full-agent queries, use `--force-proposal` to prevent the agent from
 asking clarification questions instead of producing a proposal:
@@ -354,10 +354,9 @@ evaluation, Table 3 ablations, and Figure 2 code-execution evidence:
   --output-md reproduction/artifacts/audit/paper_level_completion_latest.md
 ```
 
-The latest completion audit is intentionally `incomplete`: full trajectory
-attempts exist for all 30 queries, but only 29 have qualifying final reports,
-and the raw paper baseline, judge, human-label, ablation, and code-execution
-artifacts are still absent.
+The latest completion audit is intentionally `incomplete`: full trajectories are
+now complete for all 30 queries, but the raw paper baseline, judge, human-label,
+ablation, and code-execution artifacts are still absent.
 
 ## Current Agent-Level Status
 
@@ -379,12 +378,11 @@ EVOSCI_QUERY_EXTRA_ARGS='--proposal-only --stream-logs' \
 ```
 
 Full tool-enabled DeepSeek-backed attempts now exist for all 30 recovered paper
-queries. The audit has 29 qualifying `final_report.md` successes, 1 idle
-timeout, and no failed or missing query artifacts.
+queries. The audit has 30 qualifying `final_report.md` successes and no timed
+out, failed, or missing query artifacts.
 
-The remaining blocker is paper-level coverage: 30/30 successful paper-matched
-EvoScientist outputs, seven baseline systems, real judge outputs, human labels,
-code execution logs, and ablation runs.
+The remaining blocker is paper-level coverage: seven baseline systems, real
+judge outputs, human labels, code execution logs, and ablation runs.
 
 ## What Is Needed for Paper-Level Reproduction
 
@@ -394,8 +392,8 @@ To reproduce the paper experiments rather than only the software system:
   especially the paper's Gemini/Claude/Gemini-judge setup;
 - optionally a Tavily key for web-search-based research-agent behavior;
 - full successful tool-enabled EvoScientist trajectories for all 30 recovered
-  paper queries; current full attempts cover all 30, but only 29 have qualifying
-  final reports and 1 timed out;
+  paper queries; current full attempts now cover all 30 with qualifying final
+  reports;
 - baseline outputs for the seven paper systems, or runnable baseline setups;
 - the LLM-as-judge prompt/input pairs and model access for `gemini-3-flash`;
 - human-evaluation labels if reproducing the human agreement numbers;
