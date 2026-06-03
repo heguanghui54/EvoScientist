@@ -133,6 +133,9 @@ def main() -> None:
     status_text = status_path.read_text(encoding="utf-8")
     runner_text = (ROOT / "run_idea_generation.py").read_text(encoding="utf-8")
     full_audit_text = (ROOT / "audit_full_trajectories.py").read_text(encoding="utf-8")
+    paper_level_audit_text = (ROOT / "audit_paper_level_completion.py").read_text(
+        encoding="utf-8"
+    )
     assert "DEFAULT_COLLECT_FILES" in runner_text, "idea runner does not collect workspace outputs"
     assert "final_report.md" in runner_text, "idea runner does not collect final_report.md"
     assert "--force-proposal" in runner_text, "idea runner cannot force broad queries to proposal output"
@@ -147,6 +150,9 @@ def main() -> None:
     assert "/final_report.md" in runner_text, "force-proposal prompt does not require final_report.md"
     assert "response_region" in full_audit_text, "full trajectory audit may classify echoed prompts"
     assert "Idle timed out after" in full_audit_text, "full trajectory audit does not detect idle timeouts"
+    assert "Table 2 human idea-generation evaluation" in paper_level_audit_text
+    assert "Figure 2 code-execution success analysis" in paper_level_audit_text
+    assert "paper-level reproduction goal remains incomplete" in paper_level_audit_text
     for needle in [
         "Verified Locally",
         "Not Yet Paper-Level Reproduction",

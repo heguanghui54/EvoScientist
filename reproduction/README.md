@@ -338,6 +338,21 @@ full Table 1 automatic-evaluation setup. For the paper's 30 queries, 7
 baselines, and swapped-order judge design, the audit expects 420 pairwise judge
 records.
 
+Use `audit_paper_level_completion.py` for the stricter paper-level completion
+gate across the full trajectories, Table 1 LLM judging, Table 2 human
+evaluation, Table 3 ablations, and Figure 2 code-execution evidence:
+
+```bash
+.venv/bin/python reproduction/audit_paper_level_completion.py \
+  --output-json reproduction/artifacts/audit/paper_level_completion_latest.json \
+  --output-md reproduction/artifacts/audit/paper_level_completion_latest.md
+```
+
+The latest completion audit is intentionally `incomplete`: full trajectory
+attempts exist for all 30 queries, but only 17 have qualifying final reports,
+and the raw paper baseline, judge, human-label, ablation, and code-execution
+artifacts are still absent.
+
 ## Current Agent-Level Status
 
 The earlier API-key blocker is resolved for DeepSeek. Both the local workspace
