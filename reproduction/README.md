@@ -321,6 +321,12 @@ To reproduce the paper experiments rather than only the software system:
 
 As of the latest external check on 2026-06-03, no public baseline-output or
 judge-output artifact package was found in the author repository/search results.
+The machine-readable and human-readable gap report is stored in:
+
+```text
+reproduction/public_artifact_gap_report.json
+reproduction/public_artifact_gap_report.md
+```
 
 ## Next Command After Provider Setup
 

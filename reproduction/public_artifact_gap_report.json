@@ -1,0 +1,64 @@
+{
+  "date": "2026-06-03",
+  "purpose": "Check whether the public EvoScientist sources provide paper-level reproduction artifacts for arXiv:2603.08127.",
+  "checked_sources": [
+    {
+      "name": "official_repository",
+      "url": "https://github.com/EvoScientist/EvoScientist",
+      "checked_head": "0198e50e7f5d3148dc9c5a499fef6f2afd8d3888",
+      "method": "fresh shallow clone plus filename and keyword scan",
+      "finding": "No experiments/ or reproduction/ directory; no public baseline-output, judge-output, human-label, code-execution, or ablation artifact package found."
+    },
+    {
+      "name": "official_repository_readme",
+      "url": "https://github.com/EvoScientist/EvoScientist",
+      "method": "README inspection",
+      "finding": "The README links the technical report and lists benchmark suite release as roadmap/future work, but does not publish the paper's Table 1/Table 2/Table 3 artifacts."
+    },
+    {
+      "name": "arxiv_paper",
+      "url": "https://arxiv.org/abs/2603.08127",
+      "method": "paper and arXiv HTML/PDF inspection",
+      "finding": "The paper reports the 30-query evaluation, seven baselines, Gemini-3-flash judge, human evaluation, code execution success, and ablations, but does not provide downloadable raw outputs or labels."
+    },
+    {
+      "name": "web_search",
+      "queries": [
+        "EvoScientist EvoScientist baseline outputs judge outputs github",
+        "EvoScientist arXiv 2603.08127 baseline outputs",
+        "EvoScientist AI-Researcher InternAgent Hypogenic Novix K-Dense outputs"
+      ],
+      "method": "web search on 2026-06-03",
+      "finding": "Search found the paper, summary pages, official repository, release notes, and baseline project pages, but no public artifact package containing the missing raw experimental outputs."
+    }
+  ],
+  "missing_for_exact_table1_reproduction": {
+    "baseline_system_outputs": [
+      "Virtual Scientist",
+      "AI-Researcher",
+      "InternAgent",
+      "AI Scientist-v2",
+      "Hypogenic",
+      "Novix",
+      "K-Dense"
+    ],
+    "pairwise_judge_inputs": "30 queries x 7 baselines x 2 swapped orders = 420 records",
+    "judge_outputs": "Gemini-3-flash raw scores for the 420 pairwise records",
+    "paper_matched_evosci_outputs": "Full tool-enabled EvoScientist RA/EA/EMA trajectories, not only proposal-only outputs"
+  },
+  "missing_for_exact_table2_reproduction": {
+    "human_labels": "3 PhD-level annotator labels and annotation traces for selected baselines",
+    "human_evaluation_inputs": "Raw anonymized pairwise prompts shown to annotators"
+  },
+  "missing_for_exact_table3_and_figure2_reproduction": {
+    "ablation_outputs": "IDE/IVE/all-removed ablation run outputs and judge records",
+    "code_execution_logs": "Generated code trajectories and execution success/failure logs before and after evolution"
+  },
+  "current_reproducible_substitute": {
+    "target_outputs": "EvoScientist proposal-only outputs cover 30/30 recovered paper queries.",
+    "replacement_baseline": "Direct-DeepSeek covers 30/30 recovered paper queries.",
+    "replacement_judge": "DeepSeek judge covers 60/60 swapped records for EvoScientist vs Direct-DeepSeek.",
+    "audit": "Replacement-baseline audit is complete; paper-level 420-record audit remains incomplete."
+  },
+  "conclusion": "As of 2026-06-03, exact paper-level numeric reproduction is not possible from public artifacts alone. The current repository reproduces the software and a stated replacement comparison, and documents the remaining public-artifact gaps required for exact reproduction."
+}

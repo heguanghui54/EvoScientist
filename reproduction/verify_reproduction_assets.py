@@ -56,6 +56,17 @@ def main() -> None:
     assert (ROOT / "judge_prompt_template.md").is_file(), "missing judge prompt template"
     reported_path = ROOT / "paper_reported_results.json"
     assert reported_path.is_file(), "missing paper reported results"
+    gap_json_path = ROOT / "public_artifact_gap_report.json"
+    gap_md_path = ROOT / "public_artifact_gap_report.md"
+    assert gap_json_path.is_file(), "missing public artifact gap report JSON"
+    assert gap_md_path.is_file(), "missing public artifact gap report markdown"
+    gap_report = json.loads(gap_json_path.read_text(encoding="utf-8"))
+    assert gap_report["checked_sources"], "gap report has no checked sources"
+    assert (
+        gap_report["missing_for_exact_table1_reproduction"]["pairwise_judge_inputs"]
+        == "30 queries x 7 baselines x 2 swapped orders = 420 records"
+    )
+    assert "not possible from public artifacts alone" in gap_report["conclusion"]
     reported = json.loads(reported_path.read_text(encoding="utf-8"))
     for section in [
         "table1_llm_idea_generation",

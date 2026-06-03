@@ -151,6 +151,11 @@ paper's baseline outputs, judge outputs, human labels, code-execution logs, or
 ablation outputs. The current reproducible path is therefore to generate or
 import those artifacts.
 
+The detailed gap report is now tracked in:
+
+- `reproduction/public_artifact_gap_report.md`
+- `reproduction/public_artifact_gap_report.json`
+
 Checked public sources:
 
 - `https://github.com/EvoScientist/EvoScientist`
