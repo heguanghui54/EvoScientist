@@ -194,6 +194,14 @@ EVOSCI_QUERY_EXTRA_ARGS='--force-proposal --stream-logs --output-dir reproductio
   reproduction/ssh_ubuntu_run.sh query-bg 2
 ```
 
+To continue the remaining paper queries without rerunning successful queries:
+
+```bash
+EVOSCI_QUERY_TIMEOUT=1200 \
+EVOSCI_QUERY_EXTRA_ARGS='--start-id 4 --force-proposal --stream-logs --output-dir reproduction/artifacts/full_trajectories/EvoScientist' \
+  reproduction/ssh_ubuntu_run.sh batch-bg 30
+```
+
 The SSH wrapper passes `EVOSCI_QUERY_TIMEOUT` through to the remote runner.
 `run_idea_generation.py` also clears stale workspace-level `final_report.md` and
 `research_request.md` before each query, then copies newly generated files into

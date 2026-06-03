@@ -111,6 +111,13 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--limit", type=int, default=None, help="Run only the first N queries.")
     parser.add_argument("--query-id", type=int, default=None, help="Run one query id.")
+    parser.add_argument(
+        "--query-ids",
+        default=None,
+        help="Comma-separated query ids to run, for example '4,7,12'.",
+    )
+    parser.add_argument("--start-id", type=int, default=None, help="Run queries with id >= N.")
+    parser.add_argument("--end-id", type=int, default=None, help="Run queries with id <= N.")
     parser.add_argument("--output-dir", type=Path, default=DEFAULT_OUTPUT)
     parser.add_argument("--timeout", type=int, default=1800, help="Seconds per query.")
     parser.add_argument("--dry-run", action="store_true", help="Write prompts without calling EvoSci.")
@@ -159,10 +166,34 @@ def main() -> None:
     collect_files = args.collect_file if args.collect_file is not None else DEFAULT_COLLECT_FILES
 
     queries = load_queries()
+    selectors = sum(
+        1
+        for selected in [
+            args.query_id is not None,
+            args.query_ids is not None,
+            args.start_id is not None or args.end_id is not None,
+        ]
+        if selected
+    )
+    if selectors > 1:
+        raise SystemExit("Use only one of --query-id, --query-ids, or --start-id/--end-id.")
     if args.query_id is not None:
-        queries = [q for q in queries if q["id"] == args.query_id]
-        if not queries:
-            raise SystemExit(f"Unknown query id: {args.query_id}")
+        wanted = {args.query_id}
+        queries = [q for q in queries if q["id"] in wanted]
+    elif args.query_ids is not None:
+        try:
+            wanted = {int(part.strip()) for part in args.query_ids.split(",") if part.strip()}
+        except ValueError as exc:
+            raise SystemExit("--query-ids must be a comma-separated list of integers.") from exc
+        queries = [q for q in queries if q["id"] in wanted]
+    elif args.start_id is not None or args.end_id is not None:
+        start_id = args.start_id if args.start_id is not None else 1
+        end_id = args.end_id if args.end_id is not None else 10**9
+        if start_id > end_id:
+            raise SystemExit("--start-id cannot be greater than --end-id.")
+        queries = [q for q in queries if start_id <= q["id"] <= end_id]
+    if selectors and not queries:
+        raise SystemExit("No queries matched the requested selector.")
     if args.limit is not None:
         queries = queries[: args.limit]
 

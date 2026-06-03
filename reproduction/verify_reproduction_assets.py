@@ -103,6 +103,8 @@ def main() -> None:
     assert "--force-proposal" in runner_text, "idea runner cannot force broad queries to proposal output"
     assert "clear_workspace_files" in runner_text, "idea runner does not clear stale collected files"
     assert "--session-mode" in runner_text, "idea runner cannot control EvoSci session mode"
+    assert "--start-id" in runner_text, "idea runner cannot continue from remaining paper queries"
+    assert "--query-ids" in runner_text, "idea runner cannot run an explicit query subset"
     assert '"run"' in runner_text and "--mode" in runner_text, "idea runner does not default to isolated run mode"
     assert "run_workspace_dir" in runner_text, "idea runner does not collect from isolated run workspaces"
     assert "clear_artifact_files" in runner_text, "idea runner does not clear stale collected artifacts"
