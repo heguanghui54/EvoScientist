@@ -61,10 +61,14 @@ def main() -> None:
     assert reported_path.is_file(), "missing paper reported results"
     gap_json_path = ROOT / "public_artifact_gap_report.json"
     gap_md_path = ROOT / "public_artifact_gap_report.md"
+    baseline_inventory_json_path = ROOT / "paper_baseline_availability.json"
+    baseline_inventory_md_path = ROOT / "paper_baseline_availability.md"
     full_status_json_path = ROOT / "full_trajectory_status.json"
     full_status_md_path = ROOT / "full_trajectory_status.md"
     assert gap_json_path.is_file(), "missing public artifact gap report JSON"
     assert gap_md_path.is_file(), "missing public artifact gap report markdown"
+    assert baseline_inventory_json_path.is_file(), "missing baseline availability inventory JSON"
+    assert baseline_inventory_md_path.is_file(), "missing baseline availability inventory markdown"
     assert full_status_json_path.is_file(), "missing full trajectory status JSON"
     assert full_status_md_path.is_file(), "missing full trajectory status markdown"
     gap_report = json.loads(gap_json_path.read_text(encoding="utf-8"))
@@ -74,6 +78,22 @@ def main() -> None:
         == "30 queries x 7 baselines x 2 swapped orders = 420 records"
     )
     assert "not possible from public artifacts alone" in gap_report["conclusion"]
+    baseline_inventory = json.loads(baseline_inventory_json_path.read_text(encoding="utf-8"))
+    baseline_names = [item["name"] for item in baseline_inventory["baselines"]]
+    assert baseline_names == [
+        "Virtual Scientist",
+        "AI-Researcher",
+        "InternAgent",
+        "AI Scientist-v2",
+        "Hypogenic",
+        "Novix",
+        "K-Dense",
+    ]
+    assert baseline_inventory["summary"]["raw_output_packages_found"] == 0
+    assert all(not item["table1_raw_outputs_available"] for item in baseline_inventory["baselines"])
+    assert "AI-Researcher" in baseline_inventory["summary"]["runner_candidates_found"]
+    baseline_inventory_md = baseline_inventory_md_path.read_text(encoding="utf-8")
+    assert "Raw baseline-output packages found: 0" in baseline_inventory_md
     full_status = json.loads(full_status_json_path.read_text(encoding="utf-8"))
     expected_success_ids = list(range(1, 31))
     expected_incomplete_ids = []

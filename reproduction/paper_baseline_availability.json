@@ -1,0 +1,119 @@
+{
+  "date": "2026-06-04",
+  "purpose": "Inventory public availability of the seven Table 1 baseline systems named in arXiv:2603.08127.",
+  "scope_note": "This inventory does not count public project pages or runnable repositories as paper outputs. The Table 1 requirement remains the raw 30-query baseline outputs plus Gemini-3-flash judge records used by the paper.",
+  "baselines": [
+    {
+      "name": "Virtual Scientist",
+      "paper_role": "Table 1 baseline",
+      "public_entrypoint_status": "not_found",
+      "public_entrypoints": [],
+      "table1_raw_outputs_available": false,
+      "rerun_path": "No reliable public runner or raw artifact package was found in the refreshed search. Reproduction requires either author-provided outputs or an independently specified substitute baseline."
+    },
+    {
+      "name": "AI-Researcher",
+      "paper_role": "Table 1 baseline",
+      "public_entrypoint_status": "open_source_runner_candidate",
+      "public_entrypoints": [
+        {
+          "label": "HKUDS/AI-Researcher",
+          "url": "https://github.com/hkuds/ai-researcher",
+          "evidence": "Public repository for AI-Researcher, described as an autonomous scientific innovation system."
+        },
+        {
+          "label": "Novix hosted production version",
+          "url": "https://novix.science/chat",
+          "evidence": "Linked from the AI-Researcher repository as a production-ready hosted version."
+        }
+      ],
+      "table1_raw_outputs_available": false,
+      "rerun_path": "Possible rerun candidate, but it needs separate environment setup and prompt/protocol alignment. The public repository does not provide EvoScientist Table 1 30-query outputs."
+    },
+    {
+      "name": "InternAgent",
+      "paper_role": "Table 1 baseline",
+      "public_entrypoint_status": "open_source_runner_candidate",
+      "public_entrypoints": [
+        {
+          "label": "InternScience/InternAgent",
+          "url": "https://github.com/InternScience/InternAgent",
+          "evidence": "Public repository for InternAgent-1.5, described as a unified agentic framework for autonomous scientific discovery."
+        }
+      ],
+      "table1_raw_outputs_available": false,
+      "rerun_path": "Possible rerun candidate, but it needs separate environment setup and prompt/protocol alignment. The public repository does not provide EvoScientist Table 1 30-query outputs."
+    },
+    {
+      "name": "AI Scientist-v2",
+      "paper_role": "Table 1 baseline",
+      "public_entrypoint_status": "open_source_runner_candidate",
+      "public_entrypoints": [
+        {
+          "label": "SakanaAI/AI-Scientist-v2",
+          "url": "https://github.com/SakanaAI/AI-Scientist-v2",
+          "evidence": "Public repository for The AI Scientist-v2."
+        }
+      ],
+      "table1_raw_outputs_available": false,
+      "rerun_path": "Possible rerun candidate, but it needs separate environment setup and prompt/protocol alignment. The public repository does not provide EvoScientist Table 1 30-query outputs."
+    },
+    {
+      "name": "Hypogenic",
+      "paper_role": "Table 1 baseline",
+      "public_entrypoint_status": "not_found",
+      "public_entrypoints": [],
+      "table1_raw_outputs_available": false,
+      "rerun_path": "No reliable public runner or raw artifact package was found in the refreshed search. Reproduction requires author-provided outputs, service access if applicable, or an independently specified substitute baseline."
+    },
+    {
+      "name": "Novix",
+      "paper_role": "Table 1 baseline",
+      "public_entrypoint_status": "hosted_or_commercial_candidate",
+      "public_entrypoints": [
+        {
+          "label": "Novix hosted platform",
+          "url": "https://novix.science/chat",
+          "evidence": "Hosted production version linked from AI-Researcher public materials."
+        }
+      ],
+      "table1_raw_outputs_available": false,
+      "rerun_path": "Potential hosted rerun candidate, but requires account/service access and a pinned protocol. No public EvoScientist Table 1 30-query outputs were found."
+    },
+    {
+      "name": "K-Dense",
+      "paper_role": "Table 1 baseline",
+      "public_entrypoint_status": "open_source_and_hosted_candidate",
+      "public_entrypoints": [
+        {
+          "label": "K-Dense GitHub organization",
+          "url": "https://github.com/K-Dense-AI",
+          "evidence": "Public organization with scientific-agent tools and K-Dense BYOK repositories."
+        },
+        {
+          "label": "K-Dense hosted platform",
+          "url": "https://k-dense.ai/",
+          "evidence": "Hosted AI co-scientist platform with open-source scientific skills."
+        }
+      ],
+      "table1_raw_outputs_available": false,
+      "rerun_path": "Potential rerun candidate through hosted or open-source tooling, but requires account/setup and protocol alignment. No public EvoScientist Table 1 30-query outputs were found."
+    }
+  ],
+  "summary": {
+    "table1_baseline_count": 7,
+    "raw_output_packages_found": 0,
+    "runner_candidates_found": [
+      "AI-Researcher",
+      "InternAgent",
+      "AI Scientist-v2",
+      "Novix",
+      "K-Dense"
+    ],
+    "no_reliable_public_runner_found": [
+      "Virtual Scientist",
+      "Hypogenic"
+    ],
+    "next_reproduction_step": "Choose whether to import author-provided baseline outputs, run open-source/hosted baseline candidates under a pinned replacement protocol, or explicitly report that exact Table 1 reproduction remains impossible from public artifacts alone."
+  }
+}

@@ -1,5 +1,5 @@
 {
-  "date": "2026-06-03",
+  "date": "2026-06-04",
   "purpose": "Check whether the public EvoScientist sources provide paper-level reproduction artifacts for arXiv:2603.08127.",
   "checked_sources": [
     {
@@ -26,10 +26,18 @@
       "queries": [
         "EvoScientist EvoScientist baseline outputs judge outputs github",
         "EvoScientist arXiv 2603.08127 baseline outputs",
-        "EvoScientist AI-Researcher InternAgent Hypogenic Novix K-Dense outputs"
+        "EvoScientist AI-Researcher InternAgent Hypogenic Novix K-Dense outputs",
+        "EvoScientist baseline outputs Virtual Scientist AI-Researcher InternAgent Hypogenic Novix K-Dense",
+        "EvoScientist arXiv 2603.08127 GitHub baseline outputs judge outputs"
       ],
-      "method": "web search on 2026-06-03",
+      "method": "web search refreshed on 2026-06-04",
       "finding": "Search found the paper, summary pages, official repository, release notes, and baseline project pages, but no public artifact package containing the missing raw experimental outputs."
+    },
+    {
+      "name": "baseline_availability_inventory",
+      "path": "reproduction/paper_baseline_availability.json",
+      "method": "baseline-by-baseline public entrypoint inventory",
+      "finding": "Public runner or hosted candidates exist for some baselines, but zero raw Table 1 baseline-output packages were found."
     }
   ],
   "missing_for_exact_table1_reproduction": {
@@ -44,7 +52,7 @@
     ],
     "pairwise_judge_inputs": "30 queries x 7 baselines x 2 swapped orders = 420 records",
     "judge_outputs": "Gemini-3-flash raw scores for the 420 pairwise records",
-    "paper_matched_evosci_outputs": "Full tool-enabled EvoScientist RA/EA/EMA trajectories, not only proposal-only outputs"
+    "paper_matched_provider_and_tool_setup": "The current 30/30 full trajectory sweep uses DeepSeek without Tavily; exact model/tool reproduction would require the paper's Gemini/Claude/Gemini-judge/Tavily setup."
   },
   "missing_for_exact_table2_reproduction": {
     "human_labels": "3 PhD-level annotator labels and annotation traces for selected baselines",
@@ -55,10 +63,10 @@
     "code_execution_logs": "Generated code trajectories and execution success/failure logs before and after evolution"
   },
   "current_reproducible_substitute": {
-    "target_outputs": "EvoScientist proposal-only outputs cover 30/30 recovered paper queries.",
+    "target_outputs": "EvoScientist full tool-enabled DeepSeek trajectories cover 30/30 recovered paper queries.",
     "replacement_baseline": "Direct-DeepSeek covers 30/30 recovered paper queries.",
     "replacement_judge": "DeepSeek judge covers 60/60 swapped records for EvoScientist vs Direct-DeepSeek.",
     "audit": "Replacement-baseline audit is complete; paper-level 420-record audit remains incomplete."
   },
-  "conclusion": "As of 2026-06-03, exact paper-level numeric reproduction is not possible from public artifacts alone. The current repository reproduces the software and a stated replacement comparison, and documents the remaining public-artifact gaps required for exact reproduction."
+  "conclusion": "As of 2026-06-04, exact paper-level numeric reproduction is not possible from public artifacts alone. The current repository reproduces the software, 30/30 full EvoScientist trajectories under a DeepSeek-backed setup, and a stated replacement comparison, while documenting the remaining public-artifact gaps required for exact reproduction."
 }

@@ -1,6 +1,6 @@
 # Public Artifact Gap Report
 
-Date: 2026-06-03
+Date: 2026-06-04
 
 This report checks whether public EvoScientist sources provide the raw artifacts
 needed for exact paper-level reproduction of arXiv:2603.08127.
@@ -34,15 +34,24 @@ needed for exact paper-level reproduction of arXiv:2603.08127.
 
 4. Web search:
 
-   Queries checked on 2026-06-03:
+   Queries checked on 2026-06-03 and refreshed on 2026-06-04:
 
    - `EvoScientist EvoScientist baseline outputs judge outputs github`
    - `EvoScientist arXiv 2603.08127 baseline outputs`
    - `EvoScientist AI-Researcher InternAgent Hypogenic Novix K-Dense outputs`
+   - `EvoScientist baseline outputs Virtual Scientist AI-Researcher InternAgent Hypogenic Novix K-Dense`
+   - `EvoScientist arXiv 2603.08127 GitHub baseline outputs judge outputs`
 
    Search results surfaced the paper, the official repository, summary pages,
    release notes, and baseline project pages, but no public artifact package with
    the missing raw experiment outputs.
+
+5. Baseline availability inventory:
+   `reproduction/paper_baseline_availability.json`
+
+   Public runner or hosted candidates exist for some baselines, but zero raw
+   Table 1 baseline-output packages were found. The inventory distinguishes
+   future rerun entrypoints from paper-level artifacts.
 
 ## Missing For Exact Reproduction
 
@@ -52,7 +61,9 @@ Exact Table 1 automatic idea-generation reproduction still requires:
   `AI Scientist-v2`, `Hypogenic`, `Novix`, and `K-Dense`;
 - 420 pairwise judge input records: 30 queries x 7 baselines x 2 swapped orders;
 - Gemini-3-flash judge outputs for those 420 records;
-- paper-matched full EvoScientist trajectories, not only proposal-only outputs.
+- paper-matched Gemini/Claude/Tavily model and tool setup if exact provider
+  reproduction is required. The current full trajectories are 30/30 successful
+  under a DeepSeek-backed setup.
 
 Exact Table 2 human evaluation reproduction still requires:
 
@@ -70,7 +81,8 @@ Exact Table 3 and Figure 2 reproduction still requires:
 
 The current harness does reproduce a stated replacement comparison:
 
-- EvoScientist proposal-only outputs cover 30/30 recovered paper queries.
+- EvoScientist full tool-enabled DeepSeek trajectories cover 30/30 recovered
+  paper queries.
 - `Direct-DeepSeek` direct-LLM baseline outputs cover 30/30 queries.
 - DeepSeek judge covers 60/60 swapped pairwise records.
 - The replacement-baseline audit is complete.
@@ -81,8 +93,9 @@ Gemini-judge, human-evaluation, full-agent reproduction.
 
 ## Conclusion
 
-As of 2026-06-03, exact paper-level numeric reproduction is not possible from
+As of 2026-06-04, exact paper-level numeric reproduction is not possible from
 public artifacts alone. The public materials support software reproduction,
+30/30 full EvoScientist trajectories under a DeepSeek-backed setup,
 query/protocol reconstruction, and replacement-baseline evaluation, while the
 paper's raw baseline outputs, judge outputs, human labels, code-execution logs,
 and ablation traces remain unavailable.

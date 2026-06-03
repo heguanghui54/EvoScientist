@@ -317,6 +317,17 @@ from EvoScientist's perspective is:
 | Direct-DeepSeek | Feasibility | 60 | 16 | 7 | 37 | 26.67 | 11.67 | 61.67 |
 | Direct-DeepSeek | Relevance | 60 | 25 | 27 | 8 | 41.67 | 45.00 | 13.33 |
 
+The current paper-baseline availability inventory is:
+
+```text
+reproduction/paper_baseline_availability.json
+reproduction/paper_baseline_availability.md
+```
+
+It distinguishes public runner or hosted candidates from the raw 30-query
+baseline outputs required by Table 1. As of the refreshed check on 2026-06-04,
+zero raw Table 1 baseline-output packages were found.
+
 Run an offline end-to-end smoke test of the evaluation pipeline:
 
 ```bash
@@ -400,7 +411,7 @@ To reproduce the paper experiments rather than only the software system:
 - a defined budget, because full idea generation, code execution, pairwise
   judging, and ablations are API-heavy.
 
-As of the latest external check on 2026-06-03, no public baseline-output or
+As of the latest external check on 2026-06-04, no public baseline-output or
 judge-output artifact package was found in the author repository/search results.
 The machine-readable and human-readable gap report is stored in:
 

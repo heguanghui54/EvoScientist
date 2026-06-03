@@ -99,6 +99,13 @@ experiment.
 Full-trajectory coverage no longer needs another rerun; the remaining work is
 paper-level baseline, judge, human-label, ablation, and code-execution evidence.
 
+Baseline availability is now tracked in
+`reproduction/paper_baseline_availability.json` and
+`reproduction/paper_baseline_availability.md`. The refreshed 2026-06-04
+inventory found zero raw Table 1 baseline-output packages, but identified runner
+or hosted candidates for AI-Researcher, InternAgent, AI Scientist-v2, Novix, and
+K-Dense.
+
 Then run the real judge and aggregation steps:
 
 ```bash
