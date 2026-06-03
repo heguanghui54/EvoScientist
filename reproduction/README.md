@@ -197,7 +197,10 @@ EVOSCI_QUERY_EXTRA_ARGS='--force-proposal --stream-logs --output-dir reproductio
 The SSH wrapper passes `EVOSCI_QUERY_TIMEOUT` through to the remote runner.
 `run_idea_generation.py` also clears stale workspace-level `final_report.md` and
 `research_request.md` before each query, then copies newly generated files into
-the query artifact directory.
+the query artifact directory. Each query defaults to `EvoSci --mode run` with a
+deterministic name like `repro-query-02`, so reproduction batches do not silently
+reuse persistent daemon session state. Use `--session-mode daemon` only when
+intentionally debugging the persistent mode.
 
 Build pairwise judge inputs and aggregate judge results:
 

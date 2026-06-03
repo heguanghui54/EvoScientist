@@ -99,6 +99,9 @@ def main() -> None:
     assert "final_report.md" in runner_text, "idea runner does not collect final_report.md"
     assert "--force-proposal" in runner_text, "idea runner cannot force broad queries to proposal output"
     assert "clear_workspace_files" in runner_text, "idea runner does not clear stale collected files"
+    assert "--session-mode" in runner_text, "idea runner cannot control EvoSci session mode"
+    assert '"run"' in runner_text and "--mode" in runner_text, "idea runner does not default to isolated run mode"
+    assert "/final_report.md" in runner_text, "force-proposal prompt does not require final_report.md"
     for needle in [
         "Verified Locally",
         "Not Yet Paper-Level Reproduction",
@@ -107,6 +110,7 @@ def main() -> None:
         "Replacement-baseline judge pipeline is complete",
         "EvoScientist CLI outputs are normalized before judging",
         "Full trajectory audit is executable",
+        "Full trajectory reruns are isolated by default",
         "not a self-evolving system",
         "Ubuntu GPU Status",
     ]:

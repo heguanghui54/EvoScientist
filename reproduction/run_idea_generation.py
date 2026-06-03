@@ -125,6 +125,20 @@ def main() -> None:
             "after EvoSci exits. Defaults to final_report.md and research_request.md."
         ),
     )
+    parser.add_argument(
+        "--session-mode",
+        choices=["run", "daemon"],
+        default="run",
+        help=(
+            "EvoSci workspace mode. The default 'run' isolates each query from "
+            "persistent daemon state, which is preferred for reproducible batches."
+        ),
+    )
+    parser.add_argument(
+        "--run-name-prefix",
+        default="repro-query",
+        help="Name prefix used for isolated EvoSci --mode run sessions.",
+    )
     args = parser.parse_args()
     collect_files = args.collect_file if args.collect_file is not None else DEFAULT_COLLECT_FILES
 
@@ -170,8 +184,10 @@ def main() -> None:
                 "Generate one complete, concrete research proposal for the "
                 "following paper reproduction query. If the query is broad, pick "
                 "one specific high-impact subproblem yourself and state that "
-                "choice. Do not ask the user clarification questions. You may "
-                "use your normal tools and agent workflow, but the final answer "
+                "choice. Do not ask the user clarification questions. Do not end "
+                "with a request for more constraints. You may use your normal "
+                "tools and agent workflow. Before finishing, write the complete "
+                "proposal to /final_report.md. The final answer and the report "
                 "must include: title, problem, hypothesis, method, "
                 "dataset/benchmark, evaluation metrics, baselines, ablations, "
                 "expected failure modes, and a short execution plan.\n\n"
@@ -189,6 +205,10 @@ def main() -> None:
 
         cmd = [
             str(evosci),
+            "--mode",
+            args.session_mode,
+            "--workdir",
+            str(ROOT),
             "-p",
             prompt,
             "--ui",
@@ -196,6 +216,11 @@ def main() -> None:
             "--auto-mode",
             "--no-thinking",
         ]
+        if args.session_mode == "run":
+            cmd[1:1] = [
+                "--name",
+                f"{args.run_name_prefix}-{query['id']:02d}",
+            ]
         stdout_path = qdir / "stdout.txt"
         stderr_path = qdir / "stderr.txt"
         if args.stream_logs:
