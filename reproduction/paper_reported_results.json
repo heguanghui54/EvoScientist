@@ -1,0 +1,166 @@
+{
+  "source": {
+    "paper": "EvoScientist: Towards Multi-Agent Evolving AI Scientists for End-to-End Scientific Discovery",
+    "arxiv": "2603.08127",
+    "html": "https://arxiv.org/html/2603.08127",
+    "notes": [
+      "Values are transcribed from the arXiv HTML tables on 2026-06-03.",
+      "Idea-generation rows report Win/Tie/Lose percentages from the first system named in the comparison.",
+      "For Table 1 and Table 2, the first system is EvoScientist. For Table 3, the first system is the ablation variant."
+    ]
+  },
+  "table1_llm_idea_generation": {
+    "judge": "Gemini-3-flash",
+    "target_system": "EvoScientist",
+    "dimensions": ["Novelty", "Feasibility", "Relevance", "Clarity"],
+    "baselines": {
+      "Virtual Scientist": {
+        "dimensions": {
+          "Novelty": {"win_pct": 96.67, "tie_pct": 3.33, "lose_pct": 0.0},
+          "Feasibility": {"win_pct": 93.33, "tie_pct": 6.67, "lose_pct": 0.0},
+          "Relevance": {"win_pct": 90.0, "tie_pct": 6.67, "lose_pct": 3.33},
+          "Clarity": {"win_pct": 96.67, "tie_pct": 3.33, "lose_pct": 0.0}
+        },
+        "avg_gap": 93.34
+      },
+      "AI-Researcher": {
+        "dimensions": {
+          "Novelty": {"win_pct": 96.67, "tie_pct": 3.33, "lose_pct": 0.0},
+          "Feasibility": {"win_pct": 90.0, "tie_pct": 0.0, "lose_pct": 10.0},
+          "Relevance": {"win_pct": 86.67, "tie_pct": 10.0, "lose_pct": 3.33},
+          "Clarity": {"win_pct": 93.34, "tie_pct": 3.33, "lose_pct": 3.33}
+        },
+        "avg_gap": 87.5
+      },
+      "InternAgent": {
+        "dimensions": {
+          "Novelty": {"win_pct": 73.33, "tie_pct": 16.67, "lose_pct": 10.0},
+          "Feasibility": {"win_pct": 93.33, "tie_pct": 0.0, "lose_pct": 6.67},
+          "Relevance": {"win_pct": 86.67, "tie_pct": 13.33, "lose_pct": 0.0},
+          "Clarity": {"win_pct": 96.67, "tie_pct": 3.33, "lose_pct": 0.0}
+        },
+        "avg_gap": 83.33
+      },
+      "AI Scientist-v2": {
+        "dimensions": {
+          "Novelty": {"win_pct": 63.33, "tie_pct": 16.67, "lose_pct": 20.0},
+          "Feasibility": {"win_pct": 53.33, "tie_pct": 6.67, "lose_pct": 40.0},
+          "Relevance": {"win_pct": 36.67, "tie_pct": 50.0, "lose_pct": 13.33},
+          "Clarity": {"win_pct": 56.67, "tie_pct": 23.33, "lose_pct": 20.0}
+        },
+        "avg_gap": 29.17
+      },
+      "Hypogenic": {
+        "dimensions": {
+          "Novelty": {"win_pct": 93.33, "tie_pct": 6.67, "lose_pct": 0.0},
+          "Feasibility": {"win_pct": 83.34, "tie_pct": 3.33, "lose_pct": 13.33},
+          "Relevance": {"win_pct": 70.0, "tie_pct": 23.33, "lose_pct": 6.67},
+          "Clarity": {"win_pct": 96.67, "tie_pct": 3.33, "lose_pct": 0.0}
+        },
+        "avg_gap": 80.83
+      },
+      "Novix": {
+        "dimensions": {
+          "Novelty": {"win_pct": 90.0, "tie_pct": 6.67, "lose_pct": 3.33},
+          "Feasibility": {"win_pct": 53.33, "tie_pct": 10.0, "lose_pct": 36.67},
+          "Relevance": {"win_pct": 46.67, "tie_pct": 36.66, "lose_pct": 16.67},
+          "Clarity": {"win_pct": 70.67, "tie_pct": 10.0, "lose_pct": 20.0}
+        },
+        "avg_gap": 46.0
+      },
+      "K-Dense": {
+        "dimensions": {
+          "Novelty": {"win_pct": 86.67, "tie_pct": 3.33, "lose_pct": 10.0},
+          "Feasibility": {"win_pct": 56.67, "tie_pct": 13.33, "lose_pct": 30.0},
+          "Relevance": {"win_pct": 43.33, "tie_pct": 36.67, "lose_pct": 20.0},
+          "Clarity": {"win_pct": 76.67, "tie_pct": 13.33, "lose_pct": 10.0}
+        },
+        "avg_gap": 54.5
+      }
+    }
+  },
+  "table2_human_idea_generation": {
+    "judge": "3 PhD-level human annotators",
+    "target_system": "EvoScientist",
+    "dimensions": ["Novelty", "Feasibility", "Relevance", "Clarity"],
+    "baselines": {
+      "InternAgent": {
+        "dimensions": {
+          "Novelty": {"win_pct": 66.67, "tie_pct": 23.33, "lose_pct": 10.0},
+          "Feasibility": {"win_pct": 96.67, "tie_pct": 3.33, "lose_pct": 0.0},
+          "Relevance": {"win_pct": 90.0, "tie_pct": 0.0, "lose_pct": 10.0},
+          "Clarity": {"win_pct": 93.33, "tie_pct": 6.67, "lose_pct": 0.0}
+        },
+        "avg_gap": 84.17
+      },
+      "AI Scientist-v2": {
+        "dimensions": {
+          "Novelty": {"win_pct": 73.33, "tie_pct": 10.0, "lose_pct": 16.67},
+          "Feasibility": {"win_pct": 50.0, "tie_pct": 16.67, "lose_pct": 33.33},
+          "Relevance": {"win_pct": 43.33, "tie_pct": 50.0, "lose_pct": 6.67},
+          "Clarity": {"win_pct": 53.33, "tie_pct": 20.0, "lose_pct": 26.67}
+        },
+        "avg_gap": 34.16
+      },
+      "Novix": {
+        "dimensions": {
+          "Novelty": {"win_pct": 93.33, "tie_pct": 0.0, "lose_pct": 6.67},
+          "Feasibility": {"win_pct": 56.67, "tie_pct": 6.66, "lose_pct": 36.67},
+          "Relevance": {"win_pct": 36.67, "tie_pct": 60.0, "lose_pct": 3.33},
+          "Clarity": {"win_pct": 73.33, "tie_pct": 10.0, "lose_pct": 16.67}
+        },
+        "avg_gap": 49.17
+      },
+      "K-Dense": {
+        "dimensions": {
+          "Novelty": {"win_pct": 96.67, "tie_pct": 3.33, "lose_pct": 0.0},
+          "Feasibility": {"win_pct": 53.33, "tie_pct": 26.67, "lose_pct": 20.0},
+          "Relevance": {"win_pct": 40.0, "tie_pct": 43.33, "lose_pct": 16.67},
+          "Clarity": {"win_pct": 53.34, "tie_pct": 43.33, "lose_pct": 3.33}
+        },
+        "avg_gap": 50.84
+      }
+    }
+  },
+  "table3_ablation_idea_generation": {
+    "judge": "Gemini-3-flash",
+    "target_system_note": "Rows are from the ablation variant perspective, not EvoScientist perspective.",
+    "dimensions": ["Novelty", "Feasibility", "Relevance", "Clarity"],
+    "baselines": {
+      "-IDE vs EvoScientist": {
+        "dimensions": {
+          "Novelty": {"win_pct": 16.67, "tie_pct": 16.67, "lose_pct": 66.67},
+          "Feasibility": {"win_pct": 20.0, "tie_pct": 30.0, "lose_pct": 50.0},
+          "Relevance": {"win_pct": 23.33, "tie_pct": 50.0, "lose_pct": 26.67},
+          "Clarity": {"win_pct": 23.33, "tie_pct": 46.67, "lose_pct": 30.0}
+        },
+        "avg_gap": -22.5
+      },
+      "-IVE vs EvoScientist": {
+        "dimensions": {
+          "Novelty": {"win_pct": 30.0, "tie_pct": 26.67, "lose_pct": 43.33},
+          "Feasibility": {"win_pct": 10.0, "tie_pct": 26.67, "lose_pct": 63.33},
+          "Relevance": {"win_pct": 30.0, "tie_pct": 46.67, "lose_pct": 23.33},
+          "Clarity": {"win_pct": 16.67, "tie_pct": 46.67, "lose_pct": 36.67}
+        },
+        "avg_gap": -20.0
+      },
+      "-all vs EvoScientist": {
+        "dimensions": {
+          "Novelty": {"win_pct": 10.0, "tie_pct": 10.0, "lose_pct": 80.0},
+          "Feasibility": {"win_pct": 3.33, "tie_pct": 13.33, "lose_pct": 83.33},
+          "Relevance": {"win_pct": 16.67, "tie_pct": 46.67, "lose_pct": 36.67},
+          "Clarity": {"win_pct": 20.0, "tie_pct": 46.67, "lose_pct": 33.33}
+        },
+        "avg_gap": -45.83
+      }
+    }
+  },
+  "figure2_code_execution": {
+    "metric": "mean execution success rate across four experiment stages",
+    "before_evolution_pct": 34.39,
+    "after_evolution_pct": 44.56,
+    "stage3_before_evolution_pct": 20.33,
+    "stage3_after_evolution_pct": 21.57
+  }
+}

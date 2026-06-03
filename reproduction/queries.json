@@ -1,0 +1,156 @@
+{
+  "source": "EvoScientist paper, arXiv:2603.08127, Figure 3 / Table 4",
+  "notes": "These 30 query strings are used verbatim as user goals in the paper's idea-generation evaluation.",
+  "queries": [
+    {
+      "id": 1,
+      "topic": "Machine translation",
+      "goal": "Generate a research proposal on low-resource machine translation."
+    },
+    {
+      "id": 2,
+      "topic": "Software engineering",
+      "goal": "Help me generate a research proposal on AI for software engineering."
+    },
+    {
+      "id": 3,
+      "topic": "LLM evaluation",
+      "goal": "Generate a research proposal on how to address the accuracy issues of automated evaluation for Large Language Models."
+    },
+    {
+      "id": 4,
+      "topic": "Healthcare agents",
+      "goal": "Help me generate a research proposal on AI agents in healthcare."
+    },
+    {
+      "id": 5,
+      "topic": "Literature review automation",
+      "goal": "Generate a research proposal on automated literature review generation."
+    },
+    {
+      "id": 6,
+      "topic": "Speech recognition",
+      "goal": "Generate a research proposal on low-resource speech recognition."
+    },
+    {
+      "id": 7,
+      "topic": "Model efficiency",
+      "goal": "Generate a research proposal on how to break the performance ceiling of small models."
+    },
+    {
+      "id": 8,
+      "topic": "AI agents",
+      "goal": "Generate a research proposal on complex reasoning for AI agents."
+    },
+    {
+      "id": 9,
+      "topic": "Model deployment",
+      "goal": "Generate a research proposal on solving quantization challenges for LLM deployment on edge devices."
+    },
+    {
+      "id": 10,
+      "topic": "Text-to-SQL",
+      "goal": "Help me generate a research proposal on Text-to-SQL."
+    },
+    {
+      "id": 11,
+      "topic": "LLM capabilities",
+      "goal": "Generate a research proposal on the decoupling of Large Language Model capabilities."
+    },
+    {
+      "id": 12,
+      "topic": "Factual consistency",
+      "goal": "Generate a research proposal on how to resolve factual consistency issues in Large Language Models."
+    },
+    {
+      "id": 13,
+      "topic": "Data synthesis",
+      "goal": "Generate a research proposal on data synthesis for code LLMs."
+    },
+    {
+      "id": 14,
+      "topic": "Inference efficiency",
+      "goal": "Generate a research proposal on solving inference latency issues in Large Language Models."
+    },
+    {
+      "id": 15,
+      "topic": "Machine translation",
+      "goal": "Generate a research proposal on debiasing in machine translation."
+    },
+    {
+      "id": 16,
+      "topic": "Knowledge injection",
+      "goal": "Generate a research proposal on addressing the challenges of knowledge injection in domain-specific Large Language Models."
+    },
+    {
+      "id": 17,
+      "topic": "Information extraction",
+      "goal": "Generate a research proposal on automated information extraction."
+    },
+    {
+      "id": 18,
+      "topic": "UX evaluation",
+      "goal": "Generate a research proposal on user experience evaluation for Large Language Models."
+    },
+    {
+      "id": 19,
+      "topic": "Evaluation leaderboards",
+      "goal": "Generate a research proposal on how to construct efficient leaderboards for LLM evaluation."
+    },
+    {
+      "id": 20,
+      "topic": "Text generation",
+      "goal": "Generate a research proposal on the evaluation of diversity in text generation."
+    },
+    {
+      "id": 21,
+      "topic": "Content detection",
+      "goal": "Generate a research proposal on how to address false positives in AI-generated content detection."
+    },
+    {
+      "id": 22,
+      "topic": "Code LLM security",
+      "goal": "Generate a research proposal on the security of code LLMs."
+    },
+    {
+      "id": 23,
+      "topic": "Code LLM evaluation",
+      "goal": "Generate a research proposal on how to build a deep evaluation framework for code LLMs."
+    },
+    {
+      "id": 24,
+      "topic": "RAG",
+      "goal": "Generate a research proposal on solving multi-hop reasoning challenges in Retrieval-Augmented Generation (RAG)."
+    },
+    {
+      "id": 25,
+      "topic": "Multi-source reasoning",
+      "goal": "Generate a research proposal on complex reasoning with multi-source information."
+    },
+    {
+      "id": 26,
+      "topic": "Data filtering",
+      "goal": "Generate a research proposal on solving data filtering challenges for domain-specific models."
+    },
+    {
+      "id": 27,
+      "topic": "Long-context understanding",
+      "goal": "Generate a research proposal on how to enhance the long-context understanding of Large Language Models."
+    },
+    {
+      "id": 28,
+      "topic": "Alignment",
+      "goal": "Generate a research proposal on cross-cultural alignment for Large Language Models."
+    },
+    {
+      "id": 29,
+      "topic": "Alignment",
+      "goal": "Generate a research proposal on value alignment for AI agents."
+    },
+    {
+      "id": 30,
+      "topic": "Audio foundation models",
+      "goal": "Help me generate a research proposal on general-purpose audio foundation models."
+    }
+  ]
+}
