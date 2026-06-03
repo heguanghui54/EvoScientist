@@ -35,7 +35,8 @@
         "aggregate.json": {
           "required_fields": ["baselines"]
         }
-      }
+      },
+      "aggregator": "reproduction/aggregate_ablation_results.py"
     },
     "code_execution": {
       "root": "reproduction/artifacts/code_execution",

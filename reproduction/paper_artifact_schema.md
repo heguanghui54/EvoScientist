@@ -41,6 +41,17 @@ Each variant needs:
 - `judge_inputs.jsonl`
 - `judge_outputs.jsonl`
 - `aggregate.json`
+- Aggregator: `reproduction/aggregate_ablation_results.py`.
+
+Example:
+
+```bash
+.venv/bin/python reproduction/aggregate_ablation_results.py \
+  --artifacts-root reproduction/artifacts/ablations \
+  --combined-json reproduction/artifacts/ablations/combined_aggregate.json \
+  --combined-csv reproduction/artifacts/ablations/combined_aggregate.csv \
+  --strict
+```
 
 ## Figure 2 Code Execution
 

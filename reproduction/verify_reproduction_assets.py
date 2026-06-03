@@ -54,6 +54,7 @@ def main() -> None:
         "run_offline_smoke.py",
         "run_llm_judge.py",
         "aggregate_human_labels.py",
+        "aggregate_ablation_results.py",
         "aggregate_code_execution.py",
         "compare_reproduction_to_paper.py",
         "audit_reproduction_artifacts.py",
@@ -118,6 +119,7 @@ def main() -> None:
     assert "human_evaluation" in paper_artifact_schema["schemas"]
     assert paper_artifact_schema["schemas"]["human_evaluation"]["aggregator"] == "reproduction/aggregate_human_labels.py"
     assert "ablation" in paper_artifact_schema["schemas"]
+    assert paper_artifact_schema["schemas"]["ablation"]["aggregator"] == "reproduction/aggregate_ablation_results.py"
     assert "code_execution" in paper_artifact_schema["schemas"]
     assert paper_artifact_schema["schemas"]["code_execution"]["aggregator"] == "reproduction/aggregate_code_execution.py"
     paper_artifact_schema_md = paper_artifact_schema_md_path.read_text(encoding="utf-8")
@@ -208,6 +210,7 @@ def main() -> None:
         "Replacement baseline protocol is pinned",
         "Paper-level non-Table-1 artifact schemas are pinned",
         "Human-label aggregation is executable",
+        "Ablation aggregation is executable",
         "Code-execution aggregation is executable",
         "EvoScientist CLI outputs are normalized before judging",
         "Full trajectory audit is executable",
@@ -441,6 +444,79 @@ def main() -> None:
         )
         human_summary = json.loads(human_aggregate.read_text(encoding="utf-8"))
         assert human_summary["baselines"]["BaselineA"]["avg_gap"] == 100.0
+
+        ablations_root = tmp_path / "ablations"
+        for variant in ["-IDE", "-IVE", "-all"]:
+            variant_root = ablations_root / variant
+            variant_root.mkdir(parents=True)
+            (variant_root / "judge_outputs.jsonl").write_text(
+                "\n".join(
+                    [
+                        json.dumps(
+                            {
+                                "comparison_id": f"q01__{variant}__vs__EvoScientist",
+                                "query_id": 1,
+                                "assistant_1_system": variant,
+                                "assistant_2_system": "EvoScientist",
+                                "assistant_1": {
+                                    "Clarity": 6,
+                                    "Novelty": 6,
+                                    "Feasibility": 6,
+                                    "Relevance": 6,
+                                },
+                                "assistant_2": {
+                                    "Clarity": 8,
+                                    "Novelty": 8,
+                                    "Feasibility": 8,
+                                    "Relevance": 8,
+                                },
+                            }
+                        ),
+                        json.dumps(
+                            {
+                                "comparison_id": f"q01__EvoScientist__vs__{variant}",
+                                "query_id": 1,
+                                "assistant_1_system": "EvoScientist",
+                                "assistant_2_system": variant,
+                                "assistant_1": {
+                                    "Clarity": 8,
+                                    "Novelty": 8,
+                                    "Feasibility": 8,
+                                    "Relevance": 8,
+                                },
+                                "assistant_2": {
+                                    "Clarity": 6,
+                                    "Novelty": 6,
+                                    "Feasibility": 6,
+                                    "Relevance": 6,
+                                },
+                            }
+                        ),
+                    ]
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+        ablation_combined = tmp_path / "ablation_combined.json"
+        subprocess.run(
+            [
+                sys.executable,
+                str(ROOT / "aggregate_ablation_results.py"),
+                "--artifacts-root",
+                str(ablations_root),
+                "--combined-json",
+                str(ablation_combined),
+                "--combined-csv",
+                str(tmp_path / "ablation_combined.csv"),
+                "--strict",
+            ],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+        ablation_summary = json.loads((ablations_root / "-IDE" / "aggregate.json").read_text(encoding="utf-8"))
+        assert ablation_summary["baselines"]["-IDE vs EvoScientist"]["avg_gap"] == -100.0
+        assert set(json.loads(ablation_combined.read_text(encoding="utf-8"))["variants"]) == {"-IDE", "-IVE", "-all"}
 
         execution_logs = tmp_path / "execution_logs.jsonl"
         execution_logs.write_text(
