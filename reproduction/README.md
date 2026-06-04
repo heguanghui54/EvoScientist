@@ -343,6 +343,18 @@ It defines the shared 30-query output layout, 60 swapped judge records per
 baseline, and the acceptance checks for extending the Direct-DeepSeek comparison
 to available baseline runners. External baseline exports can be normalized with
 `reproduction/import_baseline_outputs.py` before judging.
+
+The executable seven-baseline rerun queue is pinned in:
+
+```text
+reproduction/baseline_rerun_manifest.json
+reproduction/baseline_rerun_manifest.md
+```
+
+It records the setup, import, replacement DeepSeek judge, aggregate, and audit
+commands for Virtual Scientist, AI-Researcher, InternAgent, AI Scientist-v2,
+Hypogenic, Novix, and K-Dense. It also records the combined Table 1
+`gemini-3-flash` judge command path to use after all seven outputs are imported.
 The Virtual Scientist/VirSci public-platform fit check is recorded in
 `reproduction/virtual_scientist_baseline_probe.json` and
 `reproduction/virtual_scientist_baseline_probe.md`; it identifies a runnable

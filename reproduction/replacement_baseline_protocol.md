@@ -15,8 +15,11 @@ Gemini-3-flash judge records are imported.
 - Replacement output layout:
   `reproduction/artifacts/idea_outputs/{system}/query_{id:02d}/answer.txt`.
 - Current completed replacement baseline: `Direct-DeepSeek`.
-- Candidate rerun baselines: AI-Researcher, InternAgent, AI Scientist-v2, Novix,
-  and K-Dense.
+- Candidate rerun baselines: Virtual Scientist, AI-Researcher, InternAgent,
+  AI Scientist-v2, Hypogenic, Novix, and K-Dense.
+- Unified rerun queue:
+  `reproduction/baseline_rerun_manifest.json` and
+  `reproduction/baseline_rerun_manifest.md`.
 
 ## Acceptance Checks
 

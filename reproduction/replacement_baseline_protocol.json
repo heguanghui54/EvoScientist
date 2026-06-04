@@ -18,6 +18,7 @@
     ],
     "minimum_answer_bytes": 1000
   },
+  "baseline_rerun_manifest": "reproduction/baseline_rerun_manifest.json",
   "import_tool": {
     "script": "reproduction/import_baseline_outputs.py",
     "supported_sources": [
@@ -47,11 +48,18 @@
       "paper_exact": false
     },
     {
+      "name": "Virtual Scientist",
+      "status": "adapter_required_candidate",
+      "source": "https://github.com/open-sciencelab/Virtual-Scientists",
+      "paper_exact": false,
+      "next_action": "Install the public VirSci platform, provision the AMiner-derived data and Ollama models, adapt each recovered query into the platform workflow, then normalize generated idea fields into the shared layout."
+    },
+    {
       "name": "AI-Researcher",
-      "status": "runner_candidate",
+      "status": "adapter_required_candidate",
       "source": "https://github.com/hkuds/ai-researcher",
       "paper_exact": false,
-      "next_action": "Install in an isolated checkout, feed the 30 verbatim queries, normalize outputs into the shared layout, then judge against EvoScientist."
+      "next_action": "Install in an isolated checkout, map each recovered query into its benchmark-instance workflow, normalize outputs into the shared layout, then judge against EvoScientist."
     },
     {
       "name": "InternAgent",
@@ -68,8 +76,15 @@
       "next_action": "Install in an isolated checkout, feed the 30 verbatim queries, normalize outputs into the shared layout, then judge against EvoScientist."
     },
     {
+      "name": "Hypogenic",
+      "status": "hosted_adapter_candidate",
+      "source": "https://hypogenic.ai/chat",
+      "paper_exact": false,
+      "next_action": "Use hosted access if available, submit one recovered query per fresh session, capture final answers and session metadata, then normalize exports into the shared layout."
+    },
+    {
       "name": "Novix",
-      "status": "hosted_candidate",
+      "status": "hosted_adapter_candidate",
       "source": "https://novix.science/chat",
       "paper_exact": false,
       "next_action": "Use only if service access and a stable export path are available; normalize exported answers into the shared layout."

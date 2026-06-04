@@ -121,6 +121,7 @@ def table1_actions(components: dict[str, Any], protocol: dict[str, Any]) -> list
             actions[-1]["replacement_run_template"] = [
                 ".venv/bin/python reproduction/build_ai_scientist_v2_ideation_runbook.py",
                 "bash /path/to/EvoScientist/reproduction/ai_scientist_v2_ideation_runbook/run_ai_scientist_v2_ideation.sh",
+                ".venv/bin/python reproduction/convert_ai_scientist_v2_ideation_outputs.py",
                 ".venv/bin/python reproduction/import_baseline_outputs.py --system-name 'AI Scientist-v2' --source reproduction/ai_scientist_v2_ideation_import_template.jsonl --source-format jsonl --output-root reproduction/artifacts/idea_outputs --strict",
             ]
         if baseline == "Hypogenic":
@@ -265,6 +266,7 @@ def build_plan(args: argparse.Namespace) -> dict[str, Any]:
         "public_artifact_gap_conclusion": gap_report.get("conclusion", ""),
         "baseline_readiness_counts": readiness.get("counts", {}),
         "baseline_readiness_matrix": "reproduction/baseline_readiness_matrix.json",
+        "baseline_rerun_manifest": "reproduction/baseline_rerun_manifest.json",
         "final_gate": ".venv/bin/python reproduction/audit_paper_level_completion.py --strict",
     }
 
@@ -312,6 +314,7 @@ def render_markdown(plan: dict[str, Any]) -> str:
             "## Baseline Readiness",
             "",
             "Source: `reproduction/baseline_readiness_matrix.json`",
+            "Rerun queue: `reproduction/baseline_rerun_manifest.json`",
             "",
         ]
     )

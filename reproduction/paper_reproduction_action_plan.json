@@ -86,6 +86,7 @@
       "replacement_run_template": [
         ".venv/bin/python reproduction/build_ai_scientist_v2_ideation_runbook.py",
         "bash /path/to/EvoScientist/reproduction/ai_scientist_v2_ideation_runbook/run_ai_scientist_v2_ideation.sh",
+        ".venv/bin/python reproduction/convert_ai_scientist_v2_ideation_outputs.py",
         ".venv/bin/python reproduction/import_baseline_outputs.py --system-name 'AI Scientist-v2' --source reproduction/ai_scientist_v2_ideation_import_template.jsonl --source-format jsonl --output-root reproduction/artifacts/idea_outputs --strict"
       ]
     },
@@ -227,5 +228,6 @@
     "not_reproducible_from_public_artifacts": 0
   },
   "baseline_readiness_matrix": "reproduction/baseline_readiness_matrix.json",
+  "baseline_rerun_manifest": "reproduction/baseline_rerun_manifest.json",
   "final_gate": ".venv/bin/python reproduction/audit_paper_level_completion.py --strict"
 }

@@ -60,6 +60,7 @@ def main() -> None:
         "build_internagent_qa_runbook.py",
         "probe_ai_scientist_v2_baseline.py",
         "build_ai_scientist_v2_ideation_runbook.py",
+        "convert_ai_scientist_v2_ideation_outputs.py",
         "probe_hypogenic_baseline.py",
         "probe_novix_baseline.py",
         "probe_k_dense_baseline.py",
@@ -71,6 +72,7 @@ def main() -> None:
         "audit_reproduction_artifacts.py",
         "verify_replacement_baseline_protocol.py",
         "verify_paper_artifact_schema.py",
+        "build_baseline_rerun_manifest.py",
     ]:
         assert (ROOT / script).is_file(), f"missing script: {script}"
     assert (ROOT / "judge_prompt_template.md").is_file(), "missing judge prompt template"
@@ -88,6 +90,8 @@ def main() -> None:
     full_status_md_path = ROOT / "full_trajectory_status.md"
     baseline_readiness_json_path = ROOT / "baseline_readiness_matrix.json"
     baseline_readiness_md_path = ROOT / "baseline_readiness_matrix.md"
+    baseline_rerun_manifest_json_path = ROOT / "baseline_rerun_manifest.json"
+    baseline_rerun_manifest_md_path = ROOT / "baseline_rerun_manifest.md"
     assert gap_json_path.is_file(), "missing public artifact gap report JSON"
     assert gap_md_path.is_file(), "missing public artifact gap report markdown"
     assert baseline_inventory_json_path.is_file(), "missing baseline availability inventory JSON"
@@ -100,6 +104,8 @@ def main() -> None:
     assert full_status_md_path.is_file(), "missing full trajectory status markdown"
     assert baseline_readiness_json_path.is_file(), "missing baseline readiness matrix JSON"
     assert baseline_readiness_md_path.is_file(), "missing baseline readiness matrix markdown"
+    assert baseline_rerun_manifest_json_path.is_file(), "missing baseline rerun manifest JSON"
+    assert baseline_rerun_manifest_md_path.is_file(), "missing baseline rerun manifest markdown"
     gap_report = json.loads(gap_json_path.read_text(encoding="utf-8"))
     assert gap_report["checked_sources"], "gap report has no checked sources"
     assert (
@@ -198,6 +204,11 @@ def main() -> None:
     assert "AI Scientist-v2" in ai_scientist_runbook["import_command"]
     assert ai_scientist_runbook_sh_path.read_text(encoding="utf-8").count("perform_ideation_temp_free.py") == 30
     assert (ai_scientist_runbook_root / "topics" / "query_30.md").is_file()
+    ai_scientist_converter_text = (
+        ROOT / "convert_ai_scientist_v2_ideation_outputs.py"
+    ).read_text(encoding="utf-8")
+    assert "ai_scientist_v2_ideation_import_template.jsonl" in ai_scientist_converter_text
+    assert "query_*.json" in ai_scientist_converter_text
     virtual_scientist_probe_json_path = ROOT / "virtual_scientist_baseline_probe.json"
     virtual_scientist_probe_md_path = ROOT / "virtual_scientist_baseline_probe.md"
     assert virtual_scientist_probe_json_path.is_file(), "missing Virtual Scientist probe JSON"
@@ -284,13 +295,54 @@ def main() -> None:
     assert "Baseline Readiness Matrix" in baseline_readiness_md
     assert "paper_exact_available: 0" in baseline_readiness_md
     assert "replacement_direct_or_near_direct: 3" in baseline_readiness_md
+    baseline_rerun_manifest = json.loads(
+        baseline_rerun_manifest_json_path.read_text(encoding="utf-8")
+    )
+    assert baseline_rerun_manifest["baseline_count"] == 7
+    rerun_entries = {
+        entry["baseline"]: entry for entry in baseline_rerun_manifest["entries"]
+    }
+    assert set(rerun_entries) == set(baseline_names)
+    for name, row in readiness_rows.items():
+        entry = rerun_entries[name]
+        assert entry["readiness_class"] == row["readiness_class"]
+        assert entry["paper_exact"] is False
+        assert bool(entry["prep_commands"])
+        assert "import_baseline_outputs.py" in entry["import_command"]
+        assert len(entry["judge_commands"]) == 4
+        assert entry["acceptance_gate"] == entry["judge_commands"][-1]
+        assert "audit_reproduction_artifacts.py" in entry["acceptance_gate"]
+    for name in ["Virtual Scientist", "AI-Researcher", "Hypogenic", "Novix"]:
+        assert rerun_entries[name]["requires_adapter"] is True
+    for name in ["InternAgent", "AI Scientist-v2", "K-Dense"]:
+        assert rerun_entries[name]["requires_adapter"] is False
+    combined_judge = "\n".join(baseline_rerun_manifest["combined_paper_exact_judge_commands"])
+    assert "--baseline 'Virtual Scientist'" in combined_judge
+    assert "--baseline K-Dense" in combined_judge
+    assert "--model gemini-3-flash" in combined_judge
+    assert baseline_rerun_manifest["final_gate"].endswith(
+        "audit_paper_level_completion.py --strict"
+    )
+    baseline_rerun_manifest_md = baseline_rerun_manifest_md_path.read_text(encoding="utf-8")
+    assert "Baseline Rerun Manifest" in baseline_rerun_manifest_md
+    assert "Combined Paper-Exact Judge Commands" in baseline_rerun_manifest_md
+    assert "Virtual Scientist" in baseline_rerun_manifest_md
+    assert "Hypogenic" in baseline_rerun_manifest_md
+    assert "convert_ai_scientist_v2_ideation_outputs.py" in baseline_rerun_manifest_md
     replacement_protocol = json.loads(replacement_protocol_json_path.read_text(encoding="utf-8"))
     assert replacement_protocol["import_tool"]["script"] == "reproduction/import_baseline_outputs.py"
     assert replacement_protocol["judge_protocol"]["records_per_baseline"] == 60
+    assert replacement_protocol["baseline_rerun_manifest"] == "reproduction/baseline_rerun_manifest.json"
     assert replacement_protocol["candidate_baselines"][0]["name"] == "Direct-DeepSeek"
     assert replacement_protocol["candidate_baselines"][0]["status"] == "completed_replacement_baseline"
+    protocol_baseline_names = [item["name"] for item in replacement_protocol["candidate_baselines"]]
+    for name in baseline_names:
+        assert name in protocol_baseline_names, f"missing protocol baseline: {name}"
     replacement_protocol_md = replacement_protocol_md_path.read_text(encoding="utf-8")
     assert "exact Table 1 reproduction" in replacement_protocol_md
+    assert "Virtual Scientist" in replacement_protocol_md
+    assert "Hypogenic" in replacement_protocol_md
+    assert "baseline_rerun_manifest" in replacement_protocol_md
     paper_artifact_schema = json.loads(paper_artifact_schema_json_path.read_text(encoding="utf-8"))
     assert "human_evaluation" in paper_artifact_schema["schemas"]
     assert paper_artifact_schema["schemas"]["human_evaluation"]["aggregator"] == "reproduction/aggregate_human_labels.py"
@@ -309,6 +361,7 @@ def main() -> None:
     assert action_plan["action_count"] >= 4
     assert "final_gate" in action_plan
     assert action_plan["baseline_readiness_matrix"] == "reproduction/baseline_readiness_matrix.json"
+    assert action_plan["baseline_rerun_manifest"] == "reproduction/baseline_rerun_manifest.json"
     assert action_plan["baseline_readiness_counts"]["paper_exact_available"] == 0
     action_plan_md = action_plan_md_path.read_text(encoding="utf-8")
     assert "Paper Reproduction Action Plan" in action_plan_md
@@ -319,10 +372,12 @@ def main() -> None:
     assert "virtual_scientist_baseline_probe.json" in action_plan_md
     assert "ai_scientist_v2_baseline_probe.json" in action_plan_md
     assert "build_ai_scientist_v2_ideation_runbook.py" in action_plan_md
+    assert "convert_ai_scientist_v2_ideation_outputs.py" in action_plan_md
     assert "hypogenic_baseline_probe.json" in action_plan_md
     assert "novix_baseline_probe.json" in action_plan_md
     assert "k_dense_baseline_probe.json" in action_plan_md
     assert "Baseline Readiness" in action_plan_md
+    assert "baseline_rerun_manifest.json" in action_plan_md
     full_status = json.loads(full_status_json_path.read_text(encoding="utf-8"))
     expected_success_ids = list(range(1, 31))
     expected_incomplete_ids = []
@@ -417,6 +472,7 @@ def main() -> None:
         "Novix baseline probe is recorded",
         "K-Dense baseline probe is recorded",
         "Baseline readiness matrix is recorded",
+        "Baseline rerun manifest is recorded",
         "Paper-level non-Table-1 artifact schemas are pinned",
         "Human-label aggregation is executable",
         "Ablation aggregation is executable",

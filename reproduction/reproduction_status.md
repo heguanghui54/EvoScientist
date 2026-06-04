@@ -40,6 +40,7 @@ and paper-level experimental reproduction.
 | Novix baseline probe is recorded | `novix_baseline_probe.json` records a hosted UI/account adapter path and its paper-exact limitations | Verified |
 | K-Dense baseline probe is recorded | `k_dense_baseline_probe.json` records a hosted plus BYOK local Web/API adapter path and its paper-exact limitations | Verified |
 | Baseline readiness matrix is recorded | `baseline_readiness_matrix.json` aggregates all seven Table 1 baseline probes into paper-exact, near-direct replacement, and adapter-required classes | Verified |
+| Baseline rerun manifest is recorded | `baseline_rerun_manifest.json` gives the seven-baseline rerun/import/judge/audit command queue, including the combined paper-exact `gemini-3-flash` judge path | Verified |
 | Paper-level non-Table-1 artifact schemas are pinned | `paper_artifact_schema.json` and `verify_paper_artifact_schema.py` define Table 2 human-label, Table 3 ablation, and Figure 2 code-execution evidence schemas | Verified |
 | Human-label aggregation is executable | `aggregate_human_labels.py` converts Table 2 human labels into Win/Tie/Lose aggregate JSON/CSV | Verified |
 | Ablation aggregation is executable | `aggregate_ablation_results.py` converts Table 3 variant judge outputs into variant-perspective Win/Tie/Lose aggregate JSON/CSV | Verified |
@@ -119,8 +120,13 @@ Baseline availability is now tracked in
 `reproduction/paper_baseline_availability.json` and
 `reproduction/paper_baseline_availability.md`. The refreshed 2026-06-04
 inventory found zero raw Table 1 baseline-output packages, but identified runner
-or hosted candidates for AI-Researcher, InternAgent, AI Scientist-v2, Novix, and
-K-Dense.
+or hosted adapter candidates for all seven Table 1 baselines.
+
+The seven-baseline rerun queue is tracked in
+`reproduction/baseline_rerun_manifest.json` and
+`reproduction/baseline_rerun_manifest.md`. It records the per-baseline setup,
+import, DeepSeek replacement-judge, and audit commands, plus the combined
+paper-exact `gemini-3-flash` judge commands for Table 1.
 
 Then run the real judge and aggregation steps:
 
