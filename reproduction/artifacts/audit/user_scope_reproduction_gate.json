@@ -41,7 +41,7 @@
     "reproducibility_bundle": {
       "complete": true,
       "evidence": "zip bundle, manifest, checksums, and line-count checks exist",
-      "zip_entries": 38
+      "zip_entries": 40
     }
   },
   "incomplete_checks": []
