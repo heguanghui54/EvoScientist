@@ -1,0 +1,130 @@
+Research Proposal: Compositional Grounding for Multi-Step Reasoning in
+  Tool-Augmented Language Agents## ProblemLarge language models (LLMs) achieve
+  strong performance on isolated reasoning benchmarks (e.g., GSM8K, MATH) but
+  degrade sharply when deployed as agents that must interleave reasoning with
+     external tool calls. The core challenge is not reasoning capacity but
+ compositional grounding: the agent must decide when to rely on a tool, how to
+ format its output for the tool, and how to integrate the tool's response back
+  into its reasoning trace — all while maintaining coherence across a growing
+    action history. Current agent frameworks handle this with brittle prompt
+  engineering (ReAct, Reflexion) that breaks under distribution shift, and no
+  existing benchmark jointly measures the reasoning–tool–memory triplet under
+                      controlled compositional variations.
+
+HypothesisAgents fail on multi-step reasoning-with-tools not because the
+underlying LLM lacks reasoning ability, but because the compositional interface
+between reasoning and tool-use is undertrained. Specifically, we hypothesize
+that a compositional-granularity taxonomy — decomposing tasks by (a) number of
+tool-call decision points, (b) depth of tool-output integration (surface-passing
+vs. structural reformatting), and (c) recency-dependency of prior tool outputs —
+predicts agent failure modes better than aggregate accuracy, and that a
+structured training curriculum built on this taxonomy can close the gap without
+architectural changes.
+
+MethodWe propose a three-phase methodology:
+
+Phase1 — Taxonomy and Benchmark Construction. Define a3 ×3 ×3 design space:
+
+
+ Dimension               Levels
+ Decision points (D)     1,3,5 tool-call junctures
+ Integration depth (I)   Surface (pass tool output verbatim into next prompt),
+                         Reformatted (extract key fields and restructure),
+                         Aggregated (merge multiple tool outputs before
+                         reasoning)
+ Recency dependency (R)  Independent (each step depends only on initial state),
+                         Chain-1 (depends on immediately prior tool output),
+                         Chain-3 (depends on outputs from three steps back)
+
+
+From this space we sample9 task families (one per D-I-R cell) covering
+calculator, retrieval, code-execution, and database-query tools, creating1800
+instances (200 per cell,20 held-out per cell for validation).
+
+Phase2 — Failure-Mode Profiling. Run a representative set of current agent
+frameworks (ReAct, Reflexion, Plan-and-Solve, Tree-of-Thought with tool calls)
+across all1800 instances using GPT-4o and Llama-3-70B. Record per-instance:
+final accuracy, step-wise tool-call accuracy, and integration fidelity (whether
+the agent correctly used the tool output in the subsequent reasoning step). Map
+failures onto the D-I-R cell structure.
+
+Phase3 — Targeted Curriculum Training. Construct a training curriculum ordered
+by the failure-rate gradient from Phase2 (easiest cell first). Fine-tune a base
+Llama-3-8B on this curriculum with a loss that reweights steps where integration
+fidelity is low. Evaluate held-out instances from each cell and compare to
+uniform-data fine-tuning and prompt-based baselines.
+
+Dataset / BenchmarkNo existing benchmark covers the D-I-R compositional design
+space. We build CompoTool-1800:
+
+ • Tool types: calculator (Python eval-like), knowledge retrieval (Wikipedia
+   snippet API), code execution (sandboxed Python exec), database query (SQLite
+   over synthetic tables)
+ • Task templates: multi-hop arithmetic with calculator calls, fact-verification
+   with retrieval + calculator, data-analysis pipelines with SQL + Python,
+   mixed-tool planning tasks- Splits:1600 train (sampled uniformly across
+   cells),200 validation (20 per cell held out for controlled evaluation)
+ • Contamination check: all tool outputs are procedurally generated; no overlap
+   with public datasets## Evaluation Metrics1. Primary: Cell-level accuracy
+   (average per D-I-R cell) — the main metric that tests whether the taxonomy
+   captures failure patterns2. Integration fidelity (per-step): binary indicator
+   of whether the agent correctly incorporated tool output into the next
+   reasoning step, measured by an automated verifier3. Tool-call precision:
+   fraction of tool calls that used the correct tool with the correct
+   arguments4. Composite difficulty score: weighted average across D, I, R
+   dimensions, used to test monotonicity (accuracy should decrease as composite
+   score increases)
+
+ 5 Cross-model rank consistency: Spearman correlation between model rankings on
+   CompoTool-1800 vs. existing agent benchmarks (AgentBench, ToolBench) to
+   validate that our benchmark measures something not already captured##
+   Baselines1. ReAct (Yao et al.,2023) — thought–action–observation loop,
+   zero-shot2. Reflexion (Shinn et al.,2023) — verbal self-reflection on
+   failures3. Plan-and-Solve (Wang et al.,2023) — plan-first then execute4.
+   Tree-of-Thought with tool-call leaves (Yao et al.,2024 variant) —
+   breadth-first search over reasoning + tool paths5. Direct prompting (no agent
+   scaffolding) — single-prompt with interleaved instructions, included to
+   measure the ceiling of in-context abilityAll baselines run with GPT-4o and
+   Llama-3-70B. The Phase3 fine-tuned model is compared against a uniform-data
+   fine-tuned Llama-3-8B (same compute budget) and the base Llama-3-8B with
+   ReAct.
+
+Ablations1. No tool-output integration verifier: remove the step-wise fidelity
+weighting from the curriculum loss to isolate its contribution2. Random-order
+curriculum: shuffle the cell ordering in Phase3 to test whether the
+difficulty-gradient ordering is necessary3. Single tool type: restrict training
+to only calculator tasks to measure cross-tool generalization4. No fine-tuning:
+compare the fine-tuned model to the base model with a hand-crafted prompt
+template for each cell (rule-based adaptation of ReAct)
+
+Expected Failure Modes1. Surface integration ceiling: agents that pass tool
+outputs verbatim without structural reformatting may hit an accuracy ceiling
+around D=3, I=Reformatted — the taxonomy predicts this, and it may be
+irreducible with current transformer architectures2. Recency decay: Chain-3
+instances will likely show accuracy near random beyond4–5 steps regardless of
+model size, consistent with known attention sink and lost-in-the-middle
+effects3. Curriculum overfitting: the fine-tuned model may specialize to the
+D-I-R cell boundaries and fail on instances that fall between cells (e.g., D=2,
+I=Reformatted, R=Chain-2 — an untrained cell)
+
+ 4 Verifier noise: the automated integration-fidelity verifier may itself err on
+   complex cases (e.g., when a tool output is correct but the agent uses it
+   indirectly), introducing label noise into the curriculum loss## Limitations1.
+   Tool repertoire is fixed: only four tool types, all with clean input/output
+   schemas. Real-world agents interact with dozens of heterogeneous, poorly
+   documented APIs. Generalization to open-ended tool sets is untested.
+ 5 Synthetic instance generation: procedurally generated tasks lack the
+   ambiguity of human-generated queries. Performance on CompoTool-1800 may
+   overestimate real-world robustness.
+ 6 No multi-turn user interaction: the benchmark assumes a single user query
+   with a linear tool-use trace. Conversational agents that revisit earlier
+   steps or take user feedback mid-trajectory are out of scope.
+ 7 Single-turn fine-tuning: the curriculum training uses offline supervised
+   learning on successful trajectories. Online (RL-based) methods such as
+   outcome-driven reward modeling may yield different conclusions about the
+   taxonomy's utility.
+ 8 Scale ceiling at8B parameters: findings from Llama-3-8B may not generalize
+   to70B+ models, which exhibit different error patterns (more false positives
+   than false negatives in tool-call decisions). The baseline profiling with
+   GPT-4o and Llama-3-70B partially addresses this, but the fine-tuning
+   experiment is limited to8B.

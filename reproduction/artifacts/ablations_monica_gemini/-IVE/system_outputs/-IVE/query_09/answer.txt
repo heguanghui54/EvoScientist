@@ -1,0 +1,71 @@
+QAT-Adapt: Adaptive Mixed-Precision Quantization for Edge-Depoyed LLMs##
+   TitleQAT-Adapt: Layer-Wise Adaptive Quantization with Runtime-Sensitivity
+                        Feedback for Edge-Deployed LLMs
+
+--------------------------------------------------------------------------------
+
+ProblemDeploying large language models (LLMs) on edge devices (mobile, IoT,
+embedded systems) is bottlenecked by memory bandwidth and power constraints.
+While quantization-aware training (QAT) reduces model footprint to4-bit or
+even2-bit weights, existing approaches apply uniform precision across all
+layers. This is suboptimal because:
+
+ 1 Layer sensitivity varies dramatically — early embedding layers and attention
+   projections are far more sensitive to quantization error than later FFN
+   layers, yet uniform quantization wastes bits on robust layers and destroys
+   signal in sensitive ones.
+ 2 Hardware heterogeneity — edge SoCs (e.g., Qualcomm Hexagon, Apple Neural
+   Engine, ARM Ethos) have asymmetric compute costs per bit-width. A4×4-bit
+   matmul is not2× cheaper than an8×4-bit matmul on real hardware; the cost
+   surface is non-linear and chip-specific.
+ 3 Static calibration fails under distribution shift — calibration sets
+   collected offline (e.g.,128 C4 samples) do not represent the long-tail
+   prompts edge users actually issue, causing silent accuracy degradation in
+   deployment.
+
+Prior work addresses one of these three dimensions but never all simultaneously.
+LLM-QAT (Liu et al.,2024) uses teacher-forced QAT but assumes uniform precision.
+Mixed-precision search methods (HAWQ, SPIQ) treat sensitivity as static and
+hardware-agnostic. No existing method jointly optimizes per-layer bit-width for
+real hardware cost and runtime-adaptive sensitivity estimation.
+
+--------------------------------------------------------------------------------
+
+HypothesisA sensitivity-driven, hardware-cost-aware mixed-precision quantization
+scheme — calibrated dynamically using runtime activation statistics — can match
+or exceed the perplexity of uniform4-bit QAT while reducing effective model
+footprint by ≥30% on edge hardware, without requiring per-deployment retraining.
+
+Three sub-hypotheses:
+
+ • H1: Layer-wise sensitivity estimated from activation kurtosis at inference
+   time correlates strongly (Pearson ρ >0.85) with per-layer quantization error,
+   enabling online bit-width adaptation without a held-out calibration set.
+ • H2: A hardware cost model parameterized by bit-width pairs (W, A) per layer,
+   calibrated on a target edge SoC, yields a mixed-precision configuration that
+   Pareto-dominates uniform precision.
+ • H3: The combined system (online sensitivity + hardware cost) transfers across
+   prompts without per-user fine-tuning, because sensitivity is a function of
+   the model's internal representation geometry, not the specific input text.
+
+--------------------------------------------------------------------------------
+
+MethodQAT-Adapt is a three-component pipeline:
+
+Component1: Runtime Sensitivity Probe (RSP)
+
+At deployment, after every K forward passes (we default to K =64), we compute
+per-layer activation kurtosis from a running buffer of hidden states (last4
+tokens × K). Layers with kurtosis > threshold τ (empirically set at3.5) are
+flagged as high-sensitivity and assigned higher precision on the next
+granularity step. The probe adds no forward-pass overhead — it reuses the hidden
+states already materialized in memory.
+
+Why kurtosis? Prior work (Detmers et al.,2023; Xiao et al.,2023) shows that
+outlier features with high kurtosis dominate quantization error. We extend this
+from a per-token observation to a per-layer heuristic.
+
+Component2: Hardware Cost Table (HCT)
+
+For the target SoC, we microbenchmark one matmul at each (W-bit, A-bit)
+combination in

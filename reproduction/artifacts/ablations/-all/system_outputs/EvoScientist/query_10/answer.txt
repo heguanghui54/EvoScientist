@@ -1,0 +1,135 @@
+Research Proposal: Schema-Aware Decomposition for Complex Text-to-SQL on
+Large-Scale Databases## Title
+Schema-Aware Decomposition: Robust Text-to-SQL on
+Large-Scale Databases via Progressive Pruning and Incremental Construction
+
+--------------------------------------------------------------------------------
+
+Problem
+Current LLM-based Text-to-SQL systems perform competitively on benchmarks
+like Spider (medium-scale, ~200 tables across20 databases, ~5 tables per
+question). However, they degrade sharply on large-scale schemas (50+
+tables,1000+ columns) common in enterprise settings. Two core issues:
+
+1 Context window saturation — the full schema cannot fit in a single prompt,
+forcing truncation that may drop relevant tables/columns.
+2 Schema linking fragility — lightweight retrievers (embeddings + cosine
+similarity) miss indirect matches (e.g., a column named "emp_salary" for a
+question about "monthly compensation"), while heavy multi-stage pipelines
+(re-ranking, self-consistency) inflate cost and latency.
+
+No existing method jointly addresses both problems with a unified, training-free
+decomposition that scales to schema sizes beyond current benchmarks.
+
+--------------------------------------------------------------------------------
+
+Hypothesis
+Decomposing the Text-to-SQL task into three sequential stages —
+structured schema pruning, sub-query decomposition, and incremental SQL
+construction with local verification — will improve execution accuracy on
+large-scale schemas by ≥15% over flat prompting approaches, while adding ≤2x
+inference cost.
+
+The hypothesis rests on two claims:
+
+• Schema pruning by structure + semantics (not just flat embeddings) reduces
+irrelevant context without dropping critical tables.
+• Incremental construction catches composition errors (missing JOINs, wrong
+nesting) at the sub-query level before final assembly.
+
+--------------------------------------------------------------------------------
+
+Method
+A three-stage pipeline, SaDec (Schema-Aware Decomposition):
+
+Stage1: Hybrid Schema Pruning- Structure-aware filter: Extract the subgraph of
+tables within2-hop relations of user-specified entities (heuristic: tables whose
+primary keys appear in the question text, then their foreign-key neighbors).
+
+• Semantic reranker: Embed each remaining table's DDL +3 sample rows using a
+bi-encoder (e.g., BGE-M3). Rerank by cosine similarity against the question
+embedding. Keep top-K tables (K =8–12, tunable).
+• Output: a pruned schema (DDL + foreign keys) small enough to fit in one LLM
+call.
+
+Stage2: Sub-Query Decomposition- Prompt an LLM (e.g., GPT-4o-mini) to split the
+question into2–5 sub-questions, each referencing specific tables/columns from
+the pruned schema.
+
+• Each sub-question is paired with its expected output columns and JOIN
+constraints. This acts as an interpretable intermediate plan.
+
+Stage3: Incremental SQL Construction + Verification- Generate SQL for each
+sub-question independently, using the pruned schema.
+
+• Local verifier: Execute each sub-query against the database. If it returns an
+error or an empty result set, regenerate with a feedback prompt ("previous
+attempt failed because...").
+• Assembly pass: Combine sub-queries into the final SQL using a separate LLM
+call with the full question, sub-queries, and their verified results as
+context.
+• Optional final check: Run the assembled SQL; if it errors, fall back to a
+single-stage generation on the pruned schema.
+
+No fine-tuning required. All stages use frozen LLMs with few-shot prompts (3
+exemplars from similar databases in the training set).
+
+--------------------------------------------------------------------------------
+
+Dataset / Benchmark
+Primary evaluation on BIRD-SQL (2024), specifically its
+large-scale subset (databases with ≥30 tables: ~15–20 databases, ~1,500
+questions). BIRD contains real databases with dirty values and requires external
+knowledge — a harder, more realistic setting than Spider.
+
+For controlled analysis, also evaluate on Spider-Syn (schema synonym variant,
+~700 questions) and Spider-Realistic (~500 questions with paraphrased
+questions), which stress schema linking.
+
+If results are strong, test a synthetic Spider-XL dataset constructed by
+concatenating3–4 Spider databases into a single schema (~60 tables,200+ columns)
+with200 cross-database questions written by hand.
+
+--------------------------------------------------------------------------------
+
+Evaluation Metrics| Metric | Definition | Why |
+
+|---|---|---| | Execution Accuracy (ExA) | % of predicted SQL queries whose
+execution output matches the gold output | Primary metric; forgiving of
+syntactic alternatives | | Exact Set Match (ESM) | % of predicted SQL that
+exactly matches gold AST (canonicalized) | Measures structural correctness | |
+Schema Recall (SR) | % of gold-referenced tables/columns present in the pruned
+schema | Stage1 diagnostic | | Decomposition Fidelity | % of sub-queries that
+correctly map to gold sub-expressions (manual eval on200 random samples) |
+Stage2 diagnostic | | LLM calls per query | Average number of API calls per
+question | Cost/latency diagnostic | | Success@1 vs Success@5 | Accuracy without
+and with self-consistency (5 samples) | Robustness check |
+
+--------------------------------------------------------------------------------
+
+Baselines| Method | Category | Why included |
+
+|---|---|---| | Flat prompt (full schema) | Baseline | Upper-bound approximation
+(fails when schema exceeds context) | | Flat prompt (truncated schema, first N
+tables) | Baseline | Current naive approach | | DAIL-SQL (few-shot prompt +
+schema filtering) | Strong few-shot | State-of-the-art on Spider with GPT-4 | |
+DIN-SQL (task decomposition via LLM) | Decomposition | Direct competitor — tests
+whether our structured decomposition beats its unstructured approach | | MAC-SQL
+(multi-agent collaboration) | Multi-agent | Tests whether explicit decomposition
+beats agentic coordination | | CHASE-SQL (code generation + execution) |
+Execution-feedback | Tests whether our incremental verifier beats post-hoc
+execution feedback |
+
+All baselines evaluated with the same backbone LLM (GPT-4o-mini and GPT-4o) on
+the same hardware/API version.
+
+--------------------------------------------------------------------------------
+
+Ablations1. Pruning ablation: Compare structure-aware + semantic vs.
+semantic-only vs. embedding-only (Stage1 variants).
+
+2 Decomposition ablation: Remove Stage2 entirely; feed pruned schema directly
+to Stage3.
+3 Verification ablation: Remove local verifier (no sub-query execution check);
+only final assembly check.
+4 Top-K sensitivity: Sweep K =

@@ -1,0 +1,162 @@
+● think_tool(The user wants a Table 3 ablation pro…)
+
+  Proposal: Compositional Multi-Hop Reasoning via Recursive Decomposition for
+ Tool-Augmented AI Agents## ProblemLarge language models struggle with complex
+  reasoning tasks that require composing multiple facts, tool invocations, and
+ intermediate inferences in a coherent chain. While chain-of-thought prompting
+ and related techniques improve step-level accuracy, they remain brittle under
+three conditions: (a) when the reasoning path requires backtracking from a dead
+end, (b) when tool outputs are heterogeneous (e.g., structured tables, free-text
+  passages, code execution results), and (c) when the number of compositional
+   steps exceeds approximately five. Existing approaches treat reasoning as a
+  single forward pass over latent steps, leaving agents unable to adapt their
+         decomposition strategy when a sub-problem proves intractable.
+
+HypothesisA recursive decomposition framework — where an agent iteratively
+splits a query into sub-queries, resolves each sub-query via tool calls or
+further decomposition, and recombines results — outperforms monolithic
+chain-of-thought and single-pass ReAct baselines on multi-hop reasoning
+benchmarks. We further hypothesize that the decomposition strategy itself can be
+dynamically selected per sub-problem based on the type of information required
+(factual retrieval, arithmetic, temporal reasoning, constraint satisfaction),
+rather than applying a fixed decomposition template.
+
+MethodWe propose Recursive Decomposition with Dynamic Strategy Selection
+(RD-DSS). The architecture has three components:
+
+1. Decomposition Module. Given a query (q), the module generates a decomposition
+tree (T) where each node is either a leaf (answerable directly via a single tool
+call or parametric knowledge) or an internal node (a sub-query that is further
+decomposed). Decomposition is guided by a lightweight classifier that predicts
+the reasoning type of the current sub-query from six categories: factual lookup,
+arithmetic, temporal ordering, constraint satisfaction, set intersection, and
+comparative judgment. Each type maps to a preferred decomposition template and a
+default tool candidate.
+
+2. Execution Engine. Each leaf is dispatched to one of three tool types: a web
+search API (text passages), a knowledge graph query interface (structured
+facts), or a Python interpreter (computation). Tool outputs are converted into a
+uniform passage format. The engine maintains a working memory of all resolved
+leaf values, keyed by their path in the decomposition tree.
+
+3. Recomposition Module. After all children of a node are resolved, the
+recomposition module synthesizes their outputs into a single answer for that
+node. If any child fails to resolve (tool error, empty result, contradictory
+evidence), the module may request re-decomposition of the child with modified
+parameters.
+
+Ablated mechanism (–IVE). In the full system, each failed resolution updates a
+validation-evidence store: the failure type, the sub-query embedding, the tool
+invoked, and the error pattern. This store is then used during candidate
+decomposition generation at future nodes — the system can pre-emptively reject
+decomposition strategies that are structurally similar to prior failures. In
+this –IVE variant, no such store is maintained. Each sub-problem is treated as
+independent. The decomposition module receives no signal about which strategies
+have previously led to dead ends, and the recomposition module repeats the same
+error patterns across different branches of the same tree without recognizing
+the similarity.
+
+Dataset / BenchmarkWe evaluate on three multi-hop QA benchmarks spanning
+different reasoning demands:
+
+ • HotpotQA (distractor setting) — factual multi-hop with supporting passage
+   retrieval; tests decomposition over heterogeneous evidence.
+ • 2WikiMultihopQA — multi-hop over Wikipedia with mixed entity types; tests
+   generalization to cross-domain composition.
+ • MuSiQue (3-hop and4-hop splits) — multi-hop with controlled hop count and
+   distractor difficulty; tests scaling behavior as compositional depth
+   increases.
+
+We use the full validation splits and report on the hidden test sets via
+official evaluation servers.
+
+Evaluation Metrics- F1 and Exact Match (EM) — primary metrics per benchmark
+standard.
+
+ • Decomposition efficiency — average number of nodes in the decomposition tree
+   per correctly answered query (lower = more efficient).
+ • Backtrack rate — fraction of queries where at least one sub-problem required
+   re-decomposition after an initial failure.
+ • Hop coverage — percentage of queries where the effective reasoning path
+   length matches or exceeds the gold hop count.
+ • Tool call overhead — total number of tool invocations per query (measuring
+   cost).
+
+All metrics are reported with95% confidence intervals over three seeds.
+
+Baselines1. Standard CoT — zero-shot chain-of-thought with the same backbone
+LLM, no tool access.
+
+ 2 ReAct — interleaved reasoning traces and tool invocations, single pass.
+ 3 ReAct + self-consistency — ReAct with5-sampling majority vote.
+ 4 Tree-of-Thoughts (ToT) — breadth-first search over reasoning steps with a
+   value function; no dynamic tool dispatch.
+ 5 Full RD-DSS (+IVE) — the complete system with validation-evolution memory
+   enabled. This is the primary comparison for the ablation.
+
+All methods use the same backbone LLM (e.g., Llama-3-70B-Instruct) and the same
+tool suite for fair comparison.
+
+AblationsBeyond the primary –IVE condition, we conduct:
+
+ • Strategy freezing — replace the dynamic type classifier with a single
+   decomposition template (always binary split) to isolate the contribution of
+   adaptive strategy selection.
+ • No tool diversity — restrict all leaves to web search only (no KG or code
+   execution) to measure the value of heterogeneous tool access.
+ • Single-pass recomposition — force the recomposition module to commit to an
+   answer at each internal node without allowing re-decomposition, isolating the
+   contribution of the backtrack mechanism.
+
+Expected Failure Modes (–IVE Specific)
+
+Without validation-evolution memory, we expect the following characteristic
+failures:
+
+ • Repeated failure patterns across branches. The system will attempt
+   structurally identical decomposition strategies for similar sub-problems in
+   different parts of the same tree, fail in the same way each time, and never
+   recognize the pattern. This inflates the backtrack rate and tool call
+   overhead, especially on MuSiQue4-hop where overlapping sub-problems are
+   common.
+ • Myopic decomposition on hard nodes. When a particular sub-query type (e.g.,
+   temporal ordering) consistently fails under binary decomposition, the –IVE
+   variant will continue proposing binary splits on each encounter rather than
+   switching to a different strategy. The full system would down-weight binary
+   temporal decomposition after two consecutive failures. We expect this to
+   surface as a sharp drop in accuracy on temporal sub-queries as hop count
+   increases.
+ • No cross-query transfer. After ten queries involving set intersection over
+   retrieved passages, the full system learns that exhaustive passage listing is
+   ineffective for large result sets and switches to a summary-then-intersect
+   strategy. The –IVE variant learns nothing across queries, so set-intersection
+   accuracy remains flat regardless of exposure.
+ • Checklist-style error cascades. Without recording which sub-problem types
+   have been fully resolved, the recomposition module may attempt to combine
+   partial or contradictory results and proceed as if they are complete. The
+   full system flags these as known failure signatures (e.g., "comparing two
+   sets where one is empty due to retrieval failure") and triggers
+   re-decomposition at the unresolved child. The –IVE variant proceeds with the
+   flawed partial results, leading to confident but incorrect final answers that
+   are difficult to detect without manual inspection.
+
+Limitations- Decomposition overhead. Recursive decomposition adds latency
+proportional to tree depth. Even without validation memory, a single query may
+require6–15 LLM calls. This may limit deployment on latency-sensitive
+applications regardless of the –IVE ablation.
+
+ • Tool reliability ceiling. If tool outputs are consistently wrong (e.g.,
+   outdated KG entries, low-quality search snippets), no architectural
+   improvement to the reasoning loop can recover — decomposition only exposes
+   tool failures more systematically.
+ • Type classifier accuracy. The dynamic strategy selection depends on a trained
+   or prompted type classifier (six categories). Misclassifications (e.g.,
+   labeling a factual lookup as arithmetic) produce useless decomposition
+   templates and cascade errors. The –IVE ablation exacerbates this because the
+   full system detects such cascades and corrects the type assignment; the
+   ablated system cannot.
+ • Single backbone dependency. All results are conditional on the choice of
+   backbone LLM. A weaker backbone may fail at the decomposition or
+   recomposition steps themselves, which we do not model explicitly — we treat
+   the backbone as a fixed reasoning oracle, and its internal failures compound
+   with the ablated validation memory.

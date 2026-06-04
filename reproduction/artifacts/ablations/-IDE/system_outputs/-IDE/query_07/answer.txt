@@ -1,0 +1,68 @@
+Let me first read the relevant skill instructions to match the output style and
+format properly.
+● read_file(/skills/research-ideation/SKILL.md)
+● read_file(.../assets/proposal-template.md)
+● read_file(.../references/proposal-extension.md)
+
+Now I have a clear picture of the output format and rigor standards. Here is the
+complete proposal.
+
+--------------------------------------------------------------------------------
+
+  Adaptive Capacity Scaling via Representation-Level Iterative Refinement for
+  Small Language Models## ProblemSmall language models (350M–1.3B parameters)
+    exhibit a well-documented performance ceiling: as model scale decreases,
+ performance drops disproportionately on tasks requiring multi-step reasoning,
+  long-range dependency tracking, and compositional generalization [1,2]. This
+ ceiling is widely attributed to insufficient representational capacity — fewer
+    parameters mean fewer attention heads, shallower transformer stacks, and
+     lower-rank representational subspaces. The standard remedy is to scale
+    parameters, which contradicts the deployment requirements (edge devices,
+real-time inference, privacy-constrained settings) that motivate small models in
+                                the first place.
+
+Existing attempts to decouple capacity from parameter count fall into three
+categories, each with a fundamental limitation:
+
+ • Early exiting (DeeBERT, PABEE, BERxiT) [3,4]: reduces average compute but
+   does not improve maximum performance on hard examples — the model never
+   commits more than its shallowest layers.
+ • Mixture of experts (MoE, Switch Transformer, ST-MoE) [5,6]: activates a
+   subset of parameters per input but requires a large parameter pool, defeating
+   the small-model deployment advantage.
+ • Test-time compute scaling (Chain-of-Thought, Self-Consistency,
+   Tree-of-Thoughts) [7,8]: improves reasoning via token-level search but is
+   orthogonal to representational capacity — the underlying model weights remain
+   unchanged.
+
+The open problem: Can a small model dynamically create additional
+representational capacity at inference time, using only its existing parameters,
+such that its effective performance ceiling approaches that of a model2–5× its
+size?
+
+HypothesisA small language model's performance on a given input is bottlenecked
+not by the total information stored in its weights, but by the number of
+processing steps available to integrate that information into a stable
+representation. If a model can iteratively refine its own hidden representations
+— using a learned halting mechanism to allocate more steps to harder inputs — it
+can effectively simulate greater depth without adding parameters. This
+representation-level iterative refinement breaks the scaling-law ceiling by
+trading inference-time compute (which is elastic) for parameter count (which is
+fixed).
+
+Formally, we hypothesize that for any input (x) and model (M_\theta) with (L)
+layers, there exists a refinement function (f_\phi) (parameter-efficient,
+sharing (\theta)) and a halting scorer (h_\psi) such that applying (T)
+refinement steps ((T) determined per input) yields:
+
+[\text Representational diversity decreases; gains shrink by30–50% | Tests
+whether multiple layer-specific adapters are necessary | | Phase2 full
+fine-tuning (vs. frozen base) | Freeze constraint removed; all parameters
+trained in Phase2 | Risk of catastrophic forgetting; small gain if any | Tests
+whether the frozen-base design choice is justified |
+
+Expected Failure Modes1. Refinement collapse: The refinement loop may converge
+to a trivial fixed point (reproducing the same output regardless of input
+difficulty). This would manifest as near-zero improvement on all benchmarks
+despite meaningful compute being spent. Mitigation: The consistency loss
+(\mathcal

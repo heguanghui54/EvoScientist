@@ -1,0 +1,152 @@
+Low-Resource Speech Recognition via Decoupled Acoustic-Phonetic Pretraining with
+  Targeted Decoder Adaptation## ProblemEnd-to-end automatic speech recognition
+ (ASR) for low-resource languages (under10 hours of transcribed speech) suffers
+ from a fundamental tension: self-supervised speech encoders (e.g., wav2vec2.0,
+    HuBERT) learn rich acoustic representations from unlabeled data, but the
+randomly initialized decoder collapses into overfitting on the tiny labeled set
+   during fine-tuning. Combined full-model fine-tuning forces the encoder to
+ overwrite general-purpose representations to accommodate the decoder's random
+  initialization, destroying cross-linguistic transfer. Current methods either
+   freeze the encoder entirely (sacrificing language-specific adaptation) or
+fine-tune jointly (sacrificing representation generality). The community lacks a
+  principled approach that decouples which parameters learn what: the encoder
+ should retain its universal acoustic-phonetic knowledge while only the decoder
+    and a lightweight adapter should adapt to the target language's phoneme
+                             inventory and lexicon.
+
+HypothesisDecoupled training — where a frozen self-supervised encoder feeds a
+randomly initialized transformer decoder through a Gated Adapter Module (GAM)
+that is the only trained component alongside the decoder — will outperform full
+fine-tuning and frozen-encoder baselines on ≤10-hour transcribed benchmarks,
+achieving >15% relative word error rate reduction while requiring fewer total
+updated parameters. The hypothesis rests on the claim that the encoder's
+pretrained representations already contain sufficient phonetic discriminability
+for the target language; the bottleneck is the decoder's inability to map those
+representations to the target token set without corrupting the encoder.
+
+Method**Stage1: Encoder Selection and Freezing.**Use a multilingual wav2vec2.0
+XLSR-53 encoder (pretrained on53 languages, ~600k hours of unlabeled speech).
+Freeze all transformer layers. Only the input feature encoder (CNN frontend) and
+position embeddings remain trainable to handle language-specific acoustic shifts
+(vowel quality, prosody). This is a minimal concession — fewer than2% of total
+parameters.
+
+**Stage2: Gated Adapter Module (GAM).**Insert a2-layer bottleneck adapter
+between the frozen encoder output and the decoder input, with a learned gating
+mechanism:
+
+
+ z = LayerNorm(encoder_output)
+ h = GELU(W_down · z) # bottleneck: d_model →64gate = σ(W_gate · z) # scalar
+ per time-stepadapter_output = gate · (W_up · h) + (1 − gate) · z```
+
+ The gate lets the model *per-time-step* decide whether to route through the
+ adapter or pass through the original representation unchanged. This prevents
+ the adapter from distorting encoder representations on frames where they are
+ already well-calibrated for the target language. GAM contributes ~1.2M
+ parameters.
+
+ **Stage3: Decoder Training.**The decoder is a6-layer transformer
+ (character-level CTC decoder with a language-specific output vocabulary
+ of200–400 graphemes). Train the decoder + GAM jointly with CTC loss.
+
+ **Stage4: Optional Self-Training Loop.**After convergence, generate
+ pseudo-labels on unlabeled target-language data (if available). Select
+ high-confidence frames (posterior >0.9) and retrain GAM + decoder on the
+ combined set. This is a *single* iteration — no iterative refinement
+ (consistent with the single-run, non-evolving constraint).
+
+ ## Dataset / Benchmark| Dataset | Language | Labeled Hours | Unlabeled Hours |
+ Domain |
+ |---|---|---|---|---|
+ | Common Voice (Swahili) | Swahili |8.2 |120 | Crowdsourced read speech |
+ | Common Voice (Tamil) | Tamil |6.8 |85 | Crowdsourced read speech |
+ | MLS (Kinyarwanda) | Kinyarwanda |4.5 |0 | Audiobook read speech |
+ | FLEURS (Farsi) | Farsi |10.0 |0 | Read speech,5 domains |
+
+ Four languages spanning three language families (Niger-Congo, Dravidian,
+ Indo-European) with varied phoneme inventories, ensuring results are not
+ language-specific. The split also provides two datasets with unlabeled data
+ (for self-training) and two without (for isolated low-resource assessment).
+
+ ## Evaluation Metrics| Metric | Primary / Secondary | Rationale |
+ |---|---|---|
+ | Word Error Rate (WER) | Primary | Standard ASR metric, directly comparable |
+ | Character Error Rate (CER) | Secondary | Captures morphologically rich
+ language degradation |
+ | Parameter update ratio | Diagnostic | (# updated params) / (# total params),
+ to verify decoupling claim |
+ | Time-to-convergence | Diagnostic | Training steps to reach best WER,
+ measuring optimization stability |
+
+ All WER/CER reported with95% confidence intervals from3 random seeds per
+ condition. Statistical significance assessed with paired bootstrap resampling
+ (p <0.05).
+
+ ## Baselines1. **Full Fine-Tuning (FFT).** Unfrozen XLSR-53 encoder + random
+ decoder. Standard approach for low-resource ASR.
+ 2. **Frozen Encoder (FE).** Entire encoder frozen, train decoder only.
+ Represents the current state-of-the-art for extremely low-resource settings.
+ 3. **Adapter without Gate.** GAM without the per-time-step gating mechanism
+ (constant residual). Isolates the contribution of the gating mechanism.
+ 4. **Full Adapter (no bottleneck).** Adapter with d_model → d_model (no
+ bottleneck). Tests whether the bottleneck is necessary or if a full-rank
+ adapter achieves the same result with more parameters.
+
+ ## Ablations| Ablation | What changes | What it tests |
+ |---|---|---|
+ | **No GAM** | Remove adapter entirely; train decoder directly on frozen
+ encoder output | Whether any adapter is necessary at all |
+ | **No gate** | Remove gating; use standard residual adapter | Contribution of
+ per-step gating |
+ | **Bottleneck width** | Vary bottleneck dim:16,64,256 | Sensitivity to
+ compression; the64-dim choice |
+ | **Trainable CNN frontend off** | Freeze the input feature encoder entirely |
+ Whether the2% parameter allowance matters |
+ | **No self-training** | Skip pseudo-label Stage4 | Contribution of the
+ single-round self-training |
+
+ ## Expected Failure Modes1. **Language mismatch in the pretraining corpus.**
+ XLSR-53 covers53 languages. If the target language is typologically distant
+ from all covered languages (e.g., a tonal language with no tonal-language
+ pretraining data), the frozen encoder may lack the relevant phonetic
+ discriminability. Expect WER degradation on such languages; the GAM cannot
+ invent acoustic distinctions the encoder never learned. Mitigation: select
+ languages with varying distance from XLSR-53 coverage; report WER vs.
+ phylogenetic distance as a diagnostic.
+
+ 2. **GAM gate collapse.** The gating mechanism may converge to a trivial
+ solution: gate ≈0 everywhere (bypass adapter entirely, equivalent to frozen
+ encoder baseline) or gate ≈1 everywhere (disabling the residual connection,
+ making GAM a standard adapter). Monitor gate statistics over training; if
+ all-time-step mean gate lies outside [0.2,0.8], training is degenerate.
+
+ 3. **Self-training confirmation bias.** The single self-training iteration may
+ reinforce decoder errors if the pseudo-label threshold (0.9) is too permissive
+ or too strict. Character-level analysis of pseudo-labeled vs. ground-truth
+ distribution on a held-out subset will quantify error amplification.
+
+ 4. **Catastrophic forgetting through CNN frontend.** Although only the CNN
+ frontend is trainable (2% of parameters), aggressive learning rates could
+ still shift the feature distribution enough to degrade downstream
+ representations. Monitor encoder output norm drift as a diagnostic.
+
+ ## Limitations- The method assumes access to a pretrained multilingual speech
+ encoder. Languages with no phylogenetic overlap to any pretraining language
+ remain out of scope. The method does not propose new pretraining; it exploits
+ existing frozen representations.
+ - Character-level CTC decoding imposes a conditional independence assumption
+ that degrades on languages with long-range phonological dependencies (e.g.,
+ vowel harmony in agglutinative languages). A future iteration would replace
+ CTC with a transducer or attention-based decoder, but that would conflate
+ representation adaptation with decoding architecture changes.
+ - The single-round self-training (Stage4) is deliberately limited to remain
+ consistent with the non-evolving design constraint. Multi-round self-training
+ or iterative pseudo-label refinement could yield additional gains but is
+ excluded by experimental design.
+ - Evaluation is limited to read-speech domains (Common Voice, MLS, FLEURS).
+ Conversational and noisy-condition generalization is not tested. Performance
+ on spontaneous, code-switched, or child speech is unknown.
+ - The adapter adds ~1.2M parameters and one forward pass per frame (two linear
+ layers + gating). Real-time factor impact is not measured; latency-critical
+ deployments would need a separate efficiency analysis.

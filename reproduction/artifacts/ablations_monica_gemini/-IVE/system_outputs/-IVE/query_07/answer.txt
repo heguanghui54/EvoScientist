@@ -1,0 +1,148 @@
+● think_tool(The user wants a Table 3 ablation pro…)
+● glob(**/*.md)
+● read_file(.../assets/proposal-template.md)
+● read_file(/skills/research-ideation/SKILL.md)
+● glob(**/research_request.md)
+● glob(**/memories/**/*.md)
+● glob(*.md)
+● think_tool(Now I need to write the proposal. Let…)
+
+Breaking the Performance Ceiling of Small Models via Multi-Scale Representation
+Recycling## ProblemLarge language models (100B+ parameters) continue to improve
+   predictably with scale under the Chinchin scaling laws, but models under1B
+   parameters exhibit a pronounced performance ceiling: after approximately7B
+  tokens of training, validation loss plateaus while downstream task accuracy
+ saturates well below the levels predicted by extrapolating scaling curves from
+   larger models [1,2]. This "small-model ceiling" manifests as a systematic
+  underutilisation of capacity — small models fail to compress their training
+ distribution beyond a certain point regardless of additional compute, data, or
+training steps. The root cause is not capacity (a350M-parameter transformer has
+ sufficient representational degrees of freedom), but rather that optimisation
+  dynamics at small scale produce representations that are redundant, collapse
+ along dominant principal components, and fail to capture long-tail patterns in
+                                 the data [3].
+
+Existing approaches — knowledge distillation from larger teachers [4], weight
+pruning and quantisation [5], and architectural search for efficient
+transformers [6] — treat the ceiling as a compression problem post-training.
+They do not address the fundamental issue: the training process itself converges
+to a poor local optimum where representations are under-specialised. A method
+that directly intervenes on the representation learning trajectory rather than
+compressing a converged model is needed.
+
+HypothesisSmall models plateau because the gradient signal during training
+becomes increasingly uniform across tokens and layers, collapsing the
+representation manifold. We hypothesise that multi-scale representation
+recycling — periodically injecting frozen, higher-quality representations from a
+concurrently trained auxiliary module as structured regularisation targets —
+prevents manifold collapse and forces the main model to maintain diverse,
+composable features. Specifically, if an auxiliary model operating at a
+different representational scale (wider or deeper in one critical dimension) is
+trained jointly but constrains the main model's hidden states through a
+cosine-similarity dispersion loss, the main model's effective rank of hidden
+representations will remain above a critical threshold throughout training,
+delaying the ceiling by at least a factor of three in training tokens.
+
+The mechanism is not knowledge distillation (the auxiliary is not a converged
+teacher) but rather structured perturbation of the loss landscape: the auxiliary
+provides a moving target that prevents the main model from settling into a
+low-rank attractor.
+
+MethodWe propose a dual-model framework with three components.
+
+Main model (M). A standard decoder-only transformer of350M parameters (12
+layers, hidden1024,16 heads). Trained from scratch on the full training set.
+
+Scale-shifted auxiliary (A). A structurally different transformer that shares
+the vocabulary and embedding layer with M but differs along one architectural
+axis: it has the same hidden dimension but twice the depth (24 layers) and half
+the heads per layer (8 heads). This design ensures A operates on the same
+token-level representation space as M but with different representational priors
+— deeper composition, narrower attention. A is trained jointly with M on the
+same data stream but receives its own optimiser state and learning rate
+schedule. Critically, A is NOT a teacher: its representations are not converged
+or fixed, and it is not used at inference time.
+
+Dispersion regularisation. At each training step, for a random subset of50% of
+layers in M, we extract the hidden state before the FFN at position h_{M}^{(l)}
+and the corresponding hidden state from A at the closest aligned layer
+h_{A}^{(l')} (linear mapping: l' = floor(l *24/12)). We compute a
+centre-stopping cosine dispersion loss:
+
+
+ L_disp = E[ (cos(h_M^{(l)}, h_A^{(l')}) - c_l)^2 ]
+
+
+where c_l is a per-layer target correlation coefficient, linearly annealed
+from0.9 at step0 to0.5 at step100k then held constant. The effect is
+straightforward: early training encourages A's representations to pull M's
+representations into a similar region (high correlation), but as training
+progresses, the target correlation drops, forcing M to diverge from A and
+explore a broader manifold. The loss coefficient alpha_disp is set to0.1
+relative to the primary language modelling loss.
+
+Final objective. Each training step optimises:
+
+
+ L = L_lm(M) + L_lm(A) + alpha_disp * L_disp```
+
+ Both models receive their own LM loss; the dispersion loss is symmetric and
+ differentiable through both models. At inference, A is discarded entirely —
+ only M is deployed, with no overhead.
+
+ ## Dataset / Benchmark**Training data.** C4 (Colossal Clean Crawled Corpus)
+ English subset, filtered to sequences of2048 tokens. We use50B tokens total,
+ which is approximately7x the typical compute-optimal budget for a350M model
+ (≈7B tokens under Chinchilla scaling), ensuring we operate deep into the
+ ceiling regime.
+
+ **Evaluation benchmarks.** We measure ceiling effects across four axes:
+ - **Language modelling**: validation perplexity on held-out C4 slices
+ at1B,5B,10B,25B, and50B training tokens- **Reasoning**: ARC-Challenge,
+ ARC-Easy (accuracy)
+ - **Factual knowledge**: MMLU (5-shot accuracy)
+ - **Token-level understanding**: SuperGLUE (BoolQ, CB, COPA, RTE, WiC, WSC)
+
+ All evaluations are performed every5,000 training steps (≈1B tokens) to
+ produce training curves, not just final numbers.
+
+ ## Evaluation Metrics| Metric | What It Measures | Target |
+ |--------|-----------------|--------|
+ | Validation perplexity gap | How far M is from the ideal
+ Chinchilla-extrapolated PPL for its size | <0.5 nats gap at50B tokens |
+ | Effective rank of hidden states | Manifold collapse (SVD entropy of hidden
+ states across batches) | >80% of maximum rank throughout training |
+ | Downstream accuracy ceiling slope | Accuracy change in the final25B tokens |
+ Positive slope (not flat) |
+ | Cross-layer representational similarity (CKA) | Whether layers are
+ collapsing into each other | CKA decreasing, not increasing, after15B tokens |
+ | Inference overhead | FLOPs and memory vs vanilla350M (should be zero after
+ training) | Identical |
+
+ ## Baselines| Baseline | Description | Why |
+ |----------|-------------|-----|
+ | **Vanilla350M** | Standard transformer trained without A or dispersion loss
+ | Direct ablation of method |
+ | **Knowledge distillation (KD)** | Teacher-forcing from a pretrained1.5B
+ model (frozen) throughout training [4] | Tests whether a static teacher works
+ better than dynamic A |
+ | **DeepM reverse** | Swap roles: M as auxiliary, A as main (train A, discard
+ M) | Controls for whether extra FLOPs alone explain gains |
+ | **Co-training w/o dispersion** | Train M and A jointly with only `L_lm`, no
+ `L_disp` | Isolates the effect of dispersion regularisation from co-training |
+ | **Stochastic depth baseline** | M with50% stochastic depth [7] (another
+ regulariser that prevents collapse) | Compares to an established regulariser
+ for representation diversity |
+
+ All baselines use the same data schedule, token budget, and evaluation
+ cadence. Each is run with3 random seeds.
+
+ ## Ablations| Ablation | Variable Changed | Expected Signal |
+ |----------|-----------------|-----------------|
+ | **Target schedule** | Constant c_l =0.7 vs linear vs cosine vs step-function
+ decay | Ring the effect is sensitive to the form of the c_l schedule |
+ | **Auxiliary width** | A with2x hidden dim instead of2x depth | Tests whether
+ depth expansion specifically drives the benefit |
+ | **Dispersion layers** |100% vs25% vs random-single-layer regularisation |
+ Tests how coverage affects manifold collapse |
+ | **Loss coefficient alpha_disp** |

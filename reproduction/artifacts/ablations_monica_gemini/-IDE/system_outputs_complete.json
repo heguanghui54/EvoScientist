@@ -1,53 +1,151 @@
 {
   "variant": "-IDE",
-  "query_count": 3,
-  "complete": true,
+  "query_count": 10,
+  "expected_query_count": 30,
+  "complete": false,
   "dry_run": false,
   "proposal_only": true,
   "reference_system": "EvoScientist",
-  "reference_root": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/artifacts/idea_outputs/EvoScientist",
+  "reference_root": "reproduction/artifacts/ablations_monica_gemini/-IDE/system_outputs/EvoScientist",
   "complete_query_ids": [
     1,
     2,
-    3
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10
   ],
-  "missing_reference_query_ids": [],
+  "missing_variant_query_ids": [
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23,
+    24,
+    25,
+    26,
+    27,
+    28,
+    29,
+    30
+  ],
+  "missing_reference_query_ids": [
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23,
+    24,
+    25,
+    26,
+    27,
+    28,
+    29,
+    30
+  ],
   "outputs": [
     {
       "query_id": 1,
       "topic": "Machine translation",
-      "dir": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/artifacts/ablations/-IDE/system_outputs/-IDE/query_01",
+      "dir": "reproduction/artifacts/ablations_monica_gemini/-IDE/system_outputs/-IDE/query_01",
       "reference_present": true,
       "status": "ok",
-      "returncode": 0,
-      "elapsed_seconds": 29.19,
-      "answer_chars": 10220,
-      "workspace_dir": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/runs/ablation-minus-ide-q01"
+      "answer_chars": 10220
     },
     {
       "query_id": 2,
       "topic": "Software engineering",
-      "dir": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/artifacts/ablations/-IDE/system_outputs/-IDE/query_02",
+      "dir": "reproduction/artifacts/ablations_monica_gemini/-IDE/system_outputs/-IDE/query_02",
       "reference_present": true,
       "status": "ok",
-      "returncode": 0,
-      "elapsed_seconds": 55.78,
-      "answer_chars": 16474,
-      "workspace_dir": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/runs/ablation-minus-ide-q02"
+      "answer_chars": 16474
     },
     {
       "query_id": 3,
       "topic": "LLM evaluation",
-      "dir": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/artifacts/ablations/-IDE/system_outputs/-IDE/query_03",
+      "dir": "reproduction/artifacts/ablations_monica_gemini/-IDE/system_outputs/-IDE/query_03",
       "reference_present": true,
       "status": "ok",
-      "returncode": 0,
-      "elapsed_seconds": 23.2,
-      "answer_chars": 8374,
-      "workspace_dir": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/runs/ablation-minus-ide-q03"
+      "answer_chars": 8374
+    },
+    {
+      "query_id": 4,
+      "topic": "Healthcare agents",
+      "dir": "reproduction/artifacts/ablations_monica_gemini/-IDE/system_outputs/-IDE/query_04",
+      "reference_present": true,
+      "status": "ok",
+      "answer_chars": 13073
+    },
+    {
+      "query_id": 5,
+      "topic": "Literature review automation",
+      "dir": "reproduction/artifacts/ablations_monica_gemini/-IDE/system_outputs/-IDE/query_05",
+      "reference_present": true,
+      "status": "ok",
+      "answer_chars": 8348
+    },
+    {
+      "query_id": 6,
+      "topic": "Speech recognition",
+      "dir": "reproduction/artifacts/ablations_monica_gemini/-IDE/system_outputs/-IDE/query_06",
+      "reference_present": true,
+      "status": "ok",
+      "answer_chars": 6730
+    },
+    {
+      "query_id": 7,
+      "topic": "Model efficiency",
+      "dir": "reproduction/artifacts/ablations_monica_gemini/-IDE/system_outputs/-IDE/query_07",
+      "reference_present": true,
+      "status": "ok",
+      "answer_chars": 3808
+    },
+    {
+      "query_id": 8,
+      "topic": "AI agents",
+      "dir": "reproduction/artifacts/ablations_monica_gemini/-IDE/system_outputs/-IDE/query_08",
+      "reference_present": true,
+      "status": "ok",
+      "answer_chars": 11138
+    },
+    {
+      "query_id": 9,
+      "topic": "Model deployment",
+      "dir": "reproduction/artifacts/ablations_monica_gemini/-IDE/system_outputs/-IDE/query_09",
+      "reference_present": true,
+      "status": "ok",
+      "answer_chars": 2243
+    },
+    {
+      "query_id": 10,
+      "topic": "Text-to-SQL",
+      "dir": "reproduction/artifacts/ablations_monica_gemini/-IDE/system_outputs/-IDE/query_10",
+      "reference_present": true,
+      "status": "ok",
+      "answer_chars": 10137
     }
   ],
   "paper_exact": false,
   "caveat": "Replacement ablation run driven by prompt-level disabled-component constraints. The public checkout does not expose the paper's native IDE/IVE ablation switches.",
-  "judge_input_records": 3
+  "judge_input_records": 10
 }

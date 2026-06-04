@@ -1,0 +1,73 @@
+● think_tool(The user wants a Table 3 ablation pro…)
+
+--------------------------------------------------------------------------------
+
+Multi-Source Phonetic Bootstrapping via Cross-Lingual Articulatory Priors for
+Low-Resource Speech Recognition### TitleArticulatory-Constrained Multi-View
+Representation Learning for Low-Resource Automatic Speech Recognition
+
+--------------------------------------------------------------------------------
+
+ProblemState-of-the-art automatic speech recognition (ASR) systems rely on
+hundreds to thousands of hours of transcribed speech. For the vast majority of
+the world's ~7,000 languages — many of which have fewer than10 hours of
+transcribed data — these approaches fail. Existing low-resource methods fall
+into three camps, each with a persistent limitation:
+
+ 1 Cross-lingual transfer (fine-tuning a multilingual pre-trained encoder like
+   wav2vec2.0 or HuBERT onto a target language) — works only when the target
+   language is well-represented in pre-training data; otherwise, phone-set
+   mismatch and acoustic-phonetic divergence cause catastrophic forgetting
+   during fine-tuning.
+ 2 Phonetic decoupling (using articulatory features like place/manner of
+   articulation as intermediate representations) — improves interpretability but
+   requires expert-annotated articulatory feature tables per language, which do
+   not exist for most low-resource languages.
+ 3 Self-supervised speech representations — capture rich acoustic structure but
+   lack explicit phone-level grounding, causing poor frame-to-phone alignment in
+   zero-shot settings.
+
+We address a specific subproblem: Can we build a phone-level ASR system for a
+target language with <5 hours of transcribed speech, using only a small
+articulatory feature matrix from a phonetically-related source language, without
+requiring expert annotation in the target language?
+
+--------------------------------------------------------------------------------
+
+HypothesisArticulatory priors — place, manner, and voicing feature vectors —
+extracted from a phonologically related high-resource source language provide a
+sufficiently universal phonetic constraint space that, when combined with a
+multi-view contrastive objective between acoustic and articulatory embeddings,
+enables phone-level transcription in an unseen low-resource target language
+without any target-language articulatory annotations.
+
+Formally, let ( A_s \in \mathbbPhon-compatible IPA phone inventory. For many
+low-resource settings, the "closest" phonetically annotated source may itself be
+low-resource, limiting the method's bootstrap utility.
+
+ 3 No explicit tone modeling. While PanPhon includes tone features, our method
+   does not treat tone separately from segmental features. For tonal languages,
+   tone errors are counted in PER but cannot be independently diagnosed or
+   addressed. A dedicated tonal acoustic encoder (e.g., pitch contour CNN) would
+   be a natural extension but is not part of this proposal.
+ 4 Static articulatory anchors. The PanPhon feature vectors are binary and
+   context-independent. Coarticulation, allophonic variation, and cross-speaker
+   variation are collapsed into the binary representation. A variational
+   articulatory space (distributions over features rather than binary vectors)
+   could capture uncertainty but would add complexity to the contrastive
+   objective.
+ 5 No validation-evolution memory. Unlike the full EvoScientist framework, this
+   iteration does not incorporate feedback from prior experimental failures. The
+   ablations listed (A1–A8) were selected heuristically rather than pruned by
+   accumulated rejection criteria. Consequently, the experimental budget may be
+   spent on low-information ablations while genuinely informative diagnostic
+   experiments are omitted — in particular, no ablation tests whether projection
+   to the full22-dimensional articulatory space is better than projecting onto a
+   reduced subset of features that are actually shared between source and
+   target. This gap would have been identified by a validation-evolution system
+   tracking directional collapse patterns.
+ 6 Benchmark coverage limited to four pairs. Results generalize only to
+   languages with similar phonetic properties (non-tonal or tone-lite, primarily
+   oral, with available source-language relatives on Common Voice).
+   Dravidian-Eskimo-Aleut and Khoisan language pairs are out of scope and may
+   violate the articulatory prior assumption entirely.

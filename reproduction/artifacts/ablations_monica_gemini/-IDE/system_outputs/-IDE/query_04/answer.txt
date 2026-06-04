@@ -1,0 +1,228 @@
+Ablation Variant: –IDE (Idea-Direction Evolution Disabled)
+
+--------------------------------------------------------------------------------
+
+TitleScalable Orchestration of LLM-Based Agents for Clinical Decision Support: A
+Modular Verification Framework
+
+--------------------------------------------------------------------------------
+
+ProblemCurrent AI-in-healthcare research clusters around two poles: narrow
+task-specific models (trained on a single clinical prediction task) and
+general-purpose LLMs prompted for medical advice. Neither is sufficient for real
+clinical workflows, which require multi-step reasoning, cross-referencing of
+structured and unstructured patient data, and explicit uncertainty handling.
+Several recent demonstrations have used multi-agent LLM systems to simulate
+clinical teams (e.g., radiologist → primary care → specialist handoffs), but
+these efforts lack a principled evaluation protocol:
+
+ • No standardized benchmark that tests agent coordination across realistic
+   time-pressured scenarios.
+ • No ablation of which agent components (memory, tool access, verification
+   loops) drive performance gains.
+ • No systematic handling of hallucination in the "handoff" path, where one
+   agent's confident but incorrect output poisons downstream decisions.
+
+A proposal that fills this gap must commit to a concrete technical approach and
+a falsifiable evaluation design. Without the prior IDE memory (which would
+suggest directions like "focus on junta-based verification layers" or "avoid
+over-reliance on hierarchical physician agent chains"), the method is derived
+from first-principles reasoning about the failure modes of clinical multi-agent
+systems.
+
+--------------------------------------------------------------------------------
+
+HypothesisA multi-agent system composed of role-specialized LLM agents with a
+dedicated verification agent will outperform a single monolithic LLM and a flat
+multi-agent "panel" on a structured clinical decision-making benchmark —
+provided the verification agent operates on grounded tools (retrieval over
+guidelines, structured patient data validation) rather than free-form LLM
+critique. The gain is expected to be concentrated in recall of critical findings
+(e.g., drug interactions, contraindications) rather than speed or fluency.
+
+--------------------------------------------------------------------------------
+
+Method: ClinAgent-VerifyThe proposed system is a linear multi-agent pipeline
+with four roles:
+
+ 1 Triage Agent — takes an unstructured clinical vignette, extracts structured
+   fields (age, symptoms, vitals, medications, allergies). Output: a structured
+   JSON representation.
+ 2 Diagnostic Agent — given the structured case, proposes up to3 differential
+   diagnoses with supporting evidence drawn from a local retrieval-augmented
+   source (textbook excerpts, published clinical guidelines). Each diagnosis is
+   accompanied by a confidence score (0.0–1.0) and a list of necessary
+   confirmatory tests.
+ 3 Therapy Agent — for each plausible diagnosis, proposes a treatment plan. Must
+   cross-reference the patient's existing medications for interactions and flag
+   allergies. Uses a drug–drug interaction database (retrieval, not parametric
+   knowledge).
+ 4 Verification Agent — does not generate medical content. Instead, it checks
+   consistency across the three upstream outputs: (a) do the differential
+   diagnoses match the extracted structured fields? (b) is each confidence score
+   internally consistent given the evidence cited? (c) does the therapy plan
+   address at least one diagnosis from the Differential list? (d) are all
+   flagged interactions actually present in the interaction database? Output: a
+   pass/fail/corrected report. If the report is not "pass", the relevant agent
+   is called again with the verification feedback.
+
+All agents share the same base LLM (GPT-4o-mini) with identical system prompts
+except for the role definition and tool list. This isolates the effect of role
+specialization and verification from model scale.
+
+--------------------------------------------------------------------------------
+
+Dataset / Benchmark**MedQA-Cascade (constructed subset of MedQA)**MedQA provides
+USMLE-style multiple-choice questions with clinical vignettes. We select200
+questions that require multi-step inference (explicitly tagged as "multi-system"
+or "complex" in the original dataset). Each question is reformatted as an
+unstructured vignette stripped of multiple-choice options. The evaluation task
+is: produce the correct differential, recommended test, and treatment plan such
+that a blinded physician rater can select the correct answer from the original
+options.
+
+Why this dataset instead of a full EHR corpus:
+
+ • Gold-standard answers exist (no need for physician panel for every item).
+ • Covers a wide clinical spectrum.
+ • Short vignettes minimize token cost, enabling many ablation runs.
+
+**Supplementary: MIMIC-III Discharge Summaries (20 cases)**An additional set
+of20 discharge summaries from MIMIC-III with expert-annotated "critical action
+items" (follow-up tests, medication changes, red-flag symptoms to monitor). This
+tests whether the method generalizes to longer, noisier clinical text.
+
+--------------------------------------------------------------------------------
+
+Evaluation Metrics| Metric | Definition | Primary / Secondary |
+
+|--------|-----------|---------------------| | Diagnostic recall@3 | Proportion
+of cases where the correct diagnosis appears in the top3 | Primary | | Treatment
+safety | Proportion of treatment plans with zero severe drug–interaction or
+allergy errors | Primary | | Verification pass rate | Fraction of runs that pass
+verification on first pass (without iteration) | Secondary | | Avg. agent calls
+per case | Total LLM invocations per case (measures cost) | Secondary | |
+Physician alignment | For a40-case subset, a blinded physician rates each output
+on a1–5 Likert (correctness, completeness, safety) | Validation |
+
+All metrics reported with95% confidence intervals over3 runs with different
+random seeds (noise in LLM sampling).
+
+--------------------------------------------------------------------------------
+
+Baselines1. Single monolithic LLM — GPT-4o-mini prompted with the full vignette
+and asked to produce diagnosis + treatment in one shot. Same base model, same
+total token budget.
+
+ 2 Flat multi-agent panel — All three generation agents (Triage, Diagnostic,
+   Therapy) receive the vignette simultaneously, and their outputs are
+   majority-voted by a fixed rule (no verification agent). This tests whether
+   the verification loop adds value beyond multiple viewpoints.
+ 3 Chain-of-Thought (CoT) single agent — Same as baseline1 but with a CoT prompt
+   ("think step by step about symptoms, then diagnosis, then treatment").
+
+--------------------------------------------------------------------------------
+
+Ablations (within ClinAgent-Verify)
+
+
+                          What is removed /
+ Ablation                 disabled                   Expected effect
+ –Verification            Remove the Verification    Primary metrics drop
+                          Agent entirely; pipeline   moderately (5–10%);
+                          runs                       verification pass rate not
+                          Triage→Diagnostic→Therapy  defined
+                          without feedback
+ –Tools                   Remove the retrieval tool  Treatment safety drops
+                          from Diagnostic and        sharply; hallucinated drug
+                          Therapy (only parametric   interactions expected
+                          knowledge)
+ –Structured Triage       Triage Agent outputs       Slower downstream
+                          unstructured free text     inference, higher
+                          instead of JSON;           variance; diagnostic
+                          downstream agents parse    recall expected to drop
+                          raw text                   modestly
+ –All (i.e., flat panel)  Equivalent to Baseline2    Expect lowest recall and
+                                                     safety across conditions
+
+
+--------------------------------------------------------------------------------
+
+Expected Failure Modes1. Verification loops that never terminate. The
+verification agent may flag a false-positive inconsistency (e.g., a confidence
+score that is deemed "internally inconsistent" due to LLM prompt sensitivity),
+causing infinite re-generation. Mitigation: hard cap of2 re-iteration rounds;
+after that, the case is logged as "verification timeout" and the best current
+output is used.
+
+ 2 Structural brittleness of the triage extraction. If the vignette mentions
+   symptoms in narrative order rather than as a bulleted list, the Triage Agent
+   may miss a critical symptom, cascading into a wrong differential. Mitigation:
+   include few-shot examples with narrative vignettes; measure extraction F1
+   separately.
+ 3 Retrieval miss for rare conditions. The guideline database covers common
+   conditions; a rare disease may not be in the retrieval corpus, forcing the
+   Diagnostic Agent to rely on parametric knowledge. Mitigation: report results
+   stratified by condition frequency (common vs. rare, per MedQA domain tags).
+ 4 Metric ceiling on MedQA. The monolithic LLM baseline may achieve70%+ on
+   diagnostic recall@3 (since GPT-4o-mini has seen many USMLE questions in
+   pretraining). The treatment safety metric is more discriminating because it
+   requires tool grounding. Mitigation: emphasize treatment safety as the
+   primary differentiator; confirm ceiling effect is not present on the MIMIC
+   subset.
+
+--------------------------------------------------------------------------------
+
+Limitations1. Synthetic evaluation. MedQA vignettes are designed for human
+test-takers and do not reflect the noise, missing data, and time pressure of
+real clinical settings. The MIMIC subset partially addresses this, but20 cases
+are too few for strong conclusions.
+
+ 2 Single base LLM. All results are conditional on GPT-4o-mini. Transfer to
+   other model families (Llama, Claude, Gemini) is not tested.
+ 3 No patient outcome data. The method is evaluated on recommendation quality,
+   not on real downstream patient outcomes. A positive result here motivates but
+   does not prove clinical utility.
+ 4 Fixed agent topology. The linear pipeline (Triage → Diagnostic → Therapy →
+   Verify) is one of many possible topologies (hierarchical, dynamic routing,
+   swarm). The proposal does not compare topology variants.
+ 5 No longitudinal or multi-visit reasoning. Each case is a single snapshot; the
+   system cannot track evolving patient state across visits.
+
+--------------------------------------------------------------------------------
+
+Summary Table (for direct comparison with non-ablated runs)
+
+
+                                                     What IDE would add
+ Dimension               This –IDE Proposal          (reference)
+ Method derivation       From first principles:      IDE would bias toward
+                         role specialization +       "memory-decoupled
+                         grounded verification       verification" or
+                                                     "hierarchical confidence
+                                                     calibration" based on
+                                                     prior top-ranked ideas
+ Baseline selection      Standard single-LLM, CoT,   IDE would suggest more
+                         flat panel                  targeted baselines (e.g.,
+                                                     "Agent with external
+                                                     critic" or "Self-Refine")
+                                                     from prior experimental
+                                                     memory
+ Ablation set            Verification, tools,        IDE would prioritize
+                         structured triage           ablations that isolate
+                                                     components that previously
+                                                     drove gains (e.g.,
+                                                     "verify-after-every-step
+                                                     vs. verify-at-end")
+ Expected failure modes  Termination, extraction     IDE would surface failure
+                         brittleness, retrieval      patterns observed in prior
+                         miss, ceiling effects       runs (e.g.,
+                                                     "over-correction loops" or
+                                                     "agent identity drift")
+
+
+The –IDE proposal is sound and testable but misses the efficiency of starting
+from known failure patterns and proven component designs. Whether this matters
+depends on how transferable the forgotten prior directions are to the healthcare
+domain — a question the full EvoScientist system would answer by comparing the
+two columns.

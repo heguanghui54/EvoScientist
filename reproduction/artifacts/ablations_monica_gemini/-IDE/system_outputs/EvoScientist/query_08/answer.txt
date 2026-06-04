@@ -1,0 +1,185 @@
+Research Proposal: Compositional Reasoning Under Distraction — When Do Agentic
+Workflows Break Down?
+
+Title**"Plan-Trace-Verify: A Controlled Study of Multi-Step Compositional
+Reasoning in LLM Agents Under Distractor Conditions"**
+
+--------------------------------------------------------------------------------
+
+Problem
+LLM-based agents today are deployed on tasks that require chaining
+multiple reasoning steps (e.g., "book a flight, check the weather at the
+destination, then find restaurants within budget"). These agents frequently fail
+not because individual steps are hard, but because they lose the thread when
+intermediate results contradict expectations or when irrelevant context
+(distractors) is injected mid-trajectory.
+
+The core problem: existing benchmarks evaluate reasoning in clean, single-turn
+settings (e.g., GSM8K, MATH, HotpotQA), but agentic reasoning involves iterative
+plan-trace cycles where earlier outputs become inputs to later steps. We lack a
+controlled benchmark that isolates the effect of "distractor injection" —
+irrelevant or misleading intermediate observations — on compositional reasoning
+accuracy.
+
+--------------------------------------------------------------------------------
+
+Hypothesis
+H₁ (Primary): Injecting task-irrelevant but semantically plausible
+observations mid-trajectory degrades LLM agent compositional reasoning accuracy
+by ≥25% relative to the no-distractor baseline, even when the underlying
+reasoning path is unchanged.
+
+H₂ (Mechanism): The degradation is primarily driven by retrieval interference
+(the agent attends to distractor tokens in subsequent reasoning steps) rather
+than plan corruption (the agent incorrectly revises its plan). This implies that
+improving selective attention (e.g., structured memory) will help more than
+improving planning ability.
+
+H₃ (Mitigation): A simple Plan-Trace-Verify loop — where the agent explicitly
+writes down its plan before execution, traces each step against the plan after
+receiving observations, and verifies consistency before proceeding — recovers
+≥80% of the performance gap relative to the no-distractor baseline.
+
+--------------------------------------------------------------------------------
+
+Method
+### Framework: Plan-Trace-Verify (PTV)
+
+We define three agent strategies to compare:
+
+1 Direct-ReAct (baseline): Standard ReAct-style agent — thinks, acts, observes
+in a flat loop with no explicit plan tracking.
+2 Plan-then-Execute (ablation control): The agent writes a plan (as pseudocode
+or bullet points) before execution, then follows it linearly, but does not
+re-check consistency after each observation.
+3 Plan-Trace-Verify (PTV) (proposed): The agent:
+
+• Plan: Writes an explicit, numbered plan with preconditions and expected
+postconditions for each step.
+• Trace: After each observation, appends a structured trace entry: [Step N]
+expected=<...> observed=<...> match=<yes|no>.
+• Verify: Before the next step, runs a consistency check. If match=no, the
+agent must decide: (a) proceed (the mismatch is benign), (b) re-plan from
+this state, or (c) request clarification.
+
+Distractor Injection ProtocolFor each task, we construct three conditions:
+
+• Clean: Standard trajectory, no distractors.
+• Weak distractors: One irrelevant observation per task, semantically related
+to the domain but logically unnecessary (e.g., a flight search returns "Did
+you know? Economy seats have30-inch pitch." between steps).
+• Strong distractors: Two to three irrelevant observations, written to
+plausibly contradict an intermediate expectation without actually
+invalidating the correct path (e.g., a weather lookup returns "Rain expected"
+when the correct reasoning only needs temperature).
+
+Distractors are inserted at fixed positions (after step1, after step2) to ensure
+controlled comparison.
+
+--------------------------------------------------------------------------------
+
+Dataset / Benchmark
+We construct CompAgent-Distract, a synthetic multi-step
+compositional reasoning dataset with500 tasks spanning three domains:
+
+Domain                    Example Task                 Steps  Distractor Slots
+Travel planning           "Book the cheapest flight    4–6    After steps1,3
+to a city with population
+<1M and good hiking
+within50km"
+Scientific literature QA  "Find the paper that         3–5    After step2
+introduced method X, check
+if it was published
+before2020, and list its
+citations that also use
+dataset Y"
+Multi-hop tool use        "Get the current time in     4–5    After steps1,2
+Tokyo, convert to UTC, find
+a meeting slot that works
+for a New York participant"
+
+Each task has:
+
+• A gold answer (deterministic)
+• A correct reasoning trace (verifiable by exhaustive enumeration)
+• One clean + two distractor variants (weak, strong) -3 random seeds for
+distractor surface form variationWe also evaluate on AgentQA (a subset of200
+multi-turn agent tasks) for out-of-distribution generalization.
+
+--------------------------------------------------------------------------------
+
+Evaluation Metrics| Metric | Definition | Primary? |
+
+|---|---|---| | Step-level accuracy | Fraction of reasoning steps where the
+correct action/observation is selected given the history | Yes | | Final answer
+accuracy | Exact-match (or programmatic equivalence) of the final output | Yes |
+| Plan deviation rate | Fraction of episodes where the agent's actions diverge
+from the optimal plan (measured by trace alignment) | Secondary | | Recovery
+rate | Fraction of distractor episodes where the agent corrects itself before
+the final step | Secondary | | Token cost overhead | Total input + output tokens
+relative to Direct-ReAct | Efficiency |
+
+All metrics reported with95% confidence intervals (bootstrap, N=1000) across3
+seeds.
+
+--------------------------------------------------------------------------------
+
+Baselines| Baseline | Description | Why |
+
+|---|---|---| | Direct-ReAct | Flat thought-action-observation loop | Standard
+minimal agent; lower bound | | Plan-then-Execute | Pre-plan, no mid-trajectory
+verification | Isolates the value of verification vs planning | | ReAct +
+Self-Consistency | Sample5 trajectories, majority vote final answer | Tests
+whether ensembling helps with distractors | | ReAct + Reflexion | Agent
+verbalizes feedback after failure | Tests whether post-hoc reflection recovers
+from distractors | | GPT-4o / Claude3.5 Sonnet (zero-shot) | No ReAct, just
+prompt with tools | Measures intrinsic reasoning without agent scaffolding |
+
+All baselines use the same backend LLM (we control for model; primary
+experiments use a frontier model, with a secondary pass on an open-weight model
+like Llama-3-70B).
+
+--------------------------------------------------------------------------------
+
+Ablations1. Distractor position: Do distractors hurt more at early vs late
+steps?
+
+2 Distractor type: Semantic distractors vs random tokens vs plausible-but-wrong
+facts — which causes the most degradation?
+3 Plan granularity: Does a detailed plan (per-step pre/post conditions) help
+more than a brief plan (bullet list)?
+4 Verification frequency: Verify after every step vs every2 steps vs
+end-of-trajectory — is there a sweet spot?
+5 Memory structure: Instead of PTV's trace-and-verify, use a simple scratchpad
+with a "recent observations" summary — does structured memory alone match
+PTV?
+6 Model scale: Does the gap between PTV and Direct-ReAct shrink or grow at
+larger model sizes?
+
+--------------------------------------------------------------------------------
+
+Expected Failure Modes| Failure Mode | What to Watch For | Mitigation in Design
+|
+
+|---|---|---| | PTV overhead overwhelms small models | PTV may degrade
+performance on <7B models because long traces consume context and confuse the
+model | Evaluate on ≥7B; report token cost; consider ablation (ablation4:
+verification frequency) | | Distractors too weak to cause degradation | If
+accuracy stays at90%+, the manipulation check fails | Pilot-test distractor
+strength on a development set; reject distractors that cause <5% drop on3 random
+runs. If needed, escalate to "adversarial distractors" written to specifically
+match common LLM failure patterns | | Plan quality variance swamps the effect |
+If some agents write poor plans, plan deviation may correlate with plan quality,
+not distractor handling | Pre-validate plan quality: only include episodes where
+the initial plan is judged correct by an automated verifier (a separate LLM call
+with rubric) | | No gap between Plan-then-Execute and PTV | If verification
+doesn't help, hypothesis H₃ is falsified — but H₁ and H₂ remain testable | This
+is still informative: it would suggest that planning alone (without per-step
+verification) suffices for distractor robustness. We would then investigate
+whether the agent implicitly verifies during planning | | Recovery rate near0 |
+Agents detect mismatches but do not correct | Distinguish detection vs recovery
+in metric design; if detection is high but recovery low, that's a different
+(useful) finding about agentic decision-making under uncertainty | | Distractor
+position confounds step difficulty | Earlier steps in a task may be
+systematically easier/harder | Counterbalance: permute step order for a subset
+of tasks and re-run the strongest distractor condition |

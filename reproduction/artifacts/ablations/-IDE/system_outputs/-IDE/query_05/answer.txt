@@ -1,0 +1,139 @@
+Title: Structurally-Grounded Automated Literature Review Generation via
+Citation-Graph-Guided Section PlanningProblem: Generating a coherent,
+comprehensive, and correctly cited literature survey from a corpus of papers is
+an open challenge. Existing approaches (e.g., extractive summarization, naive
+retrieval-augmented generation) produce reviews that either (a) list papers
+sequentially without organizing them into a narrative structure, (b) hallucinate
+citations or misattribute claims, or (c) fail to cover the breadth of a field
+because they lack explicit awareness of how papers relate to one another
+(support, contradict, extend, apply). A literature review is fundamentally a
+structured argument about the state of a field, not a compressed document.
+Current methods treat structure as a post-hoc decoration rather than a
+first-class planning objective.
+
+Hypothesis: If a system first constructs a citation graph over the input paper
+set, extracts structural roles (seminal work, baseline, improvement,
+application, rebuttal) and relationship types (extends, contradicts, reproduces,
+benchmarks) from citation contexts, and uses these to plan
+hierarchically-organized sections before generating prose, then the resulting
+literature review will achieve higher citation-fidelity, better topical
+coverage, and more coherent narrative flow than systems that generate sections
+either sequentially or from flat retrieval.
+
+Method: We propose a three-stage pipeline:
+
+ 1 Citation-Graph Construction & Role Assignment. Given a query topic and a seed
+   set of papers (from the initial corpus), construct a directed citation graph.
+   For each edge, extract the citing sentence and classify the relationship into
+   one of five categories using a fine-tuned sentence encoder: extends,
+   contradicts, reproduces, benchmarks-against, or unrelated. Simultaneously,
+   assign each paper a structural role (seminal, baseline, state-of-the-art,
+   survey, application, tool/dataset) based on its citation profile (in-degree,
+   recency, h-index of venue) and abstract content.
+ 2 Hierarchical Section Planning. Use a planner (e.g., an LLM prompted with
+   graph statistics or a lightweight learned policy over section templates) to
+   produce a two-level outline. At level1, sections correspond to topic clusters
+   extracted from the citation graph via community detection (e.g., Louvain on
+   co-citation edges). At level2, within each section, papers are ordered by a
+   combination of role priority (seminal → baseline → SotA → extension) and
+   chronological flow. Each section's plan specifies: (a) which papers to cite,
+   (b) what relationship narrative to use (e.g., "X extended Y by..."), and (c)
+   a one-sentence section thesis summarizing the contribution of that group of
+   papers to the field.
+ 3 Controlled Generation with Citation-Grounded Decoding. Generate section text
+   section-by-section using an LLM prompted with (i) the section thesis, (ii)
+   the ordered paper list with extracted relationship sentences, and (iii) the
+   full abstract of each paper. To reduce hallucination, we apply a
+   citation-grounded decoding constraint: after each generated sentence, the
+   model must select at least one citation from the paper list for that section;
+   generation stops per section when all planned citations for that section have
+   been used or the section thesis has been fully addressed. No cross-section
+   citations are permitted unless a paper appears in two planned sections (which
+   is allowed with a cross-reference marker).
+
+Dataset / Benchmark: We use the SciReviewGen corpus (introduced by Luu et
+al.,2024), which pairs query topics with full gold-standard survey papers and
+their reference lists. We filter for topics where at least15–25 papers in the
+gold survey are available as full text (via S2ORC or unpaywall). This yields
+approximately80–120 evaluation topics across computer science subfields. Each
+gold review is split into sections at the level-2 heading depth.
+
+Evaluation Metrics:
+
+ • ROUGE-1/2/L and BLEU for n-gram overlap with gold reviews (standard measure,
+   known limitations).
+ • Citation-F1 (proposed): the F1 score over the set of cited papers per
+   section, compared against the gold review's reference list per section.
+   Penalizes hallucinated citations and missing required citations.
+ • Narrative Coherence (proposed): human evaluation (5-point Likert) of logical
+   flow, section-to-section transitions, and thesis clarity, rated by at least3
+   annotators per example on30 randomly sampled topics.
+ • Factual Consistency: measured via DeBERTa-based NLI (entailment rate between
+   generated claims and source abstracts), averaged across all sections.
+ • Coverage: fraction of gold-reference papers that appear in the generated
+   review at least once.
+
+Baselines:
+
+ 1 Naive RAG: retrieve top-10 papers per query, generate a flat list-style
+   summary via GPT-4o (no structure planning).
+ 2 Sequential Section Generation: section-level retrieval (K=5 papers per
+   section) with GPT-4o, sections generated in order with no cross-section
+   planning (Gidiotis & Tsoumakas,2023).
+ 3 Topic-Model-Guided: LDA on all paper abstracts → topic clusters → generate
+   one paragraph per topic → concatenate (standard text mining baseline).
+ 4 Our Method (Full): the full pipeline described above.
+ 5 Ablation: No Graph Roles: same pipeline but skip role assignment — use
+   community detection only, no relationship-edge labels.
+
+Ablations (Table-3 style):
+
+
+ Variant  Component Removed                  Expected Impact
+ -GR      Citation-graph role assignment     Reduced citation-F1 (model cannot
+                                             distinguish seminal from
+                                             peripheral papers)
+ -HD      Hierarchical section planning;     Reduced narrative coherence
+          replace with flat                  (sections become independent
+          topic-to-section mapping           blocks)
+ -CGD     Citation-grounded decoding         Increased hallucination rate;
+          constraint; allow free generation  reduced citation-F1
+ -IDE     Idea-direction evolution from      Isolated effect of not leveraging
+          memory                             previously-proven research
+                                             directions from prior idea
+                                             generations
+
+
+Expected failure modes and how they are handled:
+
+ • Fragmentary output. If community detection produces too many small clusters
+   (e.g.,20+ for25 papers), sections become too narrow. Mitigation: merge
+   clusters smaller than3 papers into the nearest large cluster.
+ • Citation assignment errors. Classifying "extends" vs "benchmarks-against" is
+   ambiguous in dense subfields (e.g., LLM evaluation). Mitigation: use a
+   confidence threshold (p ≥0.65); below threshold, default to "unrelated" and
+   omit the edge from planning.
+ • Thesis drift during generation. The LLM may generate text that wanders from
+   the section thesis. Mitigation: include the section thesis as a fixed prefix
+   prompt term; after the draft, run an entailment classifier between generated
+   sentences and the thesis; flag and regenerate sentences that fall below a0.5
+   entailment threshold.
+
+Limitations:
+
+ • The method depends on the availability of a reasonably complete citation
+   graph. Fields with sparse citation practices or small paper counts (<10) may
+   yield poor results.
+ • Citation roles are assigned heuristically; a paper's actual contribution may
+   not match its citation-profile-based role (e.g., a highly-cited paper that is
+   primarily a method survey may be misclassified as "seminal").
+ • The generation step uses a closed-source LLM (GPT-4o), introducing
+   reproducibility concerns and potential API-level drift over time. All
+   experiments will log exact model, temperature (0.3 for all), and seed
+   parameters.
+ • Human evaluation for narrative coherence is expensive and covers only a
+   subset of topics. We will report inter-annotator agreement (Krippendorff's α)
+   and release annotation guidelines.
+ • The citation-grounded decoding constraint is a soft heuristic (prompt-level
+   instruction + post-hoc filtering), not a trained decoding objective, and may
+   occasionally be ignored by the model despite the prompt.

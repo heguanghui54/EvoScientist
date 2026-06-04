@@ -81,6 +81,7 @@ def main() -> None:
         "aggregate_ablation_results.py",
         "aggregate_code_execution.py",
         "run_ablation_variants.py",
+        "refresh_ablation_artifacts.py",
         "build_paper_level_evidence_runbook.py",
         "verify_paper_level_evidence_gate.py",
         "build_paper_reproduction_plan.py",
@@ -761,19 +762,35 @@ def main() -> None:
     assert ablation_partial["covered_query_count"] == 3
     assert ablation_partial["schema_gate"]["status"] == "incomplete"
     assert ablation_partial["paper_level_audit"]["table3_blocker_remains"] is True
+    assert "Ablation Queries 01-03 Partial Report" in ablation_partial_md_path.read_text(
+        encoding="utf-8"
+    )
+    ablation_10q_json_path = ROOT / "ablation_queries01_10_monica_gemini_report.json"
+    ablation_10q_md_path = ROOT / "ablation_queries01_10_monica_gemini_report.md"
+    assert ablation_10q_json_path.is_file(), "missing ablation queries01-10 Monica/Gemini JSON"
+    assert ablation_10q_md_path.is_file(), "missing ablation queries01-10 Monica/Gemini markdown"
+    ablation_10q = json.loads(ablation_10q_json_path.read_text(encoding="utf-8"))
+    assert ablation_10q["status"] == "partial"
+    assert ablation_10q["paper_exact"] is False
+    assert ablation_10q["query_ids"] == list(range(1, 11))
+    assert ablation_10q["expected_query_count"] == 30
+    assert ablation_10q["covered_query_count"] == 10
+    assert ablation_10q["judge"]["provider"] == "monica"
+    assert ablation_10q["judge"]["model"] == "gemini-3-flash-preview"
+    assert ablation_10q["judge"]["total_records"] == 30
     formal_ablation_root = ROOT / "artifacts" / "ablations"
     formal_combined = json.loads((formal_ablation_root / "combined_aggregate.json").read_text(encoding="utf-8"))
     assert set(formal_combined["variants"]) == {"-IDE", "-IVE", "-all"}
-    for variant in ablation_partial["variants"]:
+    for variant in ablation_10q["variants"]:
         vroot = formal_ablation_root / variant
         manifest = json.loads((vroot / "system_outputs_complete.json").read_text(encoding="utf-8"))
-        assert manifest["complete_query_ids"] == [1, 2, 3]
+        assert manifest["complete_query_ids"] == list(range(1, 11))
         assert manifest["paper_exact"] is False
-        assert sum(1 for line in (vroot / "judge_outputs.jsonl").read_text(encoding="utf-8").splitlines() if line.strip()) == 3
-        assert formal_combined["variants"][variant]["usable_records"] == 3
+        assert sum(1 for line in (vroot / "judge_outputs.jsonl").read_text(encoding="utf-8").splitlines() if line.strip()) == 10
+        assert formal_combined["variants"][variant]["usable_records"] == 10
     schema_latest = json.loads((ROOT / "artifacts" / "audit" / "paper_artifact_schema_latest.json").read_text(encoding="utf-8"))
     assert schema_latest["components"]["ablation"]["complete"] is False
-    assert "Ablation Queries 01-03 Partial Report" in ablation_partial_md_path.read_text(
+    assert "Ablation Queries 01-10 Monica/Gemini Judge Report" in ablation_10q_md_path.read_text(
         encoding="utf-8"
     )
     ablation_monica_json_path = ROOT / "ablation_queries01_03_monica_gemini_report.json"
@@ -792,8 +809,8 @@ def main() -> None:
     assert set(monica_combined["variants"]) == {"-IDE", "-IVE", "-all"}
     for variant in ablation_monica["variants"]:
         vroot = monica_root / variant
-        assert sum(1 for line in (vroot / "judge_outputs.jsonl").read_text(encoding="utf-8").splitlines() if line.strip()) == 3
-        assert monica_combined["variants"][variant]["usable_records"] == 3
+        assert sum(1 for line in (vroot / "judge_outputs.jsonl").read_text(encoding="utf-8").splitlines() if line.strip()) == 10
+        assert monica_combined["variants"][variant]["usable_records"] == 10
     assert "Ablation Queries 01-03 Monica/Gemini Judge Report" in ablation_monica_md_path.read_text(
         encoding="utf-8"
     )

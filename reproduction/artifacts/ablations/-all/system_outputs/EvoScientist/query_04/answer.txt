@@ -1,0 +1,137 @@
+Research Proposal: Multi-Agent LLM Systems for Clinical Trial Eligibility
+Screening## Title
+TrialMatch: A Structured Multi-Agent Debate Framework for
+Zero-Shot Clinical Trial Eligibility Screening
+
+--------------------------------------------------------------------------------
+
+Problem
+Clinical trial enrollment is the bottleneck of medical research.
+Eligibility screening — determining whether a patient's unstructured EHR notes
+satisfy a trial's inclusion/exclusion criteria — is currently performed manually
+by coordinators. This is slow, error-prone, and does not scale to the ~400,000
+trials on ClinicalTrials.gov.
+
+Single-pass LLM prompting achieves ~70–75% F1 on eligibility classification
+(TrialGPT,2024), but suffers from two issues: (a) it hallucinates criterion
+matches for ambiguous or missing data, and (b) it does not handle contradictory
+criteria across multiple trials for the same patient.
+
+Open question: Can a multi-agent debate architecture, where specialized agents
+argue for and against each criterion, outperform a single monolithic LLM on this
+task?
+
+--------------------------------------------------------------------------------
+
+Hypothesis
+A multi-agent debate system — where one agent argues for criterion
+satisfaction (citing specific evidence), a second argues against, and a judge
+agent synthesizes the final decision — will improve F1 by ≥5 points over a
+single-pass LLM with equal total inference cost, because forced adversarial
+reasoning reduces hallucination on borderline criteria.
+
+Null hypothesis: Multi-agent debate does not significantly outperform
+single-pass prompting when both use the same backbone LLM and comparable token
+budgets.
+
+--------------------------------------------------------------------------------
+
+Method
+### Architecture: TrialMatchThe system operates in three stages per
+patient-trial pair:
+
+1 Evidence Extraction: An extractor agent reads the patient note + trial
+criteria and produces a structured table mapping each criterion to the spans
+of text that are relevant (or marks the criterion as "no evidence in note").
+2 Adversarial Debate (per criterion):
+
+• Pro Agent — given the criterion and extracted evidence, argues why the
+patient meets this criterion.
+• Con Agent — given the same evidence, argues why the patient does not meet it.
+• Each agent is temperature-decayed (T=0.7 →0.3) over3 rounds; they see each
+other's arguments.
+
+3 Aggregation & Prediction:
+
+• Judge Agent — reads the debate transcripts for all criteria and produces:
+• A binary eligibility decision (eligible / ineligible)
+• A confidence score - Citations to specific spans in the original
+noteBackbone: Llama-3.1-70B (or a similarly capable open model), quantized to
+allow multi-agent rollouts on a single A100.
+
+Prompt structure: Each agent is prompted with a role persona (e.g., "You are a
+conservative clinical reviewer who requires explicit documentation before
+approving") to ensure separation of perspectives.
+
+--------------------------------------------------------------------------------
+
+Dataset / Benchmark
+Primary: TrialGPT benchmark (Jin et al.,2024) —183 patient
+summaries (from TREC Clinical Trials) and3,500+ trial-criterion pairs with
+expert-annotated eligibility labels. This is the standard zero-shot benchmark.
+
+Secondary (robustness): N2C22018 (Adverse Drug Events cohort) — convert the ADE
+extraction task into criterion-style screening for a drug trial; measure
+cross-dataset transfer.
+
+Validation method:5-fold patient-level cross-validation on TrialGPT. No patient
+appears in both train and test folds.
+
+--------------------------------------------------------------------------------
+
+Evaluation Metrics| Metric | Rationale |
+
+|---|---| | Macro F1 (primary) | Balanced measure for binary eligibility;
+primary metric in TrialGPT | | Criterion-level accuracy | Per-criterion match vs
+annotator labels (from TrialGPT's fine-grained labels) | | Precision vs Recall
+tradeoff | Important for clinical use — false positives (enrolling an ineligible
+patient) are costlier than false negatives | | Mean confidence calibration (ECE)
+| Judge confidence should correlate with correctness | | Debate round
+convergence | Does additional debate rounds (>3) change the final decision?
+(sensitivity analysis) | | Token cost | Total tokens consumed per patient-trial
+pair (runtime cost matters for deployment) |
+
+--------------------------------------------------------------------------------
+
+Baselines1. Single-pass LLM (same backbone, same evidence extraction step, no
+debate) — direct ablation2. TrialGPT (Jin et al.,2024) — strongest published
+zero-shot baseline3. Chain-of-Thought prompting on the same backbone — controls
+for reasoning depth4. Self-consistency (Wang et al.,2023) with5 samples —
+controls for ensemble effect vs. structured debate5. Random majority (predict
+the majority class per trial) — sanity floorAll baselines share the same
+evidence extraction stage and backbone model for fair comparison.
+
+--------------------------------------------------------------------------------
+
+Ablations1. No debate → single-pass LLM (this is baseline1 above)
+
+2 Single-agent self-consistency (same number of forward passes as debate, but
+no adversarial structure) — isolates the benefit of adversarial reasoning vs.
+mere sampling3. Judge only, no pro/con (judge sees evidence directly) —
+isolates the value of debate4. Debate without role personas (both agents
+prompted as neutral reviewers) — tests whether forced role separation
+matters5. Temperature ablation (fixed high vs. fixed low vs. decay schedule)
+3 Backbone size (8B vs.70B) — does debate help smaller models more?
+
+--------------------------------------------------------------------------------
+
+Expected Failure Modes| Failure Mode | Mitigation |
+
+|---|---| | Both pro and con hallucinate — debate converges on wrong facts
+because both agents invent evidence | Evidence extraction stage is constrained
+to quote spans only; agents cannot fabricate new facts | | Judge favors
+pro/consistently — positional bias or role bias in the judge | Swap agent order
+randomly; test two judge prompts (neutral; "prefer inclusion"; "prefer
+exclusion") | | Token cost is prohibitive — multi-agent debate uses3–5× more
+tokens than single-pass | Measure cost explicitly; report F1 per token. If gain
+is <5 points, single-pass is economically preferable | | No improvement on easy
+criteria — debate only helps borderline cases, which are rare (~15% of criteria)
+| Report separately on "easy" (both agents initially agree) vs "hard" criteria;
+overall F1 gain may be diluted | | Agent personas polarize unrecoverably — pro
+and con become entrenched and never converge | Hard-limit at3 rounds; judge
+always has the final say regardless of agreement | | Dataset leakage — LLM was
+pre-trained on ClinicalTrials.gov or MIMIC notes | Use a held-out set of recent
+trials (past12 months, beyond training cutoff); check for exact matches | |
+Cross-dataset transfer fails — N2C2 performance is at or below random | Accept
+as a limitation; report honestly. Consider fine-tuning the evidence extraction
+stage on N2C2 |

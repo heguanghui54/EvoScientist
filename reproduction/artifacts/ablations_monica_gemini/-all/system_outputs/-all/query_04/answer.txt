@@ -1,0 +1,142 @@
+Title: Task-Oriented AI Agents for Clinical Workflow Coordination: A Structured
+Multi-Agent Framework for Healthcare Decision SupportProblem
+
+Healthcare workflows involve parallel decision streams — triage, diagnosis,
+treatment planning, discharge scheduling — that require coordination across
+specialized knowledge domains. Current AI-in-healthcare work focuses on
+single-task models (e.g., a diagnostic classifier, a summarizer) that cannot
+sequence interdependent decisions or adapt when new patient information
+invalidates earlier steps. Prior multi-agent attempts either hardcode
+coordination rules (brittle across hospitals) or use monolithic planners that
+cannot recover from a sub-decision failure. The field lacks a principled
+evaluation framework that tests whether an agent system can (a) decompose a
+clinical scenario into subtasks, (b) execute them under realistic information
+arrival, and (c) reassemble decisions into a coherent care pathway.
+
+Hypothesis
+
+A structured multi-agent framework that separates perception, reasoning, and
+action into typed agents with an explicit coordination protocol will outperform
+monolithic planners and fixed-pipeline systems on composite clinical decision
+accuracy, recovery from mid-episode information changes, and end-to-end task
+completion rate. The advantage will be largest on scenarios requiring ≥4
+interdependent decisions, where coordination overhead is offset by error
+isolation and re-planning speed.
+
+Method
+
+We propose ClinPlan, a multi-agent framework with four typed agent roles:
+
+ 1 Triage Agent — ingests initial patient presentation (structured triage note +
+   vitals), assigns acuity level, and flags immediate actions. Returns a
+   structured acuity tag + priority queue.
+ 2 Diagnostic Reasoning Agent — receives triage output and available lab/imaging
+   results; generates a differential diagnosis list with confidence scores and
+   recommends next diagnostic tests.
+ 3 Treatment Planner Agent — takes confirmed diagnosis (or top hypothesis) plus
+   patient history/contraindications; produces a ranked treatment plan with
+   rationale.
+ 4 Coordination Agent — maintains a shared episode state, detects contradictions
+   across agent outputs, triggers re-invocation when new information arrives,
+   and produces the final integrated care pathway.
+
+Agents communicate through typed messages (JSON schema) rather than free text.
+The coordination agent maintains a directed dependency graph of decisions. When
+a new lab result arrives mid-episode, the coordination agent identifies which
+downstream decisions depend on the now-invalidated earlier decision and
+re-invokes only the affected subtree — avoiding full replanning.
+
+Dataset / Benchmark
+
+We construct ClinBench-100, a dataset of100 synthetic clinical scenarios derived
+from MIMIC-III discharge summaries, each annotated with:
+
+ • Initial presentation (triage note + vitals)
+ • Time-stamped information arrival sequence (e.g., lab result at step2, imaging
+   at step4)
+ • Gold-standard care pathway (decision sequence + final plan)
+ • Difficulty tier (simple ≤3 decisions, complex ≥4 decisions,
+   ambiguous-presentation)
+
+Each scenario is validated by two domain experts (clinicians with ≥5 years
+hospital experience) for clinical plausibility and correctness of the gold
+pathway.
+
+Evaluation Metrics
+
+ • Clinical Decision Accuracy — exact match of final care plan components
+   (diagnosis, treatment, disposition) against gold standard- Partial Credit
+   Accuracy — token-level F1 between generated and gold plan, allowing credit
+   for partially correct plans- Re-planning Efficiency — proportion of affected
+   decisions successfully re-invoked after a mid-episode information change (vs.
+   total affected decisions)
+ • Coordination Overhead — ratio of coordination messages to substantive
+   reasoning messages (lower is better)
+ • End-to-End Completion Rate — fraction of episodes where ClinPlan produces a
+   valid (non-contradictory, complete) pathway within a30-step budgetBaselines
+
+
+ Baseline          Description                   Key Difference from ClinPlan
+ Monolithic LLM    Single GPT-4 prompt with      No agent decomposition
+                   full context
+ Fixed-Pipeline    Agents run in fixed order,    No coordination agent or
+                   no re-planning                dependency graph
+ Flat Multi-Agent  All agents share a free-text  No structured coordination
+                   channel, no typed schemas
+ Oracle Planner    Coordination agent sees       Upper bound (not learnable)
+                   ground-truth dependency
+                   graph
+
+
+Ablations
+
+
+ Ablation     Component Removed                Expected Effect
+ -coord       Coordination agent; agents       ↑ coordination overhead, ↓
+              write to shared free-text log    re-planning efficiency, ↑
+                                               contradictions
+ -schema      Typed message schemas →          ↑ parsing errors, ↓ partial
+              free-text agent communication    credit accuracy
+ -dependency  Dependency graph → full replan   ↑ coordination overhead, ↑
+              on any new information           completion rate on small
+                                               scenarios, ↓ on large
+ -all         All three ablated                Collapse to near Flat
+              simultaneously (closest to flat  Multi-Agent performance
+              multi-agent)
+
+
+Expected Failure Modes
+
+ 1 Schema brittleness — typed message schemas may fail on out-of-distribution
+   clinical findings not anticipated in the schema design. Mitigation: include a
+   free-text fallback field in every message type.
+ 2 Coordination as bottleneck — the coordination agent becomes the single point
+   of failure; if its dependency graph logic is wrong, all downstream
+   re-planning fails. Mitigation: log all coordination decisions for post-hoc
+   auditing.
+ 3 Agent hallucination cascades — an incorrect triage acuity propagates into the
+   diagnostic and treatment agents. Mitigation: the coordination agent flags
+   confidence below threshold for human review rather than forwarding.
+ 4 Low ambiguity tolerance — the framework assumes decomposable decisions; truly
+   ambiguous presentations (e.g., chest pain with normal ECG) may resist
+   structured decomposition. Mitigation: tiered evaluation reports performance
+   separately for ambiguous-presentation scenarios.
+
+Limitations
+
+ 1 Synthetic scenarios — ClinBench-100 is derived from MIMIC-III but is not a
+   real-time clinical deployment. Real-world information arrival is noisier,
+   slower, and often missing entirely.
+ 2 Static gold standards — the gold care pathways reflect retrospective expert
+   consensus, which may not match prospective optimal care (treatments evolve,
+   expert disagreement exists at decision time).
+ 3 No human-in-the-loop evaluation — the framework is evaluated end-to-end
+   without a clinician reviewing intermediate decisions. Real deployment would
+   require selective human oversight that this benchmark does not model.
+ 4 Single institution bias — MIMIC-III is Beth Israel Deaconess data;
+   institutional practice patterns (triage protocols, lab ordering conventions)
+   are baked into the scenarios and may not generalize.
+ 5 No safety certification — the evaluation measures accuracy and completion
+   rate, not patient safety. A system with high accuracy on90% of cases could
+   still cause harm on the10% it gets wrong, and the current metrics do not
+   weight failure severity.

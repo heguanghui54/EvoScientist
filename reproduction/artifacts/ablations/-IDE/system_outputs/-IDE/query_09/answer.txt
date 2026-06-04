@@ -1,0 +1,36 @@
+Quantization-Aware Sparse Training (QAST): Mixed-Precision Deployment of LLMs on
+     Edge Devices## ProblemDeploying large language models on edge devices
+   (smartphones, IoT gateways, embedded systems) faces a fundamental tension:
+  aggressive quantization (4-bit weights,8-bit activations) is required to fit
+within tight memory and compute budgets, but standard post-training quantization
+  (PTQ) and quantization-aware training (QAT) methods produce severe accuracy
+   degradation below4-bit precision, particularly on long-tail reasoning and
+  factual recall tasks. Current approaches fall into three camps — PTQ (fast,
+  fragile), QAT (robust, expensive), and mixed-precision schemes that rely on
+ static sensitivity heuristics — none of which jointly optimize the interaction
+ between which weights to quantize, to what precision, and whether to sparsify
+first. Edge deployment demands a method that navigates this three-way trade-off
+                 without full retraining on each target device.
+
+HypothesisA joint optimization over per-layer quantization bit-width and
+structured sparsity — guided by a lightweight, data-free sensitivity metric
+computed from the Hessian trace approximation — yields an LLM that fits within a
+given edge-device memory budget while recovering ≥95% of the full-precision
+perplexity on held-out text, outperforming uniform quantization, static
+mixed-precision, and serial sparsify-then-quantize pipelines at the same budget.
+
+Method: Quantization-Aware Sparse Training (QAST)
+
+The proposed method has three phases:
+
+Phase1 — Sensitivity profiling (data-free). For each layer, compute a cheap
+sensitivity score without requiring a calibration set: the Hutchinson trace
+estimator (5–10 random vectors) approximates the Hessian trace. Layers with
+higher trace (higher curvature) are allocated higher bit-width (4–8 bits) and
+zero sparsity. Layers with low trace are candidates for2–3 bit quantization and
+structured sparsity (N:M sparsity at N=1, M=4 or M=8). This step costs
+roughly1–2 forward-backward passes per layer and runs once.
+
+Phase2 — Joint search via integer linear programming. Given sensitivity scores,
+memory constraints (e.g.,2 GB,4 GB), and a discrete set of configurations
+(bit-width ∈

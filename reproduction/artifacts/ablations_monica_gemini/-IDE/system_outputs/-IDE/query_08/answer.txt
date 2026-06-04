@@ -1,0 +1,207 @@
+● think_tool(The user asks for an -IDE ablation ru…)
+
+--------------------------------------------------------------------------------
+
+Compositional Constraint Propagation: A Modular Reasoning Framework for
+Multi-Step Agentic Tasks### ProblemCurrent LLM-based agents exhibit brittle
+performance on tasks requiring sustained multi-step reasoning. When a chain of
+deductions spans more than3–5 steps, error rates compound: a single incorrect
+intermediate inference propagates forward, and the final answer degrades
+non-linearly with chain length. Existing mitigations — chain-of-thought
+prompting, self-consistency sampling, and verification loops — treat reasoning
+as a left-to-right autoregressive process and do not structurally isolate
+sub-problems. As a result, agents cannot reliably backtrack, re-derive a
+corrupted intermediate value, or verify a partial solution before consuming it
+as input to the next step. This places a hard ceiling on tasks like multi-hop QA
+over conflicting documents, nested tool-use planning, and
+constraint-satisfaction problems with interdependent variables.
+
+HypothesisWe hypothesize that decomposing multi-step reasoning into a
+constraint-propagation graph — where each node is a self-contained sub-reasoning
+module that communicates only through typed, verifiable intermediate assertions
+— reduces end-to-end error rates compared to monolithic autoregressive
+generation. Specifically:
+
+▌ H1 (Primary). A structured constraint-propagation framework that
+▌ materializes intermediate assertions as typed variables with explicit
+▌ pre-conditions and post-conditions will improve accuracy on multi-step
+▌ deductive benchmarks by at least15% (absolute) over chain-of-thought
+▌ baselines, at comparable token cost.
+
+▌ H2 (Robustness). The framework's advantage grows monotonically with task
+▌ depth: on tasks requiring ≥6 reasoning steps, the accuracy gap over CoT will
+▌ be ≥25% absolute.
+
+▌ H3 (Debugability). When the model produces an incorrect final answer, a
+▌ trace over the constraint graph will identify the offending node with ≥80%
+▌ precision, enabling targeted re-generation of only the faulty sub-step.
+
+MethodCore Architecture — Constraint Propagation Network (CPN).
+
+A two-phase pipeline executed per query:
+
+Phase1: Decomposition (one-shot). The model is prompted to parse the query into
+a directed acyclic graph (DAG) of reasoning nodes. Each node specifies:
+
+ • A natural-language description of its sub-goal.
+ • Input slots (typed variables required from parent nodes).
+ • Output slots (typed variables produced).
+ • A verification predicate — a short natural-language statement that must hold
+   true after the node executes (e.g., "the sum of allocated resources ≤ total
+   budget").
+
+This phase uses a structured output format (JSON with a fixed schema). No
+execution happens yet.
+
+Phase2: Execution with constraint propagation. Nodes are processed
+topologically:
+
+ 1 A node checks that all input slots are populated and their verification
+   predicates hold. If an input predicate fails, the node enters a
+   back-propagation state that signals the upstream node to re-generate.
+ 2 The node invokes the LLM to compute its output given the verified inputs. The
+   prompt includes only the node's description and its verified inputs — no full
+   history, no other nodes.
+ 3 The output is checked against the node's own verification predicate.
+
+ • If it passes, the output is committed and downstream nodes become eligible.
+ • If it fails, the node re-samples (up to3 attempts with temperature=0.7,
+   feeding the verification error as a correction signal). After3 failures, the
+   node enters a diagnostic mode that logs the failure and escalates to a
+   meta-controller.
+
+A meta-controller (a separate LLM call, invoked only on escalation) decides
+whether to re-decompose a subgraph or fall back to standard CoT for that
+sub-problem.
+
+Graph serialization invariant. The full CPN is encoded into a single prompt
+context window on each call — no dynamic memory roll-up. Node outputs are stored
+as structured fields within the prompt, not in an external database.
+
+Dataset / BenchmarkThree evaluation sets targeting different facets of complex
+reasoning:
+
+
+ Benchmark                   Depth       Primary Challenge          Size (test)
+ MuSiQue (multi-step QA)     2–4 hops    Irrelevant context,        1,500
+                                         composition
+ LogiQA2.0                   3–8 steps   Logical deduction,         800
+                                         negation
+ AgentTool (synthetic;       4–10 steps  Planning under resource    500
+ curated from ToolBench and              constraints, conditional
+ API-Bank)                               branching
+
+
+For AgentTool, each instance specifies: available tools (with capabilities and
+costs), a goal, a budget constraint, and a set of distractors (tools with
+plausible-looking but irrelevant capabilities). The ground truth is a valid
+tool-use plan (sequence of calls) that achieves the goal within budget.
+
+All benchmarks are open-source, static, and free of data leakage concerns for
+the models evaluated.
+
+Evaluation MetricsPrimary metric:
+
+ • End-to-end accuracy (% of queries where the final output matches the
+   ground-truth answer exactly, or within a tolerance for numerical answers).
+
+Secondary metrics:
+
+ • Compositional depth accuracy — accuracy conditioned on the number of
+   ground-truth reasoning hops (to test H2).
+ • Token efficiency — total input + output tokens per correct answer.
+ • Node failure localization precision — on incorrect answers, whether the
+   (human-annotated) first error node is among the top-3 nodes flagged by the
+   CPN diagnostic (test H3).
+ • Back-propagation overhead — fraction of queries that require at least one
+   node re-generation after input verification failure.
+
+All metrics reported with95% binomial confidence intervals and averaged over3
+random seeds per condition.
+
+Baselines1. Direct (zero-shot) — prompt the LLM with the query only, no
+reasoning structure.
+
+ 2 Chain-of-Thought — standard CoT with "Let's think step by step" and no
+   decomposition.
+ 3 Self-Consistency@5 — CoT sampled5 times, majority-vote answer (Wang et
+   al.,2023).
+ 4 ReAct — interleaved reasoning and action traces, applied to the AgentTool
+   benchmark only (since MuSiQue and LogiQA have no tool-use component).
+ 5 Tree-of-Thought (ToT) — breadth-first search over reasoning states with a
+   value function prompt (Yao et al.,2023), limited to depth4 and branching
+   factor3 for tractability.
+ 6 Graph-of-Thought (GoT) — the closest prior art: splits reasoning into
+   DAG-structured nodes with aggregation operations (Besta et al.,2024), but
+   without typed verification predicates or back-propagation.
+
+All baselines run on the same LLM backbone (same model, quantization,
+temperature, and max tokens) as the CPN condition.
+
+Ablations1. -Verification — CPN without the verification predicate check on node
+outputs. Nodes commit their first generation unconditionally. Isolates the
+contribution of local correctness checks.
+
+ 2 -Backprop — CPN without back-propagation on input verification failure. If
+   inputs fail, the node proceeds anyway with a warning appended to the prompt.
+   Isolates the contribution of error recovery.
+ 3 -StructuredPrompt — CPN where node descriptions remain structured but the
+   entire graph is serialized as free text (no typed input/output slots).
+   Isolates the contribution of the typed-interface constraint.
+ 4 -MetaController — CPN where node failures (three failed attempts) cause a
+   hard fallback to standard CoT for the remaining graph, rather than invoking
+   the meta-controller for re-decomposition.
+
+Each ablation is run on the full three-benchmark suite at the same compute
+budget.
+
+Expected Failure Modes1. Decomposition collapse. For very shallow queries (1–2
+hops), the CPN overhead (decomposition + verification) inflates token cost with
+negligible accuracy gain, and the structured output schema may occasionally
+force an unnatural decomposition that performs worse than direct CoT.
+Mitigation: include a routing heuristic — skip CPN when query has fewer than3
+named entities or logical operators — to be tuned on a held-out validation set.
+
+ 2 Verification predicate brittleness. The LLM-judged verification predicate may
+   produce false positives (accepts an incorrect intermediate) or false
+   negatives (rejects a correct intermediate), degrading the
+   constraint-propagation signal. Mitigation: verification predicates are
+   constrained to simple factual statements ("X is a subset of Y", "the sum ≤
+   N") rather than open-ended assessments, and we report false-positive/negative
+   rates as a secondary analysis.
+ 3 Graph depth explosion. For highly branching queries, the DAG may grow beyond
+   the prompt window or cause the meta-controller to be invoked too frequently.
+   Mitigation: cap maximum nodes at12; any query requiring more nodes falls back
+   to CoT for the excess subgraph.
+ 4 Ordering sensitivity. Topological ordering of nodes is not unique. Different
+   orderings may produce different results if verifying one node depends on the
+   specific output of a sibling. We will run a sensitivity analysis on
+   a100-instance subset, randomly permuting node order within topological
+   constraints, and report variance.
+
+Limitations- No dynamic memory across sessions. The CPN operates within a single
+prompt context. It does not accumulate reusable decompositions across queries
+(e.g., recognizing that "allocate resources to maximize X" appears repeatedly
+with different parameters). This is by design for the -IDE setting, but means
+that on repeated query types the system starts from scratch each time.
+
+ • LLM dependence on the decomposition step. If the initial decomposition is
+   structurally wrong (missing a necessary reasoning node or adding an spurious
+   one), no amount of within-node verification can recover. The meta-controller
+   can trigger re-decomposition, but only after a node failure — a decomposition
+   that looks locally correct but is globally wrong will not be caught.
+ • Verification predicates are natural language. Unlike formal theorem provers,
+   we cannot guarantee soundness or completeness of verification. The predicates
+   are heuristic quality checks, not proofs.
+ • Single backbone. All experiments use a single LLM family (to be specified at
+   implementation). Results may not generalize to other architectures, sizes, or
+   post-training alignments. We note this as an open empirical question for
+   follow-up.
+ • Static benchmarks. None of the evaluated datasets involve interactive
+   environments, human feedback loops, or out-of-distribution tasks. Real-world
+   agentic reasoning may introduce additional failure modes (e.g., tool-return
+   ambiguity, partial observability) not captured here.
+ • No confidence scoring. The framework does not quantify uncertainty in its
+   final answer. A wrong answer delivered with high-confidence framing is
+   indistinguishable from a right one. Adding calibrated confidence estimates is
+   deferred to future work.

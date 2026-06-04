@@ -1,0 +1,176 @@
+● think_tool(The user wants a Table 3 ablation rer…)
+
+ AI Agentic Workflow for Clinical Decision Support: A Multi-Agent Framework for
+Differential Diagnosis and Treatment Planning## ProblemClinical decision-making
+  in complex, multi-morbidity cases remains a high-error domain. Single large
+language models used as standalone decision aids exhibit well-documented issues:
+hallucination in diagnostic reasoning, sensitivity to prompt phrasing, inability
+  to self-correct, and poor calibration of uncertainty. While LLM-as-judge and
+chain-of-thought prompting improve structured reasoning, they do not provide the
+ iterative verification, role specialization, or consensus-building mechanisms
+ that characterize high-reliability human clinical teams. Existing multi-agent
+healthcare frameworks either hardcode agent roles (preventing adaptation to case
+complexity) or lack rigorous mechanisms for resolving inter-agent disagreement.
+ No current system combines (a) role-specialized agents with distinct epistemic
+ perspectives, (b) a structured deliberation protocol for conflict resolution,
+ and (c) grounding in external clinical knowledge bases — all within a single,
+                       reproducible evaluation pipeline.
+
+HypothesisA multi-agent framework composed of specialized clinical reasoning
+agents — each assigned a distinct epistemic role (diagnostician, evidence
+reviewer, treatment planner, skeptic) — communicating via a structured
+deliberation protocol will produce differential diagnoses and treatment plans
+that are more accurate, more complete, and better calibrated than (1) a single
+LLM with chain-of-thought prompting, (2) an ensemble of LLMs with majority
+voting, and (3) a single LLM augmented with retrieval-augmented generation (RAG)
+from clinical literature. Specifically, we hypothesize that the skeptic agent —
+tasked explicitly with identifying evidential gaps and alternative explanations
+— will provide the largest marginal contribution to diagnostic accuracy among
+all roles.
+
+MethodArchitecture. A four-agent system operating over a shared case context:
+
+ 1 Diagnostician Agent — Proposes a differential diagnosis ranked by likelihood,
+   with reasoning chains. Prompted to simulate inductive clinical reasoning from
+   presented symptoms, history, and lab values.
+ 2 Evidence Reviewer Agent — Retrieves and summarizes relevant literature (via a
+   frozen RAG pipeline over PubMed abstracts and clinical guidelines). Assesses
+   each proposed diagnosis against available evidence.
+ 3 Treatment Planner Agent — Given a provisional diagnosis, proposes treatment
+   options with rationale, contraindications, and monitoring recommendations.
+ 4 Skeptic Agent — Reviews the Diagnostician's differential and the Evidence
+   Reviewer's assessment, identifies missing information, alternative
+   explanations, cognitive biases, and requests specific clarifications or
+   additional tests.
+
+Deliberation Protocol (modified Delphi). All agents read the case independently.
+The Diagnostician produces an initial differential. The Evidence Reviewer
+annotates each candidate. The Skeptic issues critiques and queries. The
+Diagnostician may revise. After up to three rounds, a final differential and
+treatment plan are produced. Agreement is measured via inter-agent rank
+correlation across rounds; persistent disagreement triggers an explicit
+uncertainty flag in the output.
+
+Grounding. The Evidence Reviewer uses a frozen RAG pipeline (BM25 +
+Sentence-BERT retriever over MedQA-relevant PubMed abstracts,2020–2025). No
+online search. No training or fine-tuning of the underlying LLM.
+
+LLM Backend. GPT-4o for all agents (temperature0.3 for consistency;
+temperature0.7 for the Skeptic to encourage divergent thinking).
+
+Dataset / BenchmarkMEDQA (USMLE Step2 &3 subset) —1,273 multiple-choice
+questions with clinical vignettes. We use the open-ended answer variant (no
+options provided to the system; system generates a free-text diagnosis and we
+match against gold-standard answers via semantic equivalence judged by an
+independent LLM). This avoids the gaming of multiple-choice options.
+
+MIMIC-IV (subsample) —200 de-identified emergency department cases with
+confirmed discharge diagnoses. Used for open-ended differential diagnosis
+generation. Cases are selected to include at least one co-morbidity and one
+diagnostic uncertainty signal (e.g., equivocal lab values, overlapping symptom
+profiles).
+
+Primary metric per case: Top-1 diagnostic accuracy, Top-3 recall (whether the
+correct diagnosis appears in the top three of the differential), and
+completeness (proportion of the gold-standard workup steps mentioned in the
+treatment plan).
+
+Evaluation Metrics| Category | Metric | Definition |
+
+|---|---|---| | Diagnostic accuracy | Top-1 Accuracy | Correct diagnosis ranked
+first | | Diagnostic accuracy | Top-3 Recall | Correct diagnosis in top three |
+| Reasoning quality | Completeness Score | Fraction of gold-standard workup
+steps mentioned | | Calibration | Uncertainty Flag Rate | Fraction of cases
+where system flags persistent disagreement | | Robustness | Perturbation
+Stability | Agreement across3 rephrasings of the same vignette | | Ablation
+contribution | Marginal (\Delta) Accuracy | Per-agent removal effect on Top-1
+Accuracy |
+
+Uncertainty is reported as95% bootstrap confidence intervals over1,000
+resamples. Statistical significance tested via paired bootstrap test ((\alpha
+=0.05), Bonferroni correction across6 pairwise comparisons).
+
+Baselines| Baseline | Description | Rationale |
+
+|---|---|---| | Single LLM (CoT) | GPT-4o with chain-of-thought prompt; single
+best diagnosis | Measures benefit of multi-agent deliberation over a strong
+single model | | Ensemble (Majority Vote) |4 independent GPT-4o CoT runs;
+majority vote on top diagnosis | Isolates effect of role specialization from
+simple aggregation | | Single LLM + RAG | GPT-4o CoT with same RAG pipeline used
+by Evidence Reviewer | Isolates effect of multi-agent deliberation from
+retrieval augmentation alone | | Full Multi-Agent (proposed) | All four agents +
+deliberation | Target system |
+
+Ablations| Ablation | Change | Target Question |
+
+|---|---|---| | -Skeptic | Remove Skeptic agent; Diagnostician + Evidence
+Reviewer + Treatment Planner only | Is the skeptic the highest-contribution
+role? | | -Evidence | Remove Evidence Reviewer; Diagnostician + Skeptic +
+Treatment Planner, no RAG grounding | How much does evidence retrieval matter
+vs. internal knowledge? | | -Deliberation | Agents produce independent outputs;
+final output is simple majority vote of Diagnostician and Skeptic (no iterative
+rounds) | Does iterative refinement add value beyond one-shot ensemble? | |
+-Treatment | Remove Treatment Planner; Diagnostician + Evidence Reviewer +
+Skeptic only; no treatment plan output | Does treatment planning distract from
+or inform diagnostic accuracy? | | Single Round | Deliberation limited to one
+exchange (no revision) | Is multi-round convergence necessary? |
+
+Expected Failure Modes1. Agent homogenization. Despite distinct role prompts,
+all four agents may converge to similar reasoning patterns because they share
+the same base LLM. If inter-agent disagreement is low across most cases, the
+deliberation protocol provides no benefit over a single model, and the skeptic
+role is effectively vacuous. Detection: compute average pairwise rank
+correlation of differentials across agents. Correlation >0.85 across all case
+types would indicate homogenization.
+
+ 2 Skeptic over-rejection. The skeptic agent, prompted to be critical, may
+   reject valid diagnoses too aggressively, reducing Top-3 recall even when the
+   Diagnostician was initially correct. Detection: compare the skeptic's
+   false-negative rate on cases where the Diagnostician's top candidate was
+   correct.
+ 3 RAG retrieval brittleness. The frozen RAG pipeline may fail on cases
+   requiring reasoning about rare diseases, very recent findings (post-2025), or
+   non-textual data (imaging, lab trends over time). This would limit the
+   Evidence Reviewer's utility to the most common conditions, systematically
+   under-serving the cases where decision support is most needed. Detection:
+   stratify Top-1 accuracy by case rarity (frequency in training corpus).
+ 4 Deliberation divergence. Rather than converging, agents may oscillate or
+   drift across rounds, especially on ambiguous cases. The fixed three-round
+   limit may cut off convergence prematurely or force convergence to a
+   lower-quality consensus. Detection: measure cross-round change in
+   differential rankings; flag cases where rank correlation between round2 and
+   round3 is <0.7.
+ 5 Perturbation instability. Small rephrasings of the vignette may produce
+   substantially different differentials. This is a known failure of LLM-based
+   clinical reasoning and may be amplified rather than mitigated by multi-agent
+   interaction if all agents share the same sensitivity pattern. Detection: the
+   Perturbation Stability metric directly measures this; if <0.6 across the
+   MIMIC subset, the system is not robust enough for deployment.
+
+Limitations1. No image modalities. The system processes only text vignettes.
+Real clinical decision support must integrate imaging, pathology, and waveform
+data. Extending to multimodal inputs is left to future work.
+
+ 2 No online updating. The RAG corpus is static (2020–2025). Rapidly evolving
+   areas (emerging pathogens, new drug approvals) are not reflected. A
+   production system would require continuous index updates.
+ 3 Single LLM backend. All agents use GPT-4o. Results may not generalize to
+   other base models (e.g., Claude, Gemini, open-weight models). The relative
+   contributions of role specialization vs. base model capability cannot be
+   disentangled without cross-model replication.
+ 4 Benchmark scope. MEDQA and MIMIC-IV cover US-based clinical practice.
+   Diagnostic reasoning patterns, treatment guidelines, and prevalent conditions
+   vary significantly across healthcare systems. Generalizability to non-US,
+   low-resource, or primary-care settings is unvalidated.
+ 5 No safety-critical evaluation. Diagnostic accuracy on benchmarks is a proxy
+   measure. Real-world deployment requires prospective clinical validation,
+   assessment of workflow integration, and measurement of downstream patient
+   outcomes. This proposal addresses only the algorithmic foundation.
+ 6 Evaluation via LLM judge. Using an LLM to judge semantic equivalence for
+   open-ended diagnosis introduces circularity concerns. A secondary human
+   evaluation on a100-case subset (with two board-certified physicians) is
+   planned but not yet funded or IRB-approved.
+ 7 Calibration is measured, not controlled. The uncertainty flag rate is
+   descriptive; the system cannot dynamically adjust its decision threshold or
+   defer to human review based on estimated confidence. A calibrated deferral
+   mechanism is a natural extension but is not implemented here.

@@ -4,7 +4,11 @@ Date: 2026-06-04
 Status: `partial`
 Paper-exact: `false`
 
+Superseded by: `reproduction/ablation_queries01_10_monica_gemini_report.json`
+
 This is a formal-artifact partial rerun for Table 3 ablations under `reproduction/artifacts/ablations`. It covers queries 1-3 for all three variants: `-IDE`, `-IVE`, and `-all`. Each variant was generated with `run_ablation_variants.py`, judged against the existing EvoScientist answers with DeepSeek, and aggregated from the ablation-variant perspective.
+
+This is preserved as a historical DeepSeek partial report. The current official ablation artifact root has since been advanced to queries 01-10 with Monica/Gemini judge outputs.
 
 This does not complete the paper's Table 3 reproduction. The paper-level gate now checks 30-query coverage, so this 3-query subset remains incomplete by design.
 

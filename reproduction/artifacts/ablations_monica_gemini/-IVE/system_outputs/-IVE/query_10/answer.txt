@@ -1,0 +1,231 @@
+Table3 Ablation (-IVE)
+
+Research Proposal: Schema-Drift Aware Text-to-SQL via Decomposition and
+Execution-Guided Refinement---
+
+TitleSchema-Drift Aware Text-to-SQL: A Decomposition Framework Without
+Validation Memory---
+
+ProblemText-to-SQL systems must translate natural language questions into
+executable SQL queries over complex, often multi-table schemas. Despite recent
+progress from large language models, two fundamental failure modes persist:
+
+ 1 Schema drift — the model references tables or columns that do not exist in
+   the target database, or misaligns natural language entities with the correct
+   schema elements. This is especially acute in large schemas (50+ tables) where
+   attention dilutes over irrelevant relations.
+ 2 Spurious execution success — a query returns the correct result set through
+   an incorrect SQL path (e.g., a JOIN that happens to produce the right answer
+   via coincidence or missing foreign-key enforcement). This gives a false sense
+   of correctness when only execution accuracy is measured.
+
+Existing approaches address these separately: schema linking modules reduce
+drift, and execution-guided decoding catches some spurious successes. But no
+current system tightly couples schema grounding with execution verification in a
+single iterative loop, and critically, no system learns from its own
+verification failures across queries — which is the very mechanism this ablation
+removes.
+
+--------------------------------------------------------------------------------
+
+HypothesisA Text-to-SQL system that decomposes question answering into schema
+grounding followed by executable SQL generation, and then iteratively refines
+based on execution feedback, can outperform single-shot LLM baselines on
+large-schema benchmarks — even without retaining any memory of validation
+failures, rejected SQL templates, or reusable rejection criteria across queries.
+
+In the -IVE variant, each query is a fresh inference: no prior failure signal
+informs the current grounding or generation step. The hypothesis is that the
+decomposition + per-query execution feedback loop alone accounts for the
+majority of the gain over a single-shot baseline, and that the marginal value of
+cross-query validation memory is small on standard benchmarks.
+
+--------------------------------------------------------------------------------
+
+MethodThe method consists of four modules chained per query, with no cross-query
+state:
+
+1. Schema-Aware Question Decomposition (SAQD) Given a natural language question
+Q and a full database schema S (table names, column names, types, foreign keys),
+the model first decomposes Q into a set of sub-questions. Each sub-question is
+annotated with a schema scope: a pruned subset of S containing only the tables
+and columns relevant to that sub-question. The scope pruner is a small
+fine-tuned encoder (e.g., RoBERTa + MLP) that scores each table-column pair for
+relevance to the sub-question. The top-K pairs by score form the scope.
+
+2. Independent Sub-Query Generation For each sub-question and its schema scope,
+the base LLM generates a candidate SQL fragment independently. No sub-query sees
+the output of another sub-query at this stage. This prevents cross-sub-query
+contamination and isolates errors.
+
+3. Composition & Merging A merging decoder takes all SQL fragments and the
+original question Q and composes them into a single executable SQL query. The
+merger is trained on paired examples of decomposed fragments and ground-truth
+composed queries. Foreign key constraints are injected as hard rules during
+merging (a column used in a JOIN must participate in a declared foreign key).
+
+4. Execution-Guided Refinement (EGR) — per query only The composed SQL is
+executed against a clean (non-distribution-shifted) development database. If
+execution fails (syntax error, empty result, type mismatch), the error message
+and the original question are fed back to the LLM for one refinement pass. The
+refinement pass can re-decompose, re-prune the schema scope, or rewrite the SQL.
+The refinement is stateless: no information about this error is retained for
+future queries. If the refined query also fails, the system falls back to the
+single-shot baseline output. If it succeeds, the refined query is returned.
+
+Key design choice — no validation memory: The system does not maintain any of
+the following across queries:
+
+ • A log of failed SQL templates or anti-patterns- A cache of previously
+   rejected schema scopes- A bank of reusable rejection criteria- An evolving
+   validation classifier- Any form of execution failure historyEvery query
+   begins from a zero-state decomposer, zero-state scope pruner, and zero-state
+   refinement loop. The only per-query state is the conversation with the LLM
+   during the EGR step, which is discarded after the query.
+
+--------------------------------------------------------------------------------
+
+Dataset / BenchmarkPrimary: Spider1.0 (16,747 training questions,1,034 test
+questions,200 databases,50+ tables per database in the extra split). Spider
+remains the standard for compositional generalization.
+
+Secondary: BIRD-SQL (12,751 training /1,534 test questions,95 databases). BIRD
+adds dirty database values and real-world noise, testing robustness when
+execution feedback may be unreliable due to data quality issues — a stress test
+for the EGR loop.
+
+Development splits: Use the official Spider dev set (1,034 examples) for
+hyperparameter tuning and the BIRD dev set for transfer diagnostics.
+
+--------------------------------------------------------------------------------
+
+Evaluation Metrics| Metric | Definition | Primary / Secondary |
+
+|---|---|---| | Exact Set Match Accuracy (EM) | Exact string match between
+predicted and ground-truth SQL (Spider official) | Primary | | Execution
+Accuracy (EX) | Predicted SQL and ground-truth SQL return identical result sets
+| Primary | | Test-suite Accuracy (TS) | Match across multiple database states
+(Spider official test-suite) | Primary | | Schema Drift Rate (SDR) | Fraction of
+predicted queries referencing at least one non-existent table or column |
+Secondary | | Refinement Cycles per Query (RCQ) | Average number of EGR rounds
+per query (expected <1.5) | Secondary | | Fallback Rate (FR) | Fraction of
+queries where the EGR loop fails and falls back to single-shot | Secondary |
+
+EM and EX are reported with95% bootstrap confidence intervals over3 seeds. SDR
+and RCQ are diagnostic metrics to understand where the method saves or loses
+ground relative to validation-memory variants.
+
+--------------------------------------------------------------------------------
+
+Baselines| Baseline | Why chosen |
+
+|---|---| | Single-shot GPT-4 (zero-shot prompt with full schema) | Upper-bound
+estimate of one-pass performance without any decomposition or feedback | |
+DAIL-SQL (decomposition + in-context exemplars) | Prior decomposition-based
+SOTA; tests whether our specific decomposition structure adds value over generic
+few-shot decomposition | | RESDSQL-3B+NatSQL | Prior schema-linking SOTA; tests
+whether learned schema linking (ours) competes with heuristic ranking | |
+DIN-SQL (chain-of-thought + decomposition + self-correction) | Most similar
+architecture; isolates the contribution of execution guidance vs.
+self-correction | | MAC-SQL (multi-agent with execution feedback) |
+Exec-feedback baseline; tests whether single-model refinement is competitive
+with multi-agent orchestration | | -FULL (our method with full validation memory
+enabled) | Oracle upper bound; quantifies the ceiling that -IVE cannot reach | |
+-IVE (this ablation) | The proposed variant |
+
+--------------------------------------------------------------------------------
+
+Ablations (Within the -IVE Variant)
+
+All of the following are run within the -IVE constraint (no validation memory)
+to isolate which components of the method itself carry the most weight:
+
+
+ Ablation               What changes                Expected Impact
+ No EGR                 Remove the                  Distinguishes decomposition
+                        execution-guided            from the feedback loop
+                        refinement loop (steps
+                        directly from composition
+                        to output)
+ No Schema Pruning      Feed the full schema to     Tests whether scope pruning
+                        each sub-query generator    matters when there is no
+                        instead of a pruned scope   memory to learn pruning
+                                                    mistakes from
+ Flat Decomposition     Replace SAQD with a         Tests whether the
+                        simpler prompt-based        fine-tuned scope pruner
+                        decomposition (e.g.,        adds value over prompting
+                        "Break this into
+                        sub-questions") with no
+                        learned scope scoring
+ Greedy Merging         Replace learned merging     Tests the learned merger's
+                        with a rule-based           contribution
+                        concatenation of SQL
+                        fragments (UNION ALL /
+                        JOIN heuristics)
+ Max1 Refinement Round  Limit EGR to one pass only  Tests whether multi-round
+                        (the default refinement     refinement matters without
+                        loop may iterate)           validation memory
+
+
+Each ablation is run on Spider test and BIRD test. Effect sizes (ΔEM, ΔEX) are
+reported with95% CIs.
+
+--------------------------------------------------------------------------------
+
+Expected Failure Modes1. Repetitive schema drift across queries. Without
+validation memory, the scope pruner may repeatedly choose the same wrong table
+for semantically similar questions across different test examples. A system with
+validation memory would recognize this pattern after2–3 failures and down-weight
+that table globally. The -IVE variant cannot, so drift rates may be higher on
+schemas where certain tables are easily confused (e.g., orders vs order_items).
+
+ 2 Stagnant refinement. The EGR loop has no memory of what kinds of errors it
+   made last time. If the same failure mode applies to a structurally similar
+   query later in the test set, the refinement will rediscover the same fix from
+   scratch, wasting inference budget. This may inflate RCQ without improving FR.
+ 3 Composition cascading errors. A mistake in one sub-query that the EGR loop
+   fixes may create a downstream inconsistency during merging that was not
+   present before. Without validation memory, the system cannot learn that
+   certain classes of fixes (e.g., swapping a LEFT JOIN for an INNER JOIN) tend
+   to break the merge step and should be avoided.
+ 4 BIRD robustness gap. On BIRD, where dirty data can cause execution to produce
+   empty or incorrect result sets for correct SQL, the per-query EGR loop may
+   over-refine (changing a correct query to an incorrect one in response to a
+   spurious execution error). A validation-memory system could learn to suppress
+   refinement when data quality indicators are poor; this ablation cannot.
+ 5 Comparing to -FULL. The central finding of this ablation is expected to be
+   that the gap between -IVE and -FULL is moderate on Spider (2–4 EM points) but
+   larger on BIRD (5–8 EM points), because BIRD exposes more spurious execution
+   signals that validation memory helps filter.
+
+--------------------------------------------------------------------------------
+
+Limitations- No cross-query learning. The most fundamental limitation. Every
+failure is a fresh failure. The system cannot discover that "queries involving
+temporal ranges on date columns tend to trigger type-mismatch errors and should
+use BETWEEN instead of >= ... AND < ..." — a pattern a validation-memory system
+would learn after2–3 occurrences.
+
+ • Bound on refinement quality. Because the refinement loop is stateless and
+   limited in rounds (max2), it is unlikely to fix queries that require multiple
+   interdependent corrections (e.g., wrong table → wrong column → wrong join
+   condition). The per-query EGR loop cannot coordinate corrections across
+   sub-queries.
+ • Scope pruner degrades under schema shift. The pruner is trained on Spider's
+   schema distribution. On schemas with out-of-distribution naming conventions
+   or unusually large table counts, its relevance scores degrade, and without
+   validation memory there is no corrective signal across queries.
+ • Computational overhead. Decomposition + independent sub-query generation +
+   merging + up to2 refinement rounds means4–6 LLM calls per query versus1 for
+   the single-shot baseline. Inference cost scales linearly with decomposition
+   granularity. For latency-sensitive deployments, this may be prohibitive
+   regardless of accuracy gains.
+ • No guarantee of monotonic improvement from refinement. The EGR loop can (and
+   in our BIRD experiments likely will) degrade output quality when spurious
+   execution errors trigger unnecessary rewrites. Without validation memory, the
+   system cannot detect this degradation and suppress the refinement.
+ • Spider ceiling. Spider test accuracy for SOTA methods is approaching85% EX.
+   The -IVE variant may close much of the gap to the current SOTA but cannot
+   exceed the -FULL ceiling, and may fall short on the hardest compositional
+   splits (e.g., "comparison" and "sorting" categories in Spider-CLASSIC) where
+   cross-query pattern recognition is most beneficial.

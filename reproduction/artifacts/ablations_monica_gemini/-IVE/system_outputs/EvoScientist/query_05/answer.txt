@@ -1,0 +1,110 @@
+Title: Structured Critical Literature Review Generation via Hierarchical
+Contradiction-Aware Synthesis---
+
+Problem
+Current automated literature review systems (LLM-based or
+retrieval-augmented) produce fluent but shallow summaries — they list findings
+paper-by-paper, avoid conflicting results, and fail to organize knowledge into
+the canonical sub-topics, debates, and open questions a human reviewer would
+surface. No existing system explicitly models contradictions across papers or
+generates a structured review with sections like "consensus findings,"
+"conflicting evidence," and "methodological gaps."
+
+Hypothesis
+A hierarchical, contradiction-aware pipeline that (1) retrieves and
+clusters papers by sub-topic, (2) extracts claim-level triples (method, finding,
+direction of effect), and (3) explicitly identifies and resolves or flags
+contradictions, will produce literature reviews that are rated by domain experts
+as more organized, more critical, and more useful than retrieval-augmented
+baselines that only summarize per-paper or per-topic.
+
+Method
+Stage1 — Hierarchical topic structuring. Given a query (e.g.
+"chain-of-thought reasoning"), query a paper corpus (e.g. S2ORC / Semantic
+Scholar) and cluster retrieved abstracts using a hierarchical embedding +
+LLM-labeling pipeline (HDBSCAN on SBERT embeddings, then GPT-4o-mini assigns
+canonical section headings).
+
+Stage2 — Claim extraction and contradiction detection. For each paper, extract
+structured claim triples (entity, predicate, direction/sign) via a fine-tuned
+DeBERTa-v3 or prompted LLM. Within each sub-topic cluster, compare claim triples
+for directional mismatches (e.g. "CoT improves accuracy on GSM8K" vs "CoT does
+not improve accuracy on GSM8K"). Flag contradictions with supporting citations
+on both sides.
+
+Stage3 — Contradiction-aware synthesis. Generate the review section-by-section
+using a controlled generation loop: (a) draft a section from the consensus
+claims, (b) conditionally append a "conflicting evidence" sub-section if
+contradictions were detected, (c) append an "open questions" sub-section
+identifying gaps where evidence is absent or contradictory.
+
+Stage4 — Citation grounding and fact verification. Each generated claim is
+back-linked to the original source passage. A lightweight fact-verification step
+(NLI-based, e.g. TrueTeacher) verifies whether the generated claim is entailed
+by the cited passage. Unverifiable claims are removed or softened.
+
+Dataset / Benchmark- Corpus: Semantic Scholar Open Research Corpus (S2ORC) — ~8M
+papers, with full text when available. Restrict to4-5 well-surveyed domains
+(e.g., LLM reasoning, protein folding, adversarial robustness, representation
+learning, NLP for low-resource languages).
+
+• Gold-standard reviews: For each domain, collect2-3 human-written survey
+papers (e.g. from arXiv, JMLR, ACL anthology). Segment into sections as
+ground-truth structure.
+• Review quality evaluation set: Construct50 query-review pairs per domain,
+each with3 expert ratings along organization, coverage, critical depth, and
+usefulness (1–5 Likert).
+
+Evaluation Metrics| Dimension | Metric | How measured |
+
+|---|---|---| | Structure | Section overlap (ROUGE-L / Jaccard on section
+headings) | Against human survey TOC | | Coverage | Recall of cited papers from
+human survey reference list | Macro-averaged per section | | Critical depth |
+Contradiction recall — fraction of known conflicting findings surfaced |
+Hand-labeled conflict set | | Faithfulness | % of claims entailed by cited
+passages | NLI-based verification + human spot-check | | Overall quality |
+Expert rating (1–5) on organization, usefulness | Blind rating by3 domain
+experts |
+
+Baselines1. Naive RAG — Retrieve top-20 papers, concatenate abstracts, prompt
+GPT-4o to write a review.
+
+2 Per-paper summarization — Summarize each paper individually, then concatenate
+under LLM-generated headings (Liu et al.,2024-style).
+3 Topic-cluster summarization — Cluster papers by topic, summarize cluster,
+then synthesize (similar to Scim,2024).
+4 Ours w/o contradiction detection — Same pipeline but skip Stage2
+contradiction flagging (ablate the core mechanism).
+
+Ablations- A1: Remove hierarchical clustering → flat topic list (tests whether
+hierarchy improves organization).
+
+• A2: Remove fact-verification filter (tests whether filtering reduces
+hallucination at the cost of coverage).
+• A3: Replace GPT-4o claim extraction with fine-tuned DeBERTa-v3 (tests whether
+a smaller model suffices).
+• A4: Remove contradiction-aware sub-section generation → always write
+consensus-only text (tests the value of explicit contradiction flagging vs.
+implicit handling).
+
+Expected Failure Modes1. Contradictions are rare or subtle. Most papers in a
+well-matured field may agree on fundamentals, leaving little for the
+contradiction module to surface. Mitigation: evaluate on at least one rapidly
+evolving domain (e.g., LLM reasoning post-2023) where disagreements are common.
+
+2 Claim extraction noise propagates. A false-positive contradiction (two claims
+that appear contradictory but differ in experimental setup) degrades the
+review. Mitigation: require supporting citations on both sides; add a
+confidence threshold for contradiction flagging.
+3 Expert raters prefer concise over critical. Human readers may rate a fluent,
+uncontroversial summary higher than one that honestly reports messy
+disagreements. Mitigation: structure expert evaluation to score critical
+depth and usefulness separately from fluency and organization.
+4 Structure diversity across human surveys. Two human surveys on the same topic
+often use different section taxonomies, making section-overlap metrics noisy.
+Mitigation: use macro-averaged ROUGE-L and report variance; also report
+expert agreement (Fleiss' κ) on organization.
+5 Domain shift. A pipeline tuned on NLP papers may fail for biomedical or
+physics literature where citation practices and claim phrasing differ.
+Mitigation: hold out one domain for final evaluation only, to measure
+generalization.

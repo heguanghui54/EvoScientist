@@ -1,0 +1,116 @@
+Research Proposal: Confidence-Gated Iterative Pseudo-Labeling with
+Phoneme-Constrained Augmentation for Low-Resource ASRTitle: Semi-Supervised
+Self-Training with Audited Pseudo-Labels and Phoneme-Preserving Augmentation for
+Under-10-Hour Speech Recognition---
+
+Problem
+State-of-the-art ASR systems (e.g., Whisper, wav2vec2.0) degrade
+catastrophically when fine-tuned on fewer than10 hours of transcribed speech.
+Two failure modes dominate: (1) overfitting to the small labeled set, and (2)
+confirmation bias in self-training, where the model reinforces its own errors
+through noisy pseudo-labels on unlabeled data. No existing method jointly
+addresses label quality and data diversity in the under-10-hour regime on a
+single pipeline.
+
+Hypothesis
+A self-training loop that audits pseudo-labels through a separate
+confidence calibrator (rather than the ASR model's own softmax) and couples them
+with phoneme-preserving augmentations (time-stretch, pitch-shift, and speed
+perturbation clipped to per-phoneme duration bounds) will outperform standard
+pseudo-labeling and unsupervised pre-training when labeled data ≤10 hours. The
+key claim: auditing prevents confirmation bias, and phoneme-constrained
+augmentation prevents the augmentations from destroying linguistic content that
+the small labeled set cannot recover.
+
+Method1. Seed model — Fine-tune a small SSL encoder (wav2vec2.0 Base, ~95M
+params) on the labeled set (≤10 h). Use a single linear projection head.
+
+2 Pseudo-labeling loop (3 rounds):
+
+• Decode the unlabeled pool with the current model (CTC greedy decoding).
+• Audit each pseudo-label: pass the logits to a separate lightweight confidence
+estimator (a2-layer MLP over mean-pooled encoder features, trained on the
+seed set's held-out fold) and retain only utterances where estimated
+confidence ≥0.9 threshold.
+• Combine audited pseudo-labeled utterances with the original labeled set.
+
+3 Phoneme-constrained augmentation — Before each training epoch, apply:
+
+• Time stretching (0.85x–1.15x) with per-phoneme duration floor.
+• Pitch shift (±2 semitones).
+• Speed perturbation (0.9x–1.1x).
+• Constraint: a forced-alignment phoneme recognizer (pretrained multilingual)
+verifies that the augmented audio's phoneme sequence matches the original;
+discard any augmentation where >20% of phonemes shift.
+
+4 Re-train the SSL encoder + projection head from the seed checkpoint on the
+combined (labeled + audited pseudo-labeled + augmented) data. Repeat for3
+rounds.
+
+Dataset / Benchmark- Primary: Common Voice (Tamil, Sinhala, Catalan, Kyrgyz —4
+languages with2–8 h of validated train data each). Evaluate on each language's
+official dev/test splits.
+
+• Secondary (sanity check): FLEURS10-hour subset for2 additional languages
+(Swahili, Bengali).
+
+Evaluation Metrics| Metric | Purpose |
+
+|---|---| | Character Error Rate (CER) | Primary metric; report mean ± std over3
+seeds. | | Word Error Rate (WER) | Secondary, for languages with space-delimited
+orthography. | | Pseudo-label acceptance rate | Diagnostic: % unlabeled
+utterances retained per round. | | Oracle accuracy of accepted pseudo-labels |
+Diagnostic: if a held-out reference exists for the unlabeled pool, measure what
+fraction of accepted labels are correct. |
+
+Report effect sizes with95% bootstrap confidence intervals across seeds.
+
+Baselines| Baseline | Why |
+
+|---|---| | Seed-only (fine-tune on labeled data only, no self-training) | Lower
+bound — isolates the value of unlabeled data. | | Standard pseudo-labeling (no
+auditing, no augmentation) | Ablates the audit mechanism. | | No-augmentation
+self-training (audit + pseudo-label, no phoneme constraint) | Ablates the
+augmentation contribution. | | SpecAugment self-training (SpecAugment instead of
+phoneme-constrained augmentation) | Compares against a widely-used augmentation
+baseline. | | wav2vec2.0 Base fine-tuned on full Common Voice (where available,
+e.g., Catalan ~80 h) | Upper bound — what performance looks like with abundant
+data. | | Whisper Small zero-shot | Compares against a strong multitask model
+that has never seen the target language during adaptation. |
+
+Ablations1. Audit threshold sweep — Vary the confidence threshold
+(0.7,0.8,0.9,0.95) on one language to measure the precision-recall trade-off in
+pseudo-label acceptance.
+
+2 Augmentation constraint strength — Compare the phoneme-preserving constraint
+against an unconstrained version (same augmentations, no phoneme-validity
+check).
+3 Number of self-training rounds — Compare1,2,3, and5 rounds on one language to
+measure when performance plateaus or degrades.
+4 Size of labeled seed — Sub-sample to1 h,2 h,5 h on a language with8 h
+available, and measure whether the method's advantage grows as labeled data
+shrinks.
+
+Expected Failure Modes1. Phoneme-constraint too aggressive — The multilingual
+forced-aligner may have poor accuracy on a target language it was not trained
+on, causing most augmentations to be discarded. Mitigation: Relax the threshold
+to40% phoneme shift tolerance; also measure the discard rate and report it.
+
+2 Confidence estimator is poorly calibrated — On languages far from the seed
+set, the auditor may either accept noisy labels (false positive) or reject
+correct ones (false negative). Mitigation: Use temperature scaling (Platt
+scaling) on the confidence estimator; report calibration curves (ECE) per
+round.
+3 Diminishing returns by round3 — The model may saturate because the unlabeled
+pool's acoustic diversity is exhausted. Mitigation: If WER improvement from
+round2→3 is <0.5% relative, stop early and report the saturating round as a
+finding.
+4 CTC beam search decoding with a weak language model — Without a
+target-language n-gram or neural LM, decoding may be brittle. Mitigation: Do
+not use an external LM for the main experiment (to keep the ablation clean),
+but add a shallow fusion with a3-gram LM as a secondary ablation to measure
+the orthogonal gain.
+5 Hardware constraints — Self-training with augmentation on the full unlabeled
+pool (typically50–200 h per language) may be slow. Mitigation: Downsample the
+unlabeled pool to20 h per language via random sampling, stratified by speaker
+if speaker metadata is available.

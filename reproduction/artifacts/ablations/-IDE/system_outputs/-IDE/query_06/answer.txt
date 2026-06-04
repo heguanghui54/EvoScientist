@@ -1,0 +1,127 @@
+Ablation variant -IDE: idea-direction evolution disabled. No prior memory or
+distilled research directions are used. The proposal below is generated from the
+query and ordinary reasoning only.
+
+--------------------------------------------------------------------------------
+
+TitlePhoneme-Bootstrapped Self-Supervised Learning for Low-Resource Speech
+Recognition
+
+ProblemAutomatic speech recognition (ASR) for low-resource languages remains a
+fundamental bottleneck in speech technology. While self-supervised learning
+(SSL) models (wav2vec2.0, HuBERT, WavLM) achieve strong results when fine-tuned
+on hundreds of hours of labeled data, most of the world's ~7,000 languages have
+fewer than10 hours of transcribed speech. In this setting, standard SSL
+fine-tuning collapses: the model overfits to the small labeled set and fails to
+generalize to unseen acoustic conditions, speakers, and lexical variation. The
+core problem is that the SSL pre-trained representations encode rich acoustic
+structure but lack an explicit inductive bias toward phonemic invariance, which
+is precisely what a low-resource learner most needs.
+
+HypothesisH1 (primary): Introducing a phoneme-discovery bottleneck between the
+SSL encoder and the downstream transcription head will improve low-resource ASR
+word error rate (WER) by at least15% relative over standard SSL fine-tuning when
+labeled data ≤10 hours.
+
+H2 (auxiliary): The benefit of the phoneme bottleneck is largest when the
+bottleneck is learned jointly (not frozen) and constrained via a
+minimum-edit-distance loss at the phoneme-sequence level, rather than
+frame-level cross-entropy alone.
+
+Rationale. A discrete phoneme bottleneck forces the model to map continuous SSL
+representations into a small inventory of language-agnostic sound categories.
+This acts as a strong regularizer — it throws away irrelevant acoustic detail
+(speaker identity, noise type) and retains only phonemically salient structure.
+Because the bottleneck is shared across fine-tuning and inference, it decouples
+the transcription decoder from the full variability of the SSL representation
+space.
+
+MethodWe propose Phone-Bootstrapped SSL (PB-SSL), a three-stage pipeline:
+
+Stage1 — Phoneme tokenizer (unsupervised). Given the target language's unlabeled
+audio (any amount, including the same untranscribed data), train a small
+(2-layer) HuBERT-style discrete tokenizer with a K-means codebook of size K
+=128. This produces a frame-level phoneme-like token sequence for every
+utterance. No transcriptions are used.
+
+Stage2 — SSL encoder + bottleneck. Load a pre-trained SSL backbone (wav2vec2.0
+Base,95M params). Insert a phoneme bottleneck module between the encoder output
+and the downstream head:
+
+ • A linear projection to256 dims → a Gumbel-Softmax discrete bottleneck with128
+   codes → a learned embedding lookup.
+ • Two decoding paths:
+ • Phoneme-path: Predicts the frame-level phoneme token sequence from Stage1
+   (cross-entropy + minimum edit distance (MED) loss between predicted and
+   target token sequences, computed via differentiable approximations of
+   Levenshtein distance).
+ • Transcription-path: The discrete bottleneck output is fed into a lightweight
+   transformer (2 layers,4 heads) that produces character-level logits.
+ • A shared weight term α balances phoneme-path loss vs. transcription-path
+   loss: L_total = L_ctc + α * (L_ce_phone + λ * L_med).
+
+Stage3 — Joint fine-tuning. Fine-tune both paths jointly on the labeled
+low-resource data. The phoneme-path is not frozen — it receives gradient from
+both losses, allowing the bottleneck to adapt to the target language's phonology
+during fine-tuning.
+
+Discrete bottleneck. Use straight-through Gumbel-Softmax with temperature
+annealing (τ:2.0 →0.5 over training). This is close to a hard categorical
+selection during inference, producing a transparent phoneme-like representation
+that can be inspected.
+
+Dataset / BenchmarkPrimary: Common Voice11.0 — select three languages with <10
+hours validated transcribed speech:
+
+ • Language A (Tamashek / taq): ~6 hours — typologically distant from English,
+   tests generalization- Language B (Dholuo / luo): ~8 hours — Niger-Congo,
+   tonal (tests tone encoding)
+ • Language C (Erzya / myv): ~4 hours — Uralic, agglutinative (tests
+   morphological complexity)
+
+**Development sets:**30 minutes per language (official dev splits). **Test
+sets:**1 hour per language (official test splits).
+
+Secondary: FLEURS (Federated Learning for Extended-Resource Speech) — use
+the2-hour low-resource splits for Fongbe and Limburgish to test cross-benchmark
+transfer.
+
+**Unlabeled data per language:**50–200 hours of in-domain unlabeled audio from
+Common Voice raw recordings and YouTube audio — used only for the Stage1 phoneme
+tokenizer.
+
+Evaluation Metrics1. Word Error Rate (WER) — primary metric, case-insensitive,
+evaluated on the official test set.
+
+ 2 Phoneme Error Rate (PER) — on the phoneme-path output, to measure bottleneck
+   quality.
+ 3 Normalized Mutual Information (NMI) between bottleneck code assignments and
+   ground-truth phoneme categories (where available via external phonological
+   lexicons) — measures how well the bottleneck aligns with linguistic phonemes.
+ 4 Effective codebook utilization — proportion of the128 codes activated on
+   held-out data. Low utilization (<20%) indicates codebook collapse.
+ 5 WER confidence intervals — bootstrap resampling (1,000 samples) over the test
+   set, reported as95% CIs.
+
+Baselines1. Tight lower bound: Fine-tune the SSL encoder directly with a linear
+projection + CTC head on the same data (no bottleneck).
+
+ 2 Standard SSL fine-tuning (upper bound reference): Same as (1) but with the
+   full10-hour labeled set (no ablation on data size).
+ 3 Wav2vec2.0 + K-means pseudo-labeling: The standard pseudo-labeling baseline
+   where the speech is discretized and the model is trained on pseudo-labels
+   before fine-tuning (Xu et al.,2021).
+ 4 HuBERT Base fine-tuned on the same low-resource data (discrete representation
+   learning as a pre-training method, serving as an alternative to our post-hoc
+   bottleneck).
+ 5 Cross-lingual transfer: Fine-tune the SSL backbone on a high-resource related
+   language (e.g., Swahili for Dholuo) then adapt to the target language.
+
+Ablations| # | Variant | What it tests |
+
+|---|---------|--------------| | A1 | Remove MED loss (λ =0) | Value of
+edit-distance supervision at the phoneme level | | A2 | Remove phoneme-path
+entirely (α =0, CTC only through bottleneck) | Whether the auxiliary phoneme
+task matters vs. bottleneck regularization alone | | A3 | Frozen bottleneck
+(Stage2 only, no fine-tuning of the phoneme-path) | Whether joint adaptation is
+necessary | | A4 | Codebook size sweep: K ∈

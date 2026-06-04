@@ -1,0 +1,183 @@
+Automated Literature Review Generation via Structured Citation Graph
+Synthesis### ProblemLiterature reviews are a foundational yet intensely
+labor-intensive component of scientific research. A single review can require
+reading100–300+ papers, organizing findings across competing taxonomies, and
+articulating a coherent narrative that identifies consensus, contradictions, and
+open questions. Existing automated approaches fall into two inadequate camps:
+(1) LLM-based "summarize all retrieved abstracts" systems that produce shallow,
+citation-agnostic overviews with no critical structure, and (2) taxonomy-first
+systems that require manual category engineering and cannot adapt to an evolving
+field's conceptual landscape.
+
+The core problem is structural: a useful literature review is not a compression
+task but a reasoning task — it must infer the latent topical organization of a
+body of work, identify which claims are supported by which evidence, and surface
+where evidence conflicts or is absent. Current methods treat the problem as
+extractive summarization, not as structured knowledge synthesis.
+
+HypothesisA literature review generation system that explicitly constructs a
+citation graph with typed edges (supports, contradicts, extends, uses-method,
+compares-against) and then performs hierarchical topic abstraction over this
+graph will produce reviews that are more coherent, more comprehensive, and more
+faithful to source claims than both flat LLM summarization and taxonomy-first
+baselines. The typed edge structure acts as an inductive bias that forces the
+model to reason about relationships between papers rather than surface-level
+token overlap.
+
+MethodStage1 — Structured Citation Graph Construction. Given a seed query (e.g.,
+"retrieval-augmented generation for long-context LLMs"), retrieve a candidate
+paper set via Semantic Scholar API + snowball sampling (forward/backward
+citation expansion,2 hops). For each paper pair in the candidate set, classify
+the relationship between them using a fine-tuned RoBERTa-large classifier
+across5 edge types: supports (reproduces or agrees), contradicts (reports
+conflicting findings), extends (improves or generalizes), uses-method (adopts a
+technique), and no-relation. Edge classification uses full-text sentences where
+one paper cites the other, or if no citation exists, classifier over abstract
+pairs.
+
+Stage2 — Hierarchical Topic Abstraction. Apply a two-level community detection
+algorithm on the typed citation graph:
+
+ • Level1 (coarse): Partition the graph into4–8 broad research directions using
+   spectral clustering on the weighted adjacency matrix (edge type weights
+   learned via a small validation set of5 manually annotated review outlines).
+ • Level2 (fine): Within each coarse cluster, apply HDBSCAN to identify2–4
+   sub-topics, using node2vec embeddings enriched with abstract text via SimCSE.
+
+For each fine-grained sub-topic, extract: (a) the highest-centrality paper (hub
+score, by PageRank on the typed graph), (b) the primary claims (nucleus
+extraction from abstracts using a claim-detection model), and (c) the consensus
+vector — a mean embedding of claims in the sub-topic, with per-dimension
+variance as a measure of disagreement.
+
+Stage3 — Review Generation via Structured Planning. Use the topic hierarchy as a
+content plan: a two-level outline specifying which sub-topics to discuss in
+which order, seeded by a learned reading-order policy (sequential vs.
+comparative vs. chronological, predicted from the citation graph's edge-type
+distribution). Condition a70B-class LLM (e.g., Llama3.3-70B) on the content plan
++ per-sub-topic claim summaries to generate each section sequentially.
+Cross-section consistency is enforced by a secondary pass that checks for
+contradictory claims across sections and inserts a reconciliation paragraph
+where needed.
+
+Training. The edge classifier is fine-tuned on a manually annotated dataset
+of3,000 paper-pair instances from computer science (drawn from ACL, NeurIPS,
+ICML proceedings). The content plan policy is a2-layer MLP trained on30 complete
+human-written literature reviews with extracted citation graphs. No end-to-end
+training on review generation — generation uses in-context prompting.
+
+Dataset / Benchmark- **Test set:**15 topics across NLP, systems, and ML (5
+each), each with a gold-standard literature review written by domain experts
+(published in ACM Computing Surveys, Foundations and Trends, or JMLR). Topics:
+retrieval-augmented generation, mixture-of-experts, mechanistic
+interpretability, adversarial robustness, graph neural networks, prompt
+engineering, diffusion models, LLM evaluation, code generation, federated
+learning, sparse attention, knowledge distillation, multimodal learning,
+reinforcement learning from human feedback, parameter-efficient fine-tuning.-
+**Candidate pool per topic:**80–150 papers identified via the same snowball
+procedure described above (to ensure fair comparison, the pool is frozen across
+methods).
+
+ • Evaluation: Each generated review is assessed by3 domain-expert annotators
+   on5-point Likert scales (see below), plus automated metrics.
+
+Evaluation MetricsPrimary (human-rated, averaged over3 annotators):
+
+ 1 Coherence — Does the review have a clear organizational structure with
+   logical flow between sections? (1–5)
+ 2 Comprehensiveness — What fraction of key papers/topics in the gold standard
+   appear in the generated review? (1–5; also reported as recall@k of cited
+   papers)
+ 3 Faithfulness — Are claims attributed correctly to the papers that support
+   them? Annotators flag misattributions per section. (score =1 − fraction of
+   claims with misattribution)
+
+Secondary (automated): 4. Citation recall — Fraction of gold-standard citations
+present in the generated review. 5. Citation precision — Fraction of generated
+citations that appear in the gold standard or are valid related work. 6.
+Claim-level BERTScore — Between extracted claims in the generated review and
+gold-standard claims (maximal matching, F1). 7. Structural coverage — Does the
+generated review's section-heading hierarchy align with the gold standard's?
+(Tree edit distance normalized by depth.)
+
+Baselines1. Flat LLM summarization — Prompt GPT-4o with "Write a literature
+review on [topic]" using all retrieved abstracts concatenated as context. No
+graph structure, no planning.
+
+ 2 Abstract-only clustering + summarization — Cluster abstracts with K-means on
+   SimCSE embeddings, then summarize each cluster independently with
+   Llama3.3-70B. No citation graph.
+ 3 Taxonomy-first (human-specified) — Provide a human-written2-level taxonomy
+   for each topic; generate per-section using the same Llama3.3-70B prompting.
+   Measures the ceiling from giving away the structure.
+ 4 Ours (full) — The proposed method with typed citation graph + hierarchical
+   topic abstraction + structured planning.
+ 5 Ours (no typed edges) — Ablation where edge types are collapsed to binary
+   (cited/not cited). Tests whether edge typing matters.
+
+Ablations (within the proposed method)
+
+ • No typed edges (baseline5 above) — binary edges only.
+ • No community detection — replace hierarchical HDBSCAN with flat K-means (k =
+   number of gold sections).
+ • No content plan — generate the review in one pass rather than
+   section-by-section following a plan.
+ • Variant of interest: -all (no cross-run evolution) — This is the primary
+   ablation corresponding to Table3. The full method normally uses evolution
+   memory across review generations (tuning edge weights, community detection
+   resolution, and reading-order policy based on human feedback from prior
+   topics). The -all variant disables all such cross-run adaptation: each topic
+   is treated as an independent single-run generation with fixed hyperparameters
+   (edge weights set to uniform, community detection at default resolution,
+   reading-order policy set to sequential). This isolates the contribution of
+   the graph-based pipeline itself from the contribution of learning to adapt it
+   across domains.
+
+Expected Failure Modes1. Cited-paper context length. For topics with150 papers,
+the full-text corpus exceeds any LLM context window. The topic abstraction stage
+must compress per-cluster content aggressively; compression may lose nuance
+(contradictions within a sub-topic that the LLM should surface).
+
+ 2 Edge classifier noise. If the typed edge classifier achieves <70% macro-F1,
+   false edges will corrupt community structure. Expected on rare edge types
+   (contradicts, ~8% of annotated instances). Mitigation: thresholding at0.8
+   confidence for contradicts edges.
+ 3 Snowball sampling drift. Two-hop citation expansion from a seed query can
+   drift into tangential subfields. Mitigation: restrict hops to papers whose
+   abstract cosine similarity to the seed query's centroid stays above0.5.
+ 4 Flat narrative under hierarchy. The two-level topic decomposition may produce
+   sections that are descriptive lists ("group A studies do X, group B studies
+   do Y") rather than analytical narratives. Mitigation: the secondary
+   consistency pass includes a directive to write a comparative synthesis
+   paragraph at the end of each coarse section.
+ 5 Recency bias in PageRank hubs. PageRank on the citation graph favors older
+   papers with more citations. For fast-moving fields, the most important recent
+   paper may be missed. Mitigation: weigh edges by recency (inverse exponential
+   decay with a3-year half-life).
+
+Limitations1. Single-domain evaluation. All15 test topics fall within computer
+science. Generalization to the humanities (where citation practices and argument
+structures differ substantially) is unvalidated.
+
+ 2 Human annotation ceiling. Inter-annotator agreement on coherence and
+   comprehensiveness is typically moderate (κ ≈0.4–0.6). The1–5 Likert scores
+   carry significant per-annotator bias; scores are best interpreted relative to
+   baselines rather than absolutely.
+ 3 Claim extraction fidelity. Claim-extraction models trained on scientific text
+   (SciClaim, etc.) achieve ~75 F1 on held-out abstracts. Extracted claims that
+   are incomplete or off-topic propagate noise into both the content plan and
+   the generated sections.
+ 4 No integration of figures or tables. The proposed method operates solely on
+   text. Many literature reviews reference experimental tables or benchmark
+   figures; these are not captured, which limits comprehensiveness for
+   empirically dense subfields.
+ 5 No iterative refinement. Each topic receives exactly one generation pass.
+   Human authors typically iterate on review structure3–5 times. The system
+   cannot re-organize after seeing a draft, which constrains the upper bound on
+   coherence relative to human-written reviews.
+ 6 Cold-start edge weights. The -all variant (no evolution) uses uniform
+   edge-type weights. The full method learns task-specific weights from human
+   feedback on earlier topics. Without this learning, the community detection
+   algorithm cannot prioritize contradicts or extends edges over generic cites
+   edges, which may dilute the structural signal in small or homogeneous topic
+   pools.

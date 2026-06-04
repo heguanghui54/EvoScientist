@@ -1,0 +1,121 @@
+Text-to-SQL via Constrained Decoding with Schema-Aware Prefix Tuning##
+   ProblemTranslating natural language questions into executable SQL queries
+remains a core challenge in semantic parsing. Despite recent progress with large
+language models, two persistent failure modes limit deployment: (1) hallucinated
+  table/column names that do not exist in the target schema, and (2) logically
+    incorrect but syntactically valid SQL that passes execution checks while
+    returning wrong answers. Existing approaches rely on either fine-tuning
+encoder-decoder models on large synthetic datasets (expensive, brittle to schema
+shift) or prompting closed-source LLMs with schema serialization (inconsistent,
+   no guaranteed schema adherence). No current method jointly enforces schema
+   validity at the token level while learning a structured alignment between
+                     question tokens and database columns.
+
+HypothesisConstraining the decoder's output space to the union of schema tokens
+and SQL grammar tokens, combined with a lightweight prefix that encodes
+question–column alignment scores, will eliminate schema hallucination and
+improve logical correctness on compositional queries. The schema constraint is a
+hard filter — the decoder can only emit tokens that appear in the active
+database schema or the SQL keyword vocabulary — so hallucination is structurally
+impossible. The prefix module learns a soft alignment between question spans and
+table/column candidates, providing the decoder with grounded attention without
+requiring a separate entity-linking pass.
+
+MethodSchema-Augmented Prefix Network. For a given question (q) and database
+schema (S = {T_1, \dots, T_k}) where each table (T_i) has columns ({c_{i1},
+\dots, c_{im}}), we compute a question-aware schema representation. Each column
+(c_{ij}) is encoded as a concatenation of its name, type, and a sampled cell
+value. A bi-affine scorer computes alignment scores between each question token
+and each column, producing a schema-grounded prefix vector that is prepended to
+the decoder's hidden states at every decoding step.
+
+Constrained Decoding with Schema Masking. At each timestep, the output
+vocabulary is masked to the union of:
+
+ • SQL reserved keywords (SELECT, FROM, WHERE, JOIN, GROUP BY, etc.)
+ • Table names in (S)
+ • Column names in (S)
+ • Literal tokens (numbers, strings delimited by quotes)
+ • Punctuation and operatorsTokens outside this set receive (-\infty)
+   log-probability. This mask is recomputed per example since each database has
+   a different schema.
+
+Training Objective. Standard cross-entropy on gold SQL tokens, plus an auxiliary
+alignment loss that minimizes the KL divergence between the bi-affine attention
+weights and a soft alignment derived from the gold SQL's column references. The
+two losses are summed with equal weight.
+
+Dataset / BenchmarkSpider (train/dev split,10k questions /200 databases). We
+also evaluate on Spider-Syn (synonym-substituted questions) and Spider-DK
+(domain-knowledge questions) to test robustness to lexical variation and
+implicit reasoning. For cross-domain generalization, we report on the Spider-CG
+split (cross-domain compositional generalization). Execution accuracy on the dev
+set is the primary metric.
+
+Evaluation Metrics- Execution Accuracy (EX): percentage of predictions whose
+execution output matches the gold output on a held-out SQLite instance. The
+primary metric.
+
+ • Exact Set Match (EM): exact SQL string match after normalization (column
+   order, alias removal). A secondary metric.
+ • Token-Level Schema Adherence (SA): percentage of generated tokens that belong
+   to the allowed schema+keyword mask. Should be100% by construction; reported
+   as a sanity check.
+ • Column Recall: fraction of gold-referenced columns that appear in the
+   predicted SQL. Measures grounding completeness.
+
+Baselines- T5-3B + Schema Serialization (standard fine-tuning): schema
+serialized as a flat text prefix table_name | column_name : type.
+
+ • T5-3B + Schema Linking + SQL Sketch: a two-stage pipeline with an explicit
+   entity linker followed by sketch-based decoding. Represents the strongest
+   published pipeline for Spider.
+ • Codex (code-davinci-002) few-shot prompting:8 annotated examples in the
+   prompt, schema serialized as DDL statements. Zero fine-tuning.
+ • PICARD (constrained decoding on T5): token-level validation on top of a
+   standard T5 decoder; rejects invalid SQL prefixes. Direct comparison for
+   constrained-decoding baselines.
+
+All baselines are run on the same Spider train split and evaluated on the
+identical dev set. Three random seeds per method to estimate variance.
+
+Ablations| Ablation | Component removed | Expected effect |
+
+|---|---|---| | No schema mask | Hard constraint on output vocabulary removed;
+only prefix network remains | Schema hallucination returns; EX drops5–10 points
+| | No prefix network | Bi-affine alignment removed; only schema mask remains |
+Column recall drops on complex joins; EX drops2–4 points | | No auxiliary
+alignment loss | Only cross-entropy on SQL tokens | Slower convergence; EX1–2
+points lower after full training | | No cell-value sampling | Column
+representation uses name + type only | Performance degrades on ambiguous columns
+with similar names |
+
+Expected Failure Modes- Very large schemas (100+ columns): the masked vocabulary
+grows linearly with schema size. At inference, softmax over1000+ tokens may
+become tractable but slower. Latency impact should be measured.
+
+ • Value-dependent queries (e.g., "find employees named Smith" where "Smith" is
+   a literal, not a column): the schema mask allows quoted strings, but the
+   decoder must still learn to produce the correct literal. The prefix network
+   does not help with literal prediction.
+ • Compositional generalization to unseen join patterns: if the training set has
+   no examples of joining two specific tables together, the alignment module has
+   no training signal for that column pair. The schema mask alone cannot bridge
+   this gap.
+ • Domain shift in synonyms (Spider-Syn): the schema mask only allows column
+   names as they appear in the DDL, not synonyms. If the question uses "worker"
+   and the column is "employee", the prefix alignment score for that column may
+   be low, but the mask still forces the decoder to use the correct name. This
+   is a feature rather than a bug, but it means the model must learn rigid
+   lexical mappings.
+
+LimitationsThe constrained decoding approach guarantees schema validity at the
+token level but does not guarantee logical correctness — a query that references
+the right columns may still compute the wrong aggregate or miss a join
+condition. The mask is also schema-specific and must be recomputed per database,
+adding a pre-processing step at inference. The bi-affine prefix network is
+trained on gold alignments derived from the SQL, which are noisy: multiple
+column references in a long query may align to overlapping question spans.
+Finally, the approach does not handle queries that require creating intermediate
+views or nested subqueries with aliases in a schema-not-present way; these
+remain future work.

@@ -1,0 +1,58 @@
+Breaking the Performance Ceiling of Small Language Models via Multi-Source
+Knowledge Consolidation## TitleCross-Parameter Knowledge Consolidation: Breaking
+      the Performance Ceiling of Sub-1B Language Models Through Structured
+                           Multi-Source Distillation
+
+--------------------------------------------------------------------------------
+
+ProblemSmall language models (<1B parameters) exhibit a persistent performance
+ceiling: beyond a certain scale of training data and compute, returns on
+standard metrics (perplexity, downstream task accuracy) sharply diminish. This
+ceiling is widely attributed to capacity constraints, but evidence suggests that
+the bottleneck is not raw parameter count alone — small models trained on
+well-curated data (e.g., Phi-1, TinyLlama, Qwen-0.5B) show that architecture and
+data quality matter at least as much as scale. The open question is: given a
+fixed small-parameter budget, what training recipe most effectively closes the
+gap with larger models?
+
+Existing approaches fall into three camps, each with limitations:
+
+ 1 Static knowledge distillation (Hinton et al.,2015) — transfer from one large
+   teacher to one small student at a single point in training. The student
+   inherits the teacher's blind spots.
+ 2 Data filtering / deduplication (e.g., DCI, FineWeb, C4) — improves
+   signal-to-noise ratio but does not create new knowledge; ceiling is the
+   information content of the training corpus.
+ 3 Architecture search (e.g., SandwichNorm, ALiBi, GQA) — improves efficiency
+   but has yielded diminishing returns over the past two generations of small
+   models.
+
+Hypothesis: The performance ceiling of small models is not fundamentally a
+capacity problem but an optimization conflict problem. A single small model
+cannot simultaneously absorb conflicting representations from diverse sources
+(different teacher models, different data domains, different training
+objectives). We hypothesize that a structured, staged, multi-source
+consolidation procedure — where knowledge from multiple heterogeneous teachers
+is decomposed into complementary sub-capabilities and consolidated sequentially
+— can raise the ceiling by15–25% on composite benchmarks relative to standard
+distillation baselines.
+
+--------------------------------------------------------------------------------
+
+MethodWe propose Cross-Parameter Knowledge Consolidation (CPKC), a three-stage
+training pipeline designed to resolve optimization conflicts in small-model
+learning.
+
+Stage1: Capability Decomposition via Multi-Teacher ProbingGiven a fixed small
+student model ( S ) (e.g., a350M-parameter decoder-only Transformer), and a set
+of ( K ) teacher models (( T_1, \dots, T_K )) of varying sizes
+(1.5B,7B,13B,70B), we first identify which capabilities each teacher excels at.
+For each teacher, compute per-task accuracy on a capability taxonomy:
+
+ • Reasoning (GSM8k, MATH, BBH)
+ • Knowledge (MMLU, TriviaQA, NQ)
+ • Instruction following (AlpacaEval, MT-Bench)
+ • Code generation (HumanEval, MBPP)
+ • Factual precision (FActScore, TruthfulQA)
+
+This produces a capability profile matrix ( C \in \mathbb

@@ -1,0 +1,150 @@
+--------------------------------------------------------------------------------
+
+Research Proposal: Breaking the Performance Ceiling of Small Language Models via
+Targeted Capacity Allocation## Title
+Beyond Scaling Alone: Targeted Capacity
+Allocation for Breaking the Performance Ceiling of Sub-1B Language Models
+
+--------------------------------------------------------------------------------
+
+Problem
+Small language models (<1B parameters) exhibit a well-documented but
+poorly understood phenomenon: diminishing returns past a critical data scale,
+where additional tokens yield negligible or even negative performance gains on
+held-out benchmarks. This "performance ceiling" is typically attributed to
+insufficient model capacity, but recent evidence suggests that capacity is not
+uniformly the bottleneck — certain capabilities (e.g., factual recall,
+long-range reasoning) saturate earlier than others (e.g., syntactic fluency,
+in-context pattern matching). The research problem is: Can we identify the
+precise structural causes of saturation in small models and design targeted
+interventions that reallocate limited capacity to the binding constraints?
+
+--------------------------------------------------------------------------------
+
+Hypothesis
+Primary hypothesis: The performance ceiling in small models is driven
+by capacity-competition between world-knowledge memorization and compositional
+reasoning pathways, not by a global lack of parameters. When a small model
+saturates, additional training data primarily overfits its already-congested
+feedforward memory (FFN layers) while the attention-based compositional routing
+remains underutilized.
+
+Secondary hypothesis: A structured intervention that decouples these two
+functions — compressing factual knowledge into a fixed, non-parametric memory
+(retrieval augmentation with a small bottleneck) and freeing FFN parameters for
+compositional reasoning — will raise the ceiling by10–20% on reasoning-heavy
+benchmarks while matching or exceeding baselines on factual recall.
+
+--------------------------------------------------------------------------------
+
+Method
+The proposal has three stages:
+
+Stage1: Ceiling CharacterizationTrain a350M-parameter decoder-only transformer
+on increasing data scales (50M,100M,250M,500M,1B,2B,5B,10B tokens). At each
+checkpoint, measure per-capability saturation curves across five categories:
+factual recall, syntactic well-formedness, short-range reasoning (2 hops),
+long-range reasoning (5+ hops), and in-context learning. Use influence functions
+and representation similarity (CKA between hidden states at different data
+scales) to identify which layers/modules saturate first and correlate with which
+capability.
+
+Stage2: Bottleneck DiagnosisInsert capacity probes — lightweight linear
+classifiers at each layer that predict whether a given capability fires — to
+identify the specific (layer, module) pairs where representation collision
+occurs. The hypothesis is that mid-to-late FFN layers become the bottleneck for
+factual recall while lower attention layers saturate for compositional
+reasoning.
+
+Stage3: Targeted Capacity AllocationIf the diagnosis confirms the hypothesis,
+intervene by:
+
+• Retrieval-Augmented Distillation (RAD): Compress the factual knowledge stored
+in FFN layers into a small external memory (a frozen key-value store with ~4K
+slots). Shrink the model's FFN hidden dimension by25–40% and retrain from
+scratch, relying on retrieval for factual queries and freeing FFN capacity
+for reasoning.
+• Optional control arm: Compare against a naive "bigger FFN" baseline (same
+total parameters, no retrieval) to confirm that how capacity is allocated
+matters more than how much.
+
+If the diagnosis contradicts the hypothesis (e.g., attention is the bottleneck),
+pivot to attention head pruning + reallocation — removing redundant heads to
+increase per-head dimensionality.
+
+--------------------------------------------------------------------------------
+
+Dataset / Benchmark- Training: A deduplicated, controlled-quality mix of C4
+(natural language), MathPile (math/reasoning), and a synthetic factual QA
+dataset (Wiki-QA, ~2M question-answer pairs with provenance). All tokenized with
+the same tokenizer to avoid confounds.
+
+• Evaluation (4 benchmarks):
+• Factual recall: NaturalQuestions, TriviaQA (exact match)
+• Short reasoning: BigBench-Hard subset (boolean expressions, causal judgment)
+• Long reasoning: GSM8K (grade-school math, multi-step), HotpotQA (multi-hop
+retrieval)
+• In-context learning: MMLU (5-shot)
+• Saturation diagnosis: Custom probe tasks —500 hand-written examples per
+capability with controlled difficulty levels.
+
+--------------------------------------------------------------------------------
+
+Evaluation Metrics| Metric | Rationale |
+
+|--------|-----------| | Accuracy (per benchmark) | Primary capability-level
+metric | | Saturation threshold (η) | The data scale (in tokens) at which
+performance plateaus within1% of final value | | Representation Collapse Score
+(RCS) | Average pairwise CKA similarity >0.95 between adjacent data-scale
+checkpoints in bottleneck layers — a proxy for when representations stop
+differentiating | | Parameter-Utilization Efficiency (PUE) | Per-point
+improvement per million train tokens normalized by model size; captures
+diminishing returns | | Retrieval Hit Rate (RAD variant only) | Fraction of
+queries where the external memory returns the correct factual document |
+
+Primary success signal: RAD variant achieves >10% relative improvement on GSM8K
+and HotpotQA over the350M baseline at the same total parameter budget, without
+regressing more than2% on NaturalQuestions.
+
+--------------------------------------------------------------------------------
+
+Baselines1. Standard350M decoder (no intervention) — the ceiling-establishing
+baseline2. 350M with increased FFN dimension (+25% FFN, -25% attention heads,
+same total params) — tests whether naive capacity reallocation achieves similar
+gains3. 350M with vanilla RAG (retrieval + standard model, no capacity
+reduction) — tests whether retrieval helps regardless of capacity rebalancing4.
+Distilled350M from a7B teacher (knowledge distillation alone) — tests whether
+the ceiling is a training limitation vs. architectural5. 550M standard decoder
+(more parameters entirely) — the "just scale up" ceiling comparison---
+
+Ablations1. RAD without FFN shrinkage — does retrieval help when FFN capacity is
+not freed?
+
+2 RAD with different memory sizes (2K,4K,8K slots) — sensitivity to memory
+bottleneck3. RAD applied at different layers (early vs. mid vs. late FFN) —
+where is compressed storage most effective?
+3 Retrieval-free control — train the shrunken-FFN model without retrieval;
+isolates whether the gain comes from the architecture change or the
+retrieval5. Ceiling characterization on a different architecture (e.g., a350M
+MoE with same total params) — is the ceiling mechanism architecture-specific?
+
+--------------------------------------------------------------------------------
+
+Expected Failure Modes| Failure Mode | Mitigation / Response |
+
+|---|---| | No clear bottleneck emerges (all modules saturate simultaneously) |
+The pluralistic-ceiling hypothesis fails. Fallback: test if training recipe (LR
+schedule, weight decay) is the real ceiling — ablate optimizer settings. | | RAD
+improves reasoning but kills factual recall >2% | Memory size was too small.
+Re-run with16K slots or use a learned gating mechanism to route queries. | |
+Naive FFN-increase baseline matches or beats RAD | Capacity allocation is not
+the bottleneck; the ceiling is truly total-parameter-limited. Concede and report
+the negative result as a contribution (important for the community). | | No
+ceiling observed (performance continues scaling linearly at10B tokens) | The350M
+model was too large for the data scales tested. Scale up to50B tokens or test
+a100M model to find the ceiling. | | RAD improves only on seen-document queries
+(memorization, not generalization) | Evaluate on held-out timestamps and topics.
+If gains vanish, the retrieval store is overfitting to the training set.
+Introduce a stricter train/test split on documents. | | CKA-based diagnosis is
+inconclusive | Supplement with probing classifiers and leave-one-out accuracy
+drops to cross-validate which layers matter for each capability. |

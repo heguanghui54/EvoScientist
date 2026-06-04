@@ -44,15 +44,8 @@
               "missing_fields": [],
               "complete": false,
               "expected_query_count": 30,
-              "complete_query_count": 3,
+              "complete_query_count": 10,
               "missing_query_ids": [
-                4,
-                5,
-                6,
-                7,
-                8,
-                9,
-                10,
                 11,
                 12,
                 13,
@@ -79,18 +72,11 @@
             "judge_inputs.jsonl": {
               "path": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/artifacts/ablations/-IDE/judge_inputs.jsonl",
               "exists": true,
-              "records": 3,
+              "records": 10,
               "bad_records": [],
               "complete": false,
               "expected_records": 30,
               "missing_query_ids": [
-                4,
-                5,
-                6,
-                7,
-                8,
-                9,
-                10,
                 11,
                 12,
                 13,
@@ -116,7 +102,7 @@
             "judge_outputs.jsonl": {
               "path": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/artifacts/ablations/-IDE/judge_outputs.jsonl",
               "exists": true,
-              "records": 3,
+              "records": 10,
               "bad_records": [
                 {
                   "line": 1,
@@ -135,18 +121,53 @@
                   "missing_fields": [
                     "scores"
                   ]
+                },
+                {
+                  "line": 4,
+                  "missing_fields": [
+                    "scores"
+                  ]
+                },
+                {
+                  "line": 5,
+                  "missing_fields": [
+                    "scores"
+                  ]
+                },
+                {
+                  "line": 6,
+                  "missing_fields": [
+                    "scores"
+                  ]
+                },
+                {
+                  "line": 7,
+                  "missing_fields": [
+                    "scores"
+                  ]
+                },
+                {
+                  "line": 8,
+                  "missing_fields": [
+                    "scores"
+                  ]
+                },
+                {
+                  "line": 9,
+                  "missing_fields": [
+                    "scores"
+                  ]
+                },
+                {
+                  "line": 10,
+                  "missing_fields": [
+                    "scores"
+                  ]
                 }
               ],
               "complete": false,
               "expected_records": 30,
               "missing_query_ids": [
-                4,
-                5,
-                6,
-                7,
-                8,
-                9,
-                10,
                 11,
                 12,
                 13,
@@ -187,15 +208,8 @@
               "missing_fields": [],
               "complete": false,
               "expected_query_count": 30,
-              "complete_query_count": 3,
+              "complete_query_count": 10,
               "missing_query_ids": [
-                4,
-                5,
-                6,
-                7,
-                8,
-                9,
-                10,
                 11,
                 12,
                 13,
@@ -222,18 +236,11 @@
             "judge_inputs.jsonl": {
               "path": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/artifacts/ablations/-IVE/judge_inputs.jsonl",
               "exists": true,
-              "records": 3,
+              "records": 10,
               "bad_records": [],
               "complete": false,
               "expected_records": 30,
               "missing_query_ids": [
-                4,
-                5,
-                6,
-                7,
-                8,
-                9,
-                10,
                 11,
                 12,
                 13,
@@ -259,7 +266,7 @@
             "judge_outputs.jsonl": {
               "path": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/artifacts/ablations/-IVE/judge_outputs.jsonl",
               "exists": true,
-              "records": 3,
+              "records": 10,
               "bad_records": [
                 {
                   "line": 1,
@@ -278,18 +285,53 @@
                   "missing_fields": [
                     "scores"
                   ]
+                },
+                {
+                  "line": 4,
+                  "missing_fields": [
+                    "scores"
+                  ]
+                },
+                {
+                  "line": 5,
+                  "missing_fields": [
+                    "scores"
+                  ]
+                },
+                {
+                  "line": 6,
+                  "missing_fields": [
+                    "scores"
+                  ]
+                },
+                {
+                  "line": 7,
+                  "missing_fields": [
+                    "scores"
+                  ]
+                },
+                {
+                  "line": 8,
+                  "missing_fields": [
+                    "scores"
+                  ]
+                },
+                {
+                  "line": 9,
+                  "missing_fields": [
+                    "scores"
+                  ]
+                },
+                {
+                  "line": 10,
+                  "missing_fields": [
+                    "scores"
+                  ]
                 }
               ],
               "complete": false,
               "expected_records": 30,
               "missing_query_ids": [
-                4,
-                5,
-                6,
-                7,
-                8,
-                9,
-                10,
                 11,
                 12,
                 13,
@@ -330,15 +372,8 @@
               "missing_fields": [],
               "complete": false,
               "expected_query_count": 30,
-              "complete_query_count": 3,
+              "complete_query_count": 10,
               "missing_query_ids": [
-                4,
-                5,
-                6,
-                7,
-                8,
-                9,
-                10,
                 11,
                 12,
                 13,
@@ -365,18 +400,11 @@
             "judge_inputs.jsonl": {
               "path": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/artifacts/ablations/-all/judge_inputs.jsonl",
               "exists": true,
-              "records": 3,
+              "records": 10,
               "bad_records": [],
               "complete": false,
               "expected_records": 30,
               "missing_query_ids": [
-                4,
-                5,
-                6,
-                7,
-                8,
-                9,
-                10,
                 11,
                 12,
                 13,
@@ -402,7 +430,7 @@
             "judge_outputs.jsonl": {
               "path": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/artifacts/ablations/-all/judge_outputs.jsonl",
               "exists": true,
-              "records": 3,
+              "records": 10,
               "bad_records": [
                 {
                   "line": 1,
@@ -421,18 +449,53 @@
                   "missing_fields": [
                     "scores"
                   ]
+                },
+                {
+                  "line": 4,
+                  "missing_fields": [
+                    "scores"
+                  ]
+                },
+                {
+                  "line": 5,
+                  "missing_fields": [
+                    "scores"
+                  ]
+                },
+                {
+                  "line": 6,
+                  "missing_fields": [
+                    "scores"
+                  ]
+                },
+                {
+                  "line": 7,
+                  "missing_fields": [
+                    "scores"
+                  ]
+                },
+                {
+                  "line": 8,
+                  "missing_fields": [
+                    "scores"
+                  ]
+                },
+                {
+                  "line": 9,
+                  "missing_fields": [
+                    "scores"
+                  ]
+                },
+                {
+                  "line": 10,
+                  "missing_fields": [
+                    "scores"
+                  ]
                 }
               ],
               "complete": false,
               "expected_records": 30,
               "missing_query_ids": [
-                4,
-                5,
-                6,
-                7,
-                8,
-                9,
-                10,
                 11,
                 12,
                 13,

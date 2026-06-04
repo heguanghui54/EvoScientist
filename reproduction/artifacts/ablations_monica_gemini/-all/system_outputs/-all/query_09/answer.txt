@@ -1,0 +1,36 @@
+Mitigating Low-Bit Quantization Collapse via Activation-Aware Dynamic Precision
+Scaling for Edge-Deployed LLMs## ProblemDeploying large language models on edge
+devices (smartphones, IoT, embedded systems) requires aggressive quantization —
+  typically4-bit or lower weights and activations — to fit within tight memory
+ (4–8 GB) and power budgets. Standard post-training quantization (PTQ) methods
+such as GPTQ, AWQ, and SmoothQuant apply uniform or static per-tensor bit-widths
+      and rely on calibration sets that poorly approximate deployment-time
+  distributions. Under4-bit weight-activation quantization, two failure modes
+   dominate: (1) outlier-induced collapse — activations with large-magnitude
+   channels saturate low-precision ranges, destroying signal in the remaining
+   channels; and (2)cross-layer sensitivity mismatch — a single fragile layer
+(e.g., early embeddings or late LM head) becomes a bottleneck when assigned the
+same precision as robust layers. Existing work treats these separately, leading
+  to asymmetric degradation: perplexity spikes of5–15 points on WikiText-2 and
+      zero-shot accuracy drops of10–20% on reasoning benchmarks under W4A4
+quantization. No current method jointly addresses per-layer outlier dynamics and
+heterogeneous precision assignment in a single, hardware-aware, calibration-free
+                                   framework.
+
+HypothesisWe hypothesize that quantization collapse at extreme low-bit widths
+can be mitigated by a two-stage framework that (1) dynamically rescales
+activation outliers per-layer using a lightweight, input-dependent affine
+transform learned from online statistics during a brief deployment adaptation
+phase, and (2) assigns heterogeneous mixed-precision configurations via a greedy
+sensitivity search over a convex hull of bit-widths (W2–W8, A4–A8), constrained
+by an edge-device memory budget. Critically, we propose to jointly optimize the
+rescaling parameters and the precision assignment in a single bilevel loop,
+where the outer loop selects bit-widths and the inner loop optimizes per-channel
+rescaling for the chosen configuration. This joint optimization is absent from
+prior work and is expected to close the gap between uniform W4A4 and
+full-precision performance to within2 perplexity points on held-out text.
+
+MethodStage1 — Online Activation Rescaling (OAR). For each transformer layer
+(l), we estimate an input-channel outlier mask by tracking a running mean and
+variance of the activation tensor over (N=256) forward passes of the deployed
+model. Let (\mathbf

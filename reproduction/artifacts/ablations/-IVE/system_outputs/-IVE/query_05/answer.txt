@@ -1,0 +1,202 @@
+Automated Literature Review Generation via Iterative Retrieval-Augmented
+Composition### Ablation Variant: –IVE (No Idea-Validation Evolution)
+
+--------------------------------------------------------------------------------
+
+Title: Iterative Retrieval-Augmented Generation for Structured Literature
+Reviews: An Ablation Study of Validation-Memory-Free Composition
+
+--------------------------------------------------------------------------------
+
+ProblemProducing a comprehensive, well-organized literature review is one of the
+most labor-intensive tasks in academic research. A reviewer must (a) identify
+the relevant corpus, (b) extract salient findings, (c) organize them into a
+coherent narrative, and (d) critically assess methodological strengths and gaps.
+Recent LLM-based approaches have tackled isolated sub-tasks (citation
+recommendation, abstract summarization, survey drafting), but no existing system
+produces end-to-end literature reviews that match human quality across domains.
+
+The core challenge is compositional: a review is not a concatenation of
+summaries. It requires iterative refinement — re-reading papers in light of what
+other papers claim, detecting contradictions and redundant findings, and
+structuring sections around conceptual themes rather than source order. Existing
+systems either flatten this into a single-pass retrieval-then-generate pipeline
+or rely on human-in-the-loop curation for each refinement step.
+
+We target the problem of fully automated literature review generation given a
+research question as input, with an emphasis on structured, citation-grounded,
+topically organized output.
+
+--------------------------------------------------------------------------------
+
+HypothesisH1: An iterative retrieval-augmented generation architecture that
+alternates between paper discovery, claim extraction, and structural revision
+will produce literature reviews with higher topical coherence and citation
+coverage than single-pass or cascading baselines.
+
+H2 (ablation-specific): Disabling idea-validation evolution (the mechanism that
+records and reuses past rejection criteria, failed coverage patterns, and
+structural dead ends) will cause the system to repeat coverage gaps and
+structural errors across iterations, significantly degrading coherence and
+completeness relative to the full system. In other words, without a persistent
+memory of what does not work, iterative refinement alone will plateau early.
+
+--------------------------------------------------------------------------------
+
+MethodThe full system, LitForge, operates in three iterative stages:
+
+ 1 Seed Retrieval & Initial Outline. Given a research question (e.g., "What
+   methods exist for unsupervised constituency parsing?"), the system issues
+   multi-query expansions to a semantic scholar API, retrieves the top-(k)
+   papers, and constructs an initial section outline via a structured prompt to
+   the LLM backbone.
+ 2 Iterative Gap-Filling (3 rounds). In each round the system:
+
+ • Identifies the section with the weakest citation density or shallowest
+   coverage (using a learned coverage scorer).
+ • Issues targeted retrieval queries specific to that section's theme.
+ • Extracts claim-level assertions from newly retrieved papers.
+ • Revises the section — merging, splitting, or reordering claims, and inserting
+   cross-references.
+
+ 3 Evidence Consolidation & Formatting. All citations are checked for extractive
+   faithfulness; redundant citations are merged; a limitations paragraph is
+   generated per section; and the review is rendered in a standard two-column
+   paper format.
+
+–IVE Ablation Modification. The –IVE variant removes the validation memory
+module. In the full system, failed structural choices (e.g., "organizing by
+architecture type produced high overlap in Section3"; "the coverage scorer
+under-detected contradictions in round1") are written to a persistent memory
+store and retrieved in subsequent sessions or runs. In –IVE, this store is never
+initialized. The system runs the same iterative loop but enters each round with
+no prior knowledge of which strategies failed in earlier rounds or runs. It can
+still observe the current state of the draft (the explicit text and citation
+counts) and make decisions based on that, but it cannot recall that, e.g., a
+particular query formulation yielded low-precision results in the previous round
+of the same run, or that a particular structural pattern led to section
+fragmentation in a prior run on a different topic.
+
+--------------------------------------------------------------------------------
+
+Dataset / BenchmarkLitReview-Bench (constructed for this work). We collect20
+research questions spanning NLP (10), computer vision (5), and computational
+biology (5). For each question, we curate a gold-standard literature review
+of3–5 pages written by a domain expert with access to the same corpus. Gold
+reviews are annotated with:
+
+ • Section boundary markers- Citation spans mapped to paper IDs- Central claim
+   sentences per sectionThe corpus available to the system is the full Semantic
+   Scholar Academic Graph snapshot (2024-12), restricted to papers published
+   before the gold review's creation date to avoid information leakage.
+
+Evaluation is conducted on the20 questions, with4 reserved as a held-out test
+set (1 per domain +1 cross-domain).
+
+--------------------------------------------------------------------------------
+
+Evaluation Metrics| Metric | Description |
+
+|---|---| | Coverage@k | Fraction of gold citations recalled in the system
+output (with (k)-nearest citation distance slack). | | Claim F1 | Token-level
+overlap of gold-annotated central-claim sentences with system-generated claim
+sentences, measured per section under a many-to-one alignment. | | Section
+Coherence | Average pairwise cosine similarity between consecutive sentences
+within sections, minus between-section similarity (to reward topical
+separation). Reports with confidence intervals over3 seeds. | | Redundancy Rate
+| Fraction of citation spans in the output that refer to the same paper and make
+semantically identical claims (detected via NLI entailment). | | Faithfulness |
+Percentage of system claims that are entailed by the cited source abstracts
+(using an off-the-shelf NLI model; DeBERTa-large). | | Human Rating | Three
+expert annotators rate each review on a1–5 Likert scale for organization,
+completeness, and critical insight. Inter-annotator agreement measured via
+Krippendorff's (\alpha). |
+
+--------------------------------------------------------------------------------
+
+Baselines1. Single-Pass RAG. Retrieve top-30 papers, concatenate abstracts,
+prompt LLM to write a full review. No iteration.
+
+ 2 Cascading Summarizer. Retrieve papers, summarize each independently, then
+   summarize the summaries into sections. Two-stage, no iteration.
+ 3 LitForge (full system). The full iterative system with validation memory
+   enabled.
+ 4 LitForge –IVE. The proposed ablation variant.
+
+All baselines use the same LLM backbone (GPT-4o) and retrieval corpus to isolate
+architectural differences.
+
+--------------------------------------------------------------------------------
+
+Ablations (within –IVE Scope)
+
+Beyond the primary –IVE condition, we run three additional ablations on the16
+development questions:
+
+ • –IVE + No Iteration (single-gap-fill). A single round of gap-filling (the
+   initialization, one refinement, then consolidation). This measures how much
+   the iterative loop contributes without memory.
+ • –IVE + Uniform Query. Replaces the learned coverage-scorer with a round-robin
+   that targets each section once. Tests whether the coverage-scorer's decisions
+   (which depend on observing the current draft) drive improvement.
+ • –IVE + Shuffle Sections. Randomly permutes sections before each gap-filling
+   round. Tests whether the system is sensitive to order artifacts that a
+   validation memory would normally correct across runs.
+
+--------------------------------------------------------------------------------
+
+Expected Failure Modes1. Repeated coverage gaps across rounds. Without
+validation memory, the system may identify the same section as "weak" in
+consecutive rounds, retrieve similar additional papers, and add redundant
+citations instead of diversifying coverage. We expect Coverage@k to plateau
+after round2, whereas the full system would shift attention to other sections.
+
+ 2 Structural cycling. The system may oscillate between two organizational
+   schemes (e.g., chronological vs. thematic organization) across rounds, unable
+   to commit to one, because it cannot recall that a previous iteration of the
+   same structure led to high redundancy. This manifests as low Section
+   Coherence scores and high Redundancy Rate.
+ 3 Failure to propagate cross-section insights. A key function of validation
+   memory in the full system is recording that a finding from Section2
+   contradicts a claim being drafted in Section3. Without this memory,
+   cross-section contradictions may persist or be resolved inconsistently.
+   Faithfulness may drop as a result, because the same source paper's claim is
+   reported differently in two sections without cross-reference.
+ 4 Poor generalization to out-of-domain questions. Validation memory in the full
+   system accumulates reusable rejection criteria (e.g., "querying by method
+   name alone produces low-precision results for interdisciplinary topics").
+   Without it, the –IVE system must rediscover these heuristics from scratch for
+   each question, leading to a wider variance in quality scores on the held-out
+   test set.
+
+--------------------------------------------------------------------------------
+
+Limitations- LLM backbone dependence. All results are measured using a single
+backbone (GPT-4o). The relative benefit of validation memory may differ for
+weaker or stronger backbones. We do not test this cross-model comparison in the
+current study.
+
+ • Fixed iteration budget. The3-round design is chosen for computational
+   tractability. With unlimited rounds, the –IVE variant might eventually match
+   full-system performance by effectively brute-forcing coverage. Real-world
+   applicability requires bounded iteration, so this limitation is also a design
+   constraint.
+ • Citation faithfulness upper-bound. Because the system is constrained to the
+   S2AG corpus, any claim absent from the corpus (e.g., recently published work,
+   preprint updates) is unfaithful by construction. Gold reviews were given
+   access to the same corpus restriction, but human reviewers can draw on
+   broader knowledge. Faithfulness scores should be interpreted relative to the
+   available evidence, not absolute truth.
+ • No document-level reading. The system operates on abstracts and extracted
+   salient spans, not full-text PDFs. This is a pragmatic choice to stay within
+   API token limits, but it means nuanced experimental details (hyperparameters,
+   dataset splits, statistical significance) are not surfaced in the review.
+   This limitation affects all baselines equally and is noted as a threat to
+   critical insight ratings.
+ • –IVE ablation does not isolate memory exclusively. Removing validation memory
+   also removes the implicit bias it introduces. A system with validation memory
+   may steer towards historically "safe" structures at the cost of novelty. The
+   –IVE condition may therefore overestimate quality on dimensions where
+   exploration is beneficial. We note this trade-off but do not control for it
+   in the current design — it is discussed as a direction for future work and a
+   potential confound in interpreting the ablation gap.

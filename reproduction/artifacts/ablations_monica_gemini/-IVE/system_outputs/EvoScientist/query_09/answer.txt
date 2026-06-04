@@ -1,0 +1,26 @@
+Title: Mixed-Precision Differentiable Quantization via Adaptive Bit Allocation
+for LLM Deployment on Edge DevicesProblem Deploying large language models (LLMs)
+on edge devices (phones, IoT, embedded systems) is bottlenecked by memory
+bandwidth and power. Current quantization methods either:
+
+• Apply uniform bit-widths (e.g., INT4 across all layers), which wastes
+capacity on easy layers and collapses performance on sensitive ones.
+• Rely on post-training static calibration that ignores activation-dependent
+sensitivity, causing outlier-driven accuracy loss.
+• Treat quantization as a discrete, non-differentiable operation, preventing
+end-to-end co-optimization with the deployment hardware constraints.
+
+No existing method jointly optimizes per-layer bit-width, scale/zero-point, and
+hardware cost (model size × latency) in a differentiable loop that respects
+edge-device memory budgets.
+
+Hypothesis A differentiable quantization scheme that learns per-layer bit-widths
+(1–8 bits) gated by a hardware-cost regularizer can match FP16 perplexity
+within0.5 points while reducing model footprint below2 GB (or equivalent
+edge-device RAM limit), outperforming uniform INT4 and static mixed-precision
+heuristics.
+
+Method
+
+1 Differentiable bit-selector — For each layer, maintain a softmax over
+candidate bit-widths (e.g.,
