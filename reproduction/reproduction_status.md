@@ -61,6 +61,7 @@ and paper-level experimental reproduction.
 | Paper-level evidence gate is recorded | `paper_level_evidence_gate.json` marks Table 2, Table 3, and Figure 2 not ready until real artifacts are imported under `reproduction/artifacts` | Verified |
 | Human-label aggregation is executable | `aggregate_human_labels.py` converts Table 2 human labels into Win/Tie/Lose aggregate JSON/CSV | Verified |
 | Ablation aggregation is executable | `aggregate_ablation_results.py` converts Table 3 variant judge outputs into variant-perspective Win/Tie/Lose aggregate JSON/CSV | Verified |
+| Replacement ablation smoke is complete | `ablation_ide_query01_smoke_report.json` records one real `-IDE` query-01 proposal-only ablation run, DeepSeek judge output, and aggregate result under `reproduction/artifacts/ablation_smoke` | Verified |
 | Code-execution aggregation is executable | `aggregate_code_execution.py` converts Figure 2 execution logs into before/after and stage-level success-rate JSON/CSV | Verified |
 | Paper reproduction action plan is executable | `build_paper_reproduction_plan.py` regenerates the current missing-evidence command plan from the completion audit | Verified |
 | EvoScientist CLI outputs are normalized before judging | `normalize_system_outputs.py` writes clean `answer.txt` files from raw `stdout.txt` logs | Verified |

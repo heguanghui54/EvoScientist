@@ -713,6 +713,21 @@ def main() -> None:
     assert "Table 2 human evaluation artifacts are incomplete" in paper_level_gate["blocking_items"]
     assert "Figure 2 code-execution artifacts are incomplete" in paper_level_gate["blocking_items"]
     assert "Paper-Level Evidence Gate" in paper_level_gate_md_path.read_text(encoding="utf-8")
+    ablation_smoke_json_path = ROOT / "ablation_ide_query01_smoke_report.json"
+    ablation_smoke_md_path = ROOT / "ablation_ide_query01_smoke_report.md"
+    assert ablation_smoke_json_path.is_file(), "missing -IDE query-01 ablation smoke JSON"
+    assert ablation_smoke_md_path.is_file(), "missing -IDE query-01 ablation smoke markdown"
+    ablation_smoke = json.loads(ablation_smoke_json_path.read_text(encoding="utf-8"))
+    assert ablation_smoke["variant"] == "-IDE"
+    assert ablation_smoke["query_ids"] == [1]
+    assert ablation_smoke["status"] == "complete"
+    assert ablation_smoke["paper_exact"] is False
+    for key in ["variant_manifest", "variant_answer", "reference_answer", "judge_inputs", "judge_outputs", "aggregate_json"]:
+        assert (ROOT.parent / ablation_smoke[key]).is_file(), f"missing ablation smoke artifact: {key}"
+    assert ablation_smoke["aggregate_summary"]["Feasibility"]["lose"] == 1
+    assert "-IDE Query-01 Ablation Smoke Report" in ablation_smoke_md_path.read_text(
+        encoding="utf-8"
+    )
     action_plan_json_path = ROOT / "paper_reproduction_action_plan.json"
     action_plan_md_path = ROOT / "paper_reproduction_action_plan.md"
     assert action_plan_json_path.is_file(), "missing paper reproduction action plan JSON"

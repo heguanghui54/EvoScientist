@@ -164,7 +164,47 @@ def collect_answer(qdir: Path, workspace_dir: Path, stdout_path: Path) -> str:
             destination = qdir / filename
             destination.write_bytes(source.read_bytes())
             return source.read_text(encoding="utf-8").strip()
-    return stdout_path.read_text(encoding="utf-8").strip()
+    return clean_cli_stdout(stdout_path.read_text(encoding="utf-8"))
+
+
+def clean_cli_stdout(text: str) -> str:
+    """Best-effort extraction of the final answer from EvoSci CLI output."""
+
+    lines = text.splitlines()
+    cleaned = []
+    skip_prompt_block = False
+    in_thinking_box = False
+    seen_thinking_box = False
+    for line in lines:
+        stripped = line.strip()
+        if stripped.startswith("Loading agent") or stripped.startswith("Thread: "):
+            continue
+        if stripped.startswith("Workspace: ") or stripped.startswith("\u26a0"):
+            continue
+        if stripped == "skipping":
+            continue
+        if stripped.startswith("────────────────"):
+            skip_prompt_block = not seen_thinking_box and not skip_prompt_block
+            continue
+        if skip_prompt_block:
+            continue
+        if "Thinking" in stripped and stripped.startswith("\u256d"):
+            in_thinking_box = True
+            seen_thinking_box = True
+            continue
+        if in_thinking_box:
+            if stripped.startswith("\u2570"):
+                in_thinking_box = False
+            continue
+        if stripped.startswith("[Usage:") or stripped == "Goodbye!":
+            continue
+        if stripped.startswith("Resume this session with:") or stripped.startswith("EvoSci --resume"):
+            continue
+        cleaned.append(line.rstrip())
+    result = "\n".join(cleaned).strip()
+    if "[Usage:" in result:
+        result = result.split("[Usage:", 1)[0].rstrip()
+    return result
 
 
 def write_reference_answer(reference_root: Path, system_root: Path, query_id: int) -> bool:

@@ -1,0 +1,180 @@
+Table3 Ablation: -IDE (No Idea-Direction Memory)
+
+--------------------------------------------------------------------------------
+
+TitleMorpheme-Aware Contrastive Pretraining for Low-Resource Machine Translation
+
+--------------------------------------------------------------------------------
+
+ProblemMachine translation for language pairs with fewer than100k parallel
+sentences remains far behind high-resource performance. The bottleneck is
+twofold: (1) the encoder-decoder model struggles to learn reliable cross-lingual
+alignments from sparse signal, and (2) morphological richness in many
+low-resource languages (agglutinative, fusional) compounds data sparsity by
+exploding the effective vocabulary the model must map across. Existing solutions
+— back-translation, multilingual pretraining, and unsupervised embedding
+alignment — each treat these problems indirectly and often require substantial
+monolingual data or compute that may themselves be scarce.
+
+--------------------------------------------------------------------------------
+
+HypothesisPretraining the encoder on a morpheme-aware contrastive objective that
+explicitly aligns source and target subword representations at a
+finer-than-token granularity will produce a better initialization for
+low-resource translation fine-tuning than standard cross-lingual language model
+pretraining (e.g., XLM-R, mBART) alone. Specifically, by forcing the model to
+distinguish correct morpheme-level translation pairs from distractors drawn from
+within the same language family, the encoder learns a structured cross-lingual
+representation space that generalizes from very few parallel examples.
+
+--------------------------------------------------------------------------------
+
+MethodThe proposal has three stages:
+
+**Stage1 — Morphological segmentation.**Pre-process all data using a
+unsupervised morphological segmenter (Morfeus, BPE with morpheme constraints, or
+a character-level CNN with a segmenter head trained on a small annotated seed)
+to decompose surface forms into morpheme sequences. This is applied to both
+source and target sides. The segmentation is frozen before Stage2.
+
+**Stage2 — Contrastive cross-lingual pretraining.**Given a batch of parallel
+sentences segmented into morpheme sequences ( (x_s, x_t) ), we construct a
+contrastive loss at the morpheme-token level:
+
+ • For each morpheme position ( i ) in the source, the positive example is the
+   corresponding aligned target morpheme (obtained through statistical word
+   alignment on the parallel data, e.g., fast_align, then projected to morpheme
+   boundaries).
+ • Negatives are: (a) target morphemes from a different sentence in the same
+   batch, (b) target morphemes from the same sentence but a different aligned
+   source position.
+ • The loss is a variant of InfoNCE computed per morpheme position, with
+   temperature scaling.
+
+The encoder is initialized from a pretrained cross-lingual LM (XLM-R Base) and
+fine-tuned on this contrastive objective for10k–20k steps on the target language
+pair's parallel data plus mined parallel sentences from related languages in the
+same family.
+
+**Stage3 — Translation fine-tuning.**Initialize a standard Transformer
+encoder–decoder (6L–6L) with the contrastive-pretrained encoder and a randomly
+initialized decoder. Fine-tune on the available parallel data with
+label-smoothed cross-entropy loss. Decode with beam search (beam5, length
+penalty1.0). No back-translation or iterative data augmentation is used — this
+keeps the ablation clean and lets us attribute gains to the pretraining
+objective.
+
+--------------------------------------------------------------------------------
+
+Dataset / Benchmark- Primary: Flores-101 low-resource subset — pairs with fewer
+than100k training sentences from FLORES devtest. We select4 language pairs
+spanning different morphological profiles:
+
+ • Swahili–English (agglutinative Bantu, moderate resources ~50k)
+ • Tamil–English (agglutinative Dravidian, low resources ~20k)
+ • Gujarati–English (fusional Indo-Aryan, low resources ~40k)
+ • Kazakh–English (agglutinative Turkic, very low resources ~10k)
+ • Additional paired data: We permit mining up to50k additional parallel
+   sentences from related languages (e.g., Hindi for Gujarati, Turkish for
+   Kazakh) using LASER or LaBSE — this is a controlled variable tracked in
+   ablations.
+ • Monolingual data: Used only for morphological segmenter training
+   (unsupervised), not for back-translation.
+
+--------------------------------------------------------------------------------
+
+Evaluation Metrics- BLEU (spBLEU on tokenized reference, using sacreBLEU
+signature nrefs:1|case:mixed|tok:flores101|smooth:exp) — primary metric.
+
+ • chrF++ (character-level, captures morphologically sensitive quality).
+ • COMET-22 (reference-based neural metric, for robustness against BLEU's known
+   limitations on morphologically rich languages).
+ • Morpheme Recall — custom metric: proportion of gold-standard morphemes (from
+   the segmenter) that appear in the hypothesis translation, measuring
+   morphological coverage directly.
+ • All metrics reported with95% bootstrap confidence intervals over3 random
+   seeds.
+
+--------------------------------------------------------------------------------
+
+Baselines| Baseline | Description |
+
+|---|---| | B1: Vanilla Transformer | Standard6L–6L Transformer trained from
+scratch on parallel data only. | | B2: XLM-R + Transformer | Encoder initialized
+from XLM-R Base; decoder random. No contrastive pretraining. | | B3: mBART-ft |
+Full mBART50 fine-tuned on the target pair (multilingual encoder–decoder
+pretraining). | | B4: XLM-R + CL-mBPE | Same contrastive loss but computed over
+standard BPE tokens (no morphological segmentation). This isolates the
+contribution of the morpheme-level decomposition from the contrastive objective
+itself. |
+
+All baselines use the same Transformer architecture (6L–6L,512 hidden,2048 FFN,8
+heads,0.3 dropout) and the same Stage3 fine-tuning hyperparameters for fair
+comparison. B3 is the only exception (mBART's own architecture is larger; we
+note this as a compute-matched comparison rather than a parameter-matched one).
+
+--------------------------------------------------------------------------------
+
+Ablations (within the proposed method)
+
+
+ Ablation          What is removed / changed
+ A1: —Morph        Remove morphological segmentation; use BPE-10k on both
+                   sides. Contrastive objective applied at BPE-token level.
+ A2: —Negatives    Remove the within-sentence negatives (category (b) in
+                   Stage2); only across-sentence negatives remain.
+ A3: —FamilyData   Do not use mined parallel data from related languages;
+                   restrict to the target language pair only.
+ A4: —Contrastive  Remove Stage2 entirely; initialize from XLM-R and fine-tune
+                   directly (identical to B2). Expected to be the weakest
+                   variant, validating the pretraining step.
+
+
+--------------------------------------------------------------------------------
+
+Expected Failure Modes1. Morphological segmentation noise. The unsupervised
+segmenter may introduce errors that propagate: over-segmentation (splitting
+meaningful units) or under-segmentation (missing morpheme boundaries). This
+could make contrastive alignment noisier than BPE-level alignment. We diagnose
+this by computing segmentation agreement against a small gold-standard
+morphologically annotated sample (if available from UniMorph or a
+language-specific treebank).
+
+ 2 Alignment projection errors. Projecting word-level fast_align outputs to
+   morpheme-level is lossy — one-to-many and many-to-one word–morpheme mappings
+   cause false negative / false positive pairs in the contrastive loss. We
+   mitigate by using a soft margin (relaxed threshold for what counts as a
+   "positive") and by ablating this choice.
+ 3 Language family mismatch. Mined parallel data from a related but not
+   identical language may introduce systematic translation divergences (e.g.,
+   Hindi–Gujarati word order differences). The contrastive objective might learn
+   these divergences instead of generalizing. We check per-family performance:
+   if Gujarati degrades when Hindi data is added, this mode is active.
+ 4 Diminishing returns at very low data. Below ~5k parallel sentences, even the
+   pretrained encoder may not have enough signal to learn meaningful morpheme
+   alignments. For Kazakh–English we expect a smaller gain than for
+   Swahili–English.
+ 5 Overfitting in Stage3. A pretrained encoder is larger than the parallel data
+   budget; dropout tuning and early stopping on dev BLEU are critical. We use
+   validation-based early stopping with patience5.
+
+--------------------------------------------------------------------------------
+
+Limitations- The method requires a morphological segmenter per language pair.
+For languages without a prebuilt segmenter or without sufficient monolingual
+data to train one unsupervisedly, the approach adds engineering overhead that
+may not be justified.
+
+ • The contrastive objective uses word alignments from fast_align, which assumes
+   roughly monotonic alignment for most language pairs. For heavily reordering
+   language pairs (e.g., Japanese–English), the alignment projection may break
+   down and degrade results.
+ • We deliberately exclude back-translation to keep the ablation clean, but in
+   practice the best system would likely combine both contrastive pretraining
+   and back-translation. The method's gains over baselines that do use
+   back-translation are not evaluated here.
+ • The evaluation is limited to4 language pairs. Generalization to isolating
+   languages (e.g., Yoruba, Vietnamese) or to non-English pairs is untested.
+ • Computational cost: Stage2 adds roughly1.5× the training cost of the baseline
+   fine-tuning (due to contrastive loss computation over morpheme positions).
+   This is modest but non-zero.
