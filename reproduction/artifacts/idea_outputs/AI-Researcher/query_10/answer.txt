@@ -1,0 +1,39 @@
+### 1. Title
+**CAR-SQL: Constraint-Anchored Reasoning for Robust Text-to-SQL Generation in Large-Scale Databases**
+
+### 2. Problem and Motivation
+While Large Language Models (LLMs) have achieved high performance on Text-to-SQL benchmarks like Spider, they often fail in real-world scenarios characterized by massive schemas (hundreds of tables) and complex relational constraints. Current models frequently suffer from "Schema Hallucination"—referencing columns that do not exist or joining tables on incompatible keys—and "Constraint Neglect," where they ignore foreign key (FK) relationships essential for data integrity. There is a need for a methodology that forces the model to reason about the database’s relational integrity *before* generating the final query.
+
+### 3. Core Hypothesis
+Incorporating an explicit "Relational Integrity Verification" (RIV) step—where the model must map natural language entities to specific Primary Key-Foreign Key (PK-FK) paths before drafting the SELECT and WHERE clauses—will significantly reduce execution errors in multi-join queries compared to standard chain-of-thought or zero-shot prompting.
+
+### 4. Method
+The proposed method, **Constraint-Anchored Reasoning (CAR)**, follows a three-stage pipeline:
+
+1.  **Schema Pruning & Constraint Extraction:** Given a natural language question (NLQ) and a full schema (DDL), the model first identifies a sub-schema of potentially relevant tables. For these tables, it extracts all PK-FK relationships and "CHECK" constraints.
+2.  **Constraint Path Mapping (The Core Innovation):** The model is prompted to generate a "Relational Path" in a structured format (e.g., `TableA.ID -> TableB.A_ID`). It must justify why this path is necessary to answer the NLQ. This forces the model to anchor its logic in the database's physical constraints.
+3.  **Constraint-Anchored Generation:** The model generates the final SQL query, using the Relational Path from Stage 2 as a mandatory blueprint. If the SQL uses a join not specified in the path, a self-correction module triggers a re-generation.
+
+### 5. Dataset or Benchmark
+*   **Primary Benchmark:** **BIRD (Big Bench for Large-scale Database Grounded Text-to-SQL Evaluation)**. BIRD is chosen over Spider because it contains larger databases (up to 100GB), more complex schemas, and requires higher "database-savvy" reasoning.
+*   **Subset:** Focus on the "Challenging" and "External Knowledge" categories within BIRD, where relational mapping is most critical.
+
+### 6. Evaluation Metrics
+*   **Execution Accuracy (EX):** The percentage of predicted queries that return the same result set as the gold query.
+*   **Valid Efficiency Score (VES):** Measures the execution efficiency of the generated SQL, rewarding queries that utilize indexes and correct join orders.
+*   **Schema Linkage Precision/Recall:** A manual or model-based audit of whether the correct PK-FK pairs were identified in Stage 2.
+
+### 7. Baselines
+*   **Zero-shot/Few-shot GPT-4o:** Standard prompting without explicit constraint reasoning.
+*   **DIN-SQL (Decomposed In-Context Learning):** The current state-of-the-art approach that uses task decomposition (classification, SQL generation, self-correction).
+*   **DAIL-SQL:** A benchmark baseline that optimizes prompt selection and organization for Text-to-SQL.
+
+### 8. Ablations
+*   **No-Constraint Mapping:** Remove Stage 2 and provide the pruned schema directly to the generator.
+*   **Implicit vs. Explicit Constraints:** Compare providing the model with a list of FKs versus forcing it to write out the "Relational Path" before the SQL.
+*   **Static vs. Dynamic Pruning:** Compare using the full DDL versus the pruned sub-schema from Stage 1.
+
+### 9. Failure Modes and Feasibility Risks
+*   **Inference Latency:** The multi-stage pipeline (Pruning -> Mapping -> Generation) increases token usage and wall-clock time, which may be impractical for real-time applications.
+*   **Schema Noise:** In poorly designed legacy databases where FK constraints are not explicitly defined in the DDL, the "Constraint Mapping" stage may fail to find valid paths.
+*   **Over-reliance on PK-FK:** The model might struggle with "Ad-hoc Joins" (joins on columns that are not formally linked in the schema) if it becomes too rigid in its constraint-anchoring.

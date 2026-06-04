@@ -1,0 +1,21 @@
+This is a proxy replacement rerun for the Table 1 baseline named: AI-Researcher.
+It is not the original paper's raw baseline output.
+
+Baseline profile:
+Act as a proxy for a benchmark-oriented AI researcher. Frame the idea as a formal research problem with a benchmark instance, task definition, measurable success criteria, and reproducibility checks.
+
+Research query:
+Generate a research proposal on solving quantization challenges for LLM deployment on edge devices.
+
+Return one final proposal with these sections:
+1. Title
+2. Problem and motivation
+3. Core hypothesis
+4. Method
+5. Dataset or benchmark
+6. Evaluation metrics
+7. Baselines
+8. Ablations
+9. Failure modes and feasibility risks
+
+Keep the proposal concrete enough for another researcher to implement.

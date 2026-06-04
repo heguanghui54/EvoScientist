@@ -1,0 +1,40 @@
+**1. Title**
+Knowledge-Anchored Dynamic Adapters (KADA): Mitigating Interference and Catastrophic Forgetting in Domain-Specific Knowledge Injection.
+
+**2. Problem and Motivation**
+Large Language Models (LLMs) often struggle with "knowledge interference" during domain-specific fine-tuning. When injecting specialized knowledge (e.g., medical protocols, legal statutes), the model frequently suffers from two issues: (1) **Catastrophic Forgetting**, where general reasoning capabilities or previously learned facts are degraded, and (2) **Hallucinatory Blending**, where the model incorrectly mixes pre-training data with new, domain-specific facts that may contradict the base knowledge. Current Parameter-Efficient Fine-Tuning (PEFT) methods like LoRA mitigate compute costs but do not explicitly manage the boundary between general-purpose logic and domain-specific factual retrieval.
+
+**3. Core Hypothesis**
+A modular architecture that utilizes a "Knowledge Anchor" gating mechanism—directing queries either to a frozen base model for general reasoning or to a specialized "Knowledge Adapter" for domain-specific facts—will achieve higher domain accuracy and lower general-task degradation compared to standard LoRA or full fine-tuning.
+
+**4. Method**
+The proposed KADA method involves:
+*   **Dual-Pathway Architecture:** A frozen backbone (e.g., Llama-3-8B) coupled with a set of Rank-Stabilized LoRA (RS-LoRA) adapters.
+*   **Knowledge-Anchored Gating (KAG):** A lightweight, supervised router trained on a subset of the domain data. The router uses the hidden states of the first three layers of the LLM to predict whether a token sequence requires "Domain-Specific Facts" or "General Logic."
+*   **Fact-Consistency Loss:** During training, we introduce a KL-Divergence penalty that ensures the output distribution of the KADA model on general-purpose prompts remains close to the frozen base model, while maximizing likelihood on the domain-specific corpus.
+
+**5. Dataset or Benchmark**
+*   **Task:** Medical Regulatory Compliance (Bio-Reg).
+*   **Data Source:** A curated dataset of FDA/EMA drug approval documents and clinical trial updates published *after* the base model’s training cutoff (post-2023).
+*   **Benchmark Instance:** The "Bio-Reg Conflict Set," consisting of 2,000 question-answer pairs where the "correct" answer according to new regulations contradicts "common knowledge" present in pre-2023 data.
+
+**6. Evaluation Metrics**
+*   **Domain Accuracy (DA):** Percentage of correct answers on the Bio-Reg Conflict Set.
+*   **Knowledge Retention Score (KRS):** Performance on MMLU (Massive Multitask Language Understanding) benchmarks to measure degradation of general knowledge.
+*   **Fact-Switching Efficiency (FSE):** A ratio measuring the model’s ability to correctly identify when to use new knowledge vs. old knowledge when prompted with temporal cues (e.g., "As of 2024...").
+
+**7. Baselines**
+*   **Zero-Shot Base Model:** Llama-3-8B (untrained on new domain).
+*   **Standard RAG (Retrieval-Augmented Generation):** The base model using a vector database of the domain documents.
+*   **Standard LoRA:** Uniform fine-tuning on the domain corpus without gating or KL-divergence penalties.
+*   **Full Fine-Tuning (FFT):** Unconstrained fine-tuning on the domain corpus.
+
+**8. Ablations**
+*   **No Gating:** Removing the KAG router and using a weighted sum of adapter and base outputs.
+*   **No KL-Penalty:** Removing the fact-consistency loss to measure the impact on general reasoning (MMLU scores).
+*   **Router Depth:** Testing the router at different layer depths (e.g., input layer vs. middle layers) to find the optimal point for knowledge redirection.
+
+**9. Failure Modes and Feasibility Risks**
+*   **Router Overfitting:** The KAG router might learn to associate specific keywords with the domain adapter, leading to "false positives" where general questions are processed by the domain adapter, causing nonsensical outputs.
+*   **Inference Latency:** The dual-pathway and gating mechanism may introduce a 5–10% overhead in tokens-per-second.
+*   **Data Scarcity:** If the domain-specific corpus is too small, the RS-LoRA adapters may not capture enough nuance to outperform simple RAG approaches. To mitigate this, synthetic data generation via a larger teacher model (e.g., GPT-4o) will be used to augment the training set.

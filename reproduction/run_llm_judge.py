@@ -285,6 +285,18 @@ def main() -> None:
     parser.add_argument("--limit", type=int, default=None)
     parser.add_argument("--resume", action="store_true")
     parser.add_argument("--sleep", type=float, default=0.0, help="Seconds between API calls.")
+    parser.add_argument(
+        "--record-retries",
+        type=int,
+        default=1,
+        help="Attempts per record before recording a failure.",
+    )
+    parser.add_argument(
+        "--retry-sleep",
+        type=float,
+        default=5.0,
+        help="Base seconds for per-record retry backoff.",
+    )
     args = parser.parse_args()
 
     default_models = {
@@ -314,12 +326,20 @@ def main() -> None:
                 continue
             if args.limit is not None and processed >= args.limit:
                 break
-            try:
-                judged = judge_record(record, args.provider, model, args.temperature)
-                dst.write(json.dumps(judged, ensure_ascii=False) + "\n")
-                dst.flush()
-                processed += 1
-            except Exception as exc:
+            last_error: Exception | None = None
+            for attempt in range(1, args.record_retries + 1):
+                try:
+                    judged = judge_record(record, args.provider, model, args.temperature)
+                    dst.write(json.dumps(judged, ensure_ascii=False) + "\n")
+                    dst.flush()
+                    processed += 1
+                    last_error = None
+                    break
+                except Exception as exc:
+                    last_error = exc
+                    if attempt < args.record_retries:
+                        time.sleep(args.retry_sleep * attempt)
+            if last_error is not None:
                 failed += 1
                 error_path = args.output.with_suffix(args.output.suffix + ".errors.jsonl")
                 with error_path.open("a", encoding="utf-8") as err:
@@ -327,14 +347,15 @@ def main() -> None:
                         json.dumps(
                             {
                                 "comparison_id": record.get("comparison_id"),
-                                "error": str(exc),
+                                "error": str(last_error),
+                                "attempts": args.record_retries,
                             },
                             ensure_ascii=False,
                         )
                         + "\n"
                     )
                 if args.provider != "mock":
-                    raise
+                    raise last_error
             if args.sleep:
                 time.sleep(args.sleep)
 

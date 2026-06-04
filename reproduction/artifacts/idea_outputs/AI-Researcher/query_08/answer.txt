@@ -1,0 +1,40 @@
+**1. Title**
+RE-PLAN: Recursive Error-Correction via Latent Planning and Simulation in Multi-Step Agentic Tasks.
+
+**2. Problem and Motivation**
+Current Large Language Model (LLM) agents often suffer from "cascading failures" in long-horizon reasoning tasks. When an agent makes an initial sub-optimal decision or encounters an unexpected environment state, it tends to rationalize the error in its subsequent Chain-of-Thought (CoT) rather than correcting it. This is primarily due to the linear nature of standard autoregressive generation. While frameworks like ReAct (Reason + Act) allow for environment feedback, they lack a "look-ahead" mechanism to simulate the potential consequences of an action before committing to it, leading to irreversible state changes in complex environments.
+
+**3. Core Hypothesis**
+Integrating a "Simulation-then-Execution" loop—where the agent generates multiple latent trajectories (simulations), evaluates them using an internal critic, and selects the path with the highest predicted success probability—will significantly improve performance on multi-step reasoning benchmarks compared to reactive (ReAct) or purely linear (CoT) baselines.
+
+**4. Method**
+The RE-PLAN framework consists of three distinct modules:
+*   **Proposer (P):** Given a goal and current state $S_t$, the Proposer generates $K$ candidate action sequences $\{A_1, A_2, ... A_K\}$ for the next $N$ steps.
+*   **Simulator (S):** For each candidate sequence, the Simulator (an LLM prompted to act as a world model) predicts the resulting state $S_{t+N}$ and the likely environment feedback.
+*   **Critic (C):** A reward-modeling prompt evaluates the simulated states $S_{t+N}$ against the global goal, assigning a score.
+*   **Execution:** The agent selects the highest-scored sequence, executes the first action in the real environment, and then triggers a recursive check: if the actual environment feedback deviates significantly from the simulated prediction, the agent flushes the current plan and triggers a re-simulation.
+
+**5. Dataset or Benchmark**
+The proposal will utilize **ALFWorld**, a synthetic environment that requires agents to solve multi-step household tasks (e.g., "put a clean sponge in the cabinet") using text-based interactions. ALFWorld is ideal because it requires both high-level planning and low-level state tracking, and provides a deterministic ground truth for success.
+
+**6. Evaluation Metrics**
+*   **Success Rate (SR):** The percentage of tasks completed within the maximum step limit (50 steps).
+*   **Goal Progress (GP):** For failed tasks, the percentage of sub-goals completed.
+*   **Path Efficiency Ratio:** The ratio of the length of the optimal path (determined by an oracle) to the length of the agent’s actual path.
+*   **Inference Cost:** Measured in total tokens per successful task completion to evaluate the trade-off between reasoning depth and compute.
+
+**7. Baselines**
+*   **ReAct:** The standard Reason + Act paradigm (Yao et al., 2022).
+*   **Reflexion:** An agent that performs linguistic self-reflection after a task failure to improve the next trial (Shinn et al., 2023).
+*   **CoT-Prompting:** A zero-shot or few-shot Chain-of-Thought baseline without environment interaction.
+
+**8. Ablations**
+*   **No-Simulation:** The Proposer generates only one path (K=1) and executes it without Critic evaluation.
+*   **No-Correction:** The agent follows the simulated plan even if the real environment feedback contradicts the simulation.
+*   **Random Critic:** Instead of an LLM-based Critic, a random sequence is selected from the $K$ candidates to test the necessity of the evaluation step.
+
+**9. Failure Modes and Feasibility Risks**
+*   **Simulation Drift:** The LLM acting as the "Simulator" may provide inaccurate predictions of environment transitions, leading the agent to optimize for a "hallucinated" state.
+*   **Inference Latency:** Generating $K$ trajectories and evaluating them significantly increases the time and cost per action.
+*   **State-Space Explosion:** In very complex environments, $K$ simulations may not be enough to find a viable path, leading to performance plateaus.
+*   **Feasibility:** Using high-throughput APIs (like GPT-4o-mini or Llama-3-70B) is necessary to keep the computational cost manageable while maintaining the reasoning quality required for the Simulator/Critic roles.

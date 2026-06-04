@@ -1,0 +1,40 @@
+**1. Title**
+Structured Bridge-Entity Extraction (SBEE): Mitigating Semantic Drift in Multi-Hop Retrieval-Augmented Generation.
+
+**2. Problem and Motivation**
+Standard Retrieval-Augmented Generation (RAG) systems struggle with multi-hop queries where the answer requires connecting disparate pieces of information (e.g., "What is the population of the city where the inventor of the FM radio was born?"). Current iterative RAG approaches (like IRCoT) often suffer from "semantic drift," where the second-hop query becomes too broad or loses the context of the first hop, leading to the retrieval of irrelevant documents that poison the final generation. There is a need for a mechanism that formally bridges the gap between hops using discrete entities rather than just latent vector representations.
+
+**3. Core Hypothesis**
+Explicitly extracting "bridge entities" and "relational constraints" from the first-hop retrieved context—and using them as hard filters in a hybrid (dense + sparse) second-hop search—will significantly improve retrieval precision and final answer accuracy compared to purely neural iterative retrieval.
+
+**4. Method**
+The proposed SBEE framework operates in four stages:
+1.  **Initial Retrieval:** Perform a dense embedding search for the original query $Q$ to get context $C_1$.
+2.  **Bridge Extraction:** Use a Large Language Model (LLM) to identify the "missing link" entity ($E_{bridge}$) and the required relation ($R$) from $C_1$. For example, if $Q$ asks about the inventor’s birthplace, the LLM identifies the inventor's name from $C_1$.
+3.  **Constrained Second-Hop:** Formulate a structured query $Q_2$. Instead of a standard vector search, perform a hybrid search where the bridge entity $E_{bridge}$ is treated as a mandatory keyword (BM25) while the relation $R$ is used for semantic ranking (Dense).
+4.  **Reasoned Generation:** Provide the LLM with the structured path ($Q \rightarrow C_1 \rightarrow E_{bridge} \rightarrow C_2$) to generate the final response.
+
+**5. Dataset or Benchmark**
+*   **HotpotQA (Distractor Setting):** A gold-standard multi-hop dataset requiring the integration of information across multiple Wikipedia articles.
+*   **MuSiQue:** A more complex multi-hop benchmark designed to minimize "cheating" via single-hop shortcuts.
+
+**6. Evaluation Metrics**
+*   **Retrieval Recall@K:** Success of retrieving all necessary supporting documents across both hops.
+*   **Hop-2 Precision:** Percentage of documents in the second hop that are actually relevant to the bridge entity.
+*   **Exact Match (EM) and F1 Score:** For the final generated answer.
+*   **Faithfulness:** Using an NLI-based metric to ensure the answer is derived from the retrieved documents and not internal LLM hallucinations.
+
+**7. Baselines**
+*   **Standard RAG:** Single-hop retrieval using the original query.
+*   **Self-RAG:** A framework that uses reflection tokens to decide when to retrieve.
+*   **IRCoT (Iterative Retrieval-augmented CoT):** The current state-of-the-art for multi-hop RAG which uses Chain-of-Thought to generate subsequent queries.
+
+**8. Ablations**
+*   **No Bridge Entity:** Use the LLM to generate a free-text second query without extracting a specific entity.
+*   **Dense-Only Second Hop:** Remove the keyword constraint for the bridge entity to test the necessity of hybrid search.
+*   **Single-Step vs. Multi-Step:** Compare performance when providing all retrieved documents at once versus providing them sequentially.
+
+**9. Failure Modes and Feasibility Risks**
+*   **Entity Ambiguity:** If the first hop retrieves an entity with a common name (e.g., "John Smith"), the second-hop keyword constraint may retrieve thousands of irrelevant documents.
+*   **Extraction Failure:** If the LLM fails to identify the bridge entity in the first hop, the chain breaks.
+*   **Latency:** Iterative steps and multiple LLM calls for extraction increase the time-to-first-token, potentially making it unsuitable for real-time applications without optimization (e.g., speculative decoding or smaller specialist models for extraction).

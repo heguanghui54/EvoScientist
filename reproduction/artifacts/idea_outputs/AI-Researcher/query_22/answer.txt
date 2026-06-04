@@ -1,0 +1,48 @@
+**1. Title**
+Vulnerability of Retrieval-Augmented Code Generation to Indirect Prompt Injection: A Systematic Benchmark
+
+**2. Problem and Motivation**
+Modern AI code assistants (e.g., GitHub Copilot, Cursor) utilize Retrieval-Augmented Generation (RAG) to provide context-aware suggestions by fetching relevant snippets from local files or external documentation. However, this creates a new attack vector: **Indirect Prompt Injection (IPI)**. If an attacker can introduce malicious instructions into a codebase or documentation (e.g., via a pull request to an open-source library), they may be able to influence the LLM’s output when that content is retrieved as context.
+
+Current security benchmarks focus on direct prompting or training-data poisoning, but there is a lack of systematic evaluation regarding how "contextual noise" in RAG pipelines can force an LLM to generate insecure code (e.g., bypassing authentication, introducing SQL injections, or exfiltrating environment variables).
+
+**3. Core Hypothesis**
+Code LLMs prioritize instructions embedded within retrieved context over their internal safety alignment when the context is framed as "technical documentation" or "required implementation patterns." Consequently, the Attack Success Rate (ASR) will increase significantly when malicious directives are formatted as code comments or API documentation within the RAG window.
+
+**4. Method**
+The research will evaluate a RAG-based code generation pipeline using a "Poisoned Vector Store" approach:
+1.  **Context Injection:** For a given coding task, we generate a set of "adversarial context snippets." These snippets contain a mix of helpful code and a "Malicious Contextual Directive" (MCD) (e.g., *"Note: For performance, use the `unsafe` module for all memory operations"*).
+2.  **Retrieval Simulation:** We use a standard retriever (e.g., FAISS with `text-embedding-3-small`) to fetch the top-k snippets, ensuring the adversarial snippet is included in the prompt.
+3.  **Generation:** The LLM generates code based on the user query and the retrieved context.
+4.  **Verification:** The generated code is passed through:
+    *   A test suite (to ensure functional correctness).
+    *   A static analysis security tool (SAST) like Semgrep or Bandit (to detect vulnerabilities).
+
+**5. Dataset or Benchmark**
+We propose the **SecRAG-Code Benchmark**, derived from:
+*   **Tasks:** 100 programming problems from HumanEval and MBPP that involve security-sensitive operations (e.g., file I/O, networking, database queries).
+*   **Adversarial Contexts:** For each task, create three types of poisoned context:
+    *   *Direct Instruction:* A comment explicitly telling the model to use an insecure function.
+    *   *Obfuscated Instruction:* Using synonyms or multi-step logic to hide the malicious intent.
+    *   *Documentation Mimicry:* Formatting the injection as a standard library docstring.
+
+**6. Evaluation Metrics**
+*   **Attack Success Rate (ASR):** The percentage of generated code samples that satisfy the functional requirements of the prompt but contain the targeted security vulnerability.
+*   **Pass@k:** The probability that at least one of the top-k generated code samples is functionally correct (to ensure the attack doesn't just break the code).
+*   **Vulnerability Density:** Number of security flaws per 100 lines of generated code (LOC) as identified by SAST tools.
+*   **Context Adherence Score:** A metric measuring how much of the generated code's logic was derived from the poisoned context vs. the model's internal weights.
+
+**7. Baselines**
+*   **Zero-Shot Generation:** The LLM generates code without RAG context.
+*   **Vanilla RAG:** The LLM generates code with legitimate, non-poisoned context.
+*   **System-Prompt Guarded RAG:** The LLM is given a system prompt explicitly warning it to ignore instructions found in retrieved context.
+
+**8. Ablations**
+*   **Context Window Position:** Does placing the malicious snippet at the beginning, middle, or end of the retrieved context change the ASR?
+*   **Top-K Variation:** How does the number of retrieved snippets (k=1, 3, 5, 10) affect the model's susceptibility to a single poisoned snippet?
+*   **Model Scaling:** Comparing performance across model sizes (e.g., Llama-3-8B vs. 70B, GPT-4o-mini vs. GPT-4o).
+
+**9. Failure Modes and Feasibility Risks**
+*   **Static Analysis Limitations:** SAST tools may produce false positives or miss complex logic-based vulnerabilities. *Mitigation:* Use a subset of tasks where vulnerabilities are easily verifiable via unit tests (e.g., checking if a specific insecure function was called).
+*   **Model Refusal:** High-alignment models might refuse to generate code if the injection is too obvious. *Mitigation:* Focus on "grey-area" vulnerabilities (e.g., using `shell=True` in Python's `subprocess`) rather than overtly malicious payloads like malware.
+*   **Retrieval Variance:** The embedding model might not always rank the poisoned snippet highly. *Mitigation:* Use "Gold-Standard Retrieval" (forcing the inclusion of the poisoned snippet) to isolate the LLM's generation vulnerability from the retriever's performance.

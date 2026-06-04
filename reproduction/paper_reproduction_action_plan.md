@@ -11,25 +11,6 @@ paper-level completion audit can pass.
 
 ### 1. table1_llm_idea_generation / baseline_output_import_or_generation
 
-Required evidence: 30 answer.txt files under reproduction/artifacts/idea_outputs/AI-Researcher/
-
-System: AI-Researcher
-Probe: reproduction/ai_researcher_baseline_probe.json
-Note: Current probe found the public AI-Researcher runner is benchmark-instance based, not a drop-in runner for the 30 recovered EvoScientist queries.
-
-Commands:
-
-```bash
-.venv/bin/python reproduction/import_baseline_outputs.py --system-name AI-Researcher --source {source_jsonl} --source-format jsonl --output-root reproduction/artifacts/idea_outputs --strict
-.venv/bin/python reproduction/import_baseline_outputs.py --system-name AI-Researcher --source {source_dir} --source-format directory --output-root reproduction/artifacts/idea_outputs --strict
-.venv/bin/python reproduction/build_pairwise_judge_inputs.py --systems-root reproduction/artifacts/idea_outputs --baseline AI-Researcher --output reproduction/artifacts/judge_inputs/evosci_vs_ai_researcher.jsonl
-.venv/bin/python reproduction/run_llm_judge.py --provider deepseek --model deepseek-v4-flash --input reproduction/artifacts/judge_inputs/evosci_vs_ai_researcher.jsonl --output reproduction/artifacts/judge_outputs/evosci_vs_ai_researcher_deepseek.jsonl --resume
-.venv/bin/python reproduction/aggregate_judge_results.py --input reproduction/artifacts/judge_outputs/evosci_vs_ai_researcher_deepseek.jsonl --output-csv reproduction/artifacts/tables/evosci_vs_ai_researcher_deepseek.csv --output-json reproduction/artifacts/tables/evosci_vs_ai_researcher_deepseek.json
-.venv/bin/python reproduction/audit_reproduction_artifacts.py --baseline AI-Researcher --judge-inputs reproduction/artifacts/judge_inputs/evosci_vs_ai_researcher.jsonl --judge-outputs reproduction/artifacts/judge_outputs/evosci_vs_ai_researcher_deepseek.jsonl --aggregate-json reproduction/artifacts/tables/evosci_vs_ai_researcher_deepseek.json
-```
-
-### 2. table1_llm_idea_generation / baseline_output_import_or_generation
-
 Required evidence: 30 answer.txt files under reproduction/artifacts/idea_outputs/Hypogenic/
 
 System: Hypogenic
@@ -45,7 +26,7 @@ Commands:
 .venv/bin/python reproduction/import_baseline_outputs.py --system-name Hypogenic --source $HOME/research/hypogenic/outputs/evoscientist_table1_queries/hypogenic --source-format directory --output-root reproduction/artifacts/idea_outputs --strict
 ```
 
-### 3. table1_llm_idea_generation / baseline_output_import_or_generation
+### 2. table1_llm_idea_generation / baseline_output_import_or_generation
 
 Required evidence: 30 answer.txt files under reproduction/artifacts/idea_outputs/Novix/
 
@@ -62,7 +43,7 @@ Commands:
 .venv/bin/python reproduction/import_baseline_outputs.py --system-name Novix --source $HOME/research/novix/outputs/evoscientist_table1_queries/novix --source-format directory --output-root reproduction/artifacts/idea_outputs --strict
 ```
 
-### 4. table1_llm_idea_generation / baseline_output_import_or_generation
+### 3. table1_llm_idea_generation / baseline_output_import_or_generation
 
 Required evidence: 30 answer.txt files under reproduction/artifacts/idea_outputs/K-Dense/
 
@@ -79,7 +60,7 @@ git clone https://github.com/K-Dense-AI/k-dense-byok $HOME/research/k-dense-byok
 .venv/bin/python reproduction/import_baseline_outputs.py --system-name K-Dense --source $HOME/research/k-dense-byok/outputs/evoscientist_table1_queries/k_dense --source-format directory --output-root reproduction/artifacts/idea_outputs --strict
 ```
 
-### 5. table1_llm_idea_generation / paper_judge_completion
+### 4. table1_llm_idea_generation / paper_judge_completion
 
 Required evidence: 420 swapped pairwise records plus Gemini-3-flash judge outputs
 
@@ -93,7 +74,7 @@ Commands:
 .venv/bin/python reproduction/compare_reproduction_to_paper.py --actual-json reproduction/artifacts/tables/idea_generation_win_tie_lose.json --section table1_llm_idea_generation --require-all
 ```
 
-### 6. table2_human_idea_generation / human_label_import
+### 5. table2_human_idea_generation / human_label_import
 
 Required evidence: inputs.jsonl, labels.jsonl, and aggregate.json for three PhD-level annotators
 

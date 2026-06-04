@@ -1,0 +1,42 @@
+### 1. Title
+**SchemaMatch-IE: Zero-Shot Cross-Domain Information Extraction via Semantic Schema Decomposition**
+
+### 2. Problem and Motivation
+Traditional Information Extraction (IE) systems are typically bound to a fixed schema (e.g., "Person," "Organization," "Located_In") and require significant labeled data for each new domain. While Large Language Models (LLMs) have improved zero-shot capabilities, they often struggle with "schema adherence"—the ability to map extracted entities and relations to a specific, complex, and potentially niche target schema provided at inference time without hallucinating labels.
+
+The motivation is to bridge the gap between open-domain IE (which extracts anything) and closed-domain IE (which is rigid). A system that can reliably perform IE on an unseen schema in a specialized domain (e.g., legal, rare disease research) would drastically reduce the cost of structured data acquisition.
+
+### 3. Core Hypothesis
+A multi-stage extraction pipeline that uses **Semantic Schema Decomposition**—breaking down complex relation definitions into atomic semantic constraints (e.g., "Subject must be a physical object," "Object must be a location")—will significantly outperform monolithic "one-pass" LLM prompting in zero-shot cross-domain F1 scores.
+
+### 4. Method
+The proposed method, **SchemaMatch-IE**, consists of three stages:
+1.  **Schema Semantic Parsing:** Given a target schema (labels and descriptions), the system generates a set of atomic "validation questions" for each entity and relation type.
+2.  **Span-Proposal Generation:** An LLM generates a broad set of candidate entity spans and potential triples from the text using a high-recall, open-schema prompt.
+3.  **Constraint-Based Filtering:** Each candidate triple is passed through a verification loop where the system checks the span against the "validation questions" generated in Stage 1. Only candidates that meet all semantic constraints of a specific schema label are retained.
+
+### 5. Benchmark and Dataset
+The evaluation will utilize a "Held-Out Domain" protocol:
+*   **Source Data:** A compilation of diverse IE datasets including **ACE05** (General), **SciERC** (Scientific), and **CASIE** (Cybersecurity).
+*   **Task:** The model is evaluated on a domain it has not seen during any specific instruction tuning. For instance, if the model is tuned on news/general data, it is tested on the **MAVEN** (Event Extraction) or **DocRED** (Relation Extraction) datasets using only the provided schema definitions.
+*   **Reproducibility:** Use the publicly available HuggingFace versions of these datasets with fixed train/test splits.
+
+### 6. Evaluation Metrics
+*   **Strict Micro-F1 Score:** Correctness requires matching the exact span and the exact schema label.
+*   **Schema Adherence Rate (SAR):** The percentage of extracted labels that actually exist in the provided target schema (measuring hallucination).
+*   **Zero-Shot Transfer Gap:** The difference in F1 between the zero-shot SchemaMatch-IE and a supervised baseline (e.g., a BERT-based model trained on the target domain).
+
+### 7. Baselines
+1.  **Direct Prompting (Zero-Shot):** Providing the schema and text to GPT-4o or Llama-3-70B with a "Extract all entities and relations" instruction.
+2.  **UniversalIE (InstructUIE):** A state-of-the-art fine-tuned model for IE tasks to see if a specialized model generalizes better than the decomposition method.
+3.  **Supervised Upper Bound:** A domain-specific fine-tuned RoBERTa-large model.
+
+### 8. Ablations
+*   **- Decomposition:** Running the filter stage using only the label name instead of the decomposed semantic constraints.
+*   **- Span-Proposal:** Moving directly to extraction without the initial "broad" proposal stage.
+*   **- Descriptions:** Providing only the label names (e.g., "PER") without the natural language definitions to test the necessity of semantic context.
+
+### 9. Failure Modes and Feasibility Risks
+*   **Computational Latency:** The multi-stage verification loop (Stage 3) may be slow and expensive for large documents. This can be mitigated by batching verification prompts.
+*   **Schema Ambiguity:** If the target schema has overlapping definitions (e.g., "Employer" vs. "Organization"), the model may struggle with multi-label assignment.
+*   **Context Window Limits:** Large schemas with dozens of relations may exceed the context window when combined with long source documents. This requires a "Schema Retrieval" step to only include relevant schema parts in the prompt.

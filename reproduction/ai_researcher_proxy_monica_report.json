@@ -1,0 +1,89 @@
+{
+  "date": "2026-06-04",
+  "status": "partial",
+  "completion_scope": "replacement_table1_ai_researcher_proxy",
+  "paper_exact": false,
+  "covered_baseline": "AI-Researcher",
+  "baseline_mode": "proxy_replacement_baseline",
+  "idea_outputs": {
+    "baseline": "AI-Researcher",
+    "answers": 30,
+    "root": "reproduction/artifacts/idea_outputs/AI-Researcher"
+  },
+  "judge": {
+    "provider": "monica",
+    "model": "gemini-3-flash-preview",
+    "input_records": 60,
+    "output_records": 60
+  },
+  "aggregate": {
+    "target_system": "EvoScientist",
+    "tie_threshold": 0.0,
+    "raw_records": 60,
+    "baselines": {
+      "AI-Researcher": {
+        "dimensions": {
+          "Clarity": {
+            "baseline": "AI-Researcher",
+            "dimension": "Clarity",
+            "n": 60,
+            "win": 29,
+            "tie": 7,
+            "lose": 24,
+            "win_pct": 48.33,
+            "tie_pct": 11.67,
+            "lose_pct": 40.0,
+            "gap": 8.33
+          },
+          "Novelty": {
+            "baseline": "AI-Researcher",
+            "dimension": "Novelty",
+            "n": 60,
+            "win": 37,
+            "tie": 4,
+            "lose": 19,
+            "win_pct": 61.67,
+            "tie_pct": 6.67,
+            "lose_pct": 31.67,
+            "gap": 30.0
+          },
+          "Feasibility": {
+            "baseline": "AI-Researcher",
+            "dimension": "Feasibility",
+            "n": 60,
+            "win": 23,
+            "tie": 1,
+            "lose": 36,
+            "win_pct": 38.33,
+            "tie_pct": 1.67,
+            "lose_pct": 60.0,
+            "gap": -21.67
+          },
+          "Relevance": {
+            "baseline": "AI-Researcher",
+            "dimension": "Relevance",
+            "n": 60,
+            "win": 7,
+            "tie": 42,
+            "lose": 11,
+            "win_pct": 11.67,
+            "tie_pct": 70.0,
+            "lose_pct": 18.33,
+            "gap": -6.66
+          }
+        },
+        "avg_gap": 2.5
+      }
+    }
+  },
+  "caveats": [
+    "Proxy replacement output generated with baseline-specific prompting, not the original AI-Researcher raw Table 1 output.",
+    "Public AI-Researcher artifacts are benchmark-instance based and do not expose a drop-in 30-query EvoScientist Table 1 runner.",
+    "Monica/Gemini judge had transient timeout/SSL retries; final output contains 60 valid records."
+  ],
+  "remaining_missing_baselines": [
+    "Hypogenic",
+    "Novix",
+    "K-Dense"
+  ]
+}

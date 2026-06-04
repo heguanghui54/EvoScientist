@@ -1,0 +1,39 @@
+**1. Title**
+Hierarchical Segment-Level Contrastive Learning (H-SCL) for Position-Invariant Long-Context Retrieval.
+
+**2. Problem and Motivation**
+Current Large Language Models (LLMs) suffer from the "lost-in-the-middle" phenomenon, where the model’s ability to retrieve or reason over information degrades significantly when the relevant tokens are located in the middle of a long context window. While techniques like Rotary Position Embedding (RoPE) scaling and Sliding Window Attention extend the theoretical context window, they do not inherently improve the model's focus on information density. There is a critical need for training objectives that force the model to treat all segments of a long context with equal importance, regardless of their absolute position.
+
+**3. Core Hypothesis**
+Implementing a hierarchical contrastive loss during fine-tuning—where the model must distinguish between a "target" context segment and "distractor" segments within the same long-form document—will mitigate positional bias and improve the retrieval accuracy of information located in the middle of the context window.
+
+**4. Method**
+The proposed method, Hierarchical Segment-Level Contrastive Learning (H-SCL), involves a two-stage fine-tuning process:
+1.  **Segment Partitioning:** Divide a long document (e.g., 32k tokens) into $N$ segments of equal length (e.g., 1024 tokens).
+2.  **Query Generation:** Use a teacher model to generate a specific question or summary for a randomly sampled "target" segment $S_i$.
+3.  **Contrastive Objective:** During training, the model is fed the entire document. A contrastive loss (InfoNCE) is applied to the hidden states of the last layer. The objective is to maximize the mutual information between the query representation and the target segment $S_i$ while minimizing it against all other segments $\{S_j\}_{j \neq i}$ in the same context.
+4.  **Position Shuffling:** During training, the target segment $S_i$ is moved to different positions (beginning, middle, end) within the context to ensure the model learns position-invariant feature extraction.
+
+**5. Dataset or Benchmark**
+*   **Training Dataset:** A filtered subset of the *RedPajama* or *Pile* dataset, focusing on documents exceeding 32k tokens.
+*   **Evaluation Benchmark:** **LongBench** (comprehensive long-context tasks) and a custom **Needle In A Haystack (NIAH)** test. The NIAH test will be modified to include "Multi-Needle" scenarios (retrieving 3-5 distinct facts) to test reasoning density.
+
+**6. Evaluation Metrics**
+*   **Retrieval Accuracy:** Success rate in the Needle In A Haystack task across 100 depth bins (0% to 100% of context).
+*   **F1/Rough-L:** Performance on long-document QA and summarization tasks in LongBench.
+*   **Effective Context Window (ECW):** The maximum sequence length where the model maintains a perplexity within 10% of its short-context baseline.
+
+**7. Baselines**
+*   **Llama-3-8B-Instruct:** Standard instruction-tuned model.
+*   **LongLoRA:** A popular efficient fine-tuning method for long contexts.
+*   **YARN (Yet Another RoPE extensioN):** A state-of-the-art positional interpolation method.
+
+**8. Ablations**
+*   **Ablation 1 (No Contrastive Loss):** Fine-tuning with standard Next-Token Prediction (NTP) on the same long-context data to isolate the effect of the H-SCL loss.
+*   **Ablation 2 (Fixed Position):** Training with the target segment always in the middle to test if shuffling is necessary for position invariance.
+*   **Ablation 3 (Segment Granularity):** Testing segment sizes of 512, 1024, and 2048 tokens to determine the optimal resolution for contrastive alignment.
+
+**9. Failure Modes and Feasibility Risks**
+*   **Catastrophic Forgetting:** The model might lose its general instruction-following or short-context reasoning capabilities during long-context fine-tuning. This will be monitored using the MMLU benchmark.
+*   **Memory Overhead:** Contrastive learning on 32k+ sequences requires significant VRAM. This will be mitigated using FlashAttention-2 and DeepSpeed ZeRO-3.
+*   **Overfitting to Retrieval:** The model might become an efficient "search engine" but lose the ability to synthesize information across segments. Evaluation on "Multi-hop QA" tasks will be used to detect this.

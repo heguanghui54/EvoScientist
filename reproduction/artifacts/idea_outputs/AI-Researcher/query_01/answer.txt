@@ -1,0 +1,41 @@
+**Title:** Morphologically-Aware Back-Translation (MABT) for Low-Resource Neural Machine Translation
+
+**Problem and Motivation:**
+The primary bottleneck in Neural Machine Translation (NMT) for low-resource languages is the scarcity of parallel corpora. While Back-Translation (BT) is the standard technique to leverage monolingual data, it often generates "translationese"—synthetic data that is overly fluent but lacks the linguistic diversity and morphological complexity of the target language. For morphologically rich languages (MRLs), standard BT fails to expose the model to the full range of inflectional variants, leading to poor generalization and high Out-of-Vocabulary (OOV) rates at inference time.
+
+**Core Hypothesis:**
+Injecting controlled morphological perturbations into the synthetic source side of back-translated data—specifically by simulating common inflectional errors or lemma-substitution—will act as a regularizer that forces the NMT model to learn more robust, grammar-aware representations rather than relying on surface-level pattern matching.
+
+**Method:**
+1.  **Initial Training:** Train a "Reverse" NMT model ($M_{T \to S}$) using the limited available parallel data for the target-to-source direction.
+2.  **Synthetic Generation:** Use $M_{T \to S}$ to translate a large corpus of target-language monolingual data into the source language ($S_{syn}$).
+3.  **Morphological Perturbation:** Apply a Morphological Transformation Layer to $S_{syn}$. For each sentence:
+    *   Identify high-frequency lemmas using a morphological analyzer (e.g., Stanza or a rule-based analyzer for the specific language).
+    *   Randomly perturb the morphology of 15% of the tokens (e.g., changing tense, number, or case) to create a "noisy" synthetic source $S'_{syn}$.
+4.  **Final Training:** Train the primary "Forward" NMT model ($M_{S \to T}$) on a mixture of the original parallel data and the perturbed synthetic pairs $(S'_{syn}, T_{mono})$.
+5.  **Consistency Loss:** Implement a secondary loss term that minimizes the KL-divergence between the model's output distribution for $S_{syn}$ and $S'_{syn}$ to ensure the model remains invariant to minor morphological noise while focusing on the underlying semantics.
+
+**Dataset or Benchmark:**
+*   **Languages:** English-Quechua (quy) and English-Swahili (swa). These represent two distinct morphological types (Agglutinative and Inflectional).
+*   **Data Source:** FLORES-200 for evaluation; OPUS/JW300 for training (limited to 50k parallel sentences to simulate low-resource conditions).
+*   **Monolingual Data:** Wikipedia dumps or Common Crawl for the target languages (approx. 500k sentences).
+
+**Evaluation Metrics:**
+*   **Primary:** BLEU (sacreBLEU implementation) and chrF (more sensitive to morphological accuracy).
+*   **Semantic:** COMET or BERTScore to evaluate if the perturbations improved or degraded semantic preservation.
+*   **Robustness:** Accuracy on a targeted test set of minimal pairs (e.g., testing if the model correctly translates different case markings for the same lemma).
+
+**Baselines:**
+1.  **Vanilla Transformer-Base:** Trained only on the small parallel seed.
+2.  **Standard BT:** The same Transformer model trained with unperturbed back-translated data.
+3.  **BT + Word Dropout:** Standard BT with random word deletion/replacement (to show that morphological noise is superior to random noise).
+
+**Ablations:**
+*   **Perturbation Type:** Compare random word swapping vs. lemma-preserving morphological changes.
+*   **Noise Ratio:** Vary the percentage of perturbed tokens in $S'_{syn}$ (5%, 15%, 30%).
+*   **Consistency Loss:** Measure the impact of the KL-divergence loss vs. simple data augmentation.
+
+**Failure Modes and Feasibility Risks:**
+*   **Morphological Tool Availability:** If a reliable morphological analyzer does not exist for the target language, the method may rely on Unsupervised Morpheme Segmentation (e.g., Morfessor), which is less accurate.
+*   **Semantic Drift:** Excessive perturbation might lead the model to ignore source-side grammar entirely, resulting in "hallucinations" where the model produces fluent target sentences that do not match the source meaning.
+*   **Compute Constraints:** Back-translation and consistency loss training increase the computational overhead compared to standard supervised training.

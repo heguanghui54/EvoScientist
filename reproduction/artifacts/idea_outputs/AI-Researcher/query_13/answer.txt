@@ -1,0 +1,43 @@
+**1. Title**
+**Exec-Verify: Execution-Feedback Driven Synthesis of Multi-Module Code for Robust LLM Fine-Tuning**
+
+**2. Problem and Motivation**
+Current Code LLMs are primarily trained on static GitHub crawls, which often lack high-quality, complex logic or contain "dead code." While synthetic data generation (e.g., Self-Instruct) has mitigated data scarcity, most synthetic datasets consist of isolated, single-function snippets. Real-world software engineering requires managing cross-module dependencies and architectural consistency. Existing synthetic methods often produce code that looks correct but fails during runtime due to subtle logic errors, leading to "hallucinated logic" when models are fine-tuned on unverified data.
+
+**3. Core Hypothesis**
+Fine-tuning a Code LLM on a synthetic dataset that has been filtered and refined through a closed-loop execution-feedback system—specifically targeting multi-module interactions—will yield a significantly higher Pass@k on complex software engineering benchmarks compared to models trained on larger, unverified synthetic datasets.
+
+**4. Method**
+The proposed method, **Exec-Verify**, follows a four-stage pipeline:
+1.  **Skeleton Generation:** Using a teacher model (e.g., GPT-4o), generate "Project Skeletons" consisting of a primary module (`main.py`), a utility module (`utils.py`), and a requirements file based on diverse seed prompts (e.g., "Implement a custom rate-limiter using a token bucket algorithm").
+2.  **Test-Driven Synthesis:** The teacher model is then prompted to generate a comprehensive suite of unit tests (using `pytest`) for the skeleton.
+3.  **Execution and Automated Debugging:** The generated code is executed within a sandboxed Docker environment. If the tests fail, the error trace is fed back to the teacher model for a single round of "self-repair."
+4.  **Verification Filtering:** Only code-test pairs that achieve 100% pass rates and >80% line coverage are retained.
+5.  **Fine-Tuning:** A student model (e.g., Llama-3-8B or StarCoder2-7B) is fine-tuned on the successful execution traces and the validated code.
+
+**5. Dataset or Benchmark**
+*   **Training Set:** 50,000 execution-validated multi-module Python projects (Exec-Verify-50K).
+*   **Evaluation Benchmark:**
+    *   **LiveCodeBench:** To test on recent, uncontaminated competitive programming problems.
+    *   **SWE-bench (Lite):** To evaluate the model's ability to handle multi-file context and real-world bug fixing.
+    *   **DS-1000:** For data science-specific code generation.
+
+**6. Evaluation Metrics**
+*   **Pass@k (k=1, 5, 10):** The primary metric for functional correctness.
+*   **Unit Test Coverage:** Measurement of how much of the synthetic logic was actually exercised during verification.
+*   **Strict Pass Rate:** Percentage of generated solutions that pass hidden test cases not provided during the prompt.
+
+**7. Baselines**
+*   **Base Model:** The pre-trained student model (e.g., StarCoder2-7B) without fine-tuning.
+*   **Code-Alpaca:** A baseline fine-tuned on standard, unverified synthetic instructions.
+*   **OSS-Instruct:** Fine-tuning based on snippets extracted from open-source code without execution validation.
+
+**8. Ablations**
+*   **Single vs. Multi-Module:** Training on single-file snippets vs. multi-module projects to isolate the impact of architectural complexity.
+*   **With vs. Without Self-Repair:** Evaluating the quality gain from the one-round automated debugging step.
+*   **No Execution Filter:** Training on the same synthetic prompts but without discarding the samples that fail unit tests.
+
+**9. Failure Modes and Feasibility Risks**
+*   **Tautological Tests:** The teacher model might generate "weak" tests that pass even if the code logic is flawed (e.g., `assert True == True`). *Mitigation:* Use coverage-based filtering and prompt the teacher model to generate boundary-case assertions.
+*   **Sandbox Security:** Executing arbitrary synthetic code poses security risks. *Mitigation:* Use gVisor or heavily restricted Docker containers with no network access.
+*   **Computational Cost:** Running tests for 50k projects is computationally expensive. *Mitigation:* Use lightweight Python libraries and limit execution time to 10 seconds per test suite.

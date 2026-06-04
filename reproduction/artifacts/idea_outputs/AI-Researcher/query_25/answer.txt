@@ -1,0 +1,42 @@
+### 1. Title
+**Cross-Source Discrepancy Resolution (CSDR): Evaluating LLM Reasoning over Heterogeneous and Conflicting Information.**
+
+### 2. Problem and Motivation
+State-of-the-art Large Language Models (LLMs) excel at extracting information from single documents but struggle when required to synthesize data from multiple, heterogeneous sources (e.g., a PDF report, a CSV table, and a JSON API response) that may contain overlapping or conflicting information. Current benchmarks often assume all retrieved sources are complementary and factually consistent. In real-world scenarios, sources often contain temporal discrepancies (old vs. new data) or perspective-driven contradictions. There is a lack of a rigorous framework to measure an agent’s ability to perform "logical reconciliation"—identifying which source to trust based on metadata (timestamps, authority) or internal consistency.
+
+### 3. Core Hypothesis
+A "Conflict-Aware Chain-of-Thought" (CA-CoT) prompting strategy—which explicitly requires the model to identify discrepancies between sources before formulating a final answer—will significantly reduce factual hallucination rates compared to standard Retrieval-Augmented Generation (RAG) when processing multi-source inputs with 20% or higher information overlap.
+
+### 4. Method
+The proposed method involves a three-stage reasoning pipeline:
+1.  **Source Parsing & Atomic Fact Extraction:** The model extracts individual claims from each source ($S_1, S_2, ... S_n$).
+2.  **Discrepancy Mapping:** The model is prompted to perform a pairwise comparison of claims to identify "Direct Conflicts" (e.g., Source A says $X=10$, Source B says $X=15$) and "Missing Links" (e.g., Source A mentions a process, Source B provides the parameters).
+3.  **Weighted Reconciliation:** Using provided metadata (e.g., publication date or source reliability score), the model applies a set of heuristic rules (e.g., "latest timestamp prevails") to resolve conflicts and synthesize the final response.
+
+### 5. Dataset or Benchmark
+**Dataset:** *Multi-Source Conflict Bench (MSCB)*.
+*   **Structure:** 1,000 human-annotated triplets consisting of (1) a natural language query, (2) a set of 3–5 heterogeneous documents (Text, Markdown Tables, JSON), and (3) a ground-truth answer.
+*   **Injected Conflicts:** 40% of the samples will contain "Temporal Conflicts" (outdated info vs. current info) and 20% will contain "Format Conflicts" (a table showing one value, text showing another).
+*   **Task:** The model must provide the correct answer and a "Reasoning Trace" citing which source was prioritized and why.
+
+### 6. Evaluation Metrics
+*   **Factuality Accuracy (FA):** Percentage of answers matching the ground truth.
+*   **Conflict Detection Rate (CDR):** An F1-score measuring the model’s ability to explicitly flag when two sources contradict each other.
+*   **Source Attribution Accuracy (SAA):** Percentage of correct citations for the reconciled information.
+*   **Consistency Score:** Measuring if the model provides the same answer when the order of conflicting sources is shuffled.
+
+### 7. Baselines
+*   **Standard RAG:** Feeding all retrieved context into the prompt with a "system" instruction to answer the question.
+*   **Long-Context LLM (e.g., GPT-4o, Claude 3.5 Sonnet):** Providing the entire document set in the context window without specific reasoning instructions.
+*   **Multi-Agent Debate:** Two LLM agents argue for different sources, and a third agent reconciles.
+
+### 8. Ablations
+*   **Metadata Removal:** Removing timestamps and source names to see if the model can resolve conflicts using only internal logic.
+*   **Format Homogenization:** Converting all sources (Tables, JSON) into plain text to measure the impact of heterogeneous data structures on reasoning.
+*   **Chain-of-Thought Removal:** Forcing the model to provide a direct answer without the "Discrepancy Mapping" step.
+
+### 9. Failure Modes and Feasibility Risks
+*   **Context Window Saturation:** If sources are excessively long, the model may suffer from "lost in the middle" phenomena, missing the conflicting data points.
+*   **Bias toward "First-Seen":** LLMs often exhibit a primacy bias, favoring the first source provided in the prompt regardless of its validity.
+*   **Computational Cost:** The three-stage pipeline (Extraction, Mapping, Reconciliation) increases token usage and latency significantly compared to single-pass RAG.
+*   **Feasibility:** High. The benchmark can be synthesized using existing datasets (e.g., HotpotQA or HybridQA) by manually perturbing specific facts to create controlled conflicts.

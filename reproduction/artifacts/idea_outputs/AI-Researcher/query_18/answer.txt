@@ -1,0 +1,43 @@
+**1. Title**
+LLM-UX-Bench: Quantifying Interactive Efficiency and User Effort in Goal-Oriented Multi-Turn Dialogue.
+
+**2. Problem and Motivation**
+Current Large Language Model (LLM) evaluations primarily rely on static, single-turn benchmarks (e.g., MMLU, GSM8K) or subjective human preference rankings (e.g., LMSYS Chatbot Arena). These methods fail to capture the interactive nature of User Experience (UX). A model may be highly accurate but require excessive prompting, clarification, or "prompt engineering" from the user to produce the desired result. This "User Effort" is a critical but under-measured component of LLM utility. There is a need for a reproducible, automated benchmark that measures the efficiency of the interaction loop rather than just the final output.
+
+**3. Core Hypothesis**
+A model’s UX quality can be quantitatively measured by an "Interactive Efficiency Score" (IES), defined as the inverse of the cumulative cognitive and temporal effort required by a simulated user agent to reach a verified task solution. We hypothesize that models with superior instruction-following and "conversational repair" capabilities will achieve higher IES despite having similar raw accuracy scores to lower-performing models on static benchmarks.
+
+**4. Method**
+The research proposes a "Simulator-Evaluator" framework:
+*   **User Simulator:** An LLM agent (e.g., GPT-4o) is given a "Hidden Goal" (a complex task with specific constraints) and a "Persona" (e.g., non-technical user, impatient expert).
+*   **Model Under Test (MUT):** The model being evaluated.
+*   **Interaction Loop:** The Simulator interacts with the MUT to achieve the goal. The Simulator is instructed to provide information incrementally or react to the MUT’s mistakes (e.g., "No, I meant X, not Y").
+*   **Verification:** A separate, deterministic script or a strong "Judge" model verifies if the final output meets all hidden constraints.
+*   **Measurement:** The system tracks the number of turns, total tokens exchanged, and simulated "time-to-completion."
+
+**5. Dataset or Benchmark**
+The study will utilize **UX-TaskSet**, a curated collection of 500 multi-step tasks across three domains:
+1.  **Constraint-Heavy Coding:** Writing a script where requirements are revealed only when the MUT asks or fails (e.g., "Now make it run in O(n) time").
+2.  **Ambiguous Creative Writing:** Drafting a story where the simulator has specific stylistic preferences that must be inferred through dialogue.
+3.  **Information Retrieval/Synthesis:** Navigating a multi-document reasoning task where the MUT must ask for the correct documents.
+
+**6. Evaluation Metrics**
+*   **Turns-to-Success (TTS):** The number of dialogue turns required to reach a verified solution.
+*   **Total Prompt Tokens (TPT):** A proxy for user cognitive load and API cost.
+*   **Correction Rate (CR):** The frequency with which the Simulator must explicitly correct a MUT error.
+*   **Interactive Efficiency Score (IES):** A weighted harmonic mean of (1/TTS) and (1/TPT), normalized by task difficulty.
+
+**7. Baselines**
+*   **State-of-the-Art (SOTA) Models:** GPT-4o, Claude 3.5 Sonnet, Gemini 1.5 Pro.
+*   **Open-Source Models:** Llama-3-70B, Mistral-Large-v2.
+*   **Naive Baseline:** A "Zero-Shot" prompt containing all constraints at once (to measure the gap between static and interactive performance).
+
+**8. Ablations**
+*   **Persona Impact:** Varying the User Simulator's persona (e.g., "Vague User" vs. "Explicit User") to see if model UX quality is robust to poor user prompting.
+*   **Context Window Pressure:** Testing how IES degrades as the conversation length approaches the model's effective context limit.
+*   **System Prompt Influence:** Evaluating the MUT with and without specific "UX-optimized" system instructions (e.g., "Always ask clarifying questions").
+
+**9. Failure Modes and Feasibility Risks**
+*   **Simulator Bias:** The LLM used as the User Simulator may favor models from the same family (e.g., a GPT-4 simulator might "understand" GPT-4 MUT more easily). *Mitigation: Use a variety of simulators and cross-reference results.*
+*   **Stochasticity:** Multi-turn dialogues are non-deterministic. *Mitigation: Run each benchmark instance 5 times and report confidence intervals.*
+*   **Cost:** Running thousands of multi-turn interactions across various models is computationally expensive. *Mitigation: Use a tiered approach, testing smaller subsets of tasks for initial validation.*

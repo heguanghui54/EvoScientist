@@ -1,0 +1,45 @@
+**1. Title**
+`TRACE-EVAL`: A Multi-Stage Traceability Benchmark for Evaluating Planning, Implementation, and Self-Correction in Code LLMs.
+
+**2. Problem and Motivation**
+Current code LLM benchmarks (e.g., HumanEval, MBPP) focus primarily on "green-field" generation of isolated functions. This "one-shot" evaluation fails to capture the complexity of real-world software engineering, which involves:
+1. **Architectural Planning:** Mapping high-level requirements to a logical structure.
+2. **Contextual Adherence:** Writing code that fits within existing constraints or APIs.
+3. **Iterative Debugging:** Using execution feedback (compiler errors, test failures) to refine logic.
+
+Existing metrics like `Pass@k` provide a binary success/fail signal but offer no insight into *where* the reasoning chain broke down. There is a need for a "deep" evaluation that decomposes the coding task into measurable intermediate steps.
+
+**3. Core Hypothesis**
+A multi-stage evaluation framework that explicitly separates "Intent-to-Plan" (logic) from "Plan-to-Code" (syntax/API usage) will reveal that the primary bottleneck for current state-of-the-art (SOTA) LLMs is "Plan-Execution Drift"—where the model generates a correct high-level strategy but fails to maintain that strategy during the verbose implementation phase.
+
+**4. Method**
+The `TRACE-EVAL` framework implements a three-tier evaluation pipeline:
+*   **Tier 1: Logic Mapping (L-Map):** The model is given a complex requirement and must generate a structured execution plan (e.g., a dependency graph or pseudocode). Evaluation is performed via LLM-as-a-judge against a gold-standard logic tree.
+*   **Tier 2: Constrained Implementation (C-Imp):** The model is provided with a *fixed* correct plan and must implement the code. This isolates the model’s ability to follow instructions and use correct syntax without the burden of logic invention.
+*   **Tier 3: Feedback-Loop Recovery (F-Rec):** If the generated code fails, the model is provided with the stack trace or test failure and given $N$ attempts to self-correct.
+
+**5. Dataset or Benchmark**
+The benchmark will consist of 500 "Deep Tasks" derived from real-world open-source Python and Rust repositories.
+*   **Selection Criteria:** Tasks must require at least three internal function calls and one external library dependency.
+*   **Structure:** Each task includes: (a) A natural language prompt, (b) A gold-standard architectural plan, (c) A suite of hidden unit tests, and (d) A set of "Context Constraints" (e.g., "Do not use the `requests` library; use `httpx`").
+
+**6. Evaluation Metrics**
+*   **Logic Alignment Score (LAS):** Semantic similarity between the model's generated plan and the gold-standard plan.
+*   **Plan-to-Code Fidelity (PCF):** A metric measuring how much the final code deviates from the Tier 1 plan (even if the code passes tests).
+*   **Recovery Efficiency (RE):** The ratio of (Successful Debugs) / (Total Test Failures), weighted by the number of tokens used in the correction phase.
+*   **Deep-Pass@k:** A composite score where a task is only "Passed" if it satisfies the logic plan AND passes all unit tests.
+
+**7. Baselines**
+*   **General Purpose LLMs:** GPT-4o, Claude 3.5 Sonnet, Llama-3-70B.
+*   **Code-Specific LLMs:** StarCoder2, CodeLlama-34B, DeepSeek-Coder-V2.
+*   **Agentic Baselines:** A standard ReAct-style agent loop using the aforementioned models to see if iterative prompting outperforms one-shot generation.
+
+**8. Ablations**
+*   **Plan-less Generation:** Compare Tier 3 success rates when the model generates code directly vs. when it is forced to generate a plan first.
+*   **Feedback Granularity:** Provide models with different levels of feedback (e.g., "Your code failed" vs. full stack traces vs. line-specific hints) to measure the sensitivity of the Self-Correction Tier.
+*   **Context Pruning:** Remove the "Context Constraints" to see if model performance improves when architectural requirements are relaxed.
+
+**9. Failure Modes and Feasibility Risks**
+*   **LLM-as-a-Judge Bias:** Tier 1 evaluation relies on an LLM to grade the "Logic Plan," which may introduce a bias toward models that share the same training distribution as the judge.
+*   **Data Contamination:** High-star GitHub repositories used for the dataset may already be in the training sets of SOTA models. *Mitigation:* Use very recent (post-2024) commits or synthetically modify API names to ensure novelty.
+*   **Computational Cost:** Multi-stage evaluation (Plan -> Code -> Debug) is significantly more expensive than standard `Pass@k` evaluations due to multiple inference calls per task.

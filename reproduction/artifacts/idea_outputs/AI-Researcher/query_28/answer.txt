@@ -1,0 +1,40 @@
+**Title:** Value-Conditioned Alignment (VCA): A Framework for Multi-Cultural Value Pluralism in LLMs
+
+**Problem and Motivation**
+Current Large Language Model (LLM) alignment techniques, such as RLHF (Reinforcement Learning from Human Feedback), typically optimize for a "universal" set of values that are often heavily skewed toward Western, Educated, Industrialized, Rich, and Democratic (WEIRD) perspectives. This leads to "value collapse," where the model fails to respect or even recognize the moral frameworks of non-Western cultures (e.g., Ubuntu, Confucian ethics, or collective-oriented societies). As LLMs are deployed globally, a monolithic alignment strategy creates a cultural barrier, potentially providing advice or safety filtering that is irrelevant or offensive to specific populations.
+
+**Core Hypothesis**
+By incorporating "Cultural Value Profiles" (CVPs) into the alignment phase—specifically through Value-Conditioned Direct Preference Optimization (DPO)—an LLM can be steered to reflect specific regional value systems when prompted, without degrading its general reasoning capabilities or core safety guardrails.
+
+**Method**
+1.  **Constitutional Generation:** Define five distinct CVPs based on the World Values Survey (WVS) dimensions (e.g., Traditional vs. Secular-rational, Survival vs. Self-expression).
+2.  **Dataset Synthesis:** Generate a dataset of 5,000 "Moral Scenarios" where the optimal response differs based on cultural priorities (e.g., family obligation vs. individual autonomy).
+3.  **Value-Conditioned DPO:** Fine-tune a base model (e.g., Llama-3-8B) using a modified DPO loss. The preference pair $(y_w, y_l)$ is conditioned on a system prompt indicating the target culture. For the same prompt $x$, the "winning" response $y_w$ changes depending on the CVP provided in the context.
+4.  **Inference:** At test time, the model is prompted with: "As an assistant aligned with [Culture X] values, how should one resolve this conflict: [Scenario]?"
+
+**Dataset or Benchmark**
+*   **The Global Value Alignment Benchmark (GVAB):** A new dataset consisting of 2,000 multiple-choice and open-ended questions derived from the World Values Survey and the Moral Machine experiment.
+*   **Dimensions:** It will cover five regions: East Asia (Confucian), Sub-Saharan Africa (Ubuntu), Middle East (Islamic Ethics), Latin America (Collectivist/Catholic), and Western Europe (Liberal Individualist).
+*   **Ground Truth:** Human survey data from the WVS (2017-2022 wave) serves as the "gold standard" distribution for each region.
+
+**Evaluation Metrics**
+1.  **Cultural Alignment Score (CAS):** The statistical correlation (Spearman’s rho) between the model’s predicted preferences and the actual WVS survey results for a given region.
+2.  **Value Robustness:** The model's ability to switch values correctly when the CVP prompt is changed (measured by the delta in response distribution).
+3.  **MMLU/GSM8K:** Standard benchmarks to ensure no "alignment tax" (performance degradation) occurs in general reasoning.
+4.  **Safety Consistency:** Ensuring that while cultural values shift, the model still refuses "Hard Redlines" (e.g., instructions for violence).
+
+**Baselines**
+1.  **Standard RLHF Model:** A model aligned with general "Helpful, Honest, Harmless" (HHH) principles (e.g., Llama-3-Instruct).
+2.  **Few-Shot Prompting:** The base model provided with 5-shot examples of a specific culture's values without specific fine-tuning.
+3.  **Translate-then-Prompt:** Translating the prompt into the region's primary language to see if latent cultural bias is triggered by language alone.
+
+**Ablations**
+1.  **CVP Granularity:** Comparing alignment using broad regional profiles vs. specific country-level profiles.
+2.  **Training Objective:** Comparing Value-Conditioned DPO against standard SFT (Supervised Fine-Tuning) on the same cultural data.
+3.  **Data Volume:** Testing the model's sensitivity to the number of cultural preference pairs (1k vs. 5k vs. 10k).
+
+**Failure Modes and Feasibility Risks**
+1.  **Stereotyping:** The model may descend into cultural caricatures rather than nuanced value representation.
+2.  **Internal Conflict:** Certain cultural values might contradict the base model’s "hard-coded" safety filters, leading to refusal or incoherent outputs.
+3.  **Data Scarcity:** High-quality, nuanced moral reasoning data for specific minority cultures may be difficult to synthesize or verify, risking "hallucinated" values.
+4.  **Feasibility:** Requires significant compute for DPO; however, using 7B or 8B parameter models makes this reproducible on standard academic GPU clusters (e.g., 4x A100s).

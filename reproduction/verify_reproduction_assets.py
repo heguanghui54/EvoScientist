@@ -523,6 +523,52 @@ def main() -> None:
     assert "Virtual Scientist Proxy Monica/Gemini Judge Report" in virtual_scientist_proxy_md_path.read_text(
         encoding="utf-8"
     )
+    ai_researcher_proxy_json_path = ROOT / "ai_researcher_proxy_monica_report.json"
+    ai_researcher_proxy_md_path = ROOT / "ai_researcher_proxy_monica_report.md"
+    assert ai_researcher_proxy_json_path.is_file(), "missing AI-Researcher proxy JSON report"
+    assert ai_researcher_proxy_md_path.is_file(), "missing AI-Researcher proxy markdown report"
+    ai_researcher_proxy = json.loads(ai_researcher_proxy_json_path.read_text(encoding="utf-8"))
+    assert ai_researcher_proxy["status"] == "partial"
+    assert ai_researcher_proxy["completion_scope"] == "replacement_table1_ai_researcher_proxy"
+    assert ai_researcher_proxy["paper_exact"] is False
+    assert ai_researcher_proxy["covered_baseline"] == "AI-Researcher"
+    assert ai_researcher_proxy["baseline_mode"] == "proxy_replacement_baseline"
+    assert ai_researcher_proxy["idea_outputs"]["answers"] == 30
+    assert ai_researcher_proxy["judge"]["provider"] == "monica"
+    assert ai_researcher_proxy["judge"]["model"] == "gemini-3-flash-preview"
+    assert ai_researcher_proxy["judge"]["input_records"] == 60
+    assert ai_researcher_proxy["judge"]["output_records"] == 60
+    for query_id in range(1, 31):
+        assert (
+            ROOT / "artifacts" / "idea_outputs" / "AI-Researcher" / f"query_{query_id:02d}" / "answer.txt"
+        ).is_file()
+    assert sum(
+        1
+        for line in (
+            ROOT / "artifacts" / "judge_inputs" / "evosci_vs_ai_researcher_proxy_monica.jsonl"
+        ).read_text(encoding="utf-8").splitlines()
+        if line.strip()
+    ) == 60
+    assert sum(
+        1
+        for line in (
+            ROOT / "artifacts" / "judge_outputs" / "evosci_vs_ai_researcher_proxy_monica.jsonl"
+        ).read_text(encoding="utf-8").splitlines()
+        if line.strip()
+    ) == 60
+    ai_researcher_proxy_aggregate = json.loads(
+        (ROOT / "artifacts" / "tables" / "evosci_vs_ai_researcher_proxy_monica.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    assert set(ai_researcher_proxy_aggregate["baselines"]) == {"AI-Researcher"}
+    assert (
+        ai_researcher_proxy_aggregate["baselines"]["AI-Researcher"]["dimensions"]["Clarity"]["n"]
+        == 60
+    )
+    assert "AI-Researcher Proxy Monica/Gemini Judge Report" in ai_researcher_proxy_md_path.read_text(
+        encoding="utf-8"
+    )
     virtual_scientist_probe_json_path = ROOT / "virtual_scientist_baseline_probe.json"
     virtual_scientist_probe_md_path = ROOT / "virtual_scientist_baseline_probe.md"
     assert virtual_scientist_probe_json_path.is_file(), "missing Virtual Scientist probe JSON"
@@ -974,7 +1020,7 @@ def main() -> None:
     assert action_plan_md_path.is_file(), "missing paper reproduction action plan markdown"
     action_plan = json.loads(action_plan_json_path.read_text(encoding="utf-8"))
     assert action_plan["status"] == "incomplete"
-    assert action_plan["action_count"] == 6
+    assert action_plan["action_count"] == 5
     assert "final_gate" in action_plan
     assert action_plan["baseline_readiness_matrix"] == "reproduction/baseline_readiness_matrix.json"
     assert action_plan["baseline_rerun_manifest"] == "reproduction/baseline_rerun_manifest.json"
@@ -991,11 +1037,10 @@ def main() -> None:
     assert "gemini-3-flash" in action_plan_md
     planned_systems = {action.get("system") for action in action_plan["actions"] if action.get("system")}
     assert "Virtual Scientist" not in planned_systems
-    assert "AI-Researcher" in planned_systems
+    assert "AI-Researcher" not in planned_systems
     assert "Hypogenic" in planned_systems
     assert "Novix" in planned_systems
     assert "K-Dense" in planned_systems
-    assert "ai_researcher_baseline_probe.json" in action_plan_md
     assert "hypogenic_baseline_probe.json" in action_plan_md
     assert "novix_baseline_probe.json" in action_plan_md
     assert "k_dense_baseline_probe.json" in action_plan_md

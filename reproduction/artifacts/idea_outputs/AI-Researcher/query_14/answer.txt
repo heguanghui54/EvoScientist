@@ -1,0 +1,45 @@
+**1. Title**
+Context-Aware Adaptive Speculative Decoding (CA-ASD): Optimizing Draft Windows via Real-Time Token Entropy
+
+**2. Problem and Motivation**
+Large Language Model (LLM) inference is primarily memory-bandwidth bound, leading to high latency in real-time applications. Speculative decoding addresses this by using a small "draft" model to predict $k$ future tokens, which a "target" model then verifies in a single forward pass. However, existing implementations typically use a static window size (e.g., $k=5$). This is suboptimal: if the text is highly predictable (e.g., repetitive prose), $k$ is too small, wasting potential speedup; if the text is complex (e.g., logic or code), a large $k$ leads to frequent rejections and wasted computation by the draft model.
+
+**3. Core Hypothesis**
+Dynamically adjusting the speculative lookahead window $k$ based on the Shannon entropy of the target model’s previous output distributions will increase the average number of accepted tokens per draft cycle, thereby reducing total wall-clock latency compared to static speculative decoding.
+
+**4. Method**
+The proposed system, CA-ASD, modifies the standard speculative decoding loop:
+1.  **Entropy Mapping:** For each verification step, calculate the Shannon entropy $H = -\sum p(x) \log p(x)$ of the target model's output distribution for the last verified token.
+2.  **Adaptive Window Selection:** Map $H$ to a lookahead window $k \in [1, K_{max}]$ using a calibrated heuristic function: $k_{next} = \lfloor K_{max} \cdot (1 - \text{norm}(H)) \rfloor$, where $\text{norm}(H)$ is the entropy normalized against a running average.
+3.  **Drafting:** The draft model generates $k_{next}$ tokens.
+4.  **Verification:** The target model performs a parallel forward pass. If the acceptance rate falls below a threshold $\tau$, the system aggressively reduces $k$ for the next step to minimize draft overhead.
+5.  **Implementation:** Build the system using the Hugging Face `transformers` assisted generation framework, integrating the entropy-to-window controller in the generation loop.
+
+**5. Dataset or Benchmark**
+To ensure diversity in token predictability, the evaluation will use:
+*   **GSM8K:** High-entropy (mathematical reasoning requires precision).
+*   **HumanEval:** Medium-entropy (code has structural patterns but logic-heavy segments).
+*   **WikiText-103:** Low-to-medium entropy (standard natural language).
+*   **MT-Bench:** Multi-turn conversation to test general-purpose assistant performance.
+
+**6. Evaluation Metrics**
+*   **Primary Metric:** Tokens per second (TPS) wall-clock speedup relative to standard autoregressive decoding.
+*   **Secondary Metrics:**
+    *   **Acceptance Rate:** Average number of tokens accepted per speculative run.
+    *   **Draft Efficiency:** Ratio of accepted tokens to total tokens produced by the draft model.
+    *   **Latency-per-token:** Mean and tail (p99) latency.
+
+**7. Baselines**
+*   **Standard Autoregressive Decoding:** No speculation.
+*   **Static Speculative Decoding:** Fixed $k=5$ (the industry standard).
+*   **Staged Speculative Decoding:** Using a multi-candidate tree-based approach without entropy adaptation.
+
+**8. Ablations**
+*   **Fixed vs. Adaptive $k$:** Compare CA-ASD against various fixed $k$ values ($k=3, 5, 8$).
+*   **Entropy vs. Probability:** Compare using Shannon entropy against using the max-logit probability (Confidence) as the window driver.
+*   **Heuristic vs. Linear Regressor:** Compare the simple mapping function against a lightweight linear model trained to predict the optimal $k$ for the specific draft/target pair.
+
+**9. Failure Modes and Feasibility Risks**
+*   **Computation Overhead:** The time taken to calculate entropy and adjust the window must be significantly less than the time saved; otherwise, the net latency might increase.
+*   **Draft Model Quality:** If the draft model is extremely poor (low alignment with the target model), the adaptive window might default to $k=1$, essentially reverting to autoregressive decoding with extra overhead.
+*   **Hardware Constraints:** Dynamic window sizes can complicate batching strategies in production environments (e.g., vLLM continuous batching), potentially requiring fixed-size padding that negates memory benefits.

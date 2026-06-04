@@ -1,0 +1,43 @@
+**1. Title**
+Semantic Density Filtering (SDF): Enhancing Domain-Specific Pre-training via Contrastive Seed-Centroid Alignment.
+
+**2. Problem and Motivation**
+Standard data filtering pipelines for Large Language Models (LLMs), such as those used in CCNet or RefinedWeb, rely heavily on heuristics like perplexity scores from general-purpose models or n-gram repetition counts. While effective for general web text, these filters often penalize high-quality domain-specific data (e.g., medical journals, legal briefs, or niche technical documentation) because technical jargon and specialized syntax appear as "low probability" or "out-of-distribution" to a general-purpose model. Consequently, domain-specific models are often trained on either overly noisy data (if filters are relaxed) or data that lacks sufficient depth (if filters are too aggressive).
+
+**3. Core Hypothesis**
+A filtering mechanism that ranks candidate documents based on their semantic proximity to a high-quality "domain seed set" using a contrastive embedding space will outperform perplexity-based filtering in downstream task accuracy, specifically by retaining niche technical information that general filters discard as noise.
+
+**4. Method**
+The proposed method, Semantic Density Filtering (SDF), follows a four-stage pipeline:
+1.  **Seed Selection:** Curate a small, high-quality "Gold Set" (e.g., 50,000 documents) of verified domain-specific text (e.g., peer-reviewed abstracts).
+2.  **Embedding Generation:** Use a frozen, pre-trained transformer (e.g., RoBERTa-base) to generate document-level embeddings for the Gold Set and calculate a "Domain Centroid" ($\mu$).
+3.  **Contrastive Scoring:** For each candidate document ($d$) in a large, noisy corpus, calculate a score $S(d) = \cos(\text{emb}(d), \mu) - \alpha \cdot \cos(\text{emb}(d), \mu_{gen})$, where $\mu_{gen}$ is the centroid of a general-purpose high-quality corpus (e.g., Wikipedia) and $\alpha$ is a weighting hyperparameter.
+4.  **Thresholding:** Select the top $N$ documents by score to form the final training set.
+
+**5. Dataset or Benchmark**
+*   **Source Corpus:** The "Medical" and "Legal" subsets of the Pile or a raw Common Crawl dump.
+*   **Seed Sets:** PubMed abstracts for the medical domain; CaseLaw Access Project summaries for the legal domain.
+*   **Downstream Evaluation:**
+    *   **Medical:** MedQA-USMLE, PubMedQA, and BioASQ.
+    *   **Legal:** LegalBench and CaseHold.
+
+**6. Evaluation Metrics**
+*   **Primary Metric:** Zero-shot and 5-shot accuracy on domain-specific benchmarks (MedQA, CaseHold).
+*   **Secondary Metric:** Domain-specific perplexity (test set of held-out peer-reviewed papers).
+*   **Efficiency Metric:** Data Retention Rate (DRR) vs. Task Performance (measuring how much "junk" was removed without losing "signal").
+
+**7. Baselines**
+*   **Random Sampling:** Uniformly sampling from the raw domain-filtered web crawl.
+*   **Perplexity Filtering:** Using a general-purpose GPT-2 model to filter out documents with high perplexity.
+*   **Keyword-based Filtering:** Traditional boolean search-based filtering for domain-relevant terms.
+*   **FastText Classifier:** A linear classifier trained to distinguish domain vs. non-domain text (the standard industry baseline).
+
+**8. Ablations**
+*   **Impact of $\alpha$:** Test the score with and without the "general-purpose" penalty ($\alpha=0$).
+*   **Seed Size:** Vary the size of the Gold Set (from 1,000 to 100,000 documents) to determine the minimum required for a stable centroid.
+*   **Embedding Model:** Compare specialized encoders (e.g., BioBERT) vs. general encoders (e.g., RoBERTa) for generating the centroids.
+
+**9. Failure Modes and Feasibility Risks**
+*   **Centroid Bias:** If the seed set is too narrow (e.g., only oncology papers), the filter may discard other valid medical data (e.g., pediatrics), leading to a model with narrow expertise.
+*   **Computational Cost:** Generating embeddings for billions of documents is more expensive than n-gram or perplexity filtering.
+*   **Semantic Drift:** "High quality" in a legal context may look semantically similar to "high quality" in a medical context if the encoder focuses too much on formal prose style rather than domain-specific terminology.

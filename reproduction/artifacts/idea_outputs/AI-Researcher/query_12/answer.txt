@@ -1,0 +1,47 @@
+### 1. Title
+**Contrastive Knowledge-Augmented Decoding (CKAD): Improving Factual Consistency via Logit-Space Distribution Shifting**
+
+### 2. Problem and Motivation
+Large Language Models (LLMs) frequently exhibit "factual inconsistency," where generated content contradicts either external reality or the model’s own internal knowledge base. A primary driver of this is the "fluency-factuality tradeoff": the model’s training objective (next-token prediction) prioritizes high-probability linguistic sequences over grounding. Current solutions like Retrieval-Augmented Generation (RAG) often fail when the model’s internal prior (parametric memory) is stronger than the provided context, leading the model to ignore factual evidence in favor of common hallucinations.
+
+### 3. Core Hypothesis
+Factual consistency can be significantly improved by isolating the "hallucination signal." By calculating the difference in log-probabilities between a context-aware model and a context-blind model during decoding, we can amplify tokens supported by evidence and suppress tokens generated purely from biased parametric priors.
+
+### 4. Method
+The proposed method, **Contrastive Knowledge-Augmented Decoding (CKAD)**, operates during the inference phase without requiring model retraining:
+
+1.  **Dual-Stream Logit Generation:** For every token $t$, compute two sets of logits:
+    *   $L_{grounded}$: Logits produced by the model provided with a factual context (e.g., a retrieved snippet).
+    *   $L_{prior}$: Logits produced by the model without the factual context (or with a generic prompt).
+2.  **Contrastive Re-weighting:** Calculate the adjusted logit $L'_{t}$ as:
+    $L'_{t} = L_{grounded} + \alpha \cdot (L_{grounded} - L_{prior})$
+    where $\alpha$ is a hyperparameter controlling the strength of the factual grounding.
+3.  **Adaptive Thresholding:** To prevent linguistic incoherence, apply the contrastive shift only to tokens where the entropy of $L_{grounded}$ is high, suggesting the model is uncertain and prone to hallucination.
+4.  **Decoding:** Sample the next token from the softmax of $L'_{t}$.
+
+### 5. Dataset or Benchmark
+The evaluation will utilize the **HaluEval** dataset and the **FactScore** framework.
+*   **HaluEval:** Specifically the "Summarization" and "Question Answering" subsets, which contain paired factual and hallucinated samples.
+*   **FactScore:** A benchmark that breaks down long-form generations into individual atomic facts and verifies them against Wikipedia.
+
+### 6. Evaluation Metrics
+*   **FactScore (Primary):** Percentage of generated atomic facts supported by a knowledge source.
+*   **Knowledge F1:** Measure of overlap between the generated facts and the ground-truth reference context.
+*   **MAUVE / Perplexity:** To ensure that the contrastive decoding does not degrade the linguistic fluency or "naturalness" of the text.
+*   **Hallucination Rate:** Percentage of model outputs that contradict the provided context in HaluEval.
+
+### 7. Baselines
+*   **Standard RAG:** Greedy decoding using the retrieved context in the prompt.
+*   **Chain-of-Thought (CoT) Prompting:** Asking the model to "think step-by-step" before asserting a fact.
+*   **Self-Correction (Self-CheckGPT):** A post-hoc method where the model is asked to review its own output for errors.
+*   **Decoding by Contrast (Dola):** A baseline that contrasts different layers of the model rather than context-aware/context-blind streams.
+
+### 8. Ablations
+*   **$\alpha$ Sensitivity:** Testing values of $\alpha$ from 0.1 to 2.0 to find the "sweet spot" between factuality and fluency.
+*   **Context Quality:** Replacing the factual context with "garbage" or "distractor" text to see if CKAD correctly identifies when to rely on the prior.
+*   **Logit vs. Probability Space:** Comparing the contrastive shift in the logit space versus the raw probability space.
+
+### 9. Failure Modes and Feasibility Risks
+*   **Linguistic Degradation:** Excessive $\alpha$ values may lead to repetitive or ungrammatical text as the model ignores the natural language flow in favor of factual keywords.
+*   **Inference Latency:** Generating two sets of logits per token doubles the computational cost. This can be mitigated by using a smaller "draft" model for the $L_{prior}$ stream.
+*   **Context Dependency:** If the retrieved context is itself incorrect, CKAD will amplify the error more aggressively than standard RAG. This requires a high-precision retrieval component.

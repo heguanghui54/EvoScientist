@@ -1,0 +1,60 @@
+{
+  "target_system": "EvoScientist",
+  "tie_threshold": 0.0,
+  "raw_records": 60,
+  "baselines": {
+    "AI-Researcher": {
+      "dimensions": {
+        "Clarity": {
+          "baseline": "AI-Researcher",
+          "dimension": "Clarity",
+          "n": 60,
+          "win": 29,
+          "tie": 7,
+          "lose": 24,
+          "win_pct": 48.33,
+          "tie_pct": 11.67,
+          "lose_pct": 40.0,
+          "gap": 8.33
+        },
+        "Novelty": {
+          "baseline": "AI-Researcher",
+          "dimension": "Novelty",
+          "n": 60,
+          "win": 37,
+          "tie": 4,
+          "lose": 19,
+          "win_pct": 61.67,
+          "tie_pct": 6.67,
+          "lose_pct": 31.67,
+          "gap": 30.0
+        },
+        "Feasibility": {
+          "baseline": "AI-Researcher",
+          "dimension": "Feasibility",
+          "n": 60,
+          "win": 23,
+          "tie": 1,
+          "lose": 36,
+          "win_pct": 38.33,
+          "tie_pct": 1.67,
+          "lose_pct": 60.0,
+          "gap": -21.67
+        },
+        "Relevance": {
+          "baseline": "AI-Researcher",
+          "dimension": "Relevance",
+          "n": 60,
+          "win": 7,
+          "tie": 42,
+          "lose": 11,
+          "win_pct": 11.67,
+          "tie_pct": 70.0,
+          "lose_pct": 18.33,
+          "gap": -6.66
+        }
+      },
+      "avg_gap": 2.5
+    }
+  }
+}

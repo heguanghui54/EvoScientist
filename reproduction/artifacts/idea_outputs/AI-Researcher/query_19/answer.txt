@@ -1,0 +1,41 @@
+**1. Title**
+Information-Theoretic Item Selection (ITIS): Optimizing LLM Leaderboards via Discriminative Power Analysis.
+
+**2. Problem and Motivation**
+Current LLM evaluation pipelines are computationally expensive and increasingly redundant. Benchmarks like MMLU or Big-Bench contain thousands of items, yet many are either too easy (providing no signal for top models), too difficult (noise), or highly correlated with other items. This "benchmarking bottleneck" slows down the iterative development cycle and increases the carbon footprint of AI research. There is a critical need for a methodology that identifies the most "informative" questions to construct sparse but accurate leaderboards.
+
+**3. Core Hypothesis**
+A leaderboard constructed from a subset of items (e.g., 10–20% of the original set) selected based on Item Response Theory (IRT) parameters—specifically high *discrimination* and appropriate *difficulty*—can maintain a Spearman correlation of $\rho > 0.98$ with the full-scale leaderboard ranking while reducing inference costs by an order of magnitude.
+
+**4. Method**
+The proposed method follows a three-stage pipeline:
+1.  **Parameter Estimation:** Utilizing existing historical data from major leaderboards (e.g., Hugging Face Open LLM Leaderboard), we apply a 2-Parameter Logistic (2PL) IRT model to estimate two values for every question $i$:
+    *   Difficulty ($\beta_i$): The ability level required to have a 50% success probability.
+    *   Discrimination ($\alpha_i$): How effectively the question distinguishes between models of slightly different ability levels.
+2.  **Information Density Mapping:** Calculate the Test Information Function (TIF). We prioritize items that provide the highest Fisher Information at the ability levels ($\theta$) where current state-of-the-art models reside.
+3.  **Dynamic Subset Construction:** Implement a greedy selection algorithm that picks the top $N$ items that maximize the total information across the latent ability distribution of the target model class.
+4.  **Verification:** Evaluate new, unseen models on this "Sparse-Leaderboard" to validate that the predicted rank matches the ground truth rank from the full benchmark.
+
+**5. Dataset or Benchmark**
+*   **Primary Source:** The Open LLM Leaderboard (Hugging Face) raw evaluation logs, specifically the MMLU and GSM8K subsets.
+*   **Test Set:** A "hold-out" set of 50 newly released models (not used for IRT parameter estimation) to test the generalizability of the sparse subset.
+
+**6. Evaluation Metrics**
+*   **Rank Fidelity:** Spearman’s Rank Correlation ($\rho$) and Kendall’s Tau ($\tau$) between the sparse leaderboard and the full benchmark.
+*   **Efficiency Gain:** Ratio of tokens processed in the full vs. sparse version.
+*   **Root Mean Square Error (RMSE):** The difference between the predicted model ability ($\theta$) from the sparse set vs. the full set.
+
+**7. Baselines**
+*   **Random Subsampling:** Selecting $N$ items at random from the original pool.
+*   **Category-Uniform Sampling:** Selecting items proportionally from each subject category (e.g., STEM, Humanities) without considering item difficulty.
+*   **Naive Accuracy Pruning:** Removing only the easiest/hardest items based on mean accuracy across all models.
+
+**8. Ablations**
+*   **IRT Model Complexity:** Compare 1PL (only difficulty), 2PL (difficulty + discrimination), and 3PL (adding a guessing parameter).
+*   **Subset Size Sensitivity:** Evaluate performance at 1%, 5%, 10%, 25%, and 50% of the original benchmark size.
+*   **Domain-Specific vs. General:** Test if a subset optimized for "Coding" models generalizes to "Creative Writing" models.
+
+**9. Failure Modes and Feasibility Risks**
+*   **Data Contamination:** If the "Sparse-Leaderboard" items become public knowledge, developers may over-optimize (overfit) their models on those specific high-signal questions, rendering the leaderboard useless.
+*   **Model-Type Bias:** IRT parameters estimated on Transformer-based LLMs might not generalize to future architectures (e.g., State Space Models).
+*   **Temporal Drift:** As models become significantly more capable, a "high-information" item today may become a "ceiling-effect" item tomorrow, requiring periodic recalibration of the sparse set.

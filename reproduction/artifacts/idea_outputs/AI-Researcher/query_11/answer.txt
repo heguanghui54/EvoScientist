@@ -1,0 +1,48 @@
+**1. Title**
+DECOUPLE-LOGIC: Benchmarking and Isolating Factual Knowledge from Logical Reasoning via Counterfactual Intervention.
+
+**2. Problem and Motivation**
+Current Large Language Models (LLMs) conflate two distinct capabilities: **internalized factual knowledge** (memorized data) and **logical reasoning** (the ability to manipulate rules). This coupling leads to "reasoning by memorization," where a model appears to solve a complex problem only because it has seen the specific instance or a near-identical pattern in its training set.
+
+This lack of decoupling presents a significant bottleneck for:
+*   **Generalization:** Models fail when encountering novel scenarios that contradict their training data.
+*   **Reliability:** Hallucinations often occur when a model’s "reasoning" is overridden by a strong, but incorrect, factual prior.
+*   **Evaluation:** Current benchmarks (e.g., GSM8K, MMLU) are contaminated, making it impossible to tell if a model is "thinking" or "retrieving."
+
+**3. Core Hypothesis**
+The reasoning performance of an LLM is inversely correlated with the "factual distance" of the prompt from its training distribution. By applying counterfactual interventions to logical premises, we can quantify the degree of coupling and isolate a "Pure Reasoning Score" (PRS) that is independent of world knowledge.
+
+**4. Method**
+The proposed method involves a three-stage intervention pipeline:
+1.  **Fact-Logic Mapping:** Deconstruct standard logical problems (syllogisms, mathematical word problems, or programming logic) into their structural components (the "logic graph") and their semantic components (the "entities").
+2.  **Counterfactual Swapping:** Systematically replace semantic entities with:
+    *   *Category A (Factual):* The original, true-to-world premises.
+    *   *Category B (Counterfactual):* Premises that are logically valid but factually false (e.g., "The sun is made of ice; ice is hot; therefore the sun is hot").
+    *   *Category C (Abstract):* Premises using nonsense or symbolic tokens (e.g., "Gorp is a Blerp; Blerps are Zazz; therefore Gorp is Zazz").
+3.  **Inference & Extraction:** Run the model on all categories. A "Decoupled" model should maintain identical accuracy across all three, while a "Coupled" model will show high performance on A and significant degradation on B and C.
+
+**5. Dataset or Benchmark**
+**The LogicSwap Benchmark:**
+*   **Source:** 2,000 samples derived from pruned subsets of Big-Bench (Logical Deduction) and GSM8K.
+*   **Structure:** Each sample is provided in three variants: *Standard*, *Counterfactual*, and *Abstract*.
+*   **Validation:** All counterfactual variants must be manually verified to ensure that the logical validity of the conclusion remains unchanged despite the factual falsity of the premises.
+
+**6. Evaluation Metrics**
+*   **Decoupling Delta ($\Delta D$):** The percentage drop in accuracy between Factual and Counterfactual prompts. $\Delta D = (Acc_{Factual} - Acc_{Counterfactual}) / Acc_{Factual}$.
+*   **Pure Reasoning Score (PRS):** The model’s accuracy on the Abstract variant, representing the baseline for content-independent logic.
+*   **Reasoning Consistency (RC):** The frequency with which the model provides the same logical derivation steps across all three variants, regardless of the correctness of the final answer.
+
+**7. Baselines**
+*   **Zero-Shot CoT:** Standard Chain-of-Thought prompting on base models (e.g., Llama-3-70B, GPT-4o).
+*   **Few-Shot In-Context Learning (ICL):** Providing 3-5 examples of counterfactual reasoning to see if the model can be "primed" to decouple.
+*   **Instruction-Tuned Baselines:** Models specifically tuned for logic (e.g., Orca-2 or specialized math models).
+
+**8. Ablations**
+*   **Entity Familiarity:** Vary the counterfactuals from "slightly false" (The moon is made of silver) to "highly dissonant" (Fire is freezing) to measure if the degree of factual violation affects the reasoning breakdown.
+*   **Prompt Formatting:** Test if different delimiters (e.g., "Assume for the sake of argument...") reduce the coupling effect.
+*   **Model Size:** Compare 7B, 13B, and 70B+ parameter models to determine if larger models exhibit more or less coupling.
+
+**9. Failure Modes and Feasibility Risks**
+*   **Safety Filter Interference:** Models may refuse to process counterfactuals if they trigger "misinformation" or "helpfulness" guardrails (e.g., refusing to say "The sun is cold").
+*   **Semantic Drift:** In the Abstract category, models may lose the "semantic scaffolding" required to understand the prompt structure, leading to a baseline collapse that isn't related to logic.
+*   **Feasibility:** Creating 2,000 high-quality counterfactuals requires rigorous quality control to ensure that the logic is not inadvertently broken during the swap (e.g., swapping a noun for a verb). This will be mitigated by using a template-based generation approach followed by a subset of human verification.

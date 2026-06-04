@@ -1,0 +1,38 @@
+**1. Title**
+Self-Correction through Rubric-Constrained Contrastive Reasoning (SCCR) for LLM-as-a-Judge
+
+**2. Problem and Motivation**
+Automated evaluation of Large Language Models (LLMs), often referred to as "LLM-as-a-Judge," has become a standard for scaling model assessment. However, current automated judges suffer from several critical accuracy issues: position bias (favoring the first presented response), verbosity bias (favoring longer responses regardless of quality), and a lack of reasoning consistency (assigning a score that does not align with the provided justification). These biases lead to low correlation with human expert preferences, particularly in complex reasoning or creative writing tasks where "ground truth" is subjective.
+
+**3. Core Hypothesis**
+Decomposing the evaluation task into a "Contrastive Reasoning" phase—where the judge must explicitly identify and verify factual or stylistic discrepancies between two candidate responses before assigning a score—will significantly reduce verbosity bias and increase the Spearman correlation with human gold-standard labels compared to direct zero-shot scoring.
+
+**4. Method**
+The SCCR framework operates in three distinct stages:
+1.  **Rubric-Based Feature Extraction:** Given a prompt and two candidate responses (A and B), the evaluator is prompted to extract specific features based on a multi-dimensional rubric (e.g., factual density, logical flow, adherence to constraints).
+2.  **Contrastive Analysis:** The evaluator is forced to generate a "Difference Map" that lists specific claims or stylistic choices present in Response A but missing/different in Response B, and vice versa.
+3.  **Verification and Scoring:** The evaluator must verify if the identified differences are objectively improvements or errors (e.g., "Response A includes a hallucination regarding X, whereas Response B is accurate"). Finally, it aggregates these verified differences into a final preference or scalar score.
+4.  **Permutation Parity:** The process is run twice (A vs B and B vs A) to calculate a "Consistency Score." If the results are contradictory, a tie-breaking prompt is triggered focusing only on the identified differences.
+
+**5. Dataset or Benchmark**
+The study will utilize the **LMSYS Chatbot Arena Conversations** (specifically the subset with human-labeled pairwise preferences) and **MT-Bench**. These datasets provide a wide variety of categories (Coding, Reasoning, Roleplay) and high-quality human preference labels to serve as the ground truth.
+
+**6. Evaluation Metrics**
+*   **Human Alignment:** Spearman’s rank correlation coefficient ($\rho$) and Pearson correlation ($r$) between the automated scores and human gold-standard labels.
+*   **Consistency Rate:** The percentage of cases where the judge maintains the same preference when the order of responses is swapped (mitigating position bias).
+*   **Verbosity Sensitivity:** A regression analysis measuring the correlation between response length and score to determine if the SCCR method reduces the "length-is-better" bias compared to baselines.
+
+**7. Baselines**
+*   **Direct Scoring (GPT-4/Claude 3):** Standard prompt asking for a 1–10 score or a pairwise preference.
+*   **G-Eval:** A form of weighted-sum evaluation based on probabilities of score tokens.
+*   **Prometheus:** An open-source evaluator model specifically fine-tuned for feedback.
+
+**8. Ablations**
+*   **No Rubric:** Removing the multi-dimensional criteria to see if contrastive reasoning alone is sufficient.
+*   **No Verification:** Identifying differences but skipping the step where the model checks if those differences are "good" or "bad."
+*   **Single-Pass:** Removing the permutation parity check to measure the impact on position bias.
+
+**9. Failure Modes and Feasibility Risks**
+*   **Reasoning Hallucination:** The evaluator might "hallucinate" a difference between two responses that does not exist to satisfy the contrastive reasoning prompt.
+*   **Computational Cost:** The multi-stage process (Extraction -> Contrast -> Verification) significantly increases token usage and latency compared to a single-pass evaluation.
+*   **Sensitivity to Rubric Quality:** The accuracy of the system may be highly dependent on the initial quality of the rubric, which might require task-specific manual tuning.

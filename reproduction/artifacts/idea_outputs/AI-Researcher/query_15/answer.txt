@@ -1,0 +1,38 @@
+**1. Title**
+Contrastive Preference Optimization for Gender-Neutrality (CPO-GN) in Neural Machine Translation.
+
+**2. Problem and Motivation**
+Neural Machine Translation (NMT) models frequently exhibit gender bias by defaulting to stereotypical gender assignments for occupations (e.g., translating "the doctor" as masculine and "the nurse" as feminine in gendered languages like Spanish or German). Existing mitigation strategies, such as Counterfactual Data Augmentation (CDA), often require retraining from scratch or result in a "translation quality tax," where the model’s general fluency (BLEU/COMET scores) drops. There is a need for a lightweight, post-training alignment method that suppresses stereotypical associations while preserving linguistic performance.
+
+**3. Core Hypothesis**
+Applying Contrastive Preference Optimization (CPO) to a pre-trained NMT model using paired "biased" and "debiased" translations will significantly reduce stereotypical gender bias (as measured by WinoMT) with a lower degradation in general translation quality compared to standard Supervised Fine-Tuning (SFT) or CDA.
+
+**4. Method**
+The proposed method adapts the Contrastive Preference Optimization framework—originally designed for LLM alignment—to the NMT task:
+*   **Data Pairing:** For a source sentence $S$ containing a gender-ambiguous occupation, we identify two target translations: $y_{w}$ (the "winning" or debiased translation, which uses neutral forms or matches a provided context) and $y_{l}$ (the "losing" or biased translation, which relies on stereotypes).
+*   **Loss Function:** We fine-tune the model using the CPO objective, which maximizes the log-likelihood difference between $y_{w}$ and $y_{l}$ while incorporating a behavior cloning term to prevent the model from deviating too far from the original NMT distribution.
+*   **Inference:** The model is used as a standard NMT transformer, requiring no additional tags or post-processing scripts.
+
+**5. Dataset or Benchmark**
+*   **Training Data:** A subset of the **MuST-SHE** dataset and a synthetically generated corpus using **Counterfactual Data Augmentation (CDA)** on the Europarl corpus (English to Spanish/German/Italian).
+*   **Evaluation Benchmark:** **WinoMT**, a professional gender-bias benchmark that measures the accuracy of gender translation in pro-stereotypical and anti-stereotypical contexts.
+
+**6. Evaluation Metrics**
+*   **Primary Metric:** Accuracy on WinoMT (the percentage of correctly gendered translations).
+*   **Bias Metric:** $\Delta G$ (the difference in performance between pro-stereotypical and anti-stereotypical subsets).
+*   **Quality Metrics:** BLEU and COMET scores on the Flores-200 devtest set to ensure general translation capability is preserved.
+
+**7. Baselines**
+*   **Base Model:** A pre-trained NLLB-200 (600M) or M2M-100 model without debiasing.
+*   **CDA-SFT:** The base model fine-tuned using standard Cross-Entropy loss on a counterfactual (balanced) dataset.
+*   **Tagging-based NMT:** A model trained to use gender tags (e.g., `<male>`, `<female>`) at inference time.
+
+**8. Ablations**
+*   **Reference-Free vs. Reference-Based:** Comparing CPO performance when the "winning" response is a gold-standard neutral translation versus a machine-generated debiased translation.
+*   **Loss Weighting:** Varying the coefficient of the behavior cloning term to find the optimal trade-off between debiasing and BLEU score preservation.
+*   **Language Resource Levels:** Testing the method on a high-resource pair (En-Es) vs. a mid-resource pair (En-De).
+
+**9. Failure Modes and Feasibility Risks**
+*   **Over-neutralization:** The model might begin to use neutral forms even when the source context explicitly provides gender information (e.g., "The doctor... she said").
+*   **Catastrophic Forgetting:** Fine-tuning on the relatively small debiasing datasets might degrade the model's ability to translate rare vocabulary or complex syntax.
+*   **Feasibility:** CPO is computationally efficient compared to RLHF, making it feasible to run on a single A100 or H100 GPU within a few hours for a medium-sized NMT model.

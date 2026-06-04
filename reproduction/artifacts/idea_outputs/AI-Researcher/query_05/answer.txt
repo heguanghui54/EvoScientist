@@ -1,0 +1,43 @@
+**1. Title**
+GRAPH-REVIEW: Hierarchical Literature Synthesis via Thematic Citation Graphs
+
+**2. Problem and Motivation**
+The volume of scientific publication is growing at an exponential rate, making it difficult for researchers to maintain a comprehensive understanding of specific sub-fields. While Large Language Models (LLMs) can summarize individual papers, they struggle with *synthesis*—the ability to identify thematic clusters, track the evolution of ideas over time, and resolve conflicting findings across multiple sources. Current Retrieval-Augmented Generation (RAG) systems often produce "list-like" summaries that lack the narrative cohesion and structural depth found in human-written survey papers.
+
+**3. Core Hypothesis**
+Explicitly modeling the relationships between papers as a "Thematic Citation Graph" (where nodes represent papers/concepts and edges represent citations or semantic similarity) will produce literature reviews with higher thematic coherence and citation accuracy compared to standard linear RAG or long-context window prompting.
+
+**4. Method**
+The proposed system follows a four-stage pipeline:
+1.  **Iterative Retrieval:** Given a research query, the system retrieves a seed set of papers. It then performs a "one-hop" expansion by retrieving papers cited by the seeds and papers that cite the seeds.
+2.  **Graph Construction:** A graph is built where edges are defined by (a) direct citations and (b) semantic similarity above a threshold (using embeddings like SPECTER).
+3.  **Thematic Clustering:** The system applies a community detection algorithm (e.g., Louvain) to the graph to identify sub-topics. For each cluster, the LLM generates a "thematic summary."
+4.  **Hierarchical Synthesis:** An LLM-based "Architect" agent organizes these themes into a logical outline (e.g., Chronological, Methodological, or Problem-Solution). A "Writer" agent then populates the sections, using the graph structure to ensure that transitions between paragraphs reflect actual relationships in the literature (e.g., "Building on the work of [X], [Y] improved the efficiency by...").
+
+**5. Dataset or Benchmark**
+*   **Source:** A curated subset of the *arXiv* and *PubMed* Open Access collections.
+*   **Ground Truth:** 500 high-quality, peer-reviewed survey papers published between 2022–2024.
+*   **Input:** The title and abstract of the survey paper + the full bibliographies of the cited works.
+*   **Task:** Generate a 2,000-word literature review based only on the cited works, excluding the original survey paper text.
+
+**6. Evaluation Metrics**
+*   **Citation Precision/Recall:** Percentage of claims correctly attributed to the source papers vs. hallucinated citations.
+*   **Thematic Coverage:** A comparison of the generated sub-headings against the ground-truth survey paper’s Table of Contents (using BERTScore).
+*   **Coherence (Entity Grid):** A measure of local discourse coherence to ensure the text doesn't jump sporadically between unrelated papers.
+*   **Factuality:** Using a Natural Language Inference (NLI) model to check if the generated claims are entailed by the retrieved abstracts.
+
+**7. Baselines**
+*   **Long-Context Prompting:** Feeding the top 50 abstracts into a 128k-context LLM (e.g., GPT-4o or Claude 3.5 Sonnet) with a "write a survey" prompt.
+*   **Standard RAG:** Using a vector database to retrieve relevant chunks and summarizing them in a linear fashion.
+*   **Lead-Summary:** Concatenating the abstracts of the top-cited papers in the set.
+
+**8. Ablations**
+*   **Graph vs. List:** Removing the graph-based clustering and instead using simple K-means on embeddings.
+*   **Citation Edges vs. Semantic Edges:** Evaluating the quality when only direct citations are used to structure the review vs. only semantic similarity.
+*   **Agentic vs. Monolithic:** Comparing the multi-agent (Architect/Writer) approach against a single-pass generation.
+
+**9. Failure Modes and Feasibility Risks**
+*   **Context Fragmentation:** If the thematic clusters are too small, the review may feel disjointed.
+*   **Retrieval Bias:** The system may over-index on highly-cited seminal papers and miss "long-tail" recent innovations.
+*   **Hallucination of Synthesis:** The LLM might claim two papers are related or contradictory when they are actually discussing different domains (semantic drift).
+*   **Computational Cost:** Building and clustering graphs for thousands of papers per query may be latent-heavy for real-time use.

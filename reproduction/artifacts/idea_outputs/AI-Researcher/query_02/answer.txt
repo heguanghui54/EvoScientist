@@ -1,0 +1,42 @@
+**Title:** CATS: Crosstalk-Aware Test Synthesis for Repository-Level Unit Testing
+
+**Problem and Motivation**
+Current Large Language Models (LLMs) excel at generating unit tests for isolated, self-contained functions. However, real-world software engineering involves complex inter-dependencies across multiple files (repository-level context). When generating tests for a specific method, LLMs often "hallucinate" API calls to other modules or fail to properly instantiate required objects from different directories, leading to tests that fail to compile or result in `ImportErrors`. This "context gap" prevents automated test generation from being truly useful in large-scale industrial codebases.
+
+**Core Hypothesis**
+Providing an LLM with a structured "dependency context"—consisting of the call graph and class signatures of all imported modules—will significantly increase the **compilation rate** and **branch coverage** of generated tests compared to providing only the target file or using standard RAG (Retrieval-Augmented Generation) based on text similarity.
+
+**Method**
+1.  **Dependency Mapping:** Use a static analysis tool (e.g., Tree-sitter or a Language Server Protocol) to extract the call graph for a target function $F$ in repository $R$.
+2.  **Context Construction:** For every external class or function invoked by $F$, extract its signature (method names, parameter types, and docstrings) but not its full implementation.
+3.  **Prompt Engineering:** Construct a prompt that includes:
+    *   The source code of the target file.
+    *   The extracted signatures of all relevant dependencies ("Context Snippets").
+    *   A requirement to use a specific testing framework (e.g., `pytest` or `JUnit`).
+4.  **Iterative Repair:** If the generated test fails to compile or run, feed the error log back into the LLM alongside the dependency context for one round of self-correction.
+
+**Dataset or Benchmark**
+*   **Dataset:** A subset of **SWE-bench (Lite)** or **Defects4J**.
+*   **Criteria:** Select 100-200 methods from diverse Python or Java repositories that have at least three non-trivial internal dependencies (calls to other files within the same repo).
+*   **Ground Truth:** Existing developer-written tests will serve as a baseline for coverage comparison, though the goal is to generate *new* valid tests.
+
+**Evaluation Metrics**
+1.  **Compilability Rate:** Percentage of generated tests that execute without syntax or import errors.
+2.  **Pass Rate:** Percentage of tests that pass against the original (non-buggy) code.
+3.  **Branch Coverage:** Incremental branch coverage added by the generated tests (measured via `coverage.py` or `JaCoCo`).
+4.  **Mutation Score:** The ability of the generated tests to detect "mutants" (intentionally introduced bugs).
+
+**Baselines**
+1.  **Zero-shot LLM (GPT-4o/Claude 3.5):** Generating tests using only the target function/file as context.
+2.  **Standard RAG:** Retrieving context based on BM25 or vector similarity of the code text, rather than structural dependencies.
+3.  **EvoSuite/Pynguin:** Traditional search-based software testing (SBST) tools that do not use LLMs.
+
+**Ablations**
+1.  **Signature-only vs. Full-body:** Providing only method signatures vs. providing the full source code of dependencies (to test context window efficiency).
+2.  **No-Repair:** Removing the iterative repair loop to measure the "first-shot" accuracy of the dependency context.
+3.  **Local-only:** Providing only dependencies within the same directory vs. the entire repository.
+
+**Failure Modes and Feasibility Risks**
+1.  **Context Window Limits:** Large repositories with deep dependency chains may exceed the LLM's token limit, requiring a "pruning" strategy for the call graph.
+2.  **Mocking Complexity:** The LLM may struggle to decide whether to instantiate a real dependency or "mock" it. If it mocks incorrectly, the test becomes brittle or meaningless.
+3.  **Environment Setup:** Automatically running generated tests requires a pre-configured environment (dependencies installed), which can be a significant engineering hurdle for diverse datasets. This will be mitigated by using Dockerized environments from the SWE-bench framework.

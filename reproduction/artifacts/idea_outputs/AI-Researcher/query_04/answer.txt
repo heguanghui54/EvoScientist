@@ -1,0 +1,40 @@
+**1. Title**
+Multi-Agent Differential Diagnosis (MADD): A Benchmark for Collaborative Clinical Reasoning and Error Correction.
+
+**2. Problem and Motivation**
+Large Language Models (LLMs) are increasingly applied to clinical decision support, yet single-agent deployments suffer from "tunnel vision"—the tendency to fixate on a likely diagnosis while ignoring rare but critical alternatives (anchoring bias) or hallucinating supporting evidence. In human medicine, this is mitigated through "Grand Rounds" or peer consultation. There is a lack of a standardized benchmark to measure how effectively multi-agent AI systems can simulate this collaborative oversight to reduce diagnostic errors and improve the robustness of clinical justifications.
+
+**3. Core Hypothesis**
+A multi-agent architecture employing specialized roles (Diagnostician, Critic, and Specialist) will achieve significantly higher diagnostic accuracy and lower rates of "critical misses" on complex clinical cases compared to a single-agent baseline with equivalent compute/token budgets.
+
+**4. Method**
+The proposed system uses a "Debate and Refine" framework:
+1.  **The Diagnostician (Agent A):** Generates an initial differential diagnosis and treatment plan based on the patient case.
+2.  **The Critic (Agent B):** Tasked with "Red Teaming" the diagnosis. It identifies contradictions in the patient’s vitals/history that the Diagnostician may have overlooked.
+3.  **The Specialist (Agent C):** Provided with RAG (Retrieval-Augmented Generation) access to medical textbooks and clinical guidelines to verify the logic of both A and B.
+4.  **The Synthesizer:** A final agent that reviews the debate and produces the definitive clinical report.
+
+**5. Dataset or Benchmark**
+The study will utilize the **MedQA (USMLE) dataset** and a curated subset of **MIMIC-IV** clinical summaries. Specifically, the benchmark will focus on "Hard Cases"—defined as those where a zero-shot GPT-4 model currently fails or provides a low-confidence score.
+
+**6. Evaluation Metrics**
+*   **Diagnostic Accuracy (Top-1 and Top-3):** Percentage of cases where the correct diagnosis is identified.
+*   **Critical Miss Rate:** Frequency of failing to identify life-threatening conditions (e.g., Pulmonary Embolism) when presented with ambiguous symptoms.
+*   **Justification Quality Score (JQS):** A 1–5 Likert scale evaluated by medical professionals (or a high-capability "Judge LLM") based on adherence to clinical guidelines.
+*   **Token Efficiency:** Accuracy gain per 1k tokens to measure the cost-benefit of multi-agent overhead.
+
+**7. Baselines**
+*   **Zero-shot Single Agent:** GPT-4o or Med-Llama-3 (70B) providing a diagnosis in one pass.
+*   **Chain-of-Thought (CoT) Baseline:** A single agent prompted to "think step-by-step" before diagnosing.
+*   **Self-Reflection Baseline:** A single agent prompted to "review your own answer and correct errors" in a second pass.
+
+**8. Ablations**
+*   **Role Removal:** Testing the system without the Critic or without the Specialist.
+*   **Knowledge Access:** Comparing the multi-agent system with and without RAG (Retrieval-Augmented Generation).
+*   **Communication Topology:** Comparing "Sequential Review" (A -> B -> C) vs. "All-to-All Debate."
+
+**9. Failure Modes and Feasibility Risks**
+*   **Consensus Hallucination:** Agents may collectively agree on an incorrect diagnosis (groupthink).
+*   **Latency:** The multi-turn nature of the system may be too slow for emergency clinical settings.
+*   **Dataset Contamination:** The risk that USMLE-style questions are already in the training data of the underlying models.
+*   **Feasibility:** High API costs for multi-agent calls; mitigation involves using smaller, fine-tuned open-source models (e.g., Llama-3-70B-Instruct) as the base agents.

@@ -1,0 +1,45 @@
+### 1. Title
+**Iterative Latent Refinement (ILR): Breaking the Parameter-Depth Ceiling via Recurrent Weight Sharing**
+
+### 2. Problem and Motivation
+Small Language Models (SLMs) in the 100M to 1.5B parameter range exhibit a "reasoning ceiling." While they can be trained to excel at linguistic fluency and factual retrieval, they consistently fail at complex multi-step reasoning (e.g., GSM8K, Big-Bench Hard) where larger models (70B+) succeed. Current scaling laws suggest that increasing depth is necessary for logic, but increasing depth in SLMs leads to prohibitive inference latency and memory footprints. There is a critical need for a mechanism that increases "effective depth" (computational steps) without increasing "static depth" (parameter count).
+
+### 3. Core Hypothesis
+The performance ceiling of small models is not limited by the number of parameters, but by the fixed number of transformation steps applied to a token. By implementing a **Recurrent Transformer Block**—where a hidden state is passed through the same set of weights multiple times—an SLM can simulate the representational power of a much deeper model, effectively decoupling "compute depth" from "parameter count."
+
+### 4. Method
+The proposed method, **Iterative Latent Refinement (ILR)**, modifies the standard transformer architecture as follows:
+1.  **Recurrent Core:** A subset of layers (e.g., layers 4 through 8 in a 12-layer model) is designated as the "Recurrent Core."
+2.  **Iterative Processing:** For each token, the hidden state enters the core and is processed $N$ times (where $N$ is a hyperparameter or dynamically determined) before moving to the final output layers.
+3.  **Cross-Iteration Consistency:** To prevent latent state drift, we apply:
+    *   **Weight-Tying:** The weights of the recurrent core are shared across all $N$ iterations.
+    *   **Recurrent LayerNorm:** A specialized normalization step to stabilize the variance of the hidden state across iterations.
+    *   **Iteration Embedding:** A small learnable vector added to the hidden state to inform the model which iteration ($1 \dots N$) it is currently performing.
+4.  **Training Objective:** The model is trained using a "Multi-Exit" loss, where the model is encouraged to produce the correct token prediction at any iteration $i \in [1, N]$, though the final loss is weighted toward the $N$-th iteration.
+
+### 5. Dataset or Benchmark
+*   **Primary Benchmark:** **GSM8K** (Grade School Math) and **MATH**, to test logical depth.
+*   **Secondary Benchmark:** **Big-Bench Hard (BBH)**, specifically the "Reasoning about Colored Objects" and "Logical Deduction" tasks.
+*   **Pre-training Corpus:** A 100B token subset of **FineWeb-Edu** to ensure the model has high-quality reasoning signals.
+
+### 6. Evaluation Metrics
+*   **Accuracy (Pass@1):** Performance on reasoning tasks.
+*   **Compute-Efficiency Ratio (CER):** Accuracy divided by the number of unique parameters.
+*   **Inference Latency vs. Accuracy:** A Pareto curve comparing ILR models against standard models with equivalent FLOPs.
+*   **Stability Score:** Variance of the hidden state across iterations (to measure latent collapse).
+
+### 7. Baselines
+1.  **Standard Transformer:** A vanilla Llama-style model with the same number of parameters (e.g., 1.1B parameters, 12 layers).
+2.  **Deep-Narrow Baseline:** A model with the same *total* FLOPs as the ILR model but achieved through unique layers (e.g., a 48-layer model with smaller hidden dimension).
+3.  **MobileLLM:** A state-of-the-art small model baseline utilizing weight sharing but without iterative refinement logic.
+
+### 8. Ablations
+*   **Iteration Count ($N$):** Testing $N=1$ (baseline) vs. $N=2, 4, 8$.
+*   **Weight Sharing vs. Unique Weights:** Comparing the ILR core against a "Deep" model of the same depth but with unique parameters to isolate the benefit of recurrence.
+*   **Dynamic vs. Static $N$:** Testing if a "halt signal" (Adaptive Computation Time) outperforms a fixed number of iterations.
+*   **Iteration Embeddings:** Evaluating performance with and without the iteration-specific learnable vectors.
+
+### 9. Failure Modes and Feasibility Risks
+*   **Vanishing/Exploding Gradients:** Repeated application of the same weights may lead to numerical instability. *Mitigation:* Use of ReZero or strict LayerNorm scaling.
+*   **Latent State Stagnation:** The model may learn a "null transformation" where iterations 2 through $N$ do not change the hidden state. *Mitigation:* Implement a "Residual Difference" penalty to ensure each iteration adds information.
+*   **Inference Overhead:** While parameter-efficient, $N$ iterations still cost $N \times$ FLOPs. The feasibility depends on whether weight-sharing provides better generalization than simply using a larger, non-recurrent model of the same FLOP count.

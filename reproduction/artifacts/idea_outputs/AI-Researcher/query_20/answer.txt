@@ -1,0 +1,43 @@
+**1. Title**
+DIV-BENCH: A Multi-Facet Benchmark for Evaluating Semantic Diversity and Quality Trade-offs in Large Language Models.
+
+**2. Problem and Motivation**
+Current evaluations of diversity in text generation primarily rely on surface-level n-gram overlaps (e.g., Self-BLEU, Distinct-n). These metrics fail to capture semantic diversity—the ability of a model to generate multiple, distinct, and valid conceptual ideas for a single prompt. Furthermore, there is a lack of standardized benchmarks that measure the "Diversity-Quality Pareto Frontier," where models often trade off the correctness or coherence of a response for increased variety. This leads to "diversity" that is often just hallucinated noise or grammatical gibberish.
+
+**3. Core Hypothesis**
+A robust evaluation of diversity must be "Semantically Grounded." We hypothesize that a metric based on the volume of the convex hull in a latent semantic space, combined with a quality-threshold filter, will provide a higher correlation with human judgment of "useful variety" than traditional n-gram metrics.
+
+**4. Method**
+The proposed method involves a three-stage pipeline:
+1.  **Generation:** For each prompt in the benchmark, the model generates $N=50$ candidates using various decoding strategies (e.g., varying temperature, nucleus sampling, or top-k).
+2.  **Quality Filtering:** An "Oracle" model (a significantly larger LLM or a task-specific verifier) filters out candidates that fail to meet a minimum coherence or correctness threshold.
+3.  **Semantic Mapping:** The remaining valid candidates are embedded into a high-dimensional vector space using a pre-trained transformer encoder (e.g., RoBERTa-large).
+4.  **Metric Calculation:** We calculate the **Semantic Coverage Score (SCS)**, defined as the determinant of the covariance matrix of the embeddings (representing the volume of the conceptual space covered) and the **Inter-Candidate Semantic Distance (ICSD)**.
+
+**5. Dataset or Benchmark**
+We propose **DIV-BENCH**, a dataset consisting of 500 prompts across four categories where diversity is functionally useful:
+*   **Creative Writing:** "Write five different opening sentences for a mystery novel set in a space station."
+*   **Brainstorming:** "List 10 unique uses for a paperclip besides holding paper."
+*   **Code Optimization:** "Provide multiple distinct algorithmic approaches to solve the Traveling Salesperson Problem."
+*   **Mathematical Reasoning:** "Solve this word problem using three different logical frameworks (e.g., algebraic, geometric, iterative)."
+
+**6. Evaluation Metrics**
+*   **SCS (Semantic Coverage Score):** Volume of the latent space occupied by valid generations.
+*   **V-Measure (Cluster Diversity):** Using K-means on embeddings to see how many distinct "idea clusters" are formed.
+*   **Self-BLEU:** (Baseline) To measure n-gram redundancy.
+*   **DQ-Score (Diversity-Quality Score):** The harmonic mean of the average quality score (per candidate) and the SCS.
+
+**7. Baselines**
+*   **Decoding Baselines:** Standard Nucleus Sampling ($p=0.9, 0.95$), Top-$k$ Sampling ($k=40, 50$), and Beam Search ($b=5, 10$).
+*   **Model Baselines:** GPT-3.5-Turbo, Llama-3-8B, and Mistral-7B.
+*   **Metric Baselines:** Distinct-n (n=1,2,3) and traditional Self-BLEU.
+
+**8. Ablations**
+*   **Embedding Model Impact:** Test how SCS changes when using different embedding models (e.g., OpenAI `text-embedding-3-small` vs. open-source `all-MiniLM-L6-v2`).
+*   **Quality Threshold Sensitivity:** Vary the "Oracle" filter stringency (from 0.1 to 0.9) to observe how diversity metrics collapse when quality is strictly enforced.
+*   **Sample Size ($N$):** Evaluate the stability of the metrics as the number of generated candidates decreases from 50 to 5.
+
+**9. Failure Modes and Feasibility Risks**
+*   **Semantic Collapse:** High-temperature sampling may produce semantically distinct but nonsensical text, which could inflate diversity scores if the Quality Filter is not robust.
+*   **Embedding Bias:** Latent space metrics are sensitive to the biases of the embedding model used; certain phrasing styles might appear "distant" in vector space despite being semantically identical.
+*   **Computational Cost:** Generating 50 candidates per prompt for 500 prompts across multiple models is computationally expensive, requiring significant GPU hours or API credits.

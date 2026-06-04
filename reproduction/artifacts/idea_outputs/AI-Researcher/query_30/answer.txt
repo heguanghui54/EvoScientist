@@ -1,0 +1,45 @@
+**1. Title**
+OmniAudio: A Unified Framework for Cross-Domain Audio Understanding and Synthesis via Contrastive-Generative Latent Alignment.
+
+**2. Problem and Motivation**
+Existing audio foundation models typically specialize in one of three silos: speech (e.g., Whisper), music (e.g., MusicLM), or environmental sounds (e.g., AudioLDM). While general-purpose models like CLAP provide cross-modal embeddings, they often lack the granularity for precise temporal reasoning or the ability to switch between understanding (classification/captioning) and synthesis (text-to-audio) within a single architecture. There is a need for a unified "OmniAudio" model that can reason across these domains—for example, identifying a specific bird species while simultaneously filtering out background speech or generating a soundscape based on a complex, multi-event prompt.
+
+**3. Core Hypothesis**
+Integrating a Contrastive Language-Audio Pretraining (CLAP) objective with a Masked Audio Modeling (MAM) objective in a single transformer-based architecture—fine-tuned on instruction-following triplets—will yield a foundation model that outperforms domain-specific baselines on zero-shot cross-domain tasks and exhibits superior temporal event localization.
+
+**4. Method**
+*   **Architecture:** A hierarchical Vision Transformer (ViT) backbone modified for audio spectrogram patches. The model utilizes a Vector-Quantized (VQ) latent space to discretize audio features.
+*   **Pre-training Phase 1 (Dual-Objective):**
+    *   *Contrastive Learning:* Align audio patch embeddings with text embeddings from a frozen LLM (e.g., Llama-3-8B).
+    *   *Masked Modeling:* Reconstruct masked spectrogram patches from visible neighbors to learn local acoustic textures.
+*   **Pre-training Phase 2 (Generative Alignment):** Add a lightweight diffusion decoder that operates on the shared latent space, conditioned on the text-aligned embeddings.
+*   **Instruction Tuning:** Fine-tune the model on a curated dataset of "Audio-Text-Task" triplets (e.g., "Identify the sound at 0:05 and generate a similar sound but with more reverb").
+
+**5. Dataset or Benchmark**
+*   **Training:** A combined corpus of AudioSet (2M clips), LibriSpeech (1000h), and Free Music Archive (FMA).
+*   **Evaluation Benchmark:** The "Audio-Omni-Bench," a composite of:
+    *   *Classification:* ESC-50 (Environment), GTZAN (Music).
+    *   *Captioning:* AudioCaps, Clotho.
+    *   *Reasoning:* A new test set of 500 clips requiring cross-domain logic (e.g., "Is the speaker's voice louder than the rain?").
+
+**6. Evaluation Metrics**
+*   **Understanding:** mean Average Precision (mAP) for classification; SPICE and METEOR scores for captioning.
+*   **Synthesis:** Fréchet Audio Distance (FAD) to measure generative quality; Kullback–Leibler (KL) divergence for label consistency.
+*   **Reasoning:** Zero-shot accuracy on the "Audio-Omni-Bench" reasoning subset.
+
+**7. Baselines**
+*   **CLAP (LAION):** The industry standard for audio-text embedding alignment.
+*   **AudioLDM:** A state-of-the-art latent diffusion model for audio generation.
+*   **Whisper (Large-v3):** For speech-specific performance comparison.
+*   **ImageBind:** To evaluate cross-modal transfer capabilities.
+
+**8. Ablations**
+*   **Objective Contribution:** Evaluate the model performance with *only* the contrastive loss vs. *only* the masked modeling loss.
+*   **Latent Discretization:** Compare VQ-VAE latents against continuous latent representations.
+*   **Instruction Volume:** Test the impact of varying the size of the instruction-tuning dataset (1k, 10k, 100k samples).
+
+**9. Failure Modes and Feasibility Risks**
+*   **Computational Complexity:** Training a unified transformer on high-resolution spectrograms is GPU-intensive (requires A100/H100 clusters).
+*   **Domain Dominance:** The model may overfit to the most prevalent data type (e.g., speech) and lose fidelity in rare environmental sounds.
+*   **Hallucination in Synthesis:** The generative decoder might produce "audio artifacts" when prompted with contradictory instructions (e.g., "a silent explosion").
+*   **Feasibility Risk:** High-quality, synchronized audio-instruction data is scarce and may require synthetic generation using LLMs to scale.

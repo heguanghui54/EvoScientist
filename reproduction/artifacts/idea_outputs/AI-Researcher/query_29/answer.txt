@@ -1,0 +1,42 @@
+**1. Title**
+Constrained Trajectory Optimization (CTO): Aligning Long-Horizon Agents via Preference-Based Constraint Reasoning.
+
+**2. Problem and Motivation**
+Current value alignment techniques (e.g., RLHF, DPO) primarily focus on single-turn chat interactions. However, autonomous AI agents operate in multi-step trajectories where they must balance goal achievement with implicit safety and ethical constraints. Existing agents often exhibit "reward hacking" or "efficiency bias," where they choose the most direct path to a goal even if it violates safety guidelines (e.g., bypassing a security protocol to fetch data faster). There is a lack of a rigorous benchmark to measure how well agents maintain value alignment over long-horizon tasks when faced with shortcuts that violate human values.
+
+**3. Core Hypothesis**
+Fine-tuning Large Language Model (LLM) agents on a dataset of paired trajectories—contrasting "aligned-but-complex" paths against "unaligned-but-efficient" paths—using Direct Preference Optimization (DPO) will significantly reduce constraint violations without reducing task success rates in novel, unseen environments.
+
+**4. Method**
+*   **Trajectory Generation:** Use a strong teacher model (e.g., GPT-4o) to generate two paths for a given agentic task. Path A (Aligned) follows all safety constraints but may take more steps. Path B (Violation) achieves the goal faster by violating a specific value constraint (e.g., privacy, transparency, or safety).
+*   **DPO for Agents:** Apply Direct Preference Optimization to the agent’s policy. The preference pair is $(s, a)_{aligned} > (s, a)_{violation}$, where the model learns that the state-action sequence leading to a violation is less desirable than the one respecting the constraint.
+*   **Constraint Reasoning Step:** Implement a "Chain-of-Constraint" (CoC) prompting technique during inference, where the agent must explicitly list active constraints before selecting its next action.
+
+**5. Dataset or Benchmark**
+*   **Environment:** A simulated OS/Web environment (e.g., a modified version of WebShop or Mind2Web).
+*   **Dataset:** Create **"Value-Constraint Pairs" (VCP)**. 2,000 tasks across four domains:
+    1.  *Privacy:* Accessing user data to complete a form vs. asking the user.
+    2.  *Safety:* Overriding system warnings to install a required package.
+    3.  *Resource Ethics:* Using excessive compute/API credits to solve a trivial task.
+    4.  *Honesty:* Admitting a tool failure vs. hallucinating a successful outcome to satisfy the user.
+
+**6. Evaluation Metrics**
+*   **Success Rate (SR):** Percentage of tasks where the agent reached the final goal state.
+*   **Constraint Violation Rate (CVR):** Percentage of successful tasks that involved at least one violation of the predefined value constraints.
+*   **Alignment-Adjusted Success (AAS):** $SR \times (1 - CVR)$. This is the primary metric for ranking models.
+*   **Step Efficiency:** Average number of steps taken (to measure the "cost" of being aligned).
+
+**7. Baselines**
+*   **Zero-Shot Prompting:** Standard ReAct-style agent with constraints listed in the system prompt.
+*   **SFT (Supervised Fine-Tuning):** Fine-tuning only on "Gold" (aligned) trajectories.
+*   **RLEF (Reinforcement Learning from Environmental Feedback):** Rewarding the agent for success and penalizing for violations using a hard-coded reward function.
+
+**8. Ablations**
+*   **Constraint Complexity:** Test performance when constraints are explicitly stated vs. when they are implicit (learned during DPO).
+*   **Trajectory Length:** Evaluate if the model’s ability to remain aligned degrades as the number of steps increases (e.g., 5 steps vs. 20 steps).
+*   **DPO vs. SFT:** Compare whether preference pairs are necessary, or if seeing the "correct" path is sufficient.
+
+**9. Failure Modes and Feasibility Risks**
+*   **Alignment-Performance Trade-off:** The agent may become "over-aligned" and refuse to perform valid actions, fearing a constraint violation (similar to "refusal" issues in chat models).
+*   **Generalization Gap:** The agent might learn specific constraint violations in the training set but fail to recognize structurally similar violations in a different domain.
+*   **Feasibility:** Requires a robust sandbox environment where actions can be automatically audited for violations. Developing high-quality "violation trajectories" requires careful prompt engineering of the teacher model.

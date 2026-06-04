@@ -1,0 +1,44 @@
+**1. Title**
+SAM-Quant: Sensitivity-Aware Mixed-Precision Quantization for Resource-Constrained Edge LLMs.
+
+**2. Problem and Motivation**
+Deploying Large Language Models (LLMs) on edge devices (e.g., NVIDIA Jetson, mobile SoCs, Raspberry Pi) is constrained by limited VRAM and memory bandwidth. While 4-bit Post-Training Quantization (PTQ) techniques like GPTQ or AWQ significantly reduce footprint, they often lead to substantial "accuracy collapse" in smaller models (3B–8B parameters) which are the primary candidates for edge deployment. Current methods typically apply uniform bit-widths across all layers, failing to account for the fact that certain "bottleneck" layers or attention heads are significantly more sensitive to precision loss than others.
+
+**3. Core Hypothesis**
+A non-uniform, mixed-precision allocation—where <10% of layers identified through Hessian-based sensitivity analysis are retained in 8-bit while the remainder are compressed to 3-bit or 4-bit—will yield a Pareto-superior trade-off between model perplexity and inference latency compared to uniform 4-bit quantization.
+
+**4. Method**
+The proposed method, SAM-Quant, consists of three stages:
+1.  **Sensitivity Profiling:** For a given model (e.g., Llama-3-8B), compute the Fisher Information Matrix or the trace of the Hessian for each layer using a small calibration set (e.g., 128 samples from Pile/C4).
+2.  **Budget-Constrained Optimization:** Formulate an optimization problem where the objective is to minimize the total reconstruction error $\sum ||W x - \hat{W} x||^2$ subject to a hard memory constraint (e.g., total model size < 5.5 GB).
+3.  **Mixed-Precision Mapping:** Assign bit-widths (2, 3, 4, or 8-bit) to layers based on the sensitivity ranking. Highly sensitive layers (often the first and last blocks) receive higher precision.
+4.  **Kernel Implementation:** Use a specialized CUDA/OpenCL kernel that supports mixed-precision dequantization on-the-fly, ensuring that the overhead of switching bit-widths does not negate the speed gains from quantization.
+
+**5. Dataset or Benchmark**
+*   **Calibration:** 128 segments of 2048 tokens from the **C4 (Colossal Clean Crawled Corpus)**.
+*   **Evaluation:**
+    *   **Language Modeling:** WikiText-2 and PTB (Perplexity).
+    *   **Downstream Tasks:** MMLU (General knowledge), GSM8K (Reasoning), and HumanEval (Coding).
+    *   **Hardware Target:** NVIDIA Jetson AGX Orin (simulated or physical) and MacBook M2 (using MLX).
+
+**6. Evaluation Metrics**
+*   **Accuracy:** Zero-shot accuracy on MMLU and GSM8K.
+*   **Compression:** Total model size in Gigabytes (GB).
+*   **Efficiency:** Tokens per second (TPS) and Time-to-First-Token (TTFT).
+*   **Quality:** Perplexity (PPL) on WikiText-2.
+
+**7. Baselines**
+*   **FP16:** The uncompressed reference model.
+*   **RTN (Round-to-Nearest):** Standard 4-bit uniform quantization.
+*   **GPTQ:** Optimal Brain Quantization-based 4-bit uniform.
+*   **AWQ (Activation-aware Weight Quantization):** Current state-of-the-art for uniform 4-bit weight-only quantization.
+
+**8. Ablations**
+*   **Layer Selection Strategy:** Compare SAM-Quant sensitivity ranking against random layer selection and uniform layer selection.
+*   **Calibration Size:** Test the impact of using 32, 64, 128, and 256 calibration samples on final accuracy.
+*   **Bit-width Granularity:** Compare per-channel vs. per-group quantization within the mixed-precision framework.
+
+**9. Failure Modes and Feasibility Risks**
+*   **Kernel Overhead:** The primary risk is that the logic required to handle different bit-widths in a single forward pass may introduce branching kernels that slow down inference, potentially making a 4-bit uniform model faster despite SAM-Quant being more accurate.
+*   **Calibration Drift:** The sensitivity of layers might be task-specific; a model optimized for C4 might underperform on specialized medical or legal datasets.
+*   **Hardware Support:** Not all edge accelerators support sub-byte arithmetic efficiently (e.g., 3-bit), which may require packing/unpacking overhead in software.
