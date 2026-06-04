@@ -1,8 +1,8 @@
 {
   "runner": "import_baseline_outputs.py",
   "system_name": "InternAgent",
-  "query_count": 10,
-  "min_chars": 1000,
+  "query_count": 30,
+  "min_chars": 500,
   "outputs": [
     {
       "id": 1,
@@ -53,10 +53,110 @@
       "id": 10,
       "status": "ok",
       "dir": "reproduction/artifacts/idea_outputs/InternAgent/query_10"
+    },
+    {
+      "id": 11,
+      "status": "ok",
+      "dir": "reproduction/artifacts/idea_outputs/InternAgent/query_11"
+    },
+    {
+      "id": 12,
+      "status": "ok",
+      "dir": "reproduction/artifacts/idea_outputs/InternAgent/query_12"
+    },
+    {
+      "id": 13,
+      "status": "ok",
+      "dir": "reproduction/artifacts/idea_outputs/InternAgent/query_13"
+    },
+    {
+      "id": 14,
+      "status": "ok",
+      "dir": "reproduction/artifacts/idea_outputs/InternAgent/query_14"
+    },
+    {
+      "id": 15,
+      "status": "ok",
+      "dir": "reproduction/artifacts/idea_outputs/InternAgent/query_15"
+    },
+    {
+      "id": 16,
+      "status": "ok",
+      "dir": "reproduction/artifacts/idea_outputs/InternAgent/query_16"
+    },
+    {
+      "id": 17,
+      "status": "ok",
+      "dir": "reproduction/artifacts/idea_outputs/InternAgent/query_17"
+    },
+    {
+      "id": 18,
+      "status": "ok",
+      "dir": "reproduction/artifacts/idea_outputs/InternAgent/query_18"
+    },
+    {
+      "id": 19,
+      "status": "ok",
+      "dir": "reproduction/artifacts/idea_outputs/InternAgent/query_19"
+    },
+    {
+      "id": 20,
+      "status": "ok",
+      "dir": "reproduction/artifacts/idea_outputs/InternAgent/query_20"
+    },
+    {
+      "id": 21,
+      "status": "ok",
+      "dir": "reproduction/artifacts/idea_outputs/InternAgent/query_21"
+    },
+    {
+      "id": 22,
+      "status": "ok",
+      "dir": "reproduction/artifacts/idea_outputs/InternAgent/query_22"
+    },
+    {
+      "id": 23,
+      "status": "ok",
+      "dir": "reproduction/artifacts/idea_outputs/InternAgent/query_23"
+    },
+    {
+      "id": 24,
+      "status": "ok",
+      "dir": "reproduction/artifacts/idea_outputs/InternAgent/query_24"
+    },
+    {
+      "id": 25,
+      "status": "ok",
+      "dir": "reproduction/artifacts/idea_outputs/InternAgent/query_25"
+    },
+    {
+      "id": 26,
+      "status": "ok",
+      "dir": "reproduction/artifacts/idea_outputs/InternAgent/query_26"
+    },
+    {
+      "id": 27,
+      "status": "ok",
+      "dir": "reproduction/artifacts/idea_outputs/InternAgent/query_27"
+    },
+    {
+      "id": 28,
+      "status": "ok",
+      "dir": "reproduction/artifacts/idea_outputs/InternAgent/query_28"
+    },
+    {
+      "id": 29,
+      "status": "ok",
+      "dir": "reproduction/artifacts/idea_outputs/InternAgent/query_29"
+    },
+    {
+      "id": 30,
+      "status": "ok",
+      "dir": "reproduction/artifacts/idea_outputs/InternAgent/query_30"
     }
   ],
   "summary": {
-    "written": 10,
+    "written": 30,
     "skipped": 0,
     "missing_query_ids": [],
     "too_short": [],

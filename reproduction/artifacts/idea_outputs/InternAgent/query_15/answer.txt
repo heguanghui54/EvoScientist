@@ -1,0 +1,12 @@
+# InternAgent QA Replacement Output: Query 15
+
+Topic: Machine translation
+Prompt: Generate a research proposal on debiasing in machine translation.
+Model: deepseek-chat
+Paper-exact: false
+
+This answer was generated through InternAgent QA mode as a replacement baseline, not from the EvoScientist paper's original raw InternAgent outputs.
+
+## Answer
+
+Based on the workflow execution, the research proposal on debiasing in machine translation is fully developed in node n3. It proposes a multi-phase plan addressing three core gaps: evaluation metrics, domain adaptation, and cultural bias. The plan includes objectives to develop a multi-dimensional evaluation framework (with metrics like Representational Harm Score, Domain Bias Divergence, and Cultural Preservation Index), domain-adaptive debiasing techniques (via domain-adversarial, meta-learning, and dynamic bias correction approaches), and culturally-aware debiasing mechanisms (using a cultural penalty loss and pragmatic grounding). It involves constructing a new benchmark dataset called BiasEvalMulti and includes a 36-month timeline with open-source release. The proposal directly responds to gaps identified in nodes n1 and n2, though those nodes returned empty responses and were marked unsuccessful. Node n3 succeeded and provides the complete research proposal.

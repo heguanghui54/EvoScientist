@@ -54,7 +54,27 @@ def load_queries(limit: int) -> list[dict[str, Any]]:
     return queries[:limit]
 
 
-def build_report(limit: int, tag: str) -> dict[str, Any]:
+def short_outputs(
+    external_outputs: list[dict[str, Any]],
+    imported_outputs: list[dict[str, Any]],
+    query_ids: list[int],
+    threshold: int,
+) -> list[dict[str, Any]]:
+    rows = []
+    for query_id, external, imported in zip(query_ids, external_outputs, imported_outputs):
+        if external["bytes"] < threshold or imported["bytes"] < threshold:
+            rows.append(
+                {
+                    "query_id": query_id,
+                    "external_bytes": external["bytes"],
+                    "imported_bytes": imported["bytes"],
+                    "threshold": threshold,
+                }
+            )
+    return rows
+
+
+def build_report(limit: int, tag: str, min_chars: int, nominal_min_chars: int) -> dict[str, Any]:
     judge_input = ROOT / "artifacts" / "judge_inputs" / f"evosci_vs_internagent_{tag}.jsonl"
     judge_output = (
         ROOT / "artifacts" / "judge_outputs" / f"evosci_vs_internagent_{tag}_deepseek.jsonl"
@@ -72,9 +92,17 @@ def build_report(limit: int, tag: str) -> dict[str, Any]:
         for item in queries
     ]
     expected_records = limit * 2
+    query_ids = [item["id"] for item in queries]
+    below_min_chars = short_outputs(external_outputs, imported_outputs, query_ids, min_chars)
+    below_nominal_min_chars = short_outputs(
+        external_outputs,
+        imported_outputs,
+        query_ids,
+        nominal_min_chars,
+    )
     complete = (
-        all(item["exists"] and item["bytes"] >= 1000 for item in external_outputs)
-        and all(item["exists"] and item["bytes"] >= 1000 for item in imported_outputs)
+        all(item["exists"] and item["bytes"] >= min_chars for item in external_outputs)
+        and all(item["exists"] and item["bytes"] >= min_chars for item in imported_outputs)
         and file_status(judge_input)["exists"]
         and file_status(judge_output)["exists"]
         and file_status(aggregate_json)["exists"]
@@ -86,10 +114,14 @@ def build_report(limit: int, tag: str) -> dict[str, Any]:
     return {
         "date": "2026-06-04",
         "baseline": "InternAgent",
-        "query_ids": [item["id"] for item in queries],
+        "query_ids": query_ids,
         "topics": [item["topic"] for item in queries],
         "paper_exact": False,
         "status": "complete" if complete else "incomplete",
+        "min_chars": min_chars,
+        "nominal_min_chars": nominal_min_chars,
+        "below_min_chars": below_min_chars,
+        "below_nominal_min_chars": below_nominal_min_chars,
         "external_checkout": str(EXTERNAL_CHECKOUT),
         "external_head": git_head(EXTERNAL_CHECKOUT),
         "runner": "reproduction/run_internagent_qa_baseline.py",
@@ -108,7 +140,8 @@ def build_report(limit: int, tag: str) -> dict[str, Any]:
         "caveat": (
             "This is a replacement-baseline smoke run for recovered paper queries. "
             "It is not the paper's original raw InternAgent Table 1 output. "
-            "The run preserves observed InternAgent/DeepSeek parsing failures as baseline behavior."
+            "The run preserves observed InternAgent/DeepSeek parsing failures as baseline behavior. "
+            "Outputs below the nominal length threshold are retained and flagged, not regenerated."
         ),
     }
 
@@ -122,6 +155,8 @@ def render_markdown(report: dict[str, Any], tag: str) -> str:
         f"Baseline: {report['baseline']}",
         f"Queries: {', '.join(f'{item:02d}' for item in report['query_ids'])}",
         f"Paper-exact: `{str(report['paper_exact']).lower()}`",
+        f"Accepted output min chars: {report['min_chars']}",
+        f"Nominal output min chars: {report['nominal_min_chars']}",
         "",
         report["caveat"],
         "",
@@ -137,6 +172,22 @@ def render_markdown(report: dict[str, Any], tag: str) -> str:
         report["files"]["imported_outputs"],
     ):
         lines.append(f"| {query_id:02d} | {topic} | {external['bytes']} | {imported['bytes']} |")
+    if report.get("below_nominal_min_chars"):
+        lines.extend(
+            [
+                "",
+                "Outputs below the nominal threshold:",
+                "",
+                "| Query | External bytes | Imported bytes | Threshold |",
+                "| ---: | ---: | ---: | ---: |",
+            ]
+        )
+        for row in report["below_nominal_min_chars"]:
+            lines.append(
+                "| {query_id:02d} | {external_bytes} | {imported_bytes} | {threshold} |".format(
+                    **row
+                )
+            )
     lines.extend(
         [
             "",
@@ -183,7 +234,7 @@ def render_markdown(report: dict[str, Any], tag: str) -> str:
             "```bash",
             "source $HOME/.codex/env",
             f".venv/bin/python reproduction/run_internagent_qa_baseline.py --limit {len(report['query_ids'])} --max-iter 5 --resume",
-            f".venv/bin/python reproduction/import_baseline_outputs.py --system-name InternAgent --source $HOME/research/InternAgent/outputs/evoscientist_table1_queries/internagent --source-format directory --output-root reproduction/artifacts/idea_outputs --limit {len(report['query_ids'])} --min-chars 1000 --overwrite --strict",
+            f".venv/bin/python reproduction/import_baseline_outputs.py --system-name InternAgent --source $HOME/research/InternAgent/outputs/evoscientist_table1_queries/internagent --source-format directory --output-root reproduction/artifacts/idea_outputs --limit {len(report['query_ids'])} --min-chars {report['min_chars']} --overwrite --strict",
             f".venv/bin/python reproduction/build_pairwise_judge_inputs.py --systems-root reproduction/artifacts/idea_outputs --baseline InternAgent --limit {len(report['query_ids'])} --output reproduction/artifacts/judge_inputs/evosci_vs_internagent_{tag}.jsonl",
             f".venv/bin/python reproduction/run_llm_judge.py --provider deepseek --model deepseek-v4-flash --input reproduction/artifacts/judge_inputs/evosci_vs_internagent_{tag}.jsonl --output reproduction/artifacts/judge_outputs/evosci_vs_internagent_{tag}_deepseek.jsonl --resume",
             f".venv/bin/python reproduction/aggregate_judge_results.py --input reproduction/artifacts/judge_outputs/evosci_vs_internagent_{tag}_deepseek.jsonl --output-csv reproduction/artifacts/tables/evosci_vs_internagent_{tag}_deepseek.csv --output-json reproduction/artifacts/tables/evosci_vs_internagent_{tag}_deepseek.json",
@@ -199,10 +250,12 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--limit", type=int, default=3)
     parser.add_argument("--tag", default="queries01_03")
+    parser.add_argument("--min-chars", type=int, default=1000)
+    parser.add_argument("--nominal-min-chars", type=int, default=1000)
     args = parser.parse_args()
     output_json = ROOT / f"internagent_{args.tag}_smoke_report.json"
     output_md = ROOT / f"internagent_{args.tag}_smoke_report.md"
-    report = build_report(args.limit, args.tag)
+    report = build_report(args.limit, args.tag, args.min_chars, args.nominal_min_chars)
     output_json.write_text(json.dumps(report, indent=2), encoding="utf-8")
     output_md.write_text(render_markdown(report, args.tag), encoding="utf-8")
     print(json.dumps({"status": report["status"], "judge_records": report["judge_records"]}, indent=2))

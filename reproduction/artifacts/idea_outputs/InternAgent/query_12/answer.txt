@@ -1,0 +1,12 @@
+# InternAgent QA Replacement Output: Query 12
+
+Topic: Factual consistency
+Prompt: Generate a research proposal on how to resolve factual consistency issues in Large Language Models.
+Model: deepseek-chat
+Paper-exact: false
+
+This answer was generated through InternAgent QA mode as a replacement baseline, not from the EvoScientist paper's original raw InternAgent outputs.
+
+## Answer
+
+The proposed research methodology, termed Reliable Knowledge Synthesis (RKS), is a three-stage hybrid framework. Stage 1 (Contextual Grounding) uses dense retrieval to provide relevant, up-to-date documents from a trusted corpus to ground the generation in external knowledge. Stage 2 (Contrastive Attention Steering) applies intra-model contrastive decoding to compare the probability distribution conditioned on the full augmented context (query plus retrieved documents) against the distribution conditioned on the query alone, promoting tokens faithful to the retrieved context. Stage 3 (Parameter-Level Factual Alignment) uses Direct Preference Optimization (DPO) fine-tuning on preference pairs of model-generated responses to embed a stronger prior for truthfulness into the model's parameters. The methodology will be evaluated on benchmarks including Natural Questions, TriviaQA, HotpotQA, 2WikiMultihopQA, XSum, and CNN/DailyMail, using metrics such as FactScore, QAFactEval, and NLI-based contradiction rates. Baselines include the base LLM with greedy decoding, standard top-p sampling, vanilla RAG, RAG with standard contrastive decoding, DPO-fine-tuned LLM, and the full RKS pipeline.

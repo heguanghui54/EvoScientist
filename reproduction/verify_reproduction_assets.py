@@ -302,6 +302,38 @@ def main() -> None:
     assert "InternAgent queries01_10 Smoke Report" in internagent_10q_smoke_md_path.read_text(
         encoding="utf-8"
     )
+    internagent_30q_smoke_json_path = ROOT / "internagent_queries01_30_smoke_report.json"
+    internagent_30q_smoke_md_path = ROOT / "internagent_queries01_30_smoke_report.md"
+    assert internagent_30q_smoke_json_path.is_file(), "missing InternAgent queries01-30 smoke JSON"
+    assert internagent_30q_smoke_md_path.is_file(), "missing InternAgent queries01-30 smoke markdown"
+    internagent_30q_smoke = json.loads(internagent_30q_smoke_json_path.read_text(encoding="utf-8"))
+    assert internagent_30q_smoke["baseline"] == "InternAgent"
+    assert internagent_30q_smoke["query_ids"] == list(range(1, 31))
+    assert internagent_30q_smoke["paper_exact"] is False
+    assert internagent_30q_smoke["status"] == "complete"
+    assert internagent_30q_smoke["min_chars"] == 500
+    assert internagent_30q_smoke["nominal_min_chars"] == 1000
+    assert internagent_30q_smoke["judge_records"] == 60
+    assert [row["query_id"] for row in internagent_30q_smoke["below_nominal_min_chars"]] == [13, 29]
+    for query_id in range(1, 31):
+        assert (
+            ROOT / "artifacts" / "idea_outputs" / "InternAgent" / f"query_{query_id:02d}" / "answer.txt"
+        ).is_file()
+    assert (
+        ROOT / "artifacts" / "judge_inputs" / "evosci_vs_internagent_queries01_30.jsonl"
+    ).is_file()
+    assert (
+        ROOT / "artifacts" / "judge_outputs" / "evosci_vs_internagent_queries01_30_deepseek.jsonl"
+    ).is_file()
+    assert (
+        ROOT / "artifacts" / "tables" / "evosci_vs_internagent_queries01_30_deepseek.json"
+    ).is_file()
+    smoke_30q_dims = internagent_30q_smoke["aggregate"]["baselines"]["InternAgent"]["dimensions"]
+    assert set(smoke_30q_dims) == {"Clarity", "Novelty", "Feasibility", "Relevance"}
+    assert smoke_30q_dims["Clarity"]["n"] == 60
+    assert "InternAgent queries01_30 Smoke Report" in internagent_30q_smoke_md_path.read_text(
+        encoding="utf-8"
+    )
     ai_scientist_probe_json_path = ROOT / "ai_scientist_v2_baseline_probe.json"
     ai_scientist_probe_md_path = ROOT / "ai_scientist_v2_baseline_probe.md"
     assert ai_scientist_probe_json_path.is_file(), "missing AI Scientist-v2 probe JSON"
@@ -490,9 +522,6 @@ def main() -> None:
     action_plan_md = action_plan_md_path.read_text(encoding="utf-8")
     assert "Paper Reproduction Action Plan" in action_plan_md
     assert "gemini-3-flash" in action_plan_md
-    assert "internagent_baseline_probe.json" in action_plan_md
-    assert "build_internagent_qa_runbook.py" in action_plan_md
-    assert "run_internagent_qa_baseline.py" in action_plan_md
     assert "virtual_scientist_baseline_probe.json" in action_plan_md
     assert "ai_scientist_v2_baseline_probe.json" in action_plan_md
     assert "build_ai_scientist_v2_ideation_runbook.py" in action_plan_md
@@ -591,6 +620,7 @@ def main() -> None:
         "InternAgent baseline probe is recorded",
         "InternAgent QA runbook is executable",
         "InternAgent query-01 replacement smoke is complete",
+        "InternAgent queries 01-30 replacement baseline is complete",
         "AI Scientist-v2 baseline probe is recorded",
         "AI Scientist-v2 ideation runbook is executable",
         "Hypogenic baseline probe is recorded",

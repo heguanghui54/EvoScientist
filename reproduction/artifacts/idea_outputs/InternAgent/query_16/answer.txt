@@ -1,0 +1,15 @@
+# InternAgent QA Replacement Output: Query 16
+
+Topic: Knowledge injection
+Prompt: Generate a research proposal on addressing the challenges of knowledge injection in domain-specific Large Language Models.
+Model: deepseek-chat
+Paper-exact: false
+
+This answer was generated through InternAgent QA mode as a replacement baseline, not from the EvoScientist paper's original raw InternAgent outputs.
+
+## Answer
+
+Based on the workflow execution trace, the research proposal is constructed as follows:
+- Node n2 identifies and categorizes the core challenges: catastrophic forgetting, data scarcity, domain alignment, and computational/evaluation constraints.
+- Node n3 surveys existing solutions (fine-tuning, retrieval-augmented generation, adapter modules) and details their limitations.
+- Node n4 proposes a novel hybrid framework that synergistically combines parameter-efficient fine-tuning via lightweight domain adapters, retrieval-augmented generation with a structured knowledge graph, and a continual learning mechanism using elastic weight consolidation (EWC) with a memory replay buffer. This framework is designed to address the four challenges by enabling catastrophic forgetting mitigation, compensating for data scarcity, enhancing domain alignment, and preserving computational efficiency.

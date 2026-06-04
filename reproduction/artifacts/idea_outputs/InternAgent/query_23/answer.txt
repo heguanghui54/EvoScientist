@@ -1,0 +1,12 @@
+# InternAgent QA Replacement Output: Query 23
+
+Topic: Code LLM evaluation
+Prompt: Generate a research proposal on how to build a deep evaluation framework for code LLMs.
+Model: deepseek-chat
+Paper-exact: false
+
+This answer was generated through InternAgent QA mode as a replacement baseline, not from the EvoScientist paper's original raw InternAgent outputs.
+
+## Answer
+
+The research proposal for building a deep evaluation framework for code LLMs is structured around four key components: defining scope and dimensions, reviewing existing benchmarks, designing the architecture, and outlining validation and novelty. The scope includes dimensions such as correctness, efficiency, robustness, interpretability, security, and code quality. The review of existing benchmarks (HumanEval, MBPP, SWE-bench, and others) reveals critical limitations: reductionism to binary pass/fail metrics, lack of coverage for efficiency, robustness, security, and code quality, fragmentation across specialized benchmarks, and an overemphasis on Python. The proposed framework architecture remains undefined (node n3 was not successfully completed). The validation methodology is fully outlined, using datasets like HumanEval, MBPP, APPS, SWE-bench, and CommitPack, with multi-level testing modules (unit, integration, system). Metrics include Pass@k, Functional Correctness, Syntax Validity, Interprocedural Accuracy, Resolved Rate, and a composite EvalScore. Experimental design involves controlled phases with baseline models (Codex, CodeGen, StarCoder, CodeLLaMA) and robustness checks. The novelty lies in a multi-dimensional, extensible framework that directly addresses the reductionism and gaps identified in current benchmarks, providing a principled, modular evaluation paradigm. A complete synthesis of all successful nodes (n2, n4) and partial context from n1 is provided, noting the incomplete architectural design as a limitation.

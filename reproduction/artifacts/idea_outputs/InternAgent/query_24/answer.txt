@@ -1,0 +1,12 @@
+# InternAgent QA Replacement Output: Query 24
+
+Topic: RAG
+Prompt: Generate a research proposal on solving multi-hop reasoning challenges in Retrieval-Augmented Generation (RAG).
+Model: deepseek-chat
+Paper-exact: false
+
+This answer was generated through InternAgent QA mode as a replacement baseline, not from the EvoScientist paper's original raw InternAgent outputs.
+
+## Answer
+
+Based on the survey (n2), the core challenges of multi-hop reasoning in RAG are incomplete retrieval, context management, and reasoning incoherence. Existing solutions like iterative retrieval, structured knowledge integration, and graph-based reasoning each address only part of the problem, leaving five key gaps: adaptive context management with lossless retrieval, robust and scalable knowledge graph construction from noisy retrieval, unified optimization across retrieval/structure/reasoning, handling implicit and non-linear reasoning, and verification/self-correction for long chains. To address these gaps, the proposed framework (n3) is the Adaptive, Memory-Augmented, Structured Reasoning Agent (AMSRA), an end-to-end differentiable system integrating three components: a Dynamic Memory-Augmented Context Manager for lossless compression, a Noise-Resilient Incremental Knowledge Graph Constructor for robust graph building, and a Recursive Self-Correcting Reasoning Engine with joint training and intrinsic verification loops. This framework aims to enable deep, coherent multi-hop reasoning while handling error recovery and non-linear logic.

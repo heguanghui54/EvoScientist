@@ -1,0 +1,12 @@
+# InternAgent QA Replacement Output: Query 22
+
+Topic: Code LLM security
+Prompt: Generate a research proposal on the security of code LLMs.
+Model: deepseek-chat
+Paper-exact: false
+
+This answer was generated through InternAgent QA mode as a replacement baseline, not from the EvoScientist paper's original raw InternAgent outputs.
+
+## Answer
+
+Based on the executed workflow, a research proposal on the security of code LLMs should synthesize the key security threats (including training data poisoning, backdoor attacks, memorization of secrets, insecure code generation, adversarial inputs, and supply chain vulnerabilities) and survey existing defenses (such as data curation, differential privacy, static analysis, instruction tuning, input sanitization, and dependency verification). The proposal should outline a research methodology that addresses gaps in current defenses—particularly for targeted backdoors and advanced supply chain attacks—and proposes evaluation benchmarks to measure the model's propensity to generate vulnerable code under various conditions. The dependent nodes (n1, n2, n3) provide comprehensive threat analysis, defense survey, and a call for further methodology and benchmarks, but note that node n3's final response is empty, indicating the methodology and benchmarks portion requires further development.

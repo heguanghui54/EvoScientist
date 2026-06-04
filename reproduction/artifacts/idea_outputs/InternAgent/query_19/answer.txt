@@ -1,0 +1,12 @@
+# InternAgent QA Replacement Output: Query 19
+
+Topic: Evaluation leaderboards
+Prompt: Generate a research proposal on how to construct efficient leaderboards for LLM evaluation.
+Model: deepseek-chat
+Paper-exact: false
+
+This answer was generated through InternAgent QA mode as a replacement baseline, not from the EvoScientist paper's original raw InternAgent outputs.
+
+## Answer
+
+Based on the workflow execution trace, the node n3 (task: "Propose methodological innovations for efficient leaderboard design") was executed successfully and provides a detailed proposal. The dependent nodes n2 and n4 were either executed with empty outputs or had no successful final response. Therefore, the answer is based on the successful output of n3, which outlines three methodological innovations: (1) Adaptive Testing with Item Response Theory and dynamic item banking, (2) Dynamic Benchmark Updating via automated difficulty and novelty triage, and (3) Automated Evaluation Pipelines with cryptographic provenance and reproducibility anchors. These innovations directly address key challenges such as benchmark contamination, metric saturation, and cost/reproducibility, forming a coherent ecosystem for constructing efficient leaderboards for LLM evaluation.

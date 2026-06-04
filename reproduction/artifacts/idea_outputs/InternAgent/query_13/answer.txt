@@ -1,0 +1,12 @@
+# InternAgent QA Replacement Output: Query 13
+
+Topic: Data synthesis
+Prompt: Generate a research proposal on data synthesis for code LLMs.
+Model: deepseek-chat
+Paper-exact: false
+
+This answer was generated through InternAgent QA mode as a replacement baseline, not from the EvoScientist paper's original raw InternAgent outputs.
+
+## Answer
+
+The workflow was designed to generate a research proposal on data synthesis for code LLMs. However, all subtasks (surveying existing methods, identifying challenges, and proposing a framework) were executed but marked as unsuccessful with empty final responses. Therefore, based solely on the graph data, no substantive research proposal could be synthesized.

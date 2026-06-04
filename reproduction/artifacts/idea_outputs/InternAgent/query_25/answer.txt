@@ -1,0 +1,12 @@
+# InternAgent QA Replacement Output: Query 25
+
+Topic: Multi-source reasoning
+Prompt: Generate a research proposal on complex reasoning with multi-source information.
+Model: deepseek-chat
+Paper-exact: false
+
+This answer was generated through InternAgent QA mode as a replacement baseline, not from the EvoScientist paper's original raw InternAgent outputs.
+
+## Answer
+
+The research proposal defines the core problem of complex reasoning with multi-source information, highlights the limitations of current models, and proposes a novel framework called the Adaptive Heterogeneous Reasoning Engine (AHRE). The AHRE features a tri-phase, feedback-driven architecture with components like the Multi-Modal Mapper and Linker (M3L), Contextualized Fusion Transformer (CFT) with source-aware attention, and Dynamic Reconciliation and Reflection Engine (DRRE). This framework addresses gaps in heterogeneity management, dynamic reasoning, conflict resolution, and transparency. However, the survey of existing approaches (node n2) was not successful, indicating a gap in the proposal's completeness.

@@ -1,0 +1,12 @@
+# InternAgent QA Replacement Output: Query 30
+
+Topic: Audio foundation models
+Prompt: Help me generate a research proposal on general-purpose audio foundation models.
+Model: deepseek-chat
+Paper-exact: false
+
+This answer was generated through InternAgent QA mode as a replacement baseline, not from the EvoScientist paper's original raw InternAgent outputs.
+
+## Answer
+
+This research proposal outlines the development of a general-purpose audio foundation model, addressing the critical fragmentation across domains (speech, music, environmental sounds). The objectives are: (1) design a unified self-supervised representation learning framework; (2) develop robust cross-modal alignment with text and visuals; (3) enhance robustness to out-of-distribution acoustic conditions; (4) create a comprehensive GAUDiT benchmark for holistic evaluation; and (5) explore ethical dimensions, including bias, privacy, and deepfake defense. The methodology proposes a Hierarchical Acoustic Transformer (HAT) with a multi-task self-supervised learning paradigm, a semi-supervised data strategy, and a rigorous evaluation plan. Expected contributions include a shared latent space for cross-domain transfer, robust cross-modal alignment, a generalization framework, the GAUDiT benchmark, an efficient architecture for on-device deployment, and an integrated ethical framework.

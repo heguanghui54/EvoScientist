@@ -1,0 +1,12 @@
+# InternAgent QA Replacement Output: Query 20
+
+Topic: Text generation
+Prompt: Generate a research proposal on the evaluation of diversity in text generation.
+Model: deepseek-chat
+Paper-exact: false
+
+This answer was generated through InternAgent QA mode as a replacement baseline, not from the EvoScientist paper's original raw InternAgent outputs.
+
+## Answer
+
+The execution trace provides a detailed review of existing diversity metrics (distinct-n, self-BLEU, perplexity, entropy, type-token ratio, embedding-based metrics, uniqueness, and coverage-based metrics) and identifies five key research gaps: (1) lexical-level metrics are blind to semantic redundancy; (2) corpus-level aggregation is sensitive to sample size and composition; (3) no per-instance or localized diversity evaluation exists; (4) there is no unified multi-dimensional framework spanning lexical, syntactic, semantic, and topical diversity; and (5) normative baselines and standardized benchmarking protocols are absent. However, the node intended to propose a novel evaluation framework or improved methodology (node n4) failed (success: false) and produced no final response. Consequently, the workflow does not contain a completed research proposal; it only supplies the background analysis and gap identification that would motivate such a proposal.

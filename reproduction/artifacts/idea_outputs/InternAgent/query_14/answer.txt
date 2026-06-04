@@ -1,0 +1,12 @@
+# InternAgent QA Replacement Output: Query 14
+
+Topic: Inference efficiency
+Prompt: Generate a research proposal on solving inference latency issues in Large Language Models.
+Model: deepseek-chat
+Paper-exact: false
+
+This answer was generated through InternAgent QA mode as a replacement baseline, not from the EvoScientist paper's original raw InternAgent outputs.
+
+## Answer
+
+The research proposal to solve inference latency issues in LLMs is based on a comprehensive analysis of five primary causes: model size and parameter count, memory bandwidth limitations, the quadratic complexity of attention, batch size trade-offs, and system overheads. After surveying existing techniques like quantization, pruning, speculative decoding, KV-cache optimization, and model parallelism, the proposal identifies several open research gaps. Notably, current methods address bottlenecks in isolation; there is a lack of adaptive, cross-layer optimization. The proposed novel approach integrates three components: (1) a learned dynamic attention budget that allocates computation based on token importance and compresses the KV-cache; (2) adaptive batching via prefill-decode disaggregation, dynamically interleaving phases to optimize throughput-latency trade-offs; and (3) system-level overhead reduction through zero-copy tensor sharing and a native scheduler (e.g., in Rust or C++) to eliminate Python GIL serialization. The entire system is guided by an automated search over model hyperparameters and serving configurations, using a holistic latency model that accounts for memory bandwidth, compute, attention complexity, and system overhead. This integrated framework aims to dynamically adjust quantization, attention sparsity, batch composition, and scheduling in a coordinated manner to achieve significantly lower latency with guaranteed performance bounds under variable loads. The proposal thus targets the interdependent nature of latency sources rather than isolated optimizations.

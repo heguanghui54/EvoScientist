@@ -2,7 +2,7 @@
   "date": "2026-06-04",
   "paper": "arXiv:2603.08127",
   "status": "incomplete",
-  "action_count": 11,
+  "action_count": 10,
   "actions": [
     {
       "component": "table1_llm_idea_generation",
@@ -44,28 +44,6 @@
       ],
       "probe": "reproduction/ai_researcher_baseline_probe.json",
       "note": "Current probe found the public AI-Researcher runner is benchmark-instance based, not a drop-in runner for the 30 recovered EvoScientist queries."
-    },
-    {
-      "component": "table1_llm_idea_generation",
-      "kind": "baseline_output_import_or_generation",
-      "system": "InternAgent",
-      "required_evidence": "30 answer.txt files under reproduction/artifacts/idea_outputs/InternAgent/",
-      "paper_exact": true,
-      "command_templates": [
-        ".venv/bin/python reproduction/import_baseline_outputs.py --system-name InternAgent --source {source_jsonl} --source-format jsonl --output-root reproduction/artifacts/idea_outputs --strict",
-        ".venv/bin/python reproduction/import_baseline_outputs.py --system-name InternAgent --source {source_dir} --source-format directory --output-root reproduction/artifacts/idea_outputs --strict",
-        ".venv/bin/python reproduction/build_pairwise_judge_inputs.py --systems-root reproduction/artifacts/idea_outputs --baseline InternAgent --output reproduction/artifacts/judge_inputs/evosci_vs_internagent.jsonl",
-        ".venv/bin/python reproduction/run_llm_judge.py --provider deepseek --model deepseek-v4-flash --input reproduction/artifacts/judge_inputs/evosci_vs_internagent.jsonl --output reproduction/artifacts/judge_outputs/evosci_vs_internagent_deepseek.jsonl --resume",
-        ".venv/bin/python reproduction/aggregate_judge_results.py --input reproduction/artifacts/judge_outputs/evosci_vs_internagent_deepseek.jsonl --output-csv reproduction/artifacts/tables/evosci_vs_internagent_deepseek.csv --output-json reproduction/artifacts/tables/evosci_vs_internagent_deepseek.json",
-        ".venv/bin/python reproduction/audit_reproduction_artifacts.py --baseline InternAgent --judge-inputs reproduction/artifacts/judge_inputs/evosci_vs_internagent.jsonl --judge-outputs reproduction/artifacts/judge_outputs/evosci_vs_internagent_deepseek.jsonl --aggregate-json reproduction/artifacts/tables/evosci_vs_internagent_deepseek.json"
-      ],
-      "probe": "reproduction/internagent_baseline_probe.json",
-      "note": "Current probe found InternAgent has a one-shot QA CLI suitable for a replacement baseline rerun, but it is not paper-exact raw Table 1 evidence.",
-      "replacement_run_template": [
-        ".venv/bin/python reproduction/build_internagent_qa_runbook.py",
-        ".venv/bin/python reproduction/run_internagent_qa_baseline.py --limit 30 --max-iter 5 --resume",
-        ".venv/bin/python reproduction/import_baseline_outputs.py --system-name InternAgent --source $HOME/research/InternAgent/outputs/evoscientist_table1_queries/internagent --source-format directory --output-root reproduction/artifacts/idea_outputs --strict"
-      ]
     },
     {
       "component": "table1_llm_idea_generation",

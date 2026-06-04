@@ -1,0 +1,12 @@
+# InternAgent QA Replacement Output: Query 27
+
+Topic: Long-context understanding
+Prompt: Generate a research proposal on how to enhance the long-context understanding of Large Language Models.
+Model: deepseek-chat
+Paper-exact: false
+
+This answer was generated through InternAgent QA mode as a replacement baseline, not from the EvoScientist paper's original raw InternAgent outputs.
+
+## Answer
+
+The research proposal is centered on a novel hybrid framework called Hierarchical Retrieval-Augmented Sparse Attention with Adaptive Positional Scaling (HiRASP). The proposal is structured as follows: first, it identifies current limitations in long-context understanding, including attention complexity, position encoding constraints, and memory limitations. Second, it surveys existing approaches—sparse attention, Rotary Position Embedding (RoPE), retrieval-augmented generation (RAG), and sliding window methods—and synthesizes their strengths and weaknesses. The proposed HiRASP method integrates three tiers: (1) a Hierarchical Sparse Attention (HiSA) engine that uses local windows, strided patterns, and global tokens for multi-resolution attention; (2) an Adaptive Positional Scaling (APS) module that dynamically adjusts RoPE frequencies to enable stable extrapolation to extremely long sequences (e.g., 128K tokens); and (3) a Dynamic Internal Retrieval (DIR) module that maintains an internal memory bank of past hidden states for content-aware retrieval within the same document. The research plan includes five objectives: implementing HiRASP in a LLaMA-2 backbone, training on a 32K-token corpus, evaluating on long-context benchmarks (LongBench, SCROLLS, L-Eval), performing ablation studies, and optimizing for efficiency. Expected contributions are a new hybrid architecture, an adaptive scaling mechanism, a dynamic internal retrieval method, empirical results showing state-of-the-art performance, and open-source implementations.

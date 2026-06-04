@@ -1,0 +1,480 @@
+{
+  "date": "2026-06-04",
+  "baseline": "InternAgent",
+  "query_ids": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23,
+    24,
+    25,
+    26,
+    27,
+    28,
+    29,
+    30
+  ],
+  "topics": [
+    "Machine translation",
+    "Software engineering",
+    "LLM evaluation",
+    "Healthcare agents",
+    "Literature review automation",
+    "Speech recognition",
+    "Model efficiency",
+    "AI agents",
+    "Model deployment",
+    "Text-to-SQL",
+    "LLM capabilities",
+    "Factual consistency",
+    "Data synthesis",
+    "Inference efficiency",
+    "Machine translation",
+    "Knowledge injection",
+    "Information extraction",
+    "UX evaluation",
+    "Evaluation leaderboards",
+    "Text generation",
+    "Content detection",
+    "Code LLM security",
+    "Code LLM evaluation",
+    "RAG",
+    "Multi-source reasoning",
+    "Data filtering",
+    "Long-context understanding",
+    "Alignment",
+    "Alignment",
+    "Audio foundation models"
+  ],
+  "paper_exact": false,
+  "status": "complete",
+  "min_chars": 500,
+  "nominal_min_chars": 1000,
+  "below_min_chars": [],
+  "below_nominal_min_chars": [
+    {
+      "query_id": 13,
+      "external_bytes": 701,
+      "imported_bytes": 701,
+      "threshold": 1000
+    },
+    {
+      "query_id": 29,
+      "external_bytes": 737,
+      "imported_bytes": 737,
+      "threshold": 1000
+    }
+  ],
+  "external_checkout": "/Users/hgh54913/research/InternAgent",
+  "external_head": "e341f8f181e6d337317c6bc2cddae6391b1f0390",
+  "runner": "reproduction/run_internagent_qa_baseline.py",
+  "model": "deepseek-chat",
+  "judge_model": "deepseek-v4-flash",
+  "files": {
+    "external_outputs": [
+      {
+        "path": "/Users/hgh54913/research/InternAgent/outputs/evoscientist_table1_queries/internagent/query_01.md",
+        "exists": true,
+        "bytes": 2505
+      },
+      {
+        "path": "/Users/hgh54913/research/InternAgent/outputs/evoscientist_table1_queries/internagent/query_02.md",
+        "exists": true,
+        "bytes": 1348
+      },
+      {
+        "path": "/Users/hgh54913/research/InternAgent/outputs/evoscientist_table1_queries/internagent/query_03.md",
+        "exists": true,
+        "bytes": 1324
+      },
+      {
+        "path": "/Users/hgh54913/research/InternAgent/outputs/evoscientist_table1_queries/internagent/query_04.md",
+        "exists": true,
+        "bytes": 3933
+      },
+      {
+        "path": "/Users/hgh54913/research/InternAgent/outputs/evoscientist_table1_queries/internagent/query_05.md",
+        "exists": true,
+        "bytes": 1584
+      },
+      {
+        "path": "/Users/hgh54913/research/InternAgent/outputs/evoscientist_table1_queries/internagent/query_06.md",
+        "exists": true,
+        "bytes": 1202
+      },
+      {
+        "path": "/Users/hgh54913/research/InternAgent/outputs/evoscientist_table1_queries/internagent/query_07.md",
+        "exists": true,
+        "bytes": 1639
+      },
+      {
+        "path": "/Users/hgh54913/research/InternAgent/outputs/evoscientist_table1_queries/internagent/query_08.md",
+        "exists": true,
+        "bytes": 4444
+      },
+      {
+        "path": "/Users/hgh54913/research/InternAgent/outputs/evoscientist_table1_queries/internagent/query_09.md",
+        "exists": true,
+        "bytes": 1278
+      },
+      {
+        "path": "/Users/hgh54913/research/InternAgent/outputs/evoscientist_table1_queries/internagent/query_10.md",
+        "exists": true,
+        "bytes": 1692
+      },
+      {
+        "path": "/Users/hgh54913/research/InternAgent/outputs/evoscientist_table1_queries/internagent/query_11.md",
+        "exists": true,
+        "bytes": 1331
+      },
+      {
+        "path": "/Users/hgh54913/research/InternAgent/outputs/evoscientist_table1_queries/internagent/query_12.md",
+        "exists": true,
+        "bytes": 1583
+      },
+      {
+        "path": "/Users/hgh54913/research/InternAgent/outputs/evoscientist_table1_queries/internagent/query_13.md",
+        "exists": true,
+        "bytes": 701
+      },
+      {
+        "path": "/Users/hgh54913/research/InternAgent/outputs/evoscientist_table1_queries/internagent/query_14.md",
+        "exists": true,
+        "bytes": 1986
+      },
+      {
+        "path": "/Users/hgh54913/research/InternAgent/outputs/evoscientist_table1_queries/internagent/query_15.md",
+        "exists": true,
+        "bytes": 1329
+      },
+      {
+        "path": "/Users/hgh54913/research/InternAgent/outputs/evoscientist_table1_queries/internagent/query_16.md",
+        "exists": true,
+        "bytes": 1302
+      },
+      {
+        "path": "/Users/hgh54913/research/InternAgent/outputs/evoscientist_table1_queries/internagent/query_17.md",
+        "exists": true,
+        "bytes": 1094
+      },
+      {
+        "path": "/Users/hgh54913/research/InternAgent/outputs/evoscientist_table1_queries/internagent/query_18.md",
+        "exists": true,
+        "bytes": 1459
+      },
+      {
+        "path": "/Users/hgh54913/research/InternAgent/outputs/evoscientist_table1_queries/internagent/query_19.md",
+        "exists": true,
+        "bytes": 1252
+      },
+      {
+        "path": "/Users/hgh54913/research/InternAgent/outputs/evoscientist_table1_queries/internagent/query_20.md",
+        "exists": true,
+        "bytes": 1327
+      },
+      {
+        "path": "/Users/hgh54913/research/InternAgent/outputs/evoscientist_table1_queries/internagent/query_21.md",
+        "exists": true,
+        "bytes": 2091
+      },
+      {
+        "path": "/Users/hgh54913/research/InternAgent/outputs/evoscientist_table1_queries/internagent/query_22.md",
+        "exists": true,
+        "bytes": 1342
+      },
+      {
+        "path": "/Users/hgh54913/research/InternAgent/outputs/evoscientist_table1_queries/internagent/query_23.md",
+        "exists": true,
+        "bytes": 1927
+      },
+      {
+        "path": "/Users/hgh54913/research/InternAgent/outputs/evoscientist_table1_queries/internagent/query_24.md",
+        "exists": true,
+        "bytes": 1535
+      },
+      {
+        "path": "/Users/hgh54913/research/InternAgent/outputs/evoscientist_table1_queries/internagent/query_25.md",
+        "exists": true,
+        "bytes": 1090
+      },
+      {
+        "path": "/Users/hgh54913/research/InternAgent/outputs/evoscientist_table1_queries/internagent/query_26.md",
+        "exists": true,
+        "bytes": 1959
+      },
+      {
+        "path": "/Users/hgh54913/research/InternAgent/outputs/evoscientist_table1_queries/internagent/query_27.md",
+        "exists": true,
+        "bytes": 1950
+      },
+      {
+        "path": "/Users/hgh54913/research/InternAgent/outputs/evoscientist_table1_queries/internagent/query_28.md",
+        "exists": true,
+        "bytes": 2057
+      },
+      {
+        "path": "/Users/hgh54913/research/InternAgent/outputs/evoscientist_table1_queries/internagent/query_29.md",
+        "exists": true,
+        "bytes": 737
+      },
+      {
+        "path": "/Users/hgh54913/research/InternAgent/outputs/evoscientist_table1_queries/internagent/query_30.md",
+        "exists": true,
+        "bytes": 1363
+      }
+    ],
+    "imported_outputs": [
+      {
+        "path": "reproduction/artifacts/idea_outputs/InternAgent/query_01/answer.txt",
+        "exists": true,
+        "bytes": 2505
+      },
+      {
+        "path": "reproduction/artifacts/idea_outputs/InternAgent/query_02/answer.txt",
+        "exists": true,
+        "bytes": 1348
+      },
+      {
+        "path": "reproduction/artifacts/idea_outputs/InternAgent/query_03/answer.txt",
+        "exists": true,
+        "bytes": 1324
+      },
+      {
+        "path": "reproduction/artifacts/idea_outputs/InternAgent/query_04/answer.txt",
+        "exists": true,
+        "bytes": 3933
+      },
+      {
+        "path": "reproduction/artifacts/idea_outputs/InternAgent/query_05/answer.txt",
+        "exists": true,
+        "bytes": 1584
+      },
+      {
+        "path": "reproduction/artifacts/idea_outputs/InternAgent/query_06/answer.txt",
+        "exists": true,
+        "bytes": 1202
+      },
+      {
+        "path": "reproduction/artifacts/idea_outputs/InternAgent/query_07/answer.txt",
+        "exists": true,
+        "bytes": 1639
+      },
+      {
+        "path": "reproduction/artifacts/idea_outputs/InternAgent/query_08/answer.txt",
+        "exists": true,
+        "bytes": 4443
+      },
+      {
+        "path": "reproduction/artifacts/idea_outputs/InternAgent/query_09/answer.txt",
+        "exists": true,
+        "bytes": 1278
+      },
+      {
+        "path": "reproduction/artifacts/idea_outputs/InternAgent/query_10/answer.txt",
+        "exists": true,
+        "bytes": 1692
+      },
+      {
+        "path": "reproduction/artifacts/idea_outputs/InternAgent/query_11/answer.txt",
+        "exists": true,
+        "bytes": 1331
+      },
+      {
+        "path": "reproduction/artifacts/idea_outputs/InternAgent/query_12/answer.txt",
+        "exists": true,
+        "bytes": 1583
+      },
+      {
+        "path": "reproduction/artifacts/idea_outputs/InternAgent/query_13/answer.txt",
+        "exists": true,
+        "bytes": 701
+      },
+      {
+        "path": "reproduction/artifacts/idea_outputs/InternAgent/query_14/answer.txt",
+        "exists": true,
+        "bytes": 1986
+      },
+      {
+        "path": "reproduction/artifacts/idea_outputs/InternAgent/query_15/answer.txt",
+        "exists": true,
+        "bytes": 1329
+      },
+      {
+        "path": "reproduction/artifacts/idea_outputs/InternAgent/query_16/answer.txt",
+        "exists": true,
+        "bytes": 1301
+      },
+      {
+        "path": "reproduction/artifacts/idea_outputs/InternAgent/query_17/answer.txt",
+        "exists": true,
+        "bytes": 1094
+      },
+      {
+        "path": "reproduction/artifacts/idea_outputs/InternAgent/query_18/answer.txt",
+        "exists": true,
+        "bytes": 1459
+      },
+      {
+        "path": "reproduction/artifacts/idea_outputs/InternAgent/query_19/answer.txt",
+        "exists": true,
+        "bytes": 1252
+      },
+      {
+        "path": "reproduction/artifacts/idea_outputs/InternAgent/query_20/answer.txt",
+        "exists": true,
+        "bytes": 1327
+      },
+      {
+        "path": "reproduction/artifacts/idea_outputs/InternAgent/query_21/answer.txt",
+        "exists": true,
+        "bytes": 2091
+      },
+      {
+        "path": "reproduction/artifacts/idea_outputs/InternAgent/query_22/answer.txt",
+        "exists": true,
+        "bytes": 1342
+      },
+      {
+        "path": "reproduction/artifacts/idea_outputs/InternAgent/query_23/answer.txt",
+        "exists": true,
+        "bytes": 1927
+      },
+      {
+        "path": "reproduction/artifacts/idea_outputs/InternAgent/query_24/answer.txt",
+        "exists": true,
+        "bytes": 1535
+      },
+      {
+        "path": "reproduction/artifacts/idea_outputs/InternAgent/query_25/answer.txt",
+        "exists": true,
+        "bytes": 1090
+      },
+      {
+        "path": "reproduction/artifacts/idea_outputs/InternAgent/query_26/answer.txt",
+        "exists": true,
+        "bytes": 1959
+      },
+      {
+        "path": "reproduction/artifacts/idea_outputs/InternAgent/query_27/answer.txt",
+        "exists": true,
+        "bytes": 1950
+      },
+      {
+        "path": "reproduction/artifacts/idea_outputs/InternAgent/query_28/answer.txt",
+        "exists": true,
+        "bytes": 2057
+      },
+      {
+        "path": "reproduction/artifacts/idea_outputs/InternAgent/query_29/answer.txt",
+        "exists": true,
+        "bytes": 737
+      },
+      {
+        "path": "reproduction/artifacts/idea_outputs/InternAgent/query_30/answer.txt",
+        "exists": true,
+        "bytes": 1363
+      }
+    ],
+    "judge_input": {
+      "path": "reproduction/artifacts/judge_inputs/evosci_vs_internagent_queries01_30.jsonl",
+      "exists": true,
+      "bytes": 529124
+    },
+    "judge_output": {
+      "path": "reproduction/artifacts/judge_outputs/evosci_vs_internagent_queries01_30_deepseek.jsonl",
+      "exists": true,
+      "bytes": 103914
+    },
+    "aggregate_json": {
+      "path": "reproduction/artifacts/tables/evosci_vs_internagent_queries01_30_deepseek.json",
+      "exists": true,
+      "bytes": 1353
+    },
+    "aggregate_csv": {
+      "path": "reproduction/artifacts/tables/evosci_vs_internagent_queries01_30_deepseek.csv",
+      "exists": true,
+      "bytes": 274
+    }
+  },
+  "judge_records": 60,
+  "aggregate": {
+    "target_system": "EvoScientist",
+    "tie_threshold": 0.0,
+    "raw_records": 60,
+    "baselines": {
+      "InternAgent": {
+        "dimensions": {
+          "Clarity": {
+            "baseline": "InternAgent",
+            "dimension": "Clarity",
+            "n": 60,
+            "win": 59,
+            "tie": 1,
+            "lose": 0,
+            "win_pct": 98.33,
+            "tie_pct": 1.67,
+            "lose_pct": 0.0,
+            "gap": 98.33
+          },
+          "Novelty": {
+            "baseline": "InternAgent",
+            "dimension": "Novelty",
+            "n": 60,
+            "win": 56,
+            "tie": 1,
+            "lose": 3,
+            "win_pct": 93.33,
+            "tie_pct": 1.67,
+            "lose_pct": 5.0,
+            "gap": 88.33
+          },
+          "Feasibility": {
+            "baseline": "InternAgent",
+            "dimension": "Feasibility",
+            "n": 60,
+            "win": 58,
+            "tie": 1,
+            "lose": 1,
+            "win_pct": 96.67,
+            "tie_pct": 1.67,
+            "lose_pct": 1.67,
+            "gap": 95.0
+          },
+          "Relevance": {
+            "baseline": "InternAgent",
+            "dimension": "Relevance",
+            "n": 60,
+            "win": 52,
+            "tie": 7,
+            "lose": 1,
+            "win_pct": 86.67,
+            "tie_pct": 11.67,
+            "lose_pct": 1.67,
+            "gap": 85.0
+          }
+        },
+        "avg_gap": 91.66
+      }
+    }
+  },
+  "caveat": "This is a replacement-baseline smoke run for recovered paper queries. It is not the paper's original raw InternAgent Table 1 output. The run preserves observed InternAgent/DeepSeek parsing failures as baseline behavior. Outputs below the nominal length threshold are retained and flagged, not regenerated."
+}

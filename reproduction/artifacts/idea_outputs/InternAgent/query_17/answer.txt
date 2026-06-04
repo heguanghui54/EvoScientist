@@ -1,0 +1,12 @@
+# InternAgent QA Replacement Output: Query 17
+
+Topic: Information extraction
+Prompt: Generate a research proposal on automated information extraction.
+Model: deepseek-chat
+Paper-exact: false
+
+This answer was generated through InternAgent QA mode as a replacement baseline, not from the EvoScientist paper's original raw InternAgent outputs.
+
+## Answer
+
+The workflow traces outline a research proposal on automated information extraction (IE). The scope and objectives (node n2) define a focus on domain-specific, semi-supervised IE using pre-trained language models (e.g., BERT, SciBERT), targeting a 60% reduction in annotation effort. The review of existing methods and challenges (node n3) covers rule-based, machine learning, deep learning, and transformer-based approaches, along with challenges like domain adaptation, data scarcity, extraction complexity, evaluation limitations, and robustness. The methodology and evaluation plan (node n4) remains incomplete (failed). The proposal thus has a defined scope, background, and objectives but lacks a full methodology and evaluation plan.

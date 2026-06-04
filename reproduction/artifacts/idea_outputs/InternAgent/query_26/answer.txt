@@ -1,0 +1,12 @@
+# InternAgent QA Replacement Output: Query 26
+
+Topic: Data filtering
+Prompt: Generate a research proposal on solving data filtering challenges for domain-specific models.
+Model: deepseek-chat
+Paper-exact: false
+
+This answer was generated through InternAgent QA mode as a replacement baseline, not from the EvoScientist paper's original raw InternAgent outputs.
+
+## Answer
+
+The research proposal, structured with motivation, objectives, methodology, and expected outcomes, addresses data filtering challenges in domain-specific modeling. The motivation highlights three core challenges—noise, missing data, and domain shift—that frequently co-occur and amplify each other, undermining model performance. Current filtering methods are limited by static heuristics, surface-level quality assessments, lack of scalability, absence of standardized benchmarks, opacity, and potential biases. The five objectives are: (1) develop adaptive, domain-aware filtering strategies using semi-supervised learning with domain-fine-tuned language models and ontology-initialized topic filters; (2) create fine-grained quality assessment via embedding similarity and structural indicators; (3) design scalable architectures through knowledge distillation, hybrid lexical-semantic pipelines, and incremental online learning; (4) establish formal evaluation frameworks and multi-domain benchmark suites; (5) ensure robustness to distribution shift, interpretability through attention-based explanations, and ethical fairness via diversity constraints and adversarial debiasing. The methodology unfolds in overlapping phases over 36 months, starting with benchmark creation and ending with an integrated framework evaluated on all metrics. Expected outcomes include an open-source adaptive filtering framework, comprehensive benchmarks, empirical evidence linking filtering to downstream task performance, ethical guidelines for fair curation, and peer-reviewed publications.
