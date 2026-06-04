@@ -1,0 +1,48 @@
+This research proposal is generated as a proxy baseline for the "Virtual Scientist" system.
+
+### 1. Title
+**Disentangling Logic from Language: Modular Decoupling of Reasoning Circuits via Task-Specific LoRA Interference**
+
+### 2. Problem and Motivation
+Current Large Language Models (LLMs) conflate linguistic fluency (syntax and style), world knowledge (fact retrieval), and logical reasoning (deductive/inductive processes) within the same high-dimensional weight space. This entanglement leads to "hallucinations" where a model produces grammatically perfect but logically incoherent text. If these capabilities are not decoupled, we cannot scale reasoning independently of model size or linguistic complexity. Understanding whether reasoning is a distinct functional "circuit" or an emergent property of language prediction is fundamental to building more efficient and reliable AI.
+
+### 3. Core Hypothesis
+Logical reasoning capabilities in LLMs are localized within a subset of attention heads and MLP layers that are functionally distinct from those governing linguistic syntax. By using low-rank adaptation (LoRA) to "mask" or "amplify" specific task-related gradients, it is possible to isolate a "reasoning module" that can be transferred or disabled without degrading the model's linguistic fluency.
+
+### 4. Method
+The proposed method uses a **Cross-Task Interference Analysis (CTIA)**:
+
+1.  **Initial Training:** Take a base model (e.g., Llama-3-8B).
+2.  **Modular Specialization:** Separately train two distinct LoRA adapters:
+    *   *Logic-LoRA:* Trained on symbolic logic, formal proofs, and code execution (where syntax is minimal but logic is high).
+    *   *Prose-LoRA:* Trained on creative writing and stylistic imitation (where logic is secondary to aesthetic and syntactic flow).
+3.  **Circuit Mapping:** Use **Integrated Gradients** and **Activation Patching** to identify which neurons/heads are activated by Logic-LoRA versus Prose-LoRA.
+4.  **Decoupling Intervention:**
+    *   **Orthogonalization:** Mathematically project the weights of the Logic-LoRA to be orthogonal to the Prose-LoRA to minimize interference.
+    *   **Ablation Masking:** Create a binary mask that zeros out "Logic" weights during "Prose" tasks and vice-versa to measure the performance drop in the non-targeted capability.
+5.  **Recombination:** Test if the isolated "Logic" weights can be injected into a smaller, "dumb" model to improve its reasoning without altering its base vocabulary.
+
+### 5. Dataset or Benchmark
+*   **For Reasoning:** *Big-Bench Hard (BBH)* (focusing on Logical Deduction and Syllogisms) and *GSM8K* (math word problems).
+*   **For Linguistic Fluency:** *WikiText-103* (perplexity) and the *BLiMP* (Benchmark of Linguistic Minimal Pairs) to measure grammatical sensitivity.
+*   **For World Knowledge:** *MMLU* (Massive Multitask Language Understanding) specifically the factual categories (History, Geography).
+
+### 6. Evaluation Metrics
+*   **Decoupling Ratio (DR):** The ratio of (Reasoning Accuracy Change) to (Linguistic Perplexity Change). A high DR indicates successful decoupling.
+*   **Interference Score:** The cosine similarity between the weight updates ($\Delta W$) of the Logic-LoRA and Prose-LoRA.
+*   **Zero-Shot Transfer:** Accuracy of the "Logic-Module" when applied to a base model it was not trained on.
+
+### 7. Baselines
+1.  **Full Fine-Tuning (FFT):** Standard fine-tuning on a mixture of logic and prose data (the "entangled" baseline).
+2.  **Random Pruning:** Randomly removing weights to see if performance degrades uniformly.
+3.  **Standard LoRA:** Using a single LoRA for all tasks without orthogonalization or masking.
+
+### 8. Ablations
+*   **Rank Variation:** Testing LoRA ranks from $r=4$ to $r=256$ to see if higher-rank adapters capture more "entangled" features.
+*   **Layer-wise Isolation:** Applying the decoupling only to the MLP blocks vs. only to the Attention blocks.
+*   **Data Scaling:** Reducing the amount of "Logic" training data to find the minimum threshold for circuit formation.
+
+### 9. Failure Modes and Feasibility Risks
+*   **Structural Overlap:** If logical reasoning is fundamentally "baked into" the linguistic structure of the base model, the Logic-LoRA may fail to capture the necessary circuitry, leading to poor decoupling.
+*   **Catastrophic Forgetting:** Orthogonalizing weights may lead to a total collapse of the model's ability to follow instructions if the "Instruction Following" capability is shared across both logic and prose.
+*   **Complexity of Logic:** "Logic" is not monolithic; the circuits for mathematical reasoning may differ significantly from those for common-sense reasoning, making a single "Logic-LoRA" insufficient.

@@ -1,0 +1,47 @@
+### 1. Title
+**Domain-Adaptive Contrastive Filtering (DACF): Leveraging Seed Anchors for High-Signal Data Selection in Specialized LLMs**
+
+### 2. Problem and Motivation
+General-purpose data filtering pipelines (e.g., those used for Llama or Falcon) rely heavily on heuristics like perplexity scores from models trained on Wikipedia or C4. While effective for general knowledge, these filters often discard high-value domain-specific data (medical, legal, or scientific) because specialized terminology and complex syntax are flagged as "low-quality" or "out-of-distribution" noise. Conversely, simply using keyword filters results in high-recall but low-precision datasets, retaining "SEO spam" or shallow content that mentions domain terms without providing deep reasoning. There is a need for a filtering mechanism that distinguishes between *specialized signal* and *general-purpose noise* without requiring massive labeled datasets for every new domain.
+
+### 3. Core Hypothesis
+A contrastive scoring mechanism—calculating the log-likelihood ratio of a document under a small domain-specific "Expert" model versus a "General" reference model—will identify high-utility domain data more effectively than absolute quality thresholds or keyword-based heuristics.
+
+### 4. Method
+The DACF pipeline consists of four stages:
+1.  **Seed Selection:** Curate a small (100MB–500MB), high-quality "Gold Standard" corpus for the target domain (e.g., peer-reviewed journals for science, statutory text for law).
+2.  **Proxy Training:** Train two lightweight "Proxy" models (e.g., 125M parameter Transformers or optimized n-gram models):
+    *   **$M_{expert}$**: Trained on the Gold Standard corpus.
+    *   **$M_{general}$**: Trained on a balanced sample of general web text (e.g., RefinedWeb).
+3.  **Contrastive Scoring:** For every document $x$ in a large, noisy pool (e.g., Common Crawl), calculate the DACF score:
+    $$Score(x) = \frac{1}{|x|} (\log P_{expert}(x) - \log P_{general}(x))$$
+    This score prioritizes documents that are highly probable in the domain but relatively improbable in general discourse.
+4.  **Thresholding and Sampling:** Select the top $k$ percentile of documents. Apply a secondary "Quality" filter (e.g., deduplication and line-length checks) only to this subset to ensure structural integrity.
+
+### 5. Dataset or Benchmark
+*   **Source Pool:** The "FineWeb" or "RedPajama" Common Crawl dumps.
+*   **Target Domains:**
+    *   *Medical:* Seeded by PubMed abstracts.
+    *   *Legal:* Seeded by Free Law Project data.
+*   **Evaluation Targets:** PubMedQA, MedQA (Medical); CaseHold, LegalBench (Legal).
+
+### 6. Evaluation Metrics
+*   **Downstream Accuracy:** Zero-shot and 5-shot performance on domain-specific benchmarks after training a 1B–3B parameter model on the filtered data.
+*   **Data Efficiency:** The amount of data required to reach a specific accuracy threshold compared to random or heuristic filtering.
+*   **Perplexity:** Held-out perplexity on official domain-specific test sets (e.g., NEJM articles).
+
+### 7. Baselines
+*   **Random Sampling:** Uniformly sampling from the source pool.
+*   **Keyword Filtering:** Selecting documents containing a predefined list of 500 domain-specific terms.
+*   **Perplexity-Only (KenLM):** Standard filtering using a KenLM model trained on Wikipedia (discarding high-perplexity documents).
+*   **DSIR (Importance Resampling):** A state-of-the-art importance sampling method that matches the distribution of the target domain.
+
+### 8. Ablations
+*   **Seed Size:** Varying the Gold Standard corpus from 1MB to 1GB to find the point of diminishing returns.
+*   **Proxy Model Scale:** Comparing n-gram models vs. small Transformers (125M) as the scoring engines.
+*   **Score Formulation:** Comparing the log-ratio against a simple "Expert-only" perplexity threshold.
+
+### 9. Failure Modes and Feasibility Risks
+*   **Domain Narrowness:** The filter might become *too* specific, selecting only papers that look exactly like the seed and losing the diversity of "web-style" explanations that help model generalization.
+*   **Compute Overhead:** Scoring billions of tokens with a Transformer proxy is computationally expensive. *Mitigation:* Use n-gram models or highly distilled proxies for the first pass.
+*   **Seed Bias:** If the gold seed contains specific formatting (e.g., LaTeX), the filter may over-select for formatting rather than semantic content. *Mitigation:* Strip formatting and metadata from the seed before training $M_{expert}$.

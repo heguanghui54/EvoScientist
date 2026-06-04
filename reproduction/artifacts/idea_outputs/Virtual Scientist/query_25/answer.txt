@@ -1,0 +1,46 @@
+The following research proposal is the result of a simulated multi-agent deliberation involving a Principal Investigator, Method Designer, Skeptical Reviewer, and Experiment Engineer.
+
+---
+
+### 1. Title
+**Cross-Source Evidence Graph (CEG): Enhancing Multi-Source Reasoning via Explicit Contradiction and Support Modeling**
+
+### 2. Problem and Motivation
+Large Language Models (LLMs) struggle with "knowledge blending" when faced with multi-source information. When multiple documents provide overlapping, complementary, or contradictory data, models often produce a "hallucinated average" rather than a logically consistent synthesis. Current retrieval-augmented generation (RAG) systems treat retrieved snippets as a flat sequence, ignoring the structural relationships (e.g., Source A updates a claim made in Source B) that are essential for complex reasoning. There is a critical need for a method that treats multi-source synthesis as a graph-resolution problem rather than a sequence-modeling problem.
+
+### 3. Core Hypothesis
+Explicitly modeling the logical relationships (Support, Contradict, or Neutral) between atomic claims across different sources in a graph structure will significantly improve the accuracy of multi-hop reasoning and reduce hallucinations compared to standard sequential context processing.
+
+### 4. Method
+The proposed **Cross-Source Evidence Graph (CEG)** framework consists of three stages:
+1.  **Atomic Claim Extraction:** Decompose multiple input documents into a set of atomic propositions $\{c_1, c_2, \dots, c_n\}$, each tagged with its source ID.
+2.  **Graph Construction (Relationship Mapping):** Utilize a cross-encoder NLI (Natural Language Inference) model to evaluate pairs of claims from different sources. Construct a directed graph where:
+    *   **Nodes:** Atomic claims.
+    *   **Edges:** "Supports," "Contradicts," or "Specifies."
+3.  **Conflict-Aware Synthesis:** Feed the structured graph (represented as a linearized adjacency list or a claim-map) to the LLM. The prompt instructs the model to resolve conflicts by prioritizing the most recent source or the source with the highest density of "Support" edges from other nodes, then generate the final answer based on the resolved path.
+
+### 5. Dataset or Benchmark
+*   **MuSiQue-Answerable:** A multi-hop QA dataset that requires integrating 2–4 different paragraphs to find an answer.
+*   **StrategyQA:** To test implicit reasoning across different domains.
+*   **Conflict-MuSiQue (Proposed Synthetic Extension):** A modified version of MuSiQue where one of the supporting documents is replaced with a plausible but contradictory claim to test the model's ability to identify and resolve conflicts.
+
+### 6. Evaluation Metrics
+*   **Exact Match (EM) & F1 Score:** Standard QA performance.
+*   **Conflict Resolution Accuracy (CRA):** Percentage of correct answers when the input contains explicitly contradictory information.
+*   **Attribution Accuracy:** Measuring if the model correctly cites the specific source node that provided the winning evidence.
+
+### 7. Baselines
+*   **Standard RAG:** Sequential concatenation of retrieved documents in the prompt.
+*   **Chain-of-Thought (CoT):** Standard prompting without explicit graph structuring.
+*   **Long-Context LLM:** Providing all sources to a model with a large context window (e.g., GPT-4 Turbo or Claude 3) without pre-processing.
+
+### 8. Ablations
+*   **No-Relationship Baseline:** Providing atomic claims as a flat list without the "Support/Contradict" edge labels.
+*   **Single-Source Only:** Restricting the model to the top-1 retrieved document to measure the "multi-source gain."
+*   **Randomized Relationships:** Assigning random labels to edges to test the model's sensitivity to the graph structure versus the claim text.
+
+### 9. Failure Modes and Feasibility Risks
+*   **NLI Overhead:** Using a cross-encoder for all claim pairs is $O(n^2)$. This can be mitigated by only comparing claims that share entities or keywords.
+*   **Error Propagation:** If the NLI model incorrectly labels a "Support" edge as "Contradict," the reasoning engine may discard valid evidence.
+*   **Context Fragmentation:** Breaking text into atomic claims may lose the broader context or nuance required for some high-level reasoning tasks.
+*   **Feasibility:** The method is feasible with current open-source NLI models (like DeBERTa-v3) and API-based LLMs, provided the claim extraction is kept concise.

@@ -1,0 +1,39 @@
+### 1. Title
+**Culturally-Agnostic Constitutional DPO (CAC-DPO): Aligning LLMs via Sociological Value Priors**
+
+### 2. Problem and Motivation
+Current Large Language Model (LLM) alignment techniques (e.g., RLHF, DPO) rely heavily on preference data from annotators who are predominantly from Western, Educated, Industrialized, Rich, and Democratic (WEIRD) societies. This results in models that project a monocultural value system, often failing to respect or understand the nuances of non-Western ethics, social hierarchies, or communication styles (e.g., high-context vs. low-context cultures). Existing attempts to fix this often rely on manual data collection for every culture, which is unscalable and prone to stereotyping.
+
+### 3. Core Hypothesis
+Injecting high-level sociological dimensions (derived from the World Values Survey) into the Constitutional AI framework will allow for the synthetic generation of culturally-aligned preference pairs. We hypothesize that training culture-specific LoRA (Low-Rank Adaptation) modules via Direct Preference Optimization (DPO) on these synthetic pairs will significantly improve regional value alignment while maintaining general reasoning capabilities.
+
+### 4. Method
+The proposed method follows a four-stage pipeline:
+1.  **Cultural Constitutional Design:** Define "Cultural Constitutions" for five major clusters (e.g., Confucian, Islamic, Latin American, Protestant Europe, English-speaking) based on the Inglehart–Welzel Map. Each constitution consists of 10–15 principles regarding authority, individualism, and tradition.
+2.  **Synthetic Preference Generation:** Use a strong "Teacher" model (e.g., GPT-4o) to generate responses to a set of ethically ambiguous prompts. Then, use the same teacher to rank these responses *through the lens* of each Cultural Constitution, creating five culture-specific preference datasets.
+3.  **Modular Alignment (CAC-DPO):** Train separate LoRA adapters for each cultural cluster using DPO on the synthetic datasets.
+4.  **Context-Aware Routing:** Train a lightweight "Cultural Router" (a 100M parameter classifier) that analyzes the prompt’s language, regional references, and intent to dynamically route the query to the most appropriate LoRA adapter at inference time.
+
+### 5. Dataset or Benchmark
+*   **Training:** A synthetic dataset of 50,000 preference pairs (10,000 per cluster) generated from the **World Values Survey (WVS-7)** and the **Hofstede Insights** dimensions.
+*   **Testing:** The **Global-CAI (Global Cultural Alignment Inventory)** and a translated version of the **Moral Foundations Questionnaire (MFQ-30)** adapted for LLM prompting.
+
+### 6. Evaluation Metrics
+*   **Cultural Agreement Score (CAS):** The statistical correlation between model preferences and the actual survey distributions of the target culture (measured via KL-Divergence).
+*   **General Capability Retention:** Performance on MMLU (Massive Multitask Language Understanding) to ensure alignment doesn't cause "alignment tax" on reasoning.
+*   **Stereotyping Sensitivity:** A "Red-Teaming" metric using the CrowS-Pairs dataset to ensure the model doesn't default to harmful stereotypes when a culture is mentioned.
+
+### 7. Baselines
+*   **Base Model:** Llama-3-8B-Instruct (unmodified).
+*   **Global Alignment:** Llama-3-8B-Instruct fine-tuned on a generic, multi-cultural but non-specific preference dataset.
+*   **Prompt-Engineered Baseline:** The base model with a system prompt: "You are an assistant representing [Culture] values."
+
+### 8. Ablations
+*   **No Router:** Testing the performance of individual LoRA adapters when manually selected versus automatically routed.
+*   **Constitution Complexity:** Comparing "Thin Constitutions" (3 principles) vs. "Thick Constitutions" (15 principles) to see if more detail improves alignment.
+*   **Synthetic vs. Real:** Comparing a subset of the synthetic data against a small sample of real human preference data from the same regions.
+
+### 9. Failure Modes and Feasibility Risks
+*   **The "Monolith" Fallacy:** Cultures are not monolithic. A "Confucian" adapter might fail to represent the diversity within China, Korea, or Vietnam, leading to over-generalization.
+*   **Cultural Essentialism:** The model might inadvertently learn to associate specific languages with specific values (e.g., assuming all Arabic speakers hold conservative religious views), which is a form of algorithmic bias.
+*   **Feasibility:** High reliance on the "Teacher" model's ability to accurately simulate different cultural perspectives. If the teacher model is biased, the synthetic data will inherit those biases.

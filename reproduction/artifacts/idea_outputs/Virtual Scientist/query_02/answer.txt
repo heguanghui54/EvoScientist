@@ -1,0 +1,48 @@
+This proposal represents the consensus of a virtual multi-agent team comprising a Principal Investigator, Method Designer, Skeptical Reviewer, and Experiment Engineer.
+
+### 1. Title
+**REPAIR-LOOP: Iterative Execution-Guided Patch Generation for Multi-File Software Vulnerabilities**
+
+### 2. Problem and Motivation
+Current Large Language Models (LLMs) for Automated Program Repair (APR) primarily focus on single-function or single-file fixes. However, real-world software bugs often involve complex inter-dependencies across multiple files and modules. Static code generation frequently produces "plausible" but incorrect patches that fail under execution due to subtle side effects or unhandled edge cases. There is a critical need for a system that leverages dynamic execution feedback to iteratively refine patches until they satisfy the entire project-level test suite.
+
+### 3. Core Hypothesis
+Incorporating granular execution feedback (stack traces, variable states, and failing test logs) into a multi-turn refinement loop will significantly increase the resolution rate of multi-file bugs compared to static, zero-shot patch generation.
+
+### 4. Method
+The REPAIR-LOOP framework consists of four main stages:
+1.  **Contextual Fault Localization:** An LLM-based agent analyzes the bug report and the codebase to identify a "candidate set" of files and functions likely involved in the bug.
+2.  **Initial Patch Drafting:** A "Developer Agent" generates a candidate patch for the identified files.
+3.  **Execution-Guided Verification:** The patch is applied to a cloned environment. The system runs the project’s test suite inside a Docker container.
+4.  **Iterative Refinement:**
+    *   If tests pass: The patch is submitted for final review.
+    *   If tests fail: An "Analysis Agent" extracts the specific error logs, stack traces, and (if applicable) diffs between expected and actual output.
+    *   This feedback is fed back to the Developer Agent to generate "Patch v+1."
+    *   The loop repeats for a maximum of $N$ iterations (e.g., $N=5$).
+
+### 5. Dataset or Benchmark
+*   **SWE-bench Lite:** A subset of the SWE-bench dataset consisting of 300 real-world GitHub issues from popular Python repositories. It requires resolving issues by modifying multiple files and passing hidden evaluation tests.
+*   **Defects4J (v2.0):** To validate the approach on Java-based systems with complex dependency graphs.
+
+### 6. Evaluation Metrics
+*   **Resolved @ N:** Percentage of issues successfully resolved (passing all tests) within $N$ iterations.
+*   **Success Rate:** Total percentage of bugs fixed across the dataset.
+*   **Efficiency:** Average number of iterations and tokens required per successful fix.
+*   **Regression Rate:** Frequency with which a patch fixes the target bug but causes previously passing tests to fail.
+
+### 7. Baselines
+*   **GPT-4 / Claude 3.5 Sonnet (Zero-shot):** Direct patch generation without execution feedback.
+*   **Aider:** A popular state-of-the-art CLI tool for AI-supported coding.
+*   **OpenDevin/Devin (published benchmarks):** Current state-of-the-art autonomous agents for software engineering.
+
+### 8. Ablations
+*   **No-Feedback Baseline:** The model generates a patch once and is evaluated immediately.
+*   **Binary Feedback Only:** The model is told only "Pass" or "Fail" without error logs or stack traces.
+*   **Single-File Constraint:** Restricting the model's edit scope to one file to measure the impact of multi-file reasoning.
+*   **Localization Ablation:** Providing the model with the exact ground-truth files to be modified vs. letting it find them.
+
+### 9. Failure Modes and Feasibility Risks
+*   **Infinite Loops/Oscillation:** The model may alternate between two incorrect fixes. *Mitigation:* Implement a "memory" of previous attempts to force exploration of new strategies.
+*   **Environment Setup Failure:** Real-world repositories often have complex dependencies that fail to build in a standardized container. *Mitigation:* Use pre-configured environments from the SWE-bench-docker project.
+*   **Cost and Latency:** Iterative loops with high-parameter LLMs are expensive. *Mitigation:* Test with smaller, specialized models (e.g., DeepSeek-Coder or CodeLlama) to evaluate the "loop" effectiveness independently of model scale.
+*   **Test Flakiness:** Non-deterministic tests may lead the agent to believe a fix is correct (or incorrect) when it is not. *Mitigation:* Re-run failing tests multiple times to confirm failure.

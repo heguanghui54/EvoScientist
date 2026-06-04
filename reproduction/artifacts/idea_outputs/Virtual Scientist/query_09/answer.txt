@@ -1,0 +1,44 @@
+**1. Title**
+**EDGE-Q: Sensitivity-Aware Dynamic Mixed-Precision Quantization for Edge-Constrained LLMs**
+
+**2. Problem and Motivation**
+Large Language Models (LLMs) are notoriously difficult to deploy on edge devices (e.g., mobile phones, IoT gateways) due to limited VRAM and restricted compute budgets. Current quantization techniques, such as 4-bit weight-only quantization (GPTQ, AWQ), often apply a uniform bit-width across all layers. However, different layers in an LLM exhibit varying degrees of sensitivity to quantization noise. Uniform low-bit quantization (e.g., 3-bit) often leads to catastrophic failure in reasoning and long-context tasks, while 4-bit or 8-bit may still exceed the memory limits of entry-level edge hardware. There is a need for a method that intelligently allocates bit-budgets based on layer importance while remaining compatible with hardware-accelerated kernels.
+
+**3. Core Hypothesis**
+By utilizing a Fisher Information-based sensitivity proxy to identify "bottleneck" layers, we can implement a mixed-precision strategy—allocating higher precision (6-bit or 8-bit) to sensitive layers and ultra-low precision (2-bit or 3-bit) to robust layers—that achieves a smaller memory footprint than uniform 4-bit quantization with significantly higher task accuracy.
+
+**4. Method**
+The EDGE-Q framework consists of three stages:
+1.  **Sensitivity Profiling:** We compute a diagonal approximation of the Fisher Information Matrix (FIM) for each layer using a small calibration set (e.g., 128 samples from WikiText-2). This identifies layers where weight perturbations most significantly impact the loss function.
+2.  **Bit-Budget Allocation:** Given a target memory constraint (e.g., 4GB for an 8B model), we solve a constrained optimization problem to assign bit-widths ($b \in \{2, 3, 4, 6, 8\}$) to each layer. The objective is to minimize the total weighted sensitivity across the model while staying under the VRAM limit.
+3.  **Hardware-Aware Quantization:** We apply Post-Training Quantization (PTQ) using the assigned bit-widths. To ensure edge efficiency, we use "blocked" quantization where scales and zeros are stored per 64 or 128 elements. We implement a custom inference kernel that handles mixed-precision dequantization during the forward pass, optimized for ARM NEON or Apple Metal instructions.
+
+**5. Dataset or Benchmark**
+*   **Calibration:** WikiText-2 (128 samples).
+*   **Evaluation:**
+    *   *General Knowledge:* MMLU (Massive Multitask Language Understanding).
+    *   *Reasoning:* GSM8K (Math) and ARC-Challenge.
+    *   *Perplexity:* WikiText-2 and C4.
+*   **Models:** Llama-3-8B, Mistral-7B-v0.3, and Phi-3-mini.
+
+**6. Evaluation Metrics**
+*   **Accuracy:** Zero-shot accuracy on MMLU, GSM8K, and ARC.
+*   **Memory Footprint:** Peak VRAM usage during inference.
+*   **Latency:** Time-per-token (ms/token) on a target edge device (e.g., Snapdragon 8 Gen 2 or Apple M2).
+*   **Energy Consumption:** Joules per 1000 tokens (estimated via hardware power monitors).
+
+**7. Baselines**
+*   **FP16/BF16:** The uncompressed reference model.
+*   **Uniform RTN (Round-To-Nearest):** 4-bit and 3-bit uniform quantization.
+*   **GPTQ:** Standard 4-bit weight-only quantization with second-order information.
+*   **AWQ (Activation-aware Weight Quantization):** Current state-of-the-art for uniform 4-bit deployment.
+
+**8. Ablations**
+*   **Sensitivity Metric:** Compare Fisher Information vs. Magnitude-based sensitivity vs. Random allocation.
+*   **Granularity:** Compare layer-wise mixed precision vs. block-wise (groups of layers) mixed precision.
+*   **Calibration Size:** Test the impact of using 32, 64, 128, or 256 calibration samples on the final bit-allocation stability.
+
+**9. Failure Modes and Feasibility Risks**
+*   **Kernel Overhead:** The primary risk is that the overhead of switching between different bit-width kernels (e.g., moving from a 2-bit to an 8-bit dequantization routine) might negate the latency gains from reduced memory bandwidth.
+*   **Hardware Support:** Many edge NPUs are optimized for uniform 4-bit or 8-bit integer arithmetic; mixed-precision may require falling back to the GPU or CPU, which is less power-efficient.
+*   **Calibration Drift:** The sensitivity identified on WikiText-2 may not generalize to specialized domains like coding or medical dialogue, leading to unexpected accuracy drops in those areas.

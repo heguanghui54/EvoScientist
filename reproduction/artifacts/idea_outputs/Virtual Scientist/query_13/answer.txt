@@ -1,0 +1,47 @@
+This proposal represents a synthesized research direction developed through a simulated multi-agent dialogue involving roles of a Principal Investigator, Method Designer, Skeptical Reviewer, and Experiment Engineer.
+
+### 1. Title
+**Trace-to-Truth (T3): Iterative Synthesis of Execution-Verified Debugging Trajectories for Code LLMs**
+
+### 2. Problem and Motivation
+While Large Language Models (LLMs) for code have improved significantly, they often struggle with complex algorithmic reasoning and "self-correction" during inference. Current synthetic data methods (e.g., Evol-Instruct) primarily focus on generating pairs of instructions and final "gold" solutions. This approach ignores the iterative process of programming—writing, testing, failing, and refining. Consequently, models trained on static "gold" data lack the robustness to recover from their own logical errors. There is a need for synthetic datasets that capture the *process* of reaching a correct solution through execution feedback.
+
+### 3. Core Hypothesis
+Fine-tuning a Code LLM on synthetic "debugging trajectories"—which include initial incorrect attempts, compiler/test-suite feedback, and subsequent corrections—will improve the model's zero-shot Pass@k and its intrinsic ability to self-debug, compared to models trained only on successful code-completion pairs.
+
+### 4. Method
+The proposed pipeline consists of four stages:
+1.  **Seed Expansion:** Use a base LLM (e.g., Llama-3-70B) to generate 50,000 diverse algorithmic problem descriptions (e.g., dynamic programming, graph theory, string manipulation) across different difficulty levels.
+2.  **Stochastic Generation & Execution:** For each problem, a smaller "Generator" LLM (e.g., CodeLlama-7B) attempts to solve the problem. The code is executed in a sandboxed environment against 5-10 generated unit tests.
+3.  **Trajectory Mining:**
+    *   If the code fails, the error message (Traceback, Assertion Error, or Timeout) is captured.
+    *   The Generator LLM is prompted to fix the code given the error.
+    *   This continues for up to 3 iterations or until the code passes all tests.
+4.  **Data Curation:** Collect the sequences that resulted in eventual success. The final training sample is formatted as: `[Instruction] -> [Attempt 1 (Wrong)] -> [Error Message] -> [Attempt 2 (Correct)]`.
+5.  **Supervised Fine-Tuning (SFT):** Fine-tune a base model on these multi-turn "Trace-to-Truth" trajectories, teaching the model to associate specific error types with specific logical fixes.
+
+### 5. Dataset or Benchmark
+*   **Synthesis Source:** Derived from a mix of competitive programming prompts (Codeforces, LeetCode) and synthetic prompts generated via the "Self-Instruct" method.
+*   **Evaluation Benchmarks:** HumanEval, MBPP (Mostly Basic Python Problems), and the DS-1000 data science benchmark.
+*   **Debug-Eval:** A subset of HumanEval specifically modified to include pre-written buggy code that the model must fix.
+
+### 6. Evaluation Metrics
+*   **Pass@k (k=1, 5):** Standard functional correctness.
+*   **Self-Correction Rate:** The percentage of problems the model can fix in a second pass given its own initial error.
+*   **Reasoning Consistency:** Measuring if the model's natural language explanation of a bug matches the actual code fix applied.
+
+### 7. Baselines
+*   **Base Models:** StarCoder2, CodeLlama, Llama-3-Base.
+*   **Instruction-Tuned Baselines:** Models tuned on standard Code-Alpaca or Evol-Instruct (Magicoder) datasets.
+*   **Direct-to-Gold:** A model trained on the same problems but only using the final correct version of the code, omitting the failure/trace steps.
+
+### 8. Ablations
+*   **Feedback Granularity:** Comparing training with full stack traces vs. simple "Pass/Fail" binary feedback.
+*   **Trajectory Depth:** Testing the impact of 1-step corrections vs. multi-step (3+) debugging loops.
+*   **Negative Sampling:** Including trajectories that *never* reached a correct solution to see if teaching the model "what not to do" provides any signal.
+
+### 9. Failure Modes and Feasibility Risks
+*   **Model Collapse:** If the initial Generator LLM is too weak, the "correct" solutions might be inefficient or use bad practices, which the student model will then inherit.
+*   **Execution Overhead:** Running arbitrary code in a sandbox at scale is computationally expensive and poses security risks (mitigated by using gVisor or Docker-based isolation).
+*   **Spurious Passes:** Code might pass unit tests due to weak test cases while still being logically incorrect for the general problem (mitigated by using an LLM to generate "hard" edge-case tests).
+*   **Data Contamination:** Ensuring the synthetic problems do not inadvertently leak test cases from HumanEval/MBPP.

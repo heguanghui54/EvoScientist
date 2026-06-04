@@ -1,0 +1,41 @@
+### Research Proposal: Knowledge-Graph Constrained Decoding (KG-CD) for Factual Consistency
+
+**1. Title**
+Knowledge-Graph Constrained Decoding (KG-CD): Mitigating Hallucinations via Real-Time Triple-Aware Logit Steering.
+
+**2. Problem and Motivation**
+Large Language Models (LLMs) often suffer from "knowledge neglect," where the model generates linguistically plausible but factually incorrect statements even when provided with the correct context (e.g., in RAG settings). Current solutions like post-hoc self-correction are computationally expensive and often fail because the model "hallucinates" the correction itself. There is a need for a mechanism that enforces factual grounding during the token-generation process itself, ensuring that the model’s output remains bounded by verified relational structures.
+
+**3. Core Hypothesis**
+By dynamically steering the model’s logit distribution during decoding toward entities and relations present in a retrieved Knowledge Graph (KG), we can significantly reduce factual contradictions without degrading the natural language fluency of the model.
+
+**4. Method**
+The proposed **KG-CD** framework operates in three stages:
+1.  **Dynamic Subgraph Extraction:** For a given query, the system retrieves relevant documents and uses an Information Extraction (IE) head to build a local, temporary Knowledge Graph of (Subject, Predicate, Object) triples.
+2.  **Triple-Aware Logit Steering:** During the decoding of each token, the system identifies if the model is entering an "Entity" or "Relation" state (using a lightweight classifier on the hidden states). If an entity is being generated, the system applies a positive logit bias to tokens that constitute valid "Objects" or "Predicates" connected to the previously generated "Subject" within the retrieved subgraph.
+3.  **Consistency-Weighted Beam Search:** The beam search algorithm is modified to rank candidates not just by cumulative log probability, but by a "Faithfulness Score" calculated as the overlap between the generated sequence and the retrieved triples.
+
+**5. Dataset or Benchmark**
+*   **TruthfulQA:** To measure the model's resistance to common misconceptions.
+*   **FEVER (Fact Extraction and VERification):** To test the ability to generate claims that match evidence.
+*   **HaluEval:** A large-scale collection of generated and human-annotated hallucinated samples for diverse tasks (summarization, QA, etc.).
+
+**6. Evaluation Metrics**
+*   **Factuality:** FactScore (atomic claim verification) and Q² (Question-generation Question-answering consistency).
+*   **Fluency:** Perplexity (measured by a larger teacher model like GPT-4) and MAUVE scores.
+*   **Constraint Satisfaction:** The percentage of generated entities that can be mapped back to the retrieved Knowledge Graph.
+
+**7. Baselines**
+*   **Standard RAG (Retrieval-Augmented Generation):** Simple context injection in the prompt.
+*   **Self-Correction (Self-Refine):** The model generates an initial draft and then "fact-checks" itself in a second pass.
+*   **Contrastive Decoding:** Using a smaller, "amnesiac" model to penalize common linguistic patterns in favor of factual ones.
+
+**8. Ablations**
+*   **No Steering:** Evaluate the impact of the IE-head and logit bias by removing the steering component.
+*   **Gold vs. Retrieved KG:** Compare performance using a "perfect" Knowledge Graph (gold labels) versus an automatically extracted (noisy) one to measure sensitivity to IE errors.
+*   **Fixed vs. Dynamic Bias:** Test whether a constant logit bias is superior to a bias that scales based on the model's internal uncertainty (entropy).
+
+**9. Failure Modes and Feasibility Risks**
+*   **Inference Latency:** Real-time triple extraction and logit manipulation increase the time-per-token. *Mitigation:* Use highly optimized, small IE models (e.g., REBEL) and pre-calculate subgraphs.
+*   **Graph Sparsity:** If the retrieved KG is missing a relation, the model might be "steered" away from a correct answer not present in the graph. *Mitigation:* Implement a "Gate" mechanism that reduces steering intensity if the model's original confidence is extremely high (e.g., >0.95).
+*   **Entity Disambiguation:** The model might struggle to map tokens to graph nodes if entities have multiple names. *Mitigation:* Use fuzzy string matching or embedding-based entity linking during the steering phase.

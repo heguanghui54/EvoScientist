@@ -1,0 +1,49 @@
+The following research proposal was developed through a collaborative multi-agent simulation involving roles for a Principal Investigator, Method Designer, Skeptical Reviewer, and Experiment Engineer.
+
+### 1. Title
+**Latent-Space Counterfactual Alignment (LSCA): Mitigating Occupational Gender Bias in Neural Machine Translation via Contrastive Adapter Tuning**
+
+### 2. Problem and Motivation
+Machine Translation (MT) systems frequently exhibit gender bias, particularly when translating from gender-neutral languages (e.g., English, Turkish) to gendered languages (e.g., Spanish, German, French). Models often rely on stereotypical associations—such as linking "doctor" with masculine pronouns and "nurse" with feminine ones—rather than linguistic context. Current solutions like Counterfactual Data Augmentation (CDA) often require retraining entire models or significantly degrade translation quality (BLEU scores) due to catastrophic forgetting of the original language distribution. There is a need for a modular, lightweight approach that decouples debiasing from the core translation task.
+
+### 3. Core Hypothesis
+By injecting lightweight adapters into a frozen pre-trained NMT model and training them using a dual-objective—standard cross-entropy for translation and a contrastive loss to minimize the distance between gender-swapped counterfactual pairs in the latent space—we can reduce stereotypical bias without sacrificing overall translation fluency.
+
+### 4. Method
+The proposed method, **Latent-Space Counterfactual Alignment (LSCA)**, involves the following steps:
+
+1.  **Architecture:** Use a frozen pre-trained Transformer (e.g., NLLB-200 or mBART-50). Insert Bottleneck Adapters after the feed-forward layers in both the encoder and decoder.
+2.  **Contrastive Objective:** For a given source sentence $S$ (e.g., "The doctor finished her shift"), generate a counterfactual pair $S'$ ("The doctor finished his shift"). The encoder produces hidden states $H$ and $H'$. We apply a Contrastive Loss (Cosine Similarity or InfoNCE) to minimize the distance between $H$ and $H'$ for the tokens corresponding to the occupation and the gendered pronoun.
+3.  **Joint Training:** The adapters are trained on a mixture of:
+    *   **Task A (Translation):** Standard parallel corpora (e.g., Europarl) to maintain translation quality.
+    *   **Task B (Alignment):** A smaller set of gender-balanced counterfactual pairs to enforce gender-neutral latent representations.
+4.  **Inference:** At test time, the model uses the aligned latent space to generate translations that are more sensitive to specific context rather than prior stereotypical probabilities.
+
+### 5. Dataset or Benchmark
+*   **Training:** A subset of WMT23 parallel data for general translation quality, augmented with a synthetic counterfactual dataset generated using the "Gender-Neutral Pipeline" (swapping pronouns and names in English).
+*   **Evaluation:**
+    *   **WinoMT:** A standard challenge set for gender bias in MT.
+    *   **MuST-SHE:** A dataset for evaluating gender bias in speech-to-text/translation contexts.
+    *   **FLORES-200:** To ensure no degradation in general translation performance across multiple language pairs.
+
+### 6. Evaluation Metrics
+*   **Primary Bias Metric:** Gender Accuracy (Acc) and $\Delta G$ (the difference in accuracy between masculine and feminine professional terms) as defined in the WinoMT benchmark.
+*   **Translation Quality:** BLEU, chrF++, and COMET scores to ensure the "utility" of the model remains intact.
+*   **Bias Amplification:** Measuring the change in the ratio of masculine/feminine output relative to the input distribution.
+
+### 7. Baselines
+*   **Original Pre-trained Model:** NLLB-200 (No debiasing).
+*   **CDA-Fine-tuning:** Fine-tuning the entire model on counterfactual augmented data.
+*   **Post-processing:** A rule-based system that replaces pronouns in the output based on a gender-neutrality dictionary.
+*   **Null-Space Projection (INLP):** A linear projection method used to remove gender information from word embeddings.
+
+### 8. Ablations
+*   **Adapter Placement:** Compare encoder-only vs. decoder-only vs. dual-adapter configurations.
+*   **Loss Weighting:** Vary the weight $\lambda$ of the contrastive loss relative to the cross-entropy loss.
+*   **Data Ratio:** Test performance when varying the percentage of counterfactual data (1%, 5%, 10%) in the training mix.
+*   **Frozen vs. Tuned:** Compare LSCA adapters against full model fine-tuning.
+
+### 9. Failure Modes and Feasibility Risks
+*   **Syntactic Mismatch:** In languages with heavy grammatical gender (e.g., French), changing a pronoun requires changing adjectives and articles. If the latent alignment only focuses on the pronoun, the decoder may produce grammatically inconsistent sentences (e.g., masculine noun with feminine adjective).
+*   **Semantic Drift:** Excessive contrastive alignment might "blur" the latent space so much that the model loses the ability to distinguish between actual gendered contexts (e.g., "The king" vs. "The queen").
+*   **Feasibility:** While adapters are efficient, generating high-quality counterfactual pairs for non-English source languages is difficult and may require LLM-based augmentation, increasing the preprocessing pipeline's complexity.

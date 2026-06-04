@@ -1,0 +1,42 @@
+### 1. Title
+**Contrastive Counterfactual Alignment (CCA): Robust Value Alignment for Autonomous Agents via Recursive Adjudication**
+
+### 2. Problem and Motivation
+Current alignment techniques, such as RLHF (Reinforcement Learning from Human Feedback) and DPO (Direct Preference Optimization), often focus on static, single-turn interactions. However, autonomous agents operating in multi-step environments face "value drift" and complex trade-offs (e.g., efficiency vs. safety, or privacy vs. helpfulness) that are not well-captured by simple preference pairs. Existing models often exhibit "sycophancy" or prioritize the most frequent training pattern rather than a robust ethical framework. There is a need for a method that forces agents to explicitly navigate value conflicts in a context-aware, agentic setting.
+
+### 3. Core Hypothesis
+By training an agent to adjudicate between its proposed action and a synthetically generated "counterfactual alternative" that prioritizes a competing moral or operational value, the agent will develop a more robust internal representation of value trade-offs, leading to higher alignment stability in out-of-distribution (OOD) scenarios compared to standard instruction tuning.
+
+### 4. Method
+The CCA framework consists of a three-stage pipeline:
+1.  **Action Proposal & Counterfactual Generation:** For a given state $S$ in an agentic task, the Actor model $M$ proposes an action $A_1$. A "Value Perturber" (a frozen LLM) generates a counterfactual action $A_2$ that achieves the same goal but violates a specific value constraint (e.g., it is faster but less secure).
+2.  **Recursive Adjudication:** An Adjudicator (using a "Constitutional" prompt) evaluates $A_1$ and $A_2$ against a set of hierarchical principles. It generates a "Value Rationale" explaining why one action is superior based on the specific trade-offs involved.
+3.  **Contrastive Fine-tuning:** The Actor model $M$ is fine-tuned using a modified DPO objective. Instead of just preferring $A_1$ over $A_2$, the loss is weighted by the "Rationale Strength" provided by the Adjudicator. This forces the model to learn the *logic* of the trade-off rather than just the surface-level preference.
+
+### 5. Dataset or Benchmark
+*   **Environment:** A modified version of **AgentBench** and **Machiavelli Benchmark**.
+*   **Data Generation:** We will use the **Social Chemistry 101** and **ETHICS** datasets to seed the "Value Perturber" with specific ethical dilemmas.
+*   **Context:** 10,000 multi-step trajectories where each step involves a potential value conflict (e.g., a file-management agent asked to delete a redundant but sensitive directory).
+
+### 6. Evaluation Metrics
+*   **Value Consistency Score (VCS):** The percentage of time the agent chooses the value-aligned action when the "efficient" action is tempting.
+*   **Helpfulness-Harmlessness Pareto Frontier:** Measuring the drop in task success rate (SR) relative to the increase in safety/alignment.
+*   **Robustness to Adversarial Prompting:** Performance on the **JailbreakBench** adapted for agentic workflows.
+*   **Moral Adjudication Accuracy:** Comparison of the model’s rationales against human-annotated gold-standard rationales.
+
+### 7. Baselines
+*   **SFT (Standard Fine-Tuning):** Model trained on successful task completion trajectories.
+*   **RLHF (PPO):** Standard reinforcement learning from a static reward model.
+*   **DPO (Direct Preference Optimization):** Standard preference-based tuning without counterfactual reasoning.
+*   **Constitutional AI (RLAIF):** The Anthropic-style approach using a basic critique-revision loop.
+
+### 8. Ablations
+*   **No Counterfactuals:** Training only on "correct" actions without explicit comparison to "tempting but wrong" actions.
+*   **No Rationale Weighting:** Using standard DPO without incorporating the Adjudicator’s reasoning into the loss function.
+*   **Fixed vs. Dynamic Values:** Testing if a static constitution performs better or worse than one that allows for context-dependent prioritization.
+
+### 9. Failure Modes and Feasibility Risks
+*   **Reward Hacking:** The agent might learn the specific linguistic patterns the Adjudicator prefers rather than the underlying values.
+*   **Performance Degradation (The "Alignment Tax"):** Strict value alignment may lead to an agent that is too "timid" to perform complex tasks effectively.
+*   **Computational Cost:** Generating counterfactuals and rationales for every training step significantly increases the pre-computation overhead for the dataset.
+*   **Feasibility:** Using high-performance open-source models (e.g., Llama-3-70B) as Adjudicators is computationally expensive but necessary for high-quality rationales.

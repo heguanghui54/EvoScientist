@@ -44,6 +44,7 @@ def main() -> None:
     for script in [
         "run_idea_generation.py",
         "run_direct_baseline.py",
+        "run_table1_proxy_baselines.py",
         "import_baseline_outputs.py",
         "normalize_system_outputs.py",
         "audit_full_trajectories.py",
@@ -472,6 +473,54 @@ def main() -> None:
     )
     assert set(table1_monica_aggregate["baselines"]) == {"AI Scientist-v2", "InternAgent"}
     assert "Table 1 Existing Baselines Monica/Gemini Judge Report" in table1_monica_md_path.read_text(
+        encoding="utf-8"
+    )
+    virtual_scientist_proxy_json_path = ROOT / "virtual_scientist_proxy_monica_report.json"
+    virtual_scientist_proxy_md_path = ROOT / "virtual_scientist_proxy_monica_report.md"
+    assert virtual_scientist_proxy_json_path.is_file(), "missing Virtual Scientist proxy JSON report"
+    assert virtual_scientist_proxy_md_path.is_file(), "missing Virtual Scientist proxy markdown report"
+    virtual_scientist_proxy = json.loads(
+        virtual_scientist_proxy_json_path.read_text(encoding="utf-8")
+    )
+    assert virtual_scientist_proxy["status"] == "partial"
+    assert virtual_scientist_proxy["completion_scope"] == "replacement_table1_virtual_scientist_proxy"
+    assert virtual_scientist_proxy["paper_exact"] is False
+    assert virtual_scientist_proxy["covered_baseline"] == "Virtual Scientist"
+    assert virtual_scientist_proxy["baseline_mode"] == "proxy_replacement_baseline"
+    assert virtual_scientist_proxy["idea_outputs"]["answers"] == 30
+    assert virtual_scientist_proxy["judge"]["provider"] == "monica"
+    assert virtual_scientist_proxy["judge"]["model"] == "gemini-3-flash-preview"
+    assert virtual_scientist_proxy["judge"]["input_records"] == 60
+    assert virtual_scientist_proxy["judge"]["output_records"] == 60
+    for query_id in range(1, 31):
+        assert (
+            ROOT / "artifacts" / "idea_outputs" / "Virtual Scientist" / f"query_{query_id:02d}" / "answer.txt"
+        ).is_file()
+    assert sum(
+        1
+        for line in (
+            ROOT / "artifacts" / "judge_inputs" / "evosci_vs_virtual_scientist_proxy_monica.jsonl"
+        ).read_text(encoding="utf-8").splitlines()
+        if line.strip()
+    ) == 60
+    assert sum(
+        1
+        for line in (
+            ROOT / "artifacts" / "judge_outputs" / "evosci_vs_virtual_scientist_proxy_monica.jsonl"
+        ).read_text(encoding="utf-8").splitlines()
+        if line.strip()
+    ) == 60
+    virtual_scientist_proxy_aggregate = json.loads(
+        (ROOT / "artifacts" / "tables" / "evosci_vs_virtual_scientist_proxy_monica.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    assert set(virtual_scientist_proxy_aggregate["baselines"]) == {"Virtual Scientist"}
+    assert (
+        virtual_scientist_proxy_aggregate["baselines"]["Virtual Scientist"]["dimensions"]["Clarity"]["n"]
+        == 60
+    )
+    assert "Virtual Scientist Proxy Monica/Gemini Judge Report" in virtual_scientist_proxy_md_path.read_text(
         encoding="utf-8"
     )
     virtual_scientist_probe_json_path = ROOT / "virtual_scientist_baseline_probe.json"
@@ -925,7 +974,7 @@ def main() -> None:
     assert action_plan_md_path.is_file(), "missing paper reproduction action plan markdown"
     action_plan = json.loads(action_plan_json_path.read_text(encoding="utf-8"))
     assert action_plan["status"] == "incomplete"
-    assert action_plan["action_count"] >= 4
+    assert action_plan["action_count"] == 6
     assert "final_gate" in action_plan
     assert action_plan["baseline_readiness_matrix"] == "reproduction/baseline_readiness_matrix.json"
     assert action_plan["baseline_rerun_manifest"] == "reproduction/baseline_rerun_manifest.json"
@@ -940,7 +989,13 @@ def main() -> None:
     action_plan_md = action_plan_md_path.read_text(encoding="utf-8")
     assert "Paper Reproduction Action Plan" in action_plan_md
     assert "gemini-3-flash" in action_plan_md
-    assert "virtual_scientist_baseline_probe.json" in action_plan_md
+    planned_systems = {action.get("system") for action in action_plan["actions"] if action.get("system")}
+    assert "Virtual Scientist" not in planned_systems
+    assert "AI-Researcher" in planned_systems
+    assert "Hypogenic" in planned_systems
+    assert "Novix" in planned_systems
+    assert "K-Dense" in planned_systems
+    assert "ai_researcher_baseline_probe.json" in action_plan_md
     assert "hypogenic_baseline_probe.json" in action_plan_md
     assert "novix_baseline_probe.json" in action_plan_md
     assert "k_dense_baseline_probe.json" in action_plan_md

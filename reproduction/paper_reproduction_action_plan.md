@@ -11,24 +11,6 @@ paper-level completion audit can pass.
 
 ### 1. table1_llm_idea_generation / baseline_output_import_or_generation
 
-Required evidence: 30 answer.txt files under reproduction/artifacts/idea_outputs/Virtual Scientist/
-
-System: Virtual Scientist
-Probe: reproduction/virtual_scientist_baseline_probe.json
-Note: Current probe maps Virtual Scientist to VirSci/Virtual-Scientists. It is a runnable open-source collaboration platform, but not a drop-in runner for the 30 recovered EvoScientist queries.
-
-Commands:
-
-```bash
-git clone https://github.com/open-sciencelab/Virtual-Scientists $HOME/research/Virtual-Scientists
-# Download the AMiner-derived Papers, Embeddings, Authors, and adjacency data linked in the VirSci README.
-# Patch sci_platform/sci_platform.py paths and run Ollama llama3.1/mxbai-embed-large under a pinned adapter protocol.
-# Extract generated idea/abstract fields from team_info/*_dialogue.json into outputs/evoscientist_table1_queries/virtual_scientist/query_XX.md
-.venv/bin/python reproduction/import_baseline_outputs.py --system-name 'Virtual Scientist' --source $HOME/research/Virtual-Scientists/outputs/evoscientist_table1_queries/virtual_scientist --source-format directory --output-root reproduction/artifacts/idea_outputs --strict
-```
-
-### 2. table1_llm_idea_generation / baseline_output_import_or_generation
-
 Required evidence: 30 answer.txt files under reproduction/artifacts/idea_outputs/AI-Researcher/
 
 System: AI-Researcher
@@ -46,7 +28,7 @@ Commands:
 .venv/bin/python reproduction/audit_reproduction_artifacts.py --baseline AI-Researcher --judge-inputs reproduction/artifacts/judge_inputs/evosci_vs_ai_researcher.jsonl --judge-outputs reproduction/artifacts/judge_outputs/evosci_vs_ai_researcher_deepseek.jsonl --aggregate-json reproduction/artifacts/tables/evosci_vs_ai_researcher_deepseek.json
 ```
 
-### 3. table1_llm_idea_generation / baseline_output_import_or_generation
+### 2. table1_llm_idea_generation / baseline_output_import_or_generation
 
 Required evidence: 30 answer.txt files under reproduction/artifacts/idea_outputs/Hypogenic/
 
@@ -63,7 +45,7 @@ Commands:
 .venv/bin/python reproduction/import_baseline_outputs.py --system-name Hypogenic --source $HOME/research/hypogenic/outputs/evoscientist_table1_queries/hypogenic --source-format directory --output-root reproduction/artifacts/idea_outputs --strict
 ```
 
-### 4. table1_llm_idea_generation / baseline_output_import_or_generation
+### 3. table1_llm_idea_generation / baseline_output_import_or_generation
 
 Required evidence: 30 answer.txt files under reproduction/artifacts/idea_outputs/Novix/
 
@@ -80,7 +62,7 @@ Commands:
 .venv/bin/python reproduction/import_baseline_outputs.py --system-name Novix --source $HOME/research/novix/outputs/evoscientist_table1_queries/novix --source-format directory --output-root reproduction/artifacts/idea_outputs --strict
 ```
 
-### 5. table1_llm_idea_generation / baseline_output_import_or_generation
+### 4. table1_llm_idea_generation / baseline_output_import_or_generation
 
 Required evidence: 30 answer.txt files under reproduction/artifacts/idea_outputs/K-Dense/
 
@@ -97,7 +79,7 @@ git clone https://github.com/K-Dense-AI/k-dense-byok $HOME/research/k-dense-byok
 .venv/bin/python reproduction/import_baseline_outputs.py --system-name K-Dense --source $HOME/research/k-dense-byok/outputs/evoscientist_table1_queries/k_dense --source-format directory --output-root reproduction/artifacts/idea_outputs --strict
 ```
 
-### 6. table1_llm_idea_generation / paper_judge_completion
+### 5. table1_llm_idea_generation / paper_judge_completion
 
 Required evidence: 420 swapped pairwise records plus Gemini-3-flash judge outputs
 
@@ -111,7 +93,7 @@ Commands:
 .venv/bin/python reproduction/compare_reproduction_to_paper.py --actual-json reproduction/artifacts/tables/idea_generation_win_tie_lose.json --section table1_llm_idea_generation --require-all
 ```
 
-### 7. table2_human_idea_generation / human_label_import
+### 6. table2_human_idea_generation / human_label_import
 
 Required evidence: inputs.jsonl, labels.jsonl, and aggregate.json for three PhD-level annotators
 

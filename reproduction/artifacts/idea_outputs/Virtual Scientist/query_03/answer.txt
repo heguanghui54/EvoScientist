@@ -1,0 +1,43 @@
+### 1. Title
+**CRR-Eval: Contrastive Rubric-Guided Reasoning for Calibrating LLM-as-a-Judge**
+
+### 2. Problem and Motivation
+Automated evaluation using Large Language Models (LLM-as-a-Judge) has become the standard for scaling model assessment. However, these judges suffer from significant systematic biases, including **position bias** (favoring the first response), **verbosity bias** (favoring longer responses regardless of quality), and **self-preference bias** (favoring outputs similar to their own training data). Current methods often rely on simple zero-shot or few-shot prompting, which fails to capture the nuanced reasoning required for complex instructions, leading to low correlation with human expert consensus.
+
+### 3. Core Hypothesis
+Decomposing the evaluation process into a three-stage "Contrastive Rubric-Guided Reasoning" (CRR) framework will significantly improve judge accuracy. Specifically, by forcing the judge to extract specific evidence for and against a set of fine-grained rubrics *before* comparing two models, we can minimize heuristic-driven biases (like length) and maximize alignment with human-derived ground truth.
+
+### 4. Method
+The CRR-Eval framework consists of three distinct stages:
+
+1.  **Dynamic Rubric Generation:** For a given prompt, a "Rubric Agent" generates five specific, non-overlapping criteria (e.g., factual precision, logical flow, constraint satisfaction).
+2.  **Contrastive Evidence Extraction:** The judge is presented with Model A and Model B. Instead of a direct comparison, it must fill a "Contrastive Matrix" where it identifies:
+    *   Evidence present in A but missing in B for each rubric.
+    *   Evidence present in B but missing in A for each rubric.
+    *   Specific hallucinations or errors found in each.
+3.  **Calibrated Aggregation:** The judge synthesizes the contrastive matrix into a final score. To mitigate position bias, the judge performs this process twice (switching the order of A and B) and a "Consistency Agent" flags discrepancies for a final tie-breaking reasoning step if the results are contradictory.
+
+### 5. Dataset or Benchmark
+*   **MT-Bench:** To test general-purpose conversation and reasoning.
+*   **RewardBench:** To evaluate the judge's ability to distinguish between subtle differences in model outputs across various categories (Chat, Reasoning, Safety).
+*   **LMSYS Chatbot Arena Conversations:** Utilizing the subset of human-labeled pairwise comparisons to measure alignment with human preferences.
+
+### 6. Evaluation Metrics
+*   **Human-Agreement Correlation:** Spearman’s $\rho$ and Kendall’s $\tau$ between the automated scores and human expert labels.
+*   **Bias Sensitivity Index (BSI):** Specifically measuring the change in win rate when response lengths are artificially padded (Verbosity Bias) or positions are swapped (Position Bias).
+*   **Consistency Score:** The percentage of trials where the judge provides the same verdict regardless of the input ordering of Model A and Model B.
+
+### 7. Baselines
+*   **GPT-4 Direct (Standard):** The default "LLM-as-a-Judge" prompt used in the MT-Bench repository.
+*   **Prometheus-2:** A specialized open-source evaluator model designed for rubric-based scoring.
+*   **Chain-of-Thought (CoT) Judge:** A standard judge that is simply asked to "think step-by-step" without the contrastive matrix or dynamic rubrics.
+
+### 8. Ablations
+*   **No Dynamic Rubrics:** Using a generic set of rubrics (Helpfulness, Honesty, Harmlessness) for all prompts instead of prompt-specific ones.
+*   **No Contrastive Step:** Moving directly from rubrics to scoring without the explicit A-vs-B evidence extraction.
+*   **Single-Pass vs. Dual-Pass:** Removing the position-swapping consistency check to measure the trade-off between accuracy and inference cost.
+
+### 9. Failure Modes and Feasibility Risks
+*   **Rubric Hallucination:** The Rubric Agent may generate criteria that are irrelevant to the prompt or impossible to verify.
+*   **Inference Latency/Cost:** The multi-stage reasoning and dual-pass consistency checks triple the number of tokens required per evaluation, which may be prohibitive for large-scale benchmarks.
+*   **Recursive Bias:** If the judge used for evaluation is the same model family as the Rubric Agent, it may reinforce its own internal biases (Self-Correction Paradox). This will be mitigated by using a stronger model (e.g., GPT-4o) to evaluate a weaker model (e.g., Llama-3-8B).

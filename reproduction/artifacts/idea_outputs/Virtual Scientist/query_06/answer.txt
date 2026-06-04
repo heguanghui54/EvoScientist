@@ -1,0 +1,42 @@
+### 1. Title
+**Cross-Lingual Phonetic Prototype Alignment (CPPA) for Low-Resource Speech Recognition**
+
+### 2. Problem and Motivation
+State-of-the-art Automatic Speech Recognition (ASR) systems rely on large-scale self-supervised learning (SSL) models (e.g., XLS-R, MMS). However, fine-tuning these models on languages with extremely limited labeled data (1–10 hours) often leads to overfitting or "catastrophic forgetting" of the acoustic knowledge learned during pre-training. Current methods typically use linear probes or standard adapters that do not explicitly leverage the phonetic similarities between high-resource and low-resource languages, resulting in poor generalization to unseen speakers and noisy environments in the target language.
+
+### 3. Core Hypothesis
+By constraining the acoustic representations of a low-resource language to align with a set of "phonetic prototypes" learned from high-resource languages, the model can leverage shared articulatory features, thereby reducing the amount of labeled data required to achieve high recognition accuracy.
+
+### 4. Method
+The proposed CPPA framework consists of three stages:
+
+1.  **Prototype Discovery:** Using a pre-trained multilingual SSL model (e.g., XLS-R 53), extract frame-level representations from a set of high-resource languages (e.g., English, Spanish, Mandarin). Apply k-means clustering to these representations to initialize a "Universal Prototype Bank" ($P$), where each prototype represents a latent phonetic unit.
+2.  **Alignment Fine-Tuning:** During fine-tuning on the low-resource target language, introduce a multi-task objective:
+    *   **CTC Loss:** Standard Connectionist Temporal Classification loss for character/subword prediction.
+    *   **Prototypical Contrastive Loss:** A loss function that encourages the encoder output at each time step to be close to its nearest prototype in $P$ while pushing it away from others. This forces the model to map target language sounds to a shared universal phonetic space.
+3.  **Dynamic Prototype Adaptation:** Allow the prototypes in $P$ to update slowly via a moving average to accommodate unique phonemes in the target language that may not have been present in the high-resource set (e.g., specific click sounds or tonal variations).
+4.  **Architecture:** The encoder remains the frozen or partially frozen SSL backbone, while a shallow Transformer decoder or a CTC head processes the prototype-aligned features.
+
+### 5. Dataset or Benchmark
+*   **Target Languages:** Use the **Common Voice** dataset, specifically selecting languages with < 10 hours of validated data (e.g., Swahili, Kyrgyz, Tatar, and Guarani).
+*   **High-Resource Source:** Use the **LibriSpeech** (English) and **VoxPopuli** (European languages) subsets for initial prototype generation.
+
+### 6. Evaluation Metrics
+*   **Word Error Rate (WER):** Primary metric for intelligibility.
+*   **Character Error Rate (CER):** To assess performance on morphologically rich or agglutinative languages.
+*   **Data Efficiency Gain:** Measuring the WER improvement at different data intervals (1h, 5h, 10h).
+
+### 7. Baselines
+*   **Vanilla Fine-tuning:** Standard fine-tuning of XLS-R with a CTC head on the target language.
+*   **Wav2vec-U 2.0:** An unsupervised ASR approach that does not use target labels.
+*   **Bottleneck Adapters:** Standard residual adapters inserted into the SSL layers without phonetic alignment.
+
+### 8. Ablations
+*   **Effect of Prototype Bank Size:** Testing varying numbers of clusters ($k=128, 256, 512, 1024$).
+*   **Frozen vs. Trainable Prototypes:** Evaluating whether updating the prototype bank during fine-tuning helps or hurts stability.
+*   **Source Language Diversity:** Comparing prototypes derived from a single language (English) versus a diverse multilingual set.
+
+### 9. Failure Modes and Feasibility Risks
+*   **Phonetic Mismatch:** If the target language contains phonemes significantly different from the high-resource source (e.g., specific non-pulmonic consonants), the prototype alignment may act as a "distractor" and increase WER.
+*   **Computational Overhead:** The contrastive loss calculation across all frames increases training time compared to standard CTC fine-tuning.
+*   **Prototype Collapse:** A risk where all target features map to a single prototype; this will be mitigated by using a temperature-scaled softmax and diversity-promoting regularization in the contrastive loss.

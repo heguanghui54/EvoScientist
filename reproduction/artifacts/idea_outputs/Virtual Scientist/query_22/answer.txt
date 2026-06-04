@@ -1,0 +1,45 @@
+### Research Proposal: DocShield—Evaluating the Robustness of Code LLMs against In-Context Malicious Documentation Injection
+
+#### 1. Title
+DocShield: Quantifying the Propensity of Code LLMs to Generate Vulnerable Code via Adversarial Contextual Documentation.
+
+#### 2. Problem and Motivation
+As developers increasingly use Retrieval-Augmented Generation (RAG) and long-context windows to provide LLMs with library documentation, a new attack vector emerges: **Indirect Prompt Injection via Documentation.** If an attacker can influence the documentation of a library (e.g., via a compromised Wiki, a malicious PR to a README, or a poisoned package), they can potentially trick the LLM into generating insecure code for users of that library. Current security research focuses on direct prompt injection or training-time poisoning; however, the vulnerability of LLMs to "malicious instructions disguised as documentation" remains under-explored.
+
+#### 3. Core Hypothesis
+Code LLMs prioritize local context (provided documentation) over general safety alignment when the documentation provides "functional" instructions. Specifically, LLMs will follow insecure coding patterns (e.g., disabling SSL, using weak crypto) if the provided context justifies these patterns as "standard practice" or "necessary for compatibility."
+
+#### 4. Method
+The study follows a three-stage pipeline:
+1.  **Poisoned Context Generation:** Create a set of adversarial documentation snippets (READMEs, Docstrings) for common coding tasks. Each snippet contains a "malicious instruction" embedded within legitimate-looking technical text (e.g., "For performance reasons, use `md5` for password hashing in this framework").
+2.  **Code Generation Task:** Provide the LLM with the poisoned context and a natural language task (e.g., "Write a login function using the framework described above").
+3.  **Vulnerability Analysis:** Pass the generated code through a two-tier evaluation:
+    *   **Static Analysis:** Use tools like Bandit or Semgrep to detect known vulnerability patterns.
+    *   **Functional Testing:** Execute the code to ensure it is syntactically correct and performs the requested task while maintaining the vulnerability.
+
+#### 5. Dataset or Benchmark
+*   **The "DocPoison" Dataset:** A curated set of 200 pairs of (Legitimate Documentation, Poisoned Documentation) across five languages (Python, JavaScript, Go, C++, Java).
+*   **Vulnerability Classes:** Focused on the OWASP Top 10, specifically: Insecure Deserialization, Broken Access Control, Cryptographic Failures, and Injection.
+*   **Tasks:** Standardized coding prompts derived from HumanEval and MBPP, modified to require the use of the "poisoned" library.
+
+#### 6. Evaluation Metrics
+*   **Vulnerability Injection Rate (VIR):** The percentage of generated code snippets that successfully incorporate the insecure pattern suggested in the context.
+*   **Instruction Adherence Score (IAS):** A measure of how closely the LLM followed the documentation versus its internal pre-trained knowledge.
+*   **Stealth Score:** The percentage of poisoned snippets that pass standard linters (e.g., Flake8) but fail security scanners (e.g., Bandit).
+*   **Pass@k:** To ensure that the injected vulnerability does not break the actual functionality of the code.
+
+#### 7. Baselines
+*   **Zero-Shot (No Context):** The model generates code without any library documentation.
+*   **Clean Context:** The model generates code using standard, secure library documentation.
+*   **Direct Instruction:** A model prompted directly to "Write insecure code" (to measure the effectiveness of the "documentation" disguise vs. a direct attack).
+
+#### 8. Ablations
+*   **Context Positioning:** Placing the malicious instruction at the beginning, middle, or end of the documentation.
+*   **Instruction Evasion:** Phrasing the vulnerability as a "requirement" versus a "recommendation" versus a "legacy workaround."
+*   **Model Scale:** Testing across different parameter counts (e.g., Llama-3 8B vs. 70B) to see if larger models are more or less susceptible to contextual influence.
+
+#### 9. Failure Modes and Feasibility Risks
+*   **Model Refusal:** High-alignment models (like GPT-4o) might recognize the insecure pattern and trigger a safety refusal, leading to low VIR but high safety.
+*   **Context Overload:** If the documentation is too long or complex, the LLM might ignore the specific malicious instruction by accident rather than by design.
+*   **Syntactic Fragility:** The injected vulnerability might cause the code to fail execution, making the attack "noisy" and easily detectable by the user.
+*   **Feasibility:** The experiment requires no manual labeling beyond the initial dataset creation, making it highly scalable across various open-source models.

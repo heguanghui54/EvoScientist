@@ -1,0 +1,44 @@
+This proposal represents the consensus of a multi-agent virtual research team (Principal Investigator, Method Designer, Skeptical Reviewer, and Experiment Engineer) focused on optimizing the efficiency-accuracy tradeoff in LLM evaluation.
+
+### 1. Title
+**Information-Theoretic Item Pruning (ITIP): Constructing Minimalist, High-Fidelity LLM Leaderboards**
+
+### 2. Problem and Motivation
+Current LLM leaderboards (e.g., MMLU, OpenCompass) rely on thousands of static test items. This leads to high computational costs, slow iteration cycles, and significant redundancy, as many questions fail to distinguish between top-tier models or provide overlapping information. As models scale, the cost of exhaustive evaluation becomes a bottleneck for researchers. There is a critical need for a methodology that identifies the "minimal spanning set" of evaluation items that preserves the global ranking of models.
+
+### 3. Core Hypothesis
+A subset of evaluation items—selected based on high **discrimination power** (via Item Response Theory) and low **inter-item redundancy** (via Mutual Information)—can replicate the model rankings of a full-scale benchmark (e.g., 10,000+ items) using less than 20% of the original data, maintaining a Spearman rank correlation of $\rho > 0.98$.
+
+### 4. Method
+The proposed method, **ITIP**, follows a three-stage pipeline:
+1.  **Item Profiling (IRT):** Analyze historical performance data of $N$ models on a large benchmark using a 2-Parameter Logistic (2PL) Item Response Theory model. For each item $i$, calculate its difficulty ($\beta_i$) and discrimination ($\alpha_i$).
+2.  **Redundancy Filtering:** Construct a similarity matrix between items based on model error correlations. Use a greedy sub-modular optimization approach to select items that maximize the "Information Gain" while penalizing the selection of items that are highly correlated (i.e., redundant).
+3.  **Dynamic Weighting:** Assign weights to the selected subset based on their representative power of the discarded items, ensuring the final score remains on the same scale as the original benchmark.
+
+### 5. Dataset or Benchmark
+*   **Primary Source:** The **MMLU (Massive Multitask Language Understanding)** dataset, specifically the "test" splits across all 57 subjects.
+*   **Alternative:** **Chatbot Arena (LMSYS)** crowd-sourced battle data (using Elo ratings as the ground truth to see if a subset of prompts can predict global Elo).
+*   **Model Pool:** Performance logs from at least 30 diverse models (e.g., Llama-3, GPT-4, Mistral, Qwen) to ensure the IRT parameters are robust.
+
+### 6. Evaluation Metrics
+*   **Rank Fidelity:** Spearman’s $\rho$ and Kendall’s $\tau$ between the pruned leaderboard and the full-dataset leaderboard.
+*   **Efficiency Gain:** The ratio of (Original Item Count / Pruned Item Count).
+*   **Stability:** The variance of model ranks when the pruned subset is applied to "held-out" models not used in the initial IRT profiling.
+*   **Root Mean Square Error (RMSE):** The difference between predicted scores on the subset vs. actual scores on the full set.
+
+### 7. Baselines
+*   **Random Sampling:** Selecting $k$ items at random.
+*   **Difficulty-Hard Sampling:** Selecting only the items with the lowest pass rates (the "hardest" questions).
+*   **Category-Proportional Sampling:** Reducing items while maintaining the original percentage of subjects (e.g., 5% from Math, 5% from History).
+*   **Variance-Based Selection:** Selecting items where model performance shows the highest variance.
+
+### 8. Ablations
+*   **IRT vs. Non-IRT:** Evaluating the subset without the discrimination parameter ($\alpha$).
+*   **Redundancy Penalty:** Removing the sub-modular optimization step to see if "high discrimination" alone is sufficient (or if it leads to clusters of identical questions).
+*   **Sample Size Sensitivity:** Testing the method with varying subset sizes (1%, 5%, 10%, 20%, 50%) to find the "elbow point" of the efficiency-accuracy curve.
+
+### 9. Failure Modes and Feasibility Risks
+*   **Overfitting to Model Family:** A subset pruned based on Llama-style models might not accurately rank a new architecture (e.g., a state-space model or a heavily quantized model).
+*   **Data Contamination:** If the pruned "high-value" items are leaked into training sets, the leaderboard's integrity collapses faster than a larger, more redundant one.
+*   **Subject Neglect:** The optimization might favor "STEM" questions if they show higher discrimination, effectively "deleting" Humanities from the leaderboard if those questions are statistically noisier.
+*   **Feasibility:** Requires access to raw per-item pass/fail data for a large number of models, which is not always publicly released by leaderboard maintainers. (Mitigation: Use Open LLM Leaderboard raw data).

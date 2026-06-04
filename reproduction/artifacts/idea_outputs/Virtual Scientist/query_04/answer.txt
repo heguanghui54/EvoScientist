@@ -1,0 +1,48 @@
+This proposal is generated as a replacement-baseline research idea for an EvoScientist paper reproduction. It simulates the output of a multi-agent "Virtual Scientist" team (PI, Method Designer, Skeptic, and Engineer).
+
+### 1. Title
+**MedDebate: Reducing Diagnostic Hallucinations via Multi-Agent Persona-Based Contestability**
+
+### 2. Problem and Motivation
+Large Language Models (LLMs) used in healthcare often suffer from "premature closure"—the tendency to fixate on a single diagnosis early in the reasoning process—and "hallucinations" of clinical evidence. In clinical practice, complex cases are often solved through multidisciplinary team (MDT) meetings where specialists challenge each other's assumptions. Current single-agent clinical AI lacks this internal check-and-balance, leading to overconfident but incorrect medical advice. There is a critical need for a system that mimics the adversarial and collaborative nature of human medical peer review to improve diagnostic reliability.
+
+### 3. Core Hypothesis
+A multi-agent framework employing a "Debate and Synthesis" protocol—where specialized agents (e.g., a Diagnostic Lead, a Skeptical Peer, and a Synthesis Judge) iteratively challenge clinical reasoning—will significantly reduce diagnostic errors and improve evidence-grounding compared to single-agent Chain-of-Thought (CoT) prompting.
+
+### 4. Method
+The proposed system, **MedDebate**, utilizes three distinct LLM-based agents:
+1.  **The Diagnostic Lead:** Generates an initial differential diagnosis and cites supporting evidence from the provided clinical vignette.
+2.  **The Skeptical Peer:** Specifically tasked with finding "disconfirming evidence." This agent must identify symptoms or lab values that do *not* fit the Lead’s diagnosis and propose at least one alternative "must-not-miss" diagnosis.
+3.  **The Synthesis Judge:** Reviews the transcript of the Lead and the Skeptic. It evaluates the strength of evidence for each claim and produces a final ranked differential diagnosis.
+
+**Workflow:**
+*   **Step 1:** Input clinical case to the Lead.
+*   **Step 2:** Lead’s output is passed to the Skeptic for critique.
+*   **Step 3:** Lead is allowed one "rebuttal" to address the Skeptic’s concerns.
+*   **Step 4:** The Judge synthesizes the entire conversation into a final output.
+
+### 5. Dataset or Benchmark
+*   **MedQA (USMLE):** To test general medical knowledge and reasoning.
+*   **NEJM Case Records:** A subset of "Case Records of the Massachusetts General Hospital" from the New England Journal of Medicine. These represent high-complexity, real-world cases that require multi-step deduction.
+
+### 6. Evaluation Metrics
+*   **Diagnostic Accuracy (Top-1 and Top-3):** Percentage of cases where the correct diagnosis is in the final list.
+*   **Evidence Grounding Score:** A manual or LLM-based rubric measuring how many cited "facts" in the reasoning process are actually present in the input vignette (to measure hallucination).
+*   **Calibration Error:** Measuring the alignment between the model’s reported confidence and its actual accuracy.
+
+### 7. Baselines
+*   **Zero-Shot LLM:** Standard prompting (e.g., GPT-4 or Med-PaLM 2 style).
+*   **Chain-of-Thought (CoT):** "Think step-by-step" single-agent reasoning.
+*   **Self-Reflection:** A single agent that is asked to "review its own answer" before finalizing.
+*   **Ensemble (Majority Vote):** Running the same prompt 3–5 times and taking the most frequent answer.
+
+### 8. Ablations
+*   **No-Skeptic:** Removing the adversarial agent to see if collaboration alone (two Leads) is sufficient.
+*   **No-Persona:** Removing the specialized roles (Lead/Skeptic) and using generic "Agent 1" and "Agent 2" labels.
+*   **Single-Turn:** Removing the rebuttal phase to measure the impact of iterative dialogue.
+
+### 9. Failure Modes and Feasibility Risks
+*   **Synergistic Hallucination:** Both agents might agree on an incorrect diagnosis, reinforcing each other's errors (groupthink).
+*   **Computational Cost:** Multi-agent debates significantly increase token usage and latency compared to single-inference calls.
+*   **Persona Collapse:** The LLM may struggle to maintain a truly "skeptical" stance if the initial diagnosis is presented too convincingly, leading to "sycophancy" where the skeptic simply agrees with the lead.
+*   **Feasibility:** High. This can be implemented using existing LLM APIs (GPT-4o, Claude 3.5 Sonnet) and open-source medical datasets.

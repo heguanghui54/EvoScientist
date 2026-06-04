@@ -1,0 +1,42 @@
+This proposal represents a synthesized research direction developed through a multi-agent simulation involving a Principal Investigator, Method Designer, Skeptical Reviewer, and Experiment Engineer.
+
+### 1. Title
+**Polyphonic-Latent Bridge (PLB): Enhancing Multi-Event Compositionality in General-Purpose Audio Foundation Models**
+
+### 2. Problem and Motivation
+Current audio foundation models (e.g., AudioLDM, Audiobox) excel at generating single-source audio or broad environmental textures. However, they struggle with **compositional complexity**—specifically, the ability to accurately render multiple, distinct audio events that overlap in time (polyphony) or follow a strict temporal sequence. When prompted with complex scenes (e.g., "A dog barks in the foreground while a distant chainsaw runs and wind howls"), models often "smear" the audio features, leading to spectral leakage where the dog bark takes on the texture of the chainsaw, or they omit events entirely. This limitation prevents their use in professional sound design and realistic virtual environment synthesis.
+
+### 3. Core Hypothesis
+By introducing a **Temporal-Event Query (TEQ)** mechanism that decomposes a text prompt into discrete event-tokens before the latent diffusion process, the model can better disentangle concurrent audio sources in the latent space, resulting in higher fidelity and better adherence to multi-event prompts.
+
+### 4. Method
+The PLB architecture consists of three components:
+1.  **Event Parser (LLM-based):** A frozen LLM (e.g., Llama-3-8B) parses the input prompt into a structured JSON of events, each with an estimated onset, duration, and semantic description.
+2.  **Cross-Attention Event Router:** Instead of a global text embedding, the model uses the parsed event-tokens. These tokens are fed into a modified Cross-Attention layer where each token is "routed" to specific temporal regions of the latent audio representation (using a learned positional bias).
+3.  **Latent Diffusion Model (LDM):** A standard U-Net or DiT (Diffusion Transformer) backbone operates on a compressed latent space (via EnCodec or DAC). The U-Net is augmented with the Event Router to ensure that during the denoising process, the gradients for "dog bark" and "chainsaw" are applied to distinct, though potentially overlapping, latent clusters.
+
+### 5. Dataset or Benchmark
+*   **AudioCaps & Clotho:** Standard datasets for general audio-language grounding.
+*   **Synthetic Polyphonic Mixes (SPM):** A custom-generated dataset created by mixing 3–5 distinct clips from AudioSet with known timestamps. This provides a "ground truth" for whether the model successfully preserved all requested events.
+*   **WavCaps:** For large-scale pre-training.
+
+### 6. Evaluation Metrics
+*   **FAD (Frechet Audio Distance):** To measure general distribution similarity to real audio.
+*   **Event-Specific CLIP-Score:** Using a pre-trained AudioCLIP model to check if each individual event requested in the prompt is detectable in the output.
+*   **Overlap Fidelity (OF):** A new metric calculating the Signal-to-Distortion Ratio (SDR) of individual events extracted from the generated mix via a pre-trained source separation model.
+
+### 7. Baselines
+*   **AudioLDM-2:** The current state-of-the-art in latent diffusion for audio.
+*   **AudioGen:** An autoregressive baseline that generates audio tokens directly.
+*   **Stable Audio Open:** A recent high-fidelity open-weights model.
+
+### 8. Ablations
+*   **Global vs. Routed Attention:** Comparing standard global text embeddings against the Event Router.
+*   **Manual vs. LLM Parsing:** Testing if the model performs better when humans provide the event timestamps versus the LLM's automated parsing.
+*   **Latent Bottleneck Size:** Varying the compression ratio of the VAE to see at what point polyphonic information is lost.
+
+### 9. Failure Modes and Feasibility Risks
+*   **Temporal Hallucination:** The LLM parser might assign timestamps that are physically impossible or contradictory, leading to warped audio.
+*   **Compute Intensity:** Training a DiT-based model with high-resolution cross-attention is computationally expensive, requiring significant GPU hours (A100/H100 cluster).
+*   **Source Bleeding:** In very dense mixes (5+ events), the latent space may still collapse, causing "audio artifacts" where different sounds merge into unidentifiable noise.
+*   **Data Scarcity:** While single-event data is plentiful, high-quality "captioned polyphonic" data is rare, necessitating the reliance on synthetic mixes which may not capture natural acoustic interactions (e.g., reverb matching).

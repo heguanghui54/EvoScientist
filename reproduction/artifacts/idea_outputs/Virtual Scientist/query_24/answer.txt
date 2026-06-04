@@ -1,0 +1,45 @@
+### 1. Title
+**H-RAG: Hierarchical Hypothesis-Driven Retrieval for Multi-Hop Question Answering**
+
+### 2. Problem and Motivation
+Standard Retrieval-Augmented Generation (RAG) systems typically rely on a single-step retrieval process based on the user’s initial query. However, multi-hop reasoning tasks require connecting disparate pieces of information where the "bridge" evidence (the second or third hop) is often semantically distant from the original query. Existing iterative RAG methods often suffer from "retrieval drift," where irrelevant information retrieved in early steps misleads subsequent queries, or "semantic blindness," where the system cannot identify the missing link required to reach the final answer.
+
+### 3. Core Hypothesis
+By framing multi-hop retrieval as a tree-search problem—where an LLM generates multiple competing "knowledge hypotheses" at each step and a cross-encoder prunes low-utility paths—we can significantly improve the recall of "bridge documents" and overall reasoning accuracy compared to linear iterative retrieval.
+
+### 4. Method
+The H-RAG framework operates as an agentic loop with three distinct components:
+
+1.  **Hypothesis Generator:** Given the original query $Q$ and current context $C_t$, the LLM generates $N$ distinct "missing information" hypotheses (e.g., "To answer who directed the movie starring X, I first need to find out who starred in movie X").
+2.  **Breadth-First Retrieval:** Each hypothesis is used as a query to retrieve the top-$K$ documents. This creates a search tree where each node is a retrieved snippet.
+3.  **Path Pruning & Integration:** A cross-encoder (e.g., BGE-Reranker) scores the relevance of the retrieved snippets relative to the *original* query and the *current* reasoning path. Only the top $M$ paths are retained.
+4.  **Termination Logic:** At each step, the LLM evaluates if the current context $C_t$ contains sufficient information to answer $Q$. If yes, it generates the final answer; if no, it increments the hop count and repeats.
+
+### 5. Dataset or Benchmark
+*   **HotpotQA (Distractor Setting):** Specifically focusing on the "hard" multi-hop questions.
+*   **MuSiQue-Ans:** A more challenging multi-hop dataset designed to minimize the effectiveness of single-hop shortcuts.
+*   **2WikiMultiHopQA:** To test reasoning over structured entities and relations.
+
+### 6. Evaluation Metrics
+*   **Answer Accuracy:** Exact Match (EM) and F1-score.
+*   **Retrieval Performance:** Recall@K for the specific "gold" supporting documents required for each hop.
+*   **Reasoning Path Precision:** Human or LLM-based evaluation of whether the intermediate hypotheses were logically necessary to reach the answer.
+*   **Efficiency:** Average number of LLM tokens and retrieval calls per query.
+
+### 7. Baselines
+*   **Standard RAG:** Top-K vector retrieval using the raw query.
+*   **Self-RAG:** A framework that uses critiques to decide when to retrieve.
+*   **IRCoT (Interleaving Retrieval with Chain-of-Thought):** A linear iterative baseline that generates a CoT and retrieves documents to verify each step.
+*   **ReAct:** A standard agentic loop using "Thought-Action-Observation" cycles.
+
+### 8. Ablations
+*   **No Pruning:** Keeping all retrieved branches to test the impact of noise on the LLM's reasoning.
+*   **Single Hypothesis:** Forcing the model to generate only one search query per hop (collapsing the tree into a line).
+*   **Raw Query Expansion:** Replacing LLM-generated hypotheses with simple query expansion techniques (e.g., HyDE).
+*   **Fixed Depth:** Removing the LLM's "termination logic" and forcing a fixed number of hops.
+
+### 9. Failure Modes and Feasibility Risks
+*   **Retrieval Drift:** If the first hop retrieves highly relevant but non-bridge information, the tree may expand in the wrong direction.
+*   **Computational Latency:** Generating multiple hypotheses and reranking them increases the time-per-query significantly compared to vanilla RAG.
+*   **Context Window Limits:** As the tree expands, the combined context of multiple paths may exceed the LLM’s context window or lead to "lost in the middle" effects.
+*   **Feasibility Risk:** Highly dependent on the quality of the cross-encoder; if the reranker fails to distinguish between "semantically similar" and "logically necessary" documents, the pruning will fail.

@@ -1,0 +1,47 @@
+This proposal was developed through a collaborative multi-agent simulation involving a Principal Investigator (PI), a Method Designer, a Skeptical Reviewer, and an Experiment Engineer.
+
+### 1. Title
+**Breaking the Capacity Ceiling: Information-Bottleneck Guided Selective Distillation (IB-GSD)**
+
+### 2. Problem and Motivation
+Small Language Models (SLMs, <3B parameters) typically reach a performance plateau where increasing the training data or distillation duration yields diminishing returns. Current Knowledge Distillation (KD) techniques often force the student to mimic the entire output distribution or all intermediate hidden states of a teacher model. However, small models lack the parameter capacity to store the high-dimensional "noise" or stylistic nuances of a 70B+ teacher. This results in "capacity interference," where the student model fails to generalize because it is over-leveraged trying to replicate non-essential teacher signals.
+
+### 3. Core Hypothesis
+The performance ceiling of small models can be raised by distilling only the "Information Bottlenecks" of the teacher—specifically, the subset of activations and attention patterns that contribute most to the mutual information between the input and the correct output. By filtering out low-utility teacher signals, the student can dedicate its limited parameters to the core reasoning paths.
+
+### 4. Method
+The proposed method, **Information-Bottleneck Guided Selective Distillation (IB-GSD)**, consists of three stages:
+
+1.  **Teacher Saliency Mapping:** For a given calibration set, calculate the gradient-based saliency of each attention head and hidden dimension in the teacher model (e.g., Llama-3-70B) relative to the correct output.
+2.  **Bottleneck Identification:** Use an Information Bottleneck (IB) objective to identify "critical neurons" and "influence paths." We define a mask $M$ that selects features in the teacher where the ratio of (Predictive Utility / Feature Complexity) is maximized.
+3.  **Selective Distillation Loss:** Train the student (e.g., Llama-3.2-1B) using a composite loss function:
+    *   $\mathcal{L}_{total} = \alpha \mathcal{L}_{CE} + \beta \mathcal{L}_{Selective-KD} + \gamma \mathcal{L}_{Align}$
+    *   $\mathcal{L}_{Selective-KD}$ only penalizes the student for diverging from the teacher on the identified "bottleneck" features, ignoring the high-variance, low-utility dimensions.
+4.  **Dynamic Thresholding:** Gradually increase the complexity of the distilled features as the student’s training loss stabilizes, effectively implementing a curriculum of informational depth.
+
+### 5. Dataset or Benchmark
+*   **General Knowledge:** MMLU (Massive Multitask Language Understanding).
+*   **Reasoning:** GSM8K (Math) and Big-Bench Hard (BBH).
+*   **Coding:** HumanEval.
+*   **Training Data:** A 100B token subset of the SlimPajama or Dolma dataset for the distillation phase.
+
+### 6. Evaluation Metrics
+*   **Accuracy:** Standard Top-1 accuracy on benchmarks.
+*   **Distillation Efficiency:** The ratio of (Student Accuracy / Teacher Accuracy) per million parameters.
+*   **Robustness:** Performance on adversarial perturbations (e.g., AdvGLUE) to ensure the model isn't just memorizing bottlenecks.
+
+### 7. Baselines
+*   **Standard SFT:** Supervised Fine-Tuning on the same dataset without distillation.
+*   **Vanilla KD:** Standard KL-divergence distillation on output logits (Hinton et al.).
+*   **FitNets/Hint-based Training:** Distilling all intermediate hidden states.
+*   **TinyLlama / MobileLLM:** Current state-of-the-art small models trained with massive data.
+
+### 8. Ablations
+*   **Random Masking:** Replacing the IB-guided mask with a random mask of the same sparsity to prove the saliency of the bottleneck.
+*   **Fixed vs. Dynamic Thresholding:** Testing if the curriculum-based increase in feature complexity is necessary.
+*   **Layer-wise Contribution:** Applying IB-GSD only to the MLP layers vs. only to the Attention layers.
+
+### 9. Failure Modes and Feasibility Risks
+*   **Teacher Bias:** If the teacher is wrong, the IB-mask will prioritize "confidently incorrect" features. *Mitigation:* Use an ensemble of teachers or a verifier to weight the loss.
+*   **Computational Overhead:** Calculating saliency maps for a 70B teacher is expensive. *Mitigation:* Pre-compute masks on a representative subset of the data rather than per-batch.
+*   **Information Starvation:** If the bottleneck filter is too aggressive, the student may lack the linguistic "glue" needed for coherent generation. *Mitigation:* Maintain a baseline Cross-Entropy loss on the raw text to ensure language modeling fluency.

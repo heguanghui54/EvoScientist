@@ -1,0 +1,45 @@
+### 1. Title
+**BridgeTranslate: Cross-Lingual Semantic Alignment via Sparse Language-Specific Adapters for Low-Resource MT**
+
+### 2. Problem and Motivation
+Neural Machine Translation (NMT) typically requires millions of parallel sentences to achieve high fluency. For "low-resource" languages (e.g., Wolof, Quechua, or Greenlandic), such data is non-existent. While Massively Multilingual Machine Translation (MMMT) models like NLLB-200 provide a starting point, they suffer from "language interference," where high-resource languages dominate the shared parameter space, often leading to poor lexical choices and grammatical errors in low-resource outputs. Current fine-tuning methods either overfit on small parallel sets or wash out the model's prior knowledge.
+
+### 3. Core Hypothesis
+By freezing the core weights of a pre-trained multilingual backbone and injecting **Sparse Language-Specific Adapters** trained via a dual-objective—**Cross-Lingual Contrastive Learning (CLCL)** on monolingual "sibling" data and limited supervised fine-tuning—we can align the semantic space of a low-resource language (LR) with its high-resource relative (HR) without degrading the model’s general translation capability.
+
+### 4. Method
+1.  **Architecture:** Use a frozen **NLLB-200 (3.3B or 600M)** as the backbone. Insert **Rank-Stabilized LoRA (RS-LoRA)** adapters into the attention and feed-forward layers of both the encoder and decoder.
+2.  **Sibling Selection:** Identify a high-resource "sibling" language for the target low-resource language based on linguistic proximity (e.g., Spanish for Quechua, or Hindi for Maithili).
+3.  **Phase 1: Cross-Lingual Alignment (Unsupervised):**
+    *   Use monolingual corpora for both the LR and HR languages.
+    *   Apply a **Contrastive Loss (InfoNCE)** on the mean-pooled encoder representations. The goal is to minimize the distance between the LR representation and its HR "pseudo-parallel" counterpart (retrieved via BM25 or embedding similarity from the HR monolingual pool).
+4.  **Phase 2: Task-Specific Fine-tuning (Supervised):**
+    *   Fine-tune only the adapters on the small available parallel corpus (e.g., 5k–10k sentences) using standard Label Smoothed Cross-Entropy loss.
+    *   Maintain a small "replay buffer" of high-resource parallel data to prevent catastrophic forgetting of the output language's fluency.
+
+### 5. Dataset or Benchmark
+*   **Evaluation Dataset:** **FLORES-200** (specifically the "Low" and "Very Low" resource categories).
+*   **Training Data:**
+    *   *Parallel:* **OPUS-100** or **JW300** (subsampled to 5k sentences per LR language).
+    *   *Monolingual:* **mC4** or **WikiMatrix** for the contrastive alignment phase.
+*   **Target Pairs:** Focus on 3–5 diverse pairs (e.g., Guarani-Spanish, Yoruba-English, Marathi-English).
+
+### 6. Evaluation Metrics
+*   **Primary:** **COMET** (Cross-lingual Optimized Metric for Evaluation of Translation) and **chrF++**, as BLEU is often unreliable for low-resource morphological variants.
+*   **Secondary:** **BLEU** (for legacy comparison) and **Language ID accuracy** (to ensure the model doesn't "hallucinate" high-resource sibling words in LR output).
+
+### 7. Baselines
+1.  **NLLB-200 (Zero-shot):** The base model without any language-specific tuning.
+2.  **Standard Fine-tuning:** Full parameter fine-tuning of NLLB-200 on the small parallel set.
+3.  **Back-Translation (BT):** A standard transformer-base model trained on the parallel data plus synthetic data generated via back-translation of LR monolingual data.
+4.  **MAD-X:** A standard adapter-based framework for cross-lingual transfer.
+
+### 8. Ablations
+*   **No Contrastive Phase:** Directly fine-tuning adapters on parallel data to measure the impact of the unsupervised alignment.
+*   **No Sibling Selection:** Using a random high-resource language for the contrastive phase instead of a linguistically related one.
+*   **Adapter Rank (r):** Testing the sensitivity of the model to the rank of the LoRA layers (e.g., r=8 vs. r=64).
+
+### 9. Failure Modes and Feasibility Risks
+*   **Semantic Drift:** The contrastive loss might collapse if the "pseudo-parallel" retrieval is too noisy, leading the model to map unrelated concepts together.
+*   **Script Mismatch:** If the LR and HR siblings use different scripts (e.g., Amharic vs. English), the shared subword vocabulary might be too sparse, requiring an expansion of the embedding layer (which increases memory overhead).
+*   **Resource Constraints:** While adapters save memory, the contrastive phase requires large-batch training (typically >256) to be effective, which may require multiple A100/H100 GPUs.

@@ -1,0 +1,44 @@
+**Research Proposal: Atomic-IE — Enhancing Information Extraction via Recursive Schema Decomposition and Cross-Verification**
+
+### 1. Title
+Atomic-IE: Robust Document-Level Information Extraction through Recursive Schema Decomposition and Multi-Agent Consensus.
+
+### 2. Problem and Motivation
+Current Large Language Model (LLM) approaches to Information Extraction (IE) often struggle with "schema overload" and "contextual drift." When tasked with extracting dozens of entity types and relations from long documents, models frequently suffer from the "lost-in-the-middle" phenomenon, miss subtle relations (low recall), or hallucinate connections that do not exist (low precision). Existing methods usually rely on single-pass prompting or simple chain-of-thought, which lacks the iterative scrutiny required for high-stakes domains like legal or medical IE.
+
+### 3. Core Hypothesis
+Decomposing a complex extraction schema into atomic, single-relation sub-tasks, followed by a multi-agent verification loop that requires evidence-span grounding, will significantly reduce hallucination rates and improve F1-scores compared to monolithic, single-pass extraction.
+
+### 4. Method
+The proposed system follows a three-stage pipeline:
+
+1.  **Schema Decomposition:** Given a complex schema (e.g., 20 entity types, 30 relations), a "Planner" agent breaks the task into atomic extraction units. Each unit focuses on one primary entity category or a small cluster of logically related triplets.
+2.  **Independent Extraction (The "Workers"):** Parallel LLM agents (e.g., Llama-3 or GPT-4o-mini) extract information based on these atomic units. Each agent must output: (a) the extracted triple, and (b) the exact text span (source quote) serving as evidence.
+3.  **Consensus and Verification (The "Skeptics"):** A separate "Verifier" agent identifies overlaps and contradictions between the workers. If two workers disagree on a relation or a span, a "Reconciliation" agent is triggered to perform a targeted re-read of the specific document segment to resolve the conflict.
+4.  **Synthesis:** The final graph is compiled by merging verified triples and deduplicating entities based on the grounded spans.
+
+### 5. Dataset or Benchmark
+*   **Primary Dataset:** **DocRED** (Document-level Relation Extraction) or its refined version **Re-DocRED**. These datasets are ideal because they require reasoning over multiple sentences within a document.
+*   **Secondary Dataset:** **NYT-RE** (New York Times Relation Extraction) for testing scalability across diverse news topics.
+
+### 6. Evaluation Metrics
+*   **Strict F1-Score:** Requires exact match of (Subject, Relation, Object).
+*   **Grounded Precision:** Precision calculated only for triples where the model-provided evidence span matches the ground-truth sentence.
+*   **Hallucination Rate:** The percentage of extracted triples that cannot be mapped back to any supporting text in the source document.
+*   **Token Efficiency:** Measured as (F1-score / Total Tokens Used) to evaluate the cost-benefit of the multi-agent approach.
+
+### 7. Baselines
+*   **Direct Zero-Shot:** A single prompt containing the full schema and the full document.
+*   **Chain-of-Thought (CoT) Prompting:** Asking the model to "think step-by-step" before outputting the JSON triples.
+*   **ReAct (Reasoning and Acting):** An agentic baseline that uses a search-and-extract loop but without the atomic decomposition or cross-verification.
+
+### 8. Ablations
+*   **-Decomposition:** The model uses the verification loop but processes the entire schema at once.
+*   **-Verification:** The model uses atomic decomposition but accepts the first output without cross-checking or reconciliation.
+*   **-Grounding:** The model extracts triples but is not required to provide or verify text spans.
+
+### 9. Failure Modes and Feasibility Risks
+*   **Consensus Bias:** If the underlying LLM has a systematic bias, multiple agents may agree on the same incorrect extraction (false consensus).
+*   **Computational Latency:** The multi-agent loop significantly increases the number of API calls or inference passes, which may be prohibitive for real-time applications.
+*   **Context Fragmentation:** In some cases, a relation depends on information spread so thinly across atomic units that the "Planner" might fail to group the necessary components together, leading to missed relations (recall drop).
+*   **Feasibility:** High. This method relies on standard prompting and orchestration (e.g., LangGraph or DSPy) and does not require fine-tuning, making it accessible for immediate implementation.

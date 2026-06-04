@@ -1,0 +1,50 @@
+The following research proposal was developed through a collaborative simulation involving a Principal Investigator (PI), Method Designer, Skeptical Reviewer, and Experiment Engineer.
+
+---
+
+### 1. Title
+**H-STEP: Hierarchical Schema-Table Extraction and Pruning with Execution-Guided Refinement for Large-Scale Text-to-SQL**
+
+### 2. Problem and Motivation
+Current state-of-the-art Text-to-SQL models excel at simple, single-table queries but struggle with large-scale, real-world databases (e.g., the BIRD benchmark). The primary bottleneck is "Schema Linking"—the ability to correctly map natural language mentions to specific tables and columns among hundreds of candidates. When the entire schema is crammed into a LLM prompt, the signal-to-noise ratio drops, leading to hallucinations or the selection of similarly named but irrelevant columns. Furthermore, existing models often generate syntactically correct SQL that fails at runtime due to logical mismatches with the data values.
+
+### 3. Core Hypothesis
+A hierarchical pruning mechanism—which first isolates relevant tables and then filters for specific columns—will significantly reduce noise in the LLM's context window. Additionally, incorporating an execution-guided feedback loop that utilizes database engine error messages will allow the model to self-correct schema-linking errors that are only apparent at runtime.
+
+### 4. Method
+The H-STEP framework consists of four distinct phases:
+
+1.  **Hierarchical Pruning (Phase I & II):**
+    *   **Table Selector:** An LLM is prompted with the natural language question (NLQ) and a list of all table names/descriptions to identify the top-$k$ relevant tables.
+    *   **Column Selector:** The model receives only the schemas of the top-$k$ tables and identifies the specific columns required for the JOINs, SELECTs, and WHERE clauses.
+2.  **Constrained Prompt Generation (Phase III):**
+    *   A "minimized schema" is constructed using only the selected tables and columns. This schema, along with few-shot examples, is fed to the LLM to generate the initial SQL query.
+3.  **Execution-Guided Refinement (Phase IV):**
+    *   The generated SQL is executed against a development database.
+    *   If a **Syntax/Execution Error** occurs: The error message (e.g., "no such column") is appended to the prompt for a second-pass generation.
+    *   If an **Empty Result Set** occurs (and the NLQ implies a non-empty result): The model is prompted to re-examine its "WHERE" clause filters against the actual database values using a `SELECT DISTINCT` probe.
+
+### 5. Dataset or Benchmark
+*   **BIRD (Big Bench for Large-scale Database Grounded Text-to-SQL Evaluation):** The primary benchmark due to its large schemas and emphasis on database content.
+*   **Spider:** Used as a secondary benchmark to ensure the method generalizes to cross-domain tasks without large-scale noise.
+
+### 6. Evaluation Metrics
+*   **Execution Accuracy (EX):** The percentage of predicted queries that return the same result as the gold query.
+*   **Valid Efficiency Score (VES):** Measures the computational efficiency of the generated SQL (critical for BIRD).
+*   **Schema Linking Precision/Recall:** A manual or heuristic-based check to see if the pruning stages correctly identified the necessary schema elements.
+
+### 7. Baselines
+*   **Vanilla GPT-4/GPT-3.5:** Zero-shot and few-shot prompting with the full schema.
+*   **DIN-SQL:** A multi-step decomposition framework (current SOTA approach).
+*   **C3 (Clear, Concise, Consistent):** A leading prompting-based baseline for schema linking.
+
+### 8. Ablations
+*   **No Pruning:** Feed the full schema to the generator to measure the impact of the hierarchical filtering.
+*   **Table-Only Pruning:** Skip the column-level filtering to see if table-level context is sufficient.
+*   **No Execution Feedback:** Disable the refinement loop to quantify how many errors are recoverable through self-correction.
+*   **Oracle Pruning:** Provide the model with the exact tables/columns used in the gold query to determine the upper bound of the generation phase.
+
+### 9. Failure Modes and Feasibility Risks
+*   **Pruning Errors (Cascade Failure):** If the Table Selector misses a required table, the subsequent stages cannot recover. *Mitigation:* Use a high $k$ (e.g., top-5 tables) to ensure high recall.
+*   **Context Window Limits:** On extremely large schemas, even the list of table names might be too long. *Mitigation:* Use an initial embedding-based Reranker (e.g., BM25 or BERT) before the LLM Table Selector.
+*   **Computational Cost:** Multiple LLM calls per query (Pruning -> Generation -> Refinement) increase latency and API costs. *Mitigation:* Use smaller, specialized models (e.g., Llama-3-8B) for the initial pruning stages.

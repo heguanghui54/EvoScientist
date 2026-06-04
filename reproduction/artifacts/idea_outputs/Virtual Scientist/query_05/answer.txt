@@ -1,0 +1,42 @@
+### 1. Title
+**SyncLit: Synthesis-Driven Automated Literature Review Generation via Tension-Aware Claim Mapping**
+
+### 2. Problem and Motivation
+Current automated literature review systems primarily function as "annotated bibliographies." They summarize individual papers sequentially (e.g., "Paper A did X, then Paper B did Y") but fail to achieve **synthesis**—the ability to identify thematic tensions, contradictory findings, or methodological evolutions across a corpus. This "synthesis gap" results in reviews that lack narrative depth and fail to help researchers identify specific gaps in the current state of knowledge.
+
+### 3. Core Hypothesis
+By explicitly modeling papers as a graph of interconnected claims and identifying "tensions" (contradictory results or differing assumptions) between these claims before drafting, an LLM-based agent can generate literature reviews that are more structured, critical, and insightful than those produced by standard retrieval-augmented generation (RAG) or long-context summarization.
+
+### 4. Method
+The **SyncLit** pipeline consists of four stages:
+
+1.  **Claim Extraction & Verification:** Given a corpus of $N$ papers, an extractor agent identifies key claims, evidence, and underlying assumptions. Each claim is grounded in a specific snippet of text to prevent hallucination.
+2.  **Tension-Aware Graph Construction:** A "Relational Agent" compares pairs of claims to identify relationships: *Support*, *Contradict*, *Extend*, or *Neutral*. A directed graph is built where nodes are claims and edges are these relationships.
+3.  **Thematic Clustering:** The system applies community detection on the claim graph to identify "thematic pillars" (e.g., "Performance Metrics," "Architectural Trade-offs").
+4.  **Narrative Synthesis (The "Tension-First" Prompt):** A generator agent uses the clustered graph to draft the review. It is explicitly prompted to lead with the *relationships* (e.g., "While Author A suggests X, Author B provides a counter-perspective Y based on different environmental assumptions").
+
+### 5. Dataset or Benchmark
+*   **SurveyBench-ArXiv:** A curated dataset of 500 high-quality, peer-reviewed survey papers from ArXiv (CS and BioMed) published between 2022–2024.
+*   **Input:** The full-text PDFs of the references cited in these survey papers.
+*   **Ground Truth:** The human-written survey sections corresponding to those references.
+
+### 6. Evaluation Metrics
+*   **Synthesis Density:** A ratio of "relational statements" (e.g., "however," "similarly," "in contrast to") to total sentences, verified by a secondary LLM judge.
+*   **Citation Attribution Accuracy (CAA):** The percentage of generated claims that accurately reflect the source document (measured via NLI-based entailment).
+*   **G-Eval (Insightfulness & Coherence):** Human or GPT-4o-based scoring on a 1–5 scale regarding how well the review identifies research gaps.
+*   **Hallucination Rate:** Frequency of "phantom citations" or claims not present in the source corpus.
+
+### 7. Baselines
+*   **Naive RAG:** Standard vector-store retrieval with a "summarize these papers" prompt.
+*   **Long-Context LLM (e.g., GPT-4o/Claude 3.5):** Feeding the full text of the top 20 papers into a single context window with a "write a survey" prompt.
+*   **Auto-Survey (Template-based):** A system that fills a predefined template (Introduction, Method, Result, Conclusion) for each paper.
+
+### 8. Ablations
+*   **No-Tension Graph:** Using the graph structure but removing the "Contradict" and "Extend" labels to see if synthesis quality drops.
+*   **Flat Extraction:** Removing the Claim Extraction stage and summarizing whole papers instead of specific claims.
+*   **No Grounding:** Removing the requirement to cite specific snippets during the extraction phase.
+
+### 9. Failure Modes and Feasibility Risks
+*   **Context Window Saturation:** If the corpus is too large (e.g., 100+ papers), the relational graph becomes computationally expensive ($O(N^2)$ comparisons). *Mitigation: Use a hierarchical clustering approach to limit comparisons to topically similar papers.*
+*   **Hallucination of Conflict:** The model may perceive "tensions" where none exist to satisfy the prompt. *Mitigation: Require an NLI (Natural Language Inference) check to verify that two claims are actually contradictory.*
+*   **PDF Parsing Errors:** Mathematical formulas and tables are often mangled by standard PDF-to-text tools, leading to incorrect claim extraction. *Mitigation: Use vision-aware parsers like Marker or Nougat.*

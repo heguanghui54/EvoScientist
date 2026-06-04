@@ -1,0 +1,50 @@
+This proposal represents the consensus of a multi-agent virtual team (Principal Investigator, Method Designer, Skeptical Reviewer, and Experiment Engineer) focused on moving LLM evaluation from static benchmarks to interactive user-centric metrics.
+
+### 1. Title
+**The Interaction Cost Metric (ICM): Quantifying LLM User Experience through Simulated Iterative Refinement**
+
+### 2. Problem and Motivation
+Current Large Language Model (LLM) evaluations focus primarily on "one-shot" accuracy (e.g., MMLU, GSM8K). However, in real-world scenarios, user experience (UX) is defined by the **Interaction Cost**: the amount of effort (prompt revisions, clarifications, and manual editing) a user must expend to reach a satisfactory output. A model that is highly accurate but requires hyper-specific prompt engineering offers a poorer UX than a "steerable" model that converges on the user’s intent within one or two natural language turns. There is currently no standardized, automated metric to quantify this iterative friction.
+
+### 3. Core Hypothesis
+The "Interaction Cost"—measured by the number of tokens and semantic distance traveled across multiple prompt revisions required to reach a goal—will reveal UX disparities between models that are otherwise ranked similarly on static benchmarks. Specifically, we hypothesize that models with higher "instruction-following robustness" will exhibit lower Interaction Cost regardless of their raw knowledge parameters.
+
+### 4. Method
+The framework employs a "User-System Simulation" loop:
+1.  **Goal Definition:** A set of complex tasks (e.g., "Write a Python script to scrape X but only using library Y") is defined with a hidden "Success Criterion."
+2.  **The User Agent:** A separate, highly capable LLM (e.g., GPT-4o) acts as the "User." It is given the goal but is restricted to providing natural, slightly underspecified initial prompts.
+3.  **The Subject LLM:** The model being evaluated.
+4.  **The Interaction Loop:**
+    *   The User Agent provides a prompt.
+    *   The Subject LLM responds.
+    *   A "Critic Agent" evaluates if the response meets the Success Criterion.
+    *   If not, the User Agent is given the response and must provide a *refinement* (e.g., "No, I meant without using the requests library").
+5.  **Termination:** The loop ends upon success or after 5 failed turns.
+
+### 5. Dataset or Benchmark
+We propose the **Iterative-UX Benchmark (I-UXB)**, consisting of 500 tasks across four domains:
+*   **Code Refactoring:** Transforming legacy code with specific constraints.
+*   **Creative Constraints:** Writing prose with strict stylistic and structural requirements.
+*   **Nuanced Reasoning:** Solving logic puzzles where the user gradually reveals clues.
+*   **Instruction Compliance:** Following multi-step formatting instructions that are often ignored in one-shot settings.
+
+### 6. Evaluation Metrics
+*   **Turns-to-Success (TTS):** The average number of iterations required to meet the critic's criteria.
+*   **Refinement Semantic Distance (RSD):** The cosine distance between the initial prompt and the final successful prompt (measuring how much the user had to change their original intent to accommodate the model).
+*   **Total Token Friction (TTF):** Sum of all user tokens across the interaction (a proxy for "typing effort").
+*   **UX Score:** A weighted aggregate: $1 / (TTS \times \log(TTF))$.
+
+### 7. Baselines
+*   **Raw Accuracy Baseline:** Standard one-shot performance on the same tasks.
+*   **Human Proxy:** A small-scale study (n=20) where human users perform the same tasks to validate if the "User Agent" behavior correlates with human frustration levels.
+*   **Model Comparison:** Comparison across model families (e.g., Llama-3-70B vs. GPT-4 vs. Claude 3.5 Sonnet).
+
+### 8. Ablations
+*   **User Agent Persona:** Varying the "patience" and "expertise" of the User Agent (e.g., a "Novice User" agent that gives vague feedback vs. an "Expert User" agent that gives technical feedback).
+*   **Feedback Granularity:** Testing the loop where the Critic Agent provides the User Agent with specific reasons for failure vs. the User Agent having to "guess" why the model failed.
+
+### 9. Failure Modes and Feasibility Risks
+*   **User Agent Bias:** The LLM acting as the "User" might be biased toward models from the same family (e.g., a GPT-based User Agent might "understand" a GPT-based Subject LLM more easily).
+*   **Criterion Drift:** The "Critic Agent" might become more or less lenient over multiple turns.
+*   **Computational Cost:** Running multi-turn simulations for thousands of samples is significantly more expensive than one-shot benchmarking.
+*   **Feasibility Risk:** Ensuring the "Success Criterion" is objective enough for the Critic Agent to judge consistently across different model responses.

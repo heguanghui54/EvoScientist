@@ -1,0 +1,45 @@
+This proposal represents a synthesized research direction developed through a multi-agent simulation involving a Principal Investigator, Method Designer, Skeptic, and Experiment Engineer.
+
+### 1. Title
+**Dynamic Knowledge Gating (DKG): Mitigating Knowledge Conflict and Forgetting in Domain-Specific LLM Injection**
+
+### 2. Problem and Motivation
+Injecting domain-specific knowledge (e.g., medical, legal, or proprietary technical data) into Large Language Models (LLMs) via fine-tuning often results in two primary failure modes: **catastrophic forgetting** of general-purpose reasoning and **knowledge conflict**, where the model struggles to reconcile general-world facts with specialized domain nuances. While Retrieval-Augmented Generation (RAG) addresses some of these issues, it suffers from high latency and context window limitations. There is a critical need for a parameter-efficient method that allows the model to "switch" into a domain-specific state without degrading its underlying foundational capabilities.
+
+### 3. Core Hypothesis
+By implementing a learned, token-level gating mechanism that modulates the contribution of domain-specific Low-Rank Adaptation (LoRA) weights based on the input context, a model can achieve superior domain accuracy compared to standard fine-tuning while maintaining baseline performance on general benchmarks.
+
+### 4. Method
+The proposed method, **Dynamic Knowledge Gating (DKG)**, consists of the following components:
+*   **Dual-Path Architecture:** A frozen backbone (e.g., Llama-3-8B) equipped with domain-specific LoRA adapters ($A_{dom}, B_{dom}$) in the Attention and MLP layers.
+*   **Contextual Router:** A lightweight, trainable gating module (a 2-layer MLP) that takes the hidden state $h_t$ at each layer and produces a scalar weight $g_t \in [0, 1]$.
+*   **Gated Forward Pass:** The output of a layer is computed as: $y = W_{frozen}x + g_t(A_{dom}B_{dom}x)$.
+*   **Two-Stage Training:**
+    1.  **Warm-up:** Train the LoRA adapters on domain-specific corpora using standard Causal Language Modeling (CLM) loss.
+    2.  **Gating Alignment:** Freeze the LoRA adapters and the backbone. Train the router using a balanced mix of domain data and general-purpose instruction data. The router is incentivized to minimize the loss on domain tokens by increasing $g_t$, while minimizing the divergence from the frozen model’s original output on general tokens by decreasing $g_t$.
+
+### 5. Dataset or Benchmark
+*   **Domain Data:** The **PubMed** (Medical) or **FreeLaw** (Legal) subsets of the Pile.
+*   **General Data:** A 5% sample of the **ShareGPT** or **OpenOrca** datasets to represent general reasoning and instruction following.
+*   **Evaluation Set:** **MedQA** (for medical) or **LegalBench** (for legal), combined with **MMLU** (Massive Multitask Language Understanding) to monitor general performance degradation.
+
+### 6. Evaluation Metrics
+*   **Domain Accuracy:** Zero-shot and few-shot accuracy on MedQA/LegalBench.
+*   **Retention Rate:** The ratio of MMLU scores post-injection vs. the original base model.
+*   **Knowledge Conflict Score (KCS):** A custom metric measuring the model's ability to prioritize domain-specific answers over general-world answers when presented with ambiguous prompts (e.g., "What is the limitation of 'discovery'?" in a legal vs. general context).
+
+### 7. Baselines
+*   **Full Fine-Tuning (FFT):** Standard fine-tuning on domain data.
+*   **Static LoRA:** Standard LoRA without the gating mechanism (fixed $g_t = 1$).
+*   **Vanilla RAG:** The frozen base model using a vector database of the domain corpus.
+*   **Rehearsal-based Fine-Tuning:** LoRA training with a static playback of general-purpose data.
+
+### 8. Ablations
+*   **Router Granularity:** Compare token-level gating vs. sentence-level gating vs. layer-level gating.
+*   **Gating Input:** Compare using the hidden state $h_t$ as router input vs. using the raw input embedding.
+*   **Fixed Gating:** Testing performance with a hard-coded gate (e.g., $g_t = 0.5$) to validate the necessity of the learned router.
+
+### 9. Failure Modes and Feasibility Risks
+*   **Router Overfitting:** The router might learn to "always-on" the domain adapter if the domain data is too diverse, leading to the same forgetting seen in standard LoRA.
+*   **Training Complexity:** The two-stage training process requires careful balancing of the "Gating Alignment" phase to ensure the router doesn't collapse to zero.
+*   **Inference Overhead:** While the router is small, adding a gating operation to every layer and every token increases the total TFLOPS of the forward pass, potentially impacting latency compared to static LoRA.

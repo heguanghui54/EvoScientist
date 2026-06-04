@@ -1,0 +1,51 @@
+This research proposal is a replacement-baseline generated for the purpose of paper reproduction. It represents a synthetic output from a multi-agent virtual scientist team (PI, Method Designer, Skeptical Reviewer, and Experiment Engineer).
+
+---
+
+### 1. Title
+**SEM-DIV: Evaluating Semantic Diversity via Density-Aware Manifold Coverage**
+
+### 2. Problem and Motivation
+Current diversity metrics for Large Language Models (LLMs) primarily rely on lexical overlap, such as Self-BLEU or Distinct-n. These metrics suffer from two major flaws:
+1. **Lexical Sensitivity:** They penalize high-quality paraphrases (which are semantically identical) while rewarding "noisy" diversity (where sentences are different only due to typos or punctuation).
+2. **Quality-Diversity Trade-off:** They do not account for prompt relevance. A model generating random, unrelated strings would achieve a perfect diversity score despite being useless.
+
+There is a critical need for a metric that evaluates "Semantic Breadth"—the ability of a model to explore different conceptual spaces in response to a single prompt—while ensuring those spaces remain relevant to the task.
+
+### 3. Core Hypothesis
+A diversity metric calculated by measuring the entropy of clusters in a latent embedding space (Semantic Entropy) will correlate more strongly with human judgments of "variety" than n-gram-based metrics, especially when weighted by a "Coherence Filter" to exclude irrelevant outliers.
+
+### 4. Method
+The proposed method, **SEM-DIV**, follows a four-stage pipeline:
+1. **Stochastic Generation:** For a given prompt $P$, generate $N$ independent completions ($N=50$).
+2. **Embedding & Dimensionality Reduction:** Map completions into a high-dimensional space using a state-of-the-art embedding model (e.g., `text-embedding-3-small`). Use UMAP to reduce dimensions to preserve local manifold structure.
+3. **Density-Based Clustering:** Apply HDBSCAN (Hierarchical Density-Based Spatial Clustering of Applications with Noise) to identify semantic clusters. Unlike K-means, HDBSCAN identifies "noise" points that do not belong to any conceptual cluster.
+4. **Metric Calculation:**
+   *   **Raw SEM-DIV:** Calculate the Shannon Entropy of the cluster distribution.
+   *   **Filtered SEM-DIV:** Calculate entropy while penalizing the "noise" points identified by HDBSCAN, ensuring that random/gibberish outputs do not inflate the diversity score.
+
+### 5. Dataset or Benchmark
+*   **Creative Writing:** The *WritingPrompts* dataset (Fan et al., 2018) to test open-ended diversity.
+*   **Instruction Following:** *AlpacaEval* prompts to test diversity in constraint-satisfaction.
+*   **Human Gold Standard:** A subset of 500 prompt-response sets (each with 10 variations) ranked by human annotators on a 1-5 scale of "Semantic Variety."
+
+### 6. Evaluation Metrics
+*   **Spearman’s Rank Correlation:** Correlation between SEM-DIV scores and human variety rankings.
+*   **Sensitivity to Paraphrasing:** A test where a model generates 10 identical meanings in different words; a successful metric should show low diversity.
+*   **Sensitivity to Mode Collapse:** Testing if the metric drops significantly when a model repeats a single "safe" response.
+
+### 7. Baselines
+*   **Self-BLEU:** Measures lexical overlap between generated sequences.
+*   **Distinct-n (n=1,2,3):** Measures the ratio of unique n-grams to total n-grams.
+*   **Pairwise BERTScore:** Average BERTScore between all pairs of generated sequences.
+*   **V-Measure:** A standard clustering evaluation metric used as a proxy for diversity.
+
+### 8. Ablations
+*   **Embedding Model Choice:** Compare SEM-DIV performance using static embeddings (GloVe) vs. contextual embeddings (RoBERTa) vs. LLM-native embeddings.
+*   **Clustering Algorithm:** Compare HDBSCAN vs. K-Means vs. Spectral Clustering.
+*   **Sample Size ($N$):** Evaluate how many generations are required before the SEM-DIV score stabilizes (testing for computational efficiency).
+
+### 9. Failure Modes and Feasibility Risks
+*   **Embedding Bias:** If the embedding model is biased toward certain syntactic structures, SEM-DIV might mistake structural similarity for semantic similarity.
+*   **Computational Overhead:** Generating $N=50$ samples and running HDBSCAN per prompt is significantly more expensive than calculating n-grams.
+*   **Granularity Problem:** In very narrow tasks (e.g., mathematical reasoning), "semantic clusters" may be too close to distinguish, leading to a floor effect where all models appear to have zero diversity.

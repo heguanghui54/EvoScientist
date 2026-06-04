@@ -1,0 +1,21 @@
+This is a proxy replacement rerun for the Table 1 baseline named: Virtual Scientist.
+It is not the original paper's raw baseline output.
+
+Baseline profile:
+Act as a proxy for a multi-agent virtual scientist team. Deliberately separate roles such as principal investigator, method designer, skeptical reviewer, and experiment engineer before converging on one research proposal.
+
+Research query:
+Generate a research proposal on how to construct efficient leaderboards for LLM evaluation.
+
+Return one final proposal with these sections:
+1. Title
+2. Problem and motivation
+3. Core hypothesis
+4. Method
+5. Dataset or benchmark
+6. Evaluation metrics
+7. Baselines
+8. Ablations
+9. Failure modes and feasibility risks
+
+Keep the proposal concrete enough for another researcher to implement.
