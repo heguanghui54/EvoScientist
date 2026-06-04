@@ -1,0 +1,94 @@
+Research Proposal: Self-Improving AI Agents for Software Engineering via
+ Iterative Execution Feedback## TitleEvoForge: A Self-Evolving Code-Generation
+   Agent that Learns from Execution Traces Without Explicit Validation Memory
+
+ProblemLarge language models (LLMs) applied to software engineering tasks — bug
+repair, feature implementation, test generation — currently rely on either a
+single prompt or a fixed retrieval corpus. When an agent produces a flawed
+patch, standard approaches either re-sample from the same prior (wasting samples
+on the same failure modes) or retrieve external examples that may not match the
+local code context. The core problem is how to enable an agent to improve its
+own code-generation policy across repeated attempts on the same task without
+maintaining an explicit store of past errors and rejection rules. If
+validation-driven memory is removed, does the agent collapse to random
+resampling, or can it extract useful signal from execution traces alone?
+
+HypothesisA code-generation agent that conditions each subsequent attempt on the
+full execution trace (stdout, stderr, exit code, runtime exception type) of its
+previous attempt — but not on an explicit memory of which past ideas were
+rejected or why — can still improve monotonically across iterations. The
+execution trace itself carries implicit validation signal: a timeout suggests an
+infinite loop, a specific exception type narrows the space of viable next moves,
+and a partial output with a low exit code hints at a near-miss. We hypothesize
+that this implicit signal is sufficient to achieve comparable final accuracy to
+a system that maintains an explicit validation-evolution memory, at the cost of
+more iterations on average.
+
+MethodEvoForge operates as a loop over a single task-instance:
+
+ 1 Initial prompt — A task description (e.g., "fix the bug in sort_utils.py")
+   plus the full codebase context is fed to an LLM, which generates a candidate
+   patch.
+ 2 Sandbox execution — The patch is applied and the test suite (or a safe
+   subset) is run. Stdout, stderr, exit code, and any exception traceback are
+   captured.
+ 3 Contextualized re-prompt — The entire interaction history for this task
+   (previous patches + their execution traces) is appended to the prompt.
+   Importantly, the prompt contains only the raw traces; no external
+   validation-evolution memory (e.g., a "failed_directions.json" or a learned
+   rejection classifier) is consulted or injected.
+ 4 Repeat — Steps2–3 run for up to K iterations or until all tests pass.
+
+Key design choices:
+
+ • No cross-task memory. Each task is independent; learning does not accumulate
+   across tasks. This isolates the -IVE ablation.
+ • Trace-only signal. The agent never sees a binary "pass/fail" label in a
+   structured format; it must infer success/failure from the raw trace output.
+ • Same LLM checkpoint throughout. No online fine-tuning; all improvement comes
+   from in-context adaptation.
+
+Dataset / BenchmarkSWE-bench Verified (the curated subset of SWE-bench with500
+task-instances from real Python repositories, each with a bug report, a codebase
+snapshot, and a test suite). We use the lite split (300 instances) to keep
+compute feasible:
+
+ • Validation split:100 instances for prompt tuning and iteration-budget
+   selection.
+ • Test split:200 instances for final evaluation.
+
+Each instance requires generating a patch that passes the held-out tests.
+
+Evaluation Metrics| Metric | Definition | Primary? |
+
+|--------|-----------|----------| | % Resolved (pass@k) | Fraction of instances
+where any of k iterations produces a passing patch | Primary | | Mean iterations
+to resolve | Average number of iterations among resolved instances | Secondary |
+| Trace utilization | Fraction of iterations where the new patch is different
+from the previous one (measures whether the trace is being used vs. ignored) |
+Process metric | | Pass saturation curve | % resolved after1,2,3, … K iterations
+| Diagnostic |
+
+All metrics are reported with95% bootstrap confidence intervals across3 seeds
+(varying the LLM sampling temperature at iteration1 only).
+
+Baselines1. Static single-prompt (pass@1) — The same LLM asked once with the
+task description and codebase; no iteration. (Lower bound.)
+
+ 2 Resampling without trace — K independent i.i.d. samples from the same prompt;
+   the best patch (by test pass rate or by an oracle) is selected. (Controls for
+   the benefit of more samples alone.)
+ 3 Best-of-N with execution reranking — Generate N independent patches; run all
+   in the sandbox; pick the one with the highest pass rate on a held-out
+   validation test split. (Stronger baseline — uses the same sandbox but no
+   sequential conditioning.)
+ 4 Full EvoScientist (with -IVE enabled) — The same sequential loop but with an
+   explicit validation-evolution memory (stores failed directions, rejection
+   criteria, and execution failure patterns). (Upper bound.)
+
+Ablations (Internal)
+
+ • Trace verbosity ablation. Feed only the exception type + error message (no
+   stdout) vs. the full trace, to measure how much signal resides in structured
+   error types vs. unstructured output.
+ • Iteration budget K. Sweep K ∈

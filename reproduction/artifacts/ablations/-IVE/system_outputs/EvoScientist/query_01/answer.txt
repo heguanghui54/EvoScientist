@@ -1,0 +1,145 @@
+Research Proposal: Cross-Lingual Contrastive Retrieval for Low-Resource Neural
+Machine Translation## Title
+CREST-MT: Cross-Lingual Contrastive
+Retrieval-Augmented Fine-Tuning for Low-Resource Machine Translation
+
+--------------------------------------------------------------------------------
+
+Problem
+Neural machine translation (NMT) for low-resource language pairs suffers
+from data sparsity. While massively multilingual pretrained models (e.g., mBART,
+NLLB) provide a strong foundation, they are expensive to deploy and fine-tune,
+and their coverage of truly low-resource languages remains uneven. Current
+approaches either rely on large-scale back-translation (which introduces noise)
+or on pivoting through a high-resource language (which compounds errors). There
+is no established method that efficiently selects high-quality synthetic
+training data from monolingual corpora without requiring a seed translation
+system or a large teacher model.
+
+--------------------------------------------------------------------------------
+
+Hypothesis
+Cross-lingual sentence embeddings, learned via a lightweight
+contrastive objective on a small bilingual dictionary (≤5k entries), can
+retrieve high-quality parallel sentence pairs from monolingual corpora to
+augment a small seed parallel corpus. An NMT model fine-tuned on this augmented
+data will outperform: (1) training on the seed corpus alone, (2) standard
+back-translation augmentation, and (3) using generic multilingual sentence
+encoders (e.g., LaBSE) for retrieval, particularly when the total compute budget
+is ≤1 GPU-day.
+
+--------------------------------------------------------------------------------
+
+Method
+### Stage1: Lightweight Cross-Lingual Retriever1. Input:5,000 word-level
+translation pairs from a bilingual dictionary (or automatically induced via
+unsupervised bilingual lexicon induction). Two large monolingual corpora (source
+side: ~5M sentences, target side: ~5M sentences).
+
+2 Encoder: A small dual-encoder Transformer (2 layers,256-dim hidden,4 heads —
+≈6M parameters) initialized independently on source and target monolingual
+data via masked language modeling (1 epoch each).
+3 Contrastive alignment: For each dictionary entry, sample an equal number of
+unrelated source/target words as negatives. Optimize with InfoNCE loss + a
+margin of0.3. No back-translation or parallel data is needed.
+4 Retrieval: Encode all sentences from both monolingual corpora with the
+aligned encoder. For each source sentence, retrieve the top-5 target
+sentences by cosine similarity. Apply a confidence threshold (≥0.7) to retain
+only high-confidence pairs.
+
+Stage2: NMT Fine-Tuning1. Seed parallel corpus:20k sentence pairs.
+
+2 Augmented corpus: Seed + high-confidence retrieved pairs (expected
+yield:50k–150k depending on language pair — accept50k as minimum).
+3 Model:6-layer Transformer (512-dim,8-head encoder-decoder) — intentionally
+kept small.
+4 Training: Standard label-smoothed cross-entropy (label smoothing ε=0.1), Adam
+(β₁=0.9, β₂=0.98), inverse sqrt learning rate scheduler (warmup4000 steps).
+Batch size4096 tokens. Early stopping based on dev perplexity (patience5).1
+GPU-day budget on a single A100.
+
+--------------------------------------------------------------------------------
+
+Dataset / Benchmark| Split | Size | Source |
+
+|---|---|---| | Bilingual dictionary |5,000 pairs | Wiktionary / PanLex /
+automatic induction | | Seed parallel (train) |20k pairs | JW300 or Tatoeba | |
+Monolingual (source) |5M sentences | CommonCrawl / Leipzig Corpora | |
+Monolingual (target) |5M sentences | CommonCrawl / Leipzig Corpora | | Dev |2k
+pairs | FLORES-200 dev split | | Test |2k pairs | FLORES-200 devtest split |
+
+Language pair: Gujarati → English (gu-en), a genuinely low-resource pair with
+under100k publicly available parallel sentences. The same pipeline should also
+be evaluated on a second pair (e.g., Kazakh → English) to ensure results are not
+language-specific.
+
+--------------------------------------------------------------------------------
+
+Evaluation Metrics- BLEU (sacrébleu signature:
+nrefs:1|case:mixed|eff:no|tok:13a|smooth:exp) — primary metric- chrF++
+(character-level) — secondary, captures morphologically faithful translations-
+COMET (wmt22-comet-da) — neural metric for semantic adequacy- Retrieval
+precision@1 on held-out bilingual dictionary entries (to validate the retriever
+quality in Stage1)
+
+• Effective augmentation yield: number of retrieved pairs above the confidence
+thresholdAll NMT models are run with 3 random seeds. We report means with95%
+bootstrap confidence intervals.
+
+--------------------------------------------------------------------------------
+
+Baselines| # | Method | Key Difference from CREST-MT |
+
+|---|---|---| | B1 | Seed-only fine-tuning | No data augmentation | | B2 | Seed
++ standard back-translation | Uses a target→source model to back-translate
+target monolingual data | | B3 | Seed + LaBSE-based retrieval (Feng et al.,2022)
+| Replaces our contrastive retriever with the publicly available LaBSE encoder |
+| B4 | mBART-50 fine-tuned on seed (4 layers unfrozen) | Multilingual pretrained
+baseline,4× parameter cost | | B5 | Random retrieval: seed + randomly paired
+monolingual sentences | Upper bound on noise; controls for data quantity alone |
+| B6 | Bilingual dictionary induction baseline: replaces the dictionary with an
+automatically induced one (unsupervised) | Tests sensitivity to dictionary
+quality |
+
+--------------------------------------------------------------------------------
+
+Ablations1. Retriever size: Remove contrastive alignment entirely (train on
+word-level MLM only, no bilingual signal).
+
+2 Confidence threshold: Vary the threshold (0.5,0.7,0.85,0.95) to measure
+precision–recall trade-off on retrieved pairs.
+3 Dictionary size: Reduce dictionary from5k →1k →200 entries to measure how
+much bilingual signal the retriever needs.
+4 Negative sampling strategy: Compare random negatives vs. in-batch negatives
+vs. hard negative mining via TF-IDF similarity.
+5 Monolingual data quantity: Subset source/target monolingual data from5M →500k
+→50k sentences.
+6 NMT model scale: Increase NMT to12-layer/1024-dim to test whether gains
+persist in larger models.
+
+--------------------------------------------------------------------------------
+
+Expected Failure Modes| Failure Mode | Likelihood | Mitigation |
+
+|---|---|---| | Retriever yields no high-confidence pairs (<50k) | Medium —
+depends on how well dictionary covers the monolingual data | Fall back to a
+weaker threshold (0.5) and filter by round-trip consistency instead; if still
+<50k, report ablation (A2) to characterize the threshold boundary | | Augmented
+data is too noisy and degrades BLEU | Low–Medium — random retrieval baseline
+(B5) bounds noise, and contrastive retrieval should be better than random |
+Measure per-pair confidence and stratify test-set BLEU by retrieval confidence
+quartiles; if low-confidence pairs actively hurt, use confidence-weighted
+training loss | | Dictionary quality is poor (many incorrect entries) | Low for
+Wiktionary; Medium for automatically induced dictionaries | B6 ablation tests
+this explicitly; if Wiktionary exists for the language pair, use it; if not,
+report the induction baseline separately | | Gains appear only on small NMT
+model, vanish at scale | Medium — larger models have stronger language priors
+and may not benefit from extra data | Ablation A6 tests this directly; if gains
+vanish, reframe contribution as "efficient retrieval for small models" | |
+Computational budget (1 GPU-day) is insufficient | Low — the small encoder and
+modest NMT are designed to fit this budget | Profile training step time; if
+close to the limit, reduce monolingual data to2M sentences and cap NMT epochs
+at30 | | Results are language-pair specific | Medium — gu-en may be easy due to
+shared script in some domains, or hard due to limited data quality | Replicate
+on a second language pair (kk-en) with distinct script and different data
+sources; report both in the main paper |

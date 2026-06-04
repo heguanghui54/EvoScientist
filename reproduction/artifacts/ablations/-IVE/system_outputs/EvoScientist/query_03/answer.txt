@@ -1,0 +1,186 @@
+Research Proposal: Addressing Accuracy Issues in Automated LLM Evaluation---
+
+Title
+Calibrated Ensemble Evaluation (CEE): Improving LLM-as-a-Judge Accuracy
+through Uncertainty-Aware Multi-Model Deliberation
+
+--------------------------------------------------------------------------------
+
+Problem
+LLM-based automated evaluators ("LLM-as-a-judge") are the dominant method
+for evaluating open-ended text generation at scale, but suffer from four
+well-documented accuracy issues:
+
+1 Systematic biases — position bias (preferring first or second response),
+verbosity bias (preferring longer outputs), and self-enhancement bias
+(preferring outputs from models similar to the judge).
+2 No uncertainty quantification — standard practice returns a point estimate
+(score or preference) with no confidence, making it impossible to know when
+the judge is uncertain vs confident.
+3 Low inter-rater reliability — agreement between LLM judges and human raters
+varies wildly across domains (Spearman ρ ranges from0.3 on creative writing
+to0.7 on factual QA).
+4 Rubric brittleness — even with detailed rubrics, LLM judges often fail to
+follow multi-criteria instructions consistently, collapsing dimensions or
+ignoring criteria.
+
+The core unmet need is an evaluation framework that produces trustworthy scores
+— scores that are calibrated, debiased, and accompanied by uncertainty — rather
+than simply fast scores.
+
+--------------------------------------------------------------------------------
+
+Hypothesis
+Decomposing evaluation into atomic quality criteria, aggregating
+judgments from multiple diverse evaluator LLMs with explicit uncertainty
+estimation, and calibrating the resulting scores against a small human-annotated
+set will significantly improve accuracy — defined as Spearman rank correlation
+with held-out human judgments — over the standard single-model, single-pass,
+holistic-judgment baseline, while also reducing known biases (position,
+verbosity) and providing well-calibrated uncertainty estimates.
+
+--------------------------------------------------------------------------------
+
+Method (3-stage pipeline)
+
+Stage1: Atomic Criterion DecompositionInstead of asking a judge for a single
+"overall quality" score (which collapses heterogeneous dimensions), decompose
+evaluation into6 atomic rubrics:
+
+#  Criterion              Definition
+1  Relevance              Does the response address the prompt directly?
+2  Correctness            Are factual claims accurate? (for knowledge tasks)
+3  Coherence              Is the response logically structured and internally
+consistent?
+4  Completeness           Does the response cover the scope requested?
+5  Conciseness            Is the response free of unnecessary verbosity?
+6  Instruction Following  Does the response obey format, length, and style
+constraints?
+
+Each criterion is scored on a1–5 Likert scale by each evaluator model, using a
+criterion-specific prompt that includes the rubric definition, the prompt, and
+the response. This prevents any single criterion from dominating.
+
+Stage2: Multi-Model Panel with UncertaintyQuery a panel of K =3 to5 diverse LLM
+evaluators (from different model families, e.g., GPT-4o, Claude3.5 Sonnet,
+Llama370B, Gemini2.0 Flash, Mistral Large). Each model scores each response on
+all6 criteria.
+
+For each (model, criterion, response) triple, also extract the log-probability
+of the score token(s) as a proxy for the model's confidence in that judgment.
+This gives a per-criterion confidence weight.
+
+Stage3: Calibration LayerUsing a held-out calibration set of N =500–1,000
+examples with human ratings on the same6 criteria (collected from3 annotators
+per example):
+
+1 Score Aggregation: Per criterion, compute a confidence-weighted average
+across models: s_c = Σ_i w_i_c * score_i_c / Σ_i w_i_c where w_i_c =
+exp(logprob_i_c) is model i's confidence on criterion c.
+2 Bias Correction: Fit a small logistic regression or isotonic regression per
+criterion to map the aggregated score s_c to a calibrated score ŝ_c that
+minimizes expected calibration error against human ratings.
+3 Uncertainty Output: For each response, output both the calibrated score
+vector ŝ ∈ [1,5]^6 and a per-criterion uncertainty interval derived from the
+weighted variance across the panel.
+
+--------------------------------------------------------------------------------
+
+Dataset / Benchmark| Dataset | Use | Size | Human Annotations |
+
+|---------|-----|------|-------------------| | MT-Bench | Primary evaluation |80
+multi-turn questions,3,360 model outputs | Human preference + pairwise ratings
+(published) | | Chatbot Arena (subset) | Primary evaluation |10K randomly
+sampled comparisons | Human preference votes (public) | | FLASK | Fine-grained
+evaluation | ~1,700 model outputs | Human ratings on12 fine-grained dimensions |
+| ShareGPT + rubric annotation | Calibration set |500 examples,3 annotators/ex |
+Collected fresh (6 atomic criteria + overall) | | AlpacaEval2.0 | OOD test |805
+examples | Length-controlled win rates (indirect human signal) |
+
+--------------------------------------------------------------------------------
+
+Evaluation Metrics| Metric | What it measures | Target |
+
+|--------|-----------------|--------| | Spearman ρ (with human scores) | Rank
+correlation — primary metric | >0.65 (vs ~0.50–0.55 for GPT-4 baseline on
+creative/ open-ended tasks) | | Exact + Adjacent Agreement | Score-level match
+with humans | >60% exact +85% adjacent | | Position Bias Rate | % of trials
+where swapping A/B order flips the preference | <5% (vs ~15–20% for single-model
+judges) | | Verbosity Correlation | Pearson r between predicted score and
+response length (log tokens) | |r| <0.10 (vs ~0.35 for rubric-free judges) | |
+Expected Calibration Error (ECE) | Binned calibration of confidence vs accuracy
+| <0.08 | | Test-Retest Consistency | Variance across3 independent runs on same
+input | σ² <0.02 per criterion | | Cost per Evaluation | API cost per evaluation
+@ inference time | Report in USD for transparency |
+
+--------------------------------------------------------------------------------
+
+Baselines| Baseline | Description | Why chosen |
+
+|----------|-------------|------------| | GPT-4-as-a-judge (holistic) | Single
+GPT-4 call scoring "overall quality"1–5 | De facto standard in most LLM
+evaluation pipelines | | GPT-4-as-a-judge (with rubric) | Same model, but with
+the6 atomic criteria in prompt | Controls for rubric decomposition effect alone
+| | PairRM | Trained pairwise reward model (based on Llama) | Representative of
+trained, task-specific evaluators | | JudgeLM | Fine-tuned evaluator on100K
+human judgments | Strongest published fine-tuned baseline | | Majority Vote (3x)
+| Same model (GPT-4) called3 times, majority vote | Controls for the effect of
+repeated sampling alone | | Humans (held out) | Human judgment on held-out test
+set | Upper-bound oracle (no automated evaluation is expected to match this, but
+it anchors the comparison) |
+
+--------------------------------------------------------------------------------
+
+Ablations
+Each ablation removes or varies one component of CEE while holding
+everything else fixed, tested on the MT-Bench test set:
+
+Ablation                 Variation                  What it isolates
+Panel size               K =1 vs3 vs5 models        Value of model diversity
+Criterion decomposition  Replace6 criteria with     Value of atomic rubric
+single holistic "overall"  structure
+judgment
+Uncertainty weighting    Replace                    Value of log-prob
+confidence-weighted        confidence signal
+average with uniform
+average
+Calibration layer        Remove calibration (use    Value of human-anchored
+raw aggregated scores)     calibration
+Model diversity          Same-family panel (GPT-4o  Value of cross-family
+×3) vs cross-family        diversity vs repeated
+(GPT-4o + Claude + Llama)  sampling
+
+--------------------------------------------------------------------------------
+
+Expected Failure Modes| Failure Mode | Likelihood | Mitigation |
+
+|-------------|-----------|------------| | Calibration overfitting — the
+calibration layer overfits to the small (500-example) human set and degrades on
+OOD distributions like AlpacaEval | Medium | Use regularization (isotonic
+regression with smoothing); report OOD performance separately; scale calibration
+set to1,000 if budget permits | | Model collinearity — diverse models produce
+correlated errors on the same failure cases (e.g., all miss subtle factual
+errors in stylized text) | Medium-High | Analyze error correlation matrix across
+models; if collinearity is high (>0.8 across all pairs), consider subsampling to
+the two most independent models | | Criterion decomposition misses holistic
+qualities — atomic rubrics fail to capture emergent dimensions (interestingness,
+novelty, tone) that drive human preferences | Medium | Add a7th "overall
+gestalt" criterion alongside atomic ones; check whether the holistic dimension
+is needed for high human correlation via ablation | | Computational cost — K ×6
+API calls per evaluation (e.g.,5 ×6 =30 calls) is15–30× more expensive than a
+single-judge baseline, limiting practical adoption | High | Accept cost as a
+trade-off for research-phase accuracy; report cost per evaluation; investigate
+whether pruning to the top-2 criteria after a pilot study can reduce calls3×
+with minimal accuracy loss | | Rubric leakage — models exhibit new
+criterion-specific biases (e.g., always giving "conciseness" low scores to long
+but good answers) | Medium | Exploratory analysis of per-criterion score
+distributions; adjust rubric wording in a small pilot (N=50) before finalizing |
+| Human annotation bottleneck — collecting500 ×6 ×3 ≈9,000 reliable
+atomic-criterion annotations is expensive and slow | High | Use existing FLASK
+dataset (already has fine-grained annotations) to bootstrap; only collect ~200
+fresh annotations for the calibration held-out set | | Log-prob confidence is
+poorly calibrated — score-token log-probs may not reflect true judgment
+confidence, especially under sampling temperature >0 | Medium | Set temperature
+to0 for evaluation calls; if log-probs still unreliable, replace with
+self-reported confidence ("How confident are you in this score on a1-5 scale?")
+as an alternative confidence signal |

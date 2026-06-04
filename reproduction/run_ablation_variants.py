@@ -200,7 +200,7 @@ def clean_cli_stdout(text: str) -> str:
             continue
         if stripped.startswith("Resume this session with:") or stripped.startswith("EvoSci --resume"):
             continue
-        cleaned.append(line.rstrip())
+        cleaned.append(line.rstrip().replace("Goodbye!", "").rstrip())
     result = "\n".join(cleaned).strip()
     if "[Usage:" in result:
         result = result.split("[Usage:", 1)[0].rstrip()

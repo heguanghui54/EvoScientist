@@ -62,6 +62,7 @@ and paper-level experimental reproduction.
 | Human-label aggregation is executable | `aggregate_human_labels.py` converts Table 2 human labels into Win/Tie/Lose aggregate JSON/CSV | Verified |
 | Ablation aggregation is executable | `aggregate_ablation_results.py` converts Table 3 variant judge outputs into variant-perspective Win/Tie/Lose aggregate JSON/CSV | Verified |
 | Replacement ablation smoke is complete | `ablation_query01_smoke_report.json` records real query-01 proposal-only ablation runs for `-IDE`, `-IVE`, and `-all`, with DeepSeek judge outputs and aggregate results under `reproduction/artifacts/ablation_smoke` | Verified |
+| Formal ablation partial rerun exists | `ablation_queries01_03_partial_report.json` records real queries 01-03 proposal-only ablation runs for `-IDE`, `-IVE`, and `-all`, with 9 DeepSeek judge outputs under `reproduction/artifacts/ablations`; the coverage-aware schema gate still marks Table 3 incomplete because only 3/30 paper queries are covered | Verified |
 | Code-execution aggregation is executable | `aggregate_code_execution.py` converts Figure 2 execution logs into before/after and stage-level success-rate JSON/CSV | Verified |
 | Paper reproduction action plan is executable | `build_paper_reproduction_plan.py` regenerates the current missing-evidence command plan from the completion audit | Verified |
 | EvoScientist CLI outputs are normalized before judging | `normalize_system_outputs.py` writes clean `answer.txt` files from raw `stdout.txt` logs | Verified |
@@ -77,7 +78,7 @@ and paper-level experimental reproduction.
 | Paper LLM-as-judge numeric table | Real judge JSONL from `gemini-3-flash` for the seven paper baselines | DeepSeek judge table exists for the replacement baseline; Gemini judge key still not confirmed |
 | Human agreement numbers | PhD annotator labels | Not public in this checkout |
 | Code-generation success table | Generated code trajectories and execution logs | Requires real proposal generation first |
-| Ablation table | Runs with IDE/IVE/all removed or equivalent toggles | Requires real agent runs and ablation implementation plan |
+| Ablation table | 30-query runs with IDE/IVE/all removed or equivalent toggles and paper-matched judge outputs | Formal replacement evidence now covers queries 01-03 for all three variants, but Table 3 still requires 30/30 coverage and the paper's native ablation switches or author-provided raw outputs |
 
 ## Current Provider State
 

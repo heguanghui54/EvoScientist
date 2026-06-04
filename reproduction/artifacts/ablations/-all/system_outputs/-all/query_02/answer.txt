@@ -1,0 +1,164 @@
+A Controlled Study of Automated Program Repair via Iterative Research Synthesis
+   with and without Cross-Run Memory Evolution## TitleIterative Research for
+     Automated Program Repair: An Ablation of Cross-Run Memory Evolution in
+                          Scientific Discovery Agents
+
+--------------------------------------------------------------------------------
+
+ProblemLarge language models have achieved impressive results on isolated code
+generation benchmarks (HumanEval, MBPP), yet their application to scientific
+research on program repair — where the goal is not merely to write a fix but to
+discover, validate, and report a reproducible repair method — remains
+underexplored. Current approaches treat each research session as independent,
+discarding accumulated knowledge about which repair strategies fail or succeed
+across different bug classes. The central question is whether cross-run memory
+evolution (preserving and reusing validated ideas, validation criteria, and
+experimental strategies across sessions) meaningfully improves the quality and
+efficiency of program repair research compared to isolated single-run efforts.
+
+--------------------------------------------------------------------------------
+
+HypothesisA research agent equipped with cross-run evolution mechanisms
+(idea-direction memory, idea-validation memory, and experiment-strategy memory)
+will produce higher-quality program repair proposals — measured by repair
+success rate, reproducibility of reported results, and novelty of the proposed
+method — than an otherwise identical agent that operates as a non-evolving
+single-run system. Furthermore, the advantage will grow as the number of
+research iterations increases.
+
+--------------------------------------------------------------------------------
+
+MethodWe compare two variants of the EvoScientist research agent applied to the
+task of automated program repair:
+
+Full EvoScientist (FS): The agent receives a program repair task, conducts
+literature grounding, generates candidate repair ideas across multiple personas
+(innovator/pragmatist/critic), ranks them via an ELO tournament, expands the top
+idea into a proposal, designs and executes experiments, and writes a final
+report. Between runs, the FS variant updates three persistent memory stores: (1)
+idea-direction memory — which repair strategies (e.g., semantic patching,
+test-suite amplification, invariant inference) have been promising or
+unpromising for different bug types; (2) idea-validation memory — which
+validation criteria consistently separate strong from weak ideas; (3)
+experiment-strategy memory — which experimental setups, hyperparameter ranges,
+and evaluation protocols have proven reliable. All three memories are read at
+the start of each new run and updated after each completion.
+
+No-Evolution Ablation (FS⁻ᵃˡˡ): The same agent architecture, task pipeline, and
+tool use, but all three memory mechanisms are disabled. Each run begins from a
+blank slate: no record of prior research directions, no accumulated validation
+knowledge, and no cached experimental strategies. The agent must re-explore the
+idea space, re-derive validation heuristics, and re-discover experimental
+protocols from scratch on every invocation.
+
+Both variants run10 independent program repair tasks sampled from the Defects4J
+benchmark (see below). Each variant receives exactly the same prompts, budget,
+and tool access.
+
+--------------------------------------------------------------------------------
+
+Dataset / BenchmarkDefects4J (v2.0): A curated corpus of835 real Java bugs
+from17 open-source projects. We sample10 bugs stratified by project and severity
+(5 single-edit bugs from the "Chart", "Lang", "Math", "Closure", and "Time"
+projects;5 multi-edit bugs from the same projects). Each bug includes a failing
+test case, the passing test suite, and the known fix. Bugs are held out and
+never seen by the model during prior training.
+
+--------------------------------------------------------------------------------
+
+Evaluation Metrics| Metric | Definition |
+
+|---|---| | Repair Precision | Fraction of bugs for which the proposed method
+produces a correct fix (passes all tests in the suite). | | Proposal Novelty |
+Semantic overlap between the proposed repair strategy and the top-3 related
+works returned by a literature search (lower overlap = higher novelty), scored
+by an independent evaluator. | | Experimental Reproducibility | Binary flag:
+whether the final report includes all information needed to replicate the
+experiment (random seed, exact model configuration, evaluation command,
+environment specification). | | Research Efficiency | Total number of tool calls
+and search steps consumed per completed proposal (lower is better). | |
+Self-Correction Rate | Fraction of runs where the agent detects a flaw in its
+own initial experiment (e.g., data leakage, metric miscalculation, confounding
+variable) and adjusts before the final report. |
+
+All metrics are reported as means with95% confidence intervals across10
+independent runs per variant.
+
+--------------------------------------------------------------------------------
+
+Baselines1. Full EvoScientist (FS): The unablated system with all three
+evolution mechanisms active. This is the positive control.
+
+ 2 FS⁻ᵃˡˡ (This Proposal): The no-evolution ablation, serving as the negative
+   control.
+ 3 Static Retrieval-Augmented Prompt: A simpler baseline that prepends a static,
+   hand-curated document of "best practices for program repair research" to each
+   run, without any run-specific memory evolution. This controls for the base
+   value of any additional context versus evolved context.
+
+--------------------------------------------------------------------------------
+
+Ablations (within FS⁻ᵃˡˡ)
+
+Since the primary ablation in this study is the removal of all evolution, we
+also define three intermediate ablations for completeness (to isolate which
+memory component drives any observed advantage):
+
+ • FS⁻ᵈʳ̈ⁱʳ̈ᵗⁱᵒⁿ: Disable only idea-direction memory. Validation and strategy
+   memories remain active.
+ • FS⁻ᵛᵃˡⁱᵈᵃᵗⁱᵒⁿ: Disable only idea-validation memory. Direction and strategy
+   memories remain active.
+ • FS⁻ˢᵗʳᵃᵗᵉᵍʸ: Disable only experiment-strategy memory. Direction and
+   validation memories remain active.
+
+If the full -all ablation shows a significant drop relative to FS, these
+intermediate ablations will pinpoint which memory type contributes most to the
+gap.
+
+--------------------------------------------------------------------------------
+
+Expected Failure Modes1. Task ceiling effect. Defects4J fixes are well-studied;
+even the single-run variant may perform at ceiling, obscuring the advantage of
+evolution. Mitigation: Include the5 multi-edit bugs, which are substantially
+harder and known to saturate simpler approaches.
+
+ 2 Memory contamination across runs in FS. Despite stratification, an early-run
+   repair method might incidentally help on a later bug via shared patterns
+   (e.g., both involve null-pointer guards), making it difficult to attribute
+   improvement solely to memory. Mitigation: Log which memory entries are read
+   on each run and measure the semantic similarity between the retrieved
+   memories and the bug at hand.
+ 3 Metric noise from model stochasticity. Temperature sampling produces variance
+   in idea generation and ranking. Mitigation: Run3 seeds per bug (30 total runs
+   per variant) and report confidence intervals.
+ 4 Reproducibility metric ceiling. Single-run agents may produce equally
+   reproducible reports if the report-writing skill is stable regardless of
+   memory. Mitigation: Add a fine-grained reproducibility checklist (11 binary
+   items adapted from the ML Reproducibility Checklist).
+ 5 Overfitting to Defects4J. Results may not transfer to other languages or bug
+   repositories. Limitation: Explicitly noted as a scope constraint; the
+   conclusion will flag replication on BugsInPy and CodeFlaws as necessary
+   follow-up.
+
+--------------------------------------------------------------------------------
+
+Limitations- Single benchmark scope. Defects4J covers only Java bugs from a
+specific set of projects. Generalization to other languages (Python, JavaScript,
+C) and to industrial codebases is not tested.
+
+ • Fixed budget per run. Both variants receive identical compute budgets. It is
+   possible that an evolving system's advantage lies in reallocating budget more
+   intelligently over time — a benefit that a same-budget comparison may
+   underestimate if the evolution mechanism itself consumes resources.
+ • No human-in-the-loop. The evaluation measures the proposal as produced by the
+   agent, not the downstream utility of that proposal when executed by a human
+   researcher. An agent that produces a slightly lower-scoring but more readable
+   proposal might be more useful in practice.
+ • Short horizon (10 runs). Evolution mechanisms may require more runs to show
+   significant compound effects. A100-run study would be needed to estimate the
+   asymptotic benefit.
+ • Confounding between memory types. The three memory mechanisms interact:
+   better experiment strategies may produce cleaner results that in turn feed
+   better validation criteria. A full factorial design (2³ =8 conditions) would
+   separate main effects from interactions but is beyond the scope of this
+   Table3 ablation.

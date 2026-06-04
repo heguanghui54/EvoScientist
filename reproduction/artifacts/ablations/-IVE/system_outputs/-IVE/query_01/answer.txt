@@ -1,0 +1,205 @@
+● think_tool(This is a Table 3 ablation for the Ev…)
+
+Cross-Lingual Lexical Bootstrapping for Low-Resource Neural Machine Translation
+via Cognate-Guided Code-Switching### ProblemNeural machine translation (NMT)
+systems require large parallel corpora to achieve acceptable quality. For the
+vast majority of the world's languages — those with fewer than1 million speakers
+and minimal digitized text — parallel data is scarce or nonexistent. Existing
+low-resource approaches fall into three categories: transfer learning from a
+high-resource parent language, unsupervised methods that rely on monolingual
+corpora and back-translation, and data augmentation using lexical substitution.
+Each has a known ceiling: transfer learning degrades sharply when the parent and
+target are typologically distant; unsupervised methods produce fluent but
+semantically brittle output; and lexical augmentation methods are limited by the
+coverage of existing bilingual lexicons. No current method systematically
+exploits the phonological and orthographic signal shared between related
+languages — cognates — to generate synthetic parallel data at the sentence
+level, then uses that data to train a joint encoder that generalizes beyond the
+lexical overlap.
+
+HypothesisH1. Incorporating cognate-guided code-switching as a data augmentation
+strategy injects sufficient parallel signal into low-resource MT training to
+improve BLEU by ≥3 points over back-translation-only baselines at
+the10k-sentence parallel data regime.
+
+H2. A shared bilingual encoder pretrained on a cognate-detection objective
+learns cross-lingual representations that transfer better to the translation
+task than standard cross-lingual language model pretraining (e.g., XLM-R)
+because the objective forces alignment at the subword level rather than the
+sentence level.
+
+H3. The gains are largest for language pairs with moderate cognate density
+(15–35% lexical overlap) and diminish at both very high overlap (where standard
+transfer already works) and very low overlap (where the signal from cognates is
+too sparse). This produces an identifiable U-shaped utility curve, which can be
+used to decide a priori whether cognate bootstrapping will help a given language
+pair.
+
+MethodThe proposed method, CognateBoot, proceeds in four stages:
+
+Stage1: Cognate Detection and Lexicon Induction. Given a source language L_s and
+target language L_t with a small seed parallel lexicon (500–2000 entries), train
+a cognate classifier that operates on subword sequences. The classifier uses
+edit distance over phonemized forms (via the Epitran grapheme-to-phoneme
+library) combined with a learned alignment score from a2-layer Transformer over
+character n-grams. This detects cognates even when orthographic divergence is
+high (e.g., Spanish noche → Italian notte). Output: a bilingual cognate lexicon
+of size k (target:5,000–20,000 pairs, depending on language pair).
+
+Stage2: Cognate-Guided Code-Switching Augmentation. For each sentence in the
+target-side monolingual corpus (which is assumed to be larger than the parallel
+data, e.g.,100k–500k sentences), identify content words that have a known
+cognate in L_s via the induced lexicon. Replace each such word with its cognate
+equivalent with probability p =0.3 (tuned on a held-out development set). Apply
+a syntactic constraint: only replace nouns, verbs, and adjectives; function
+words and inflected forms are skipped unless the cognate match is exact in lemma
+form. The result is a code-switched sentence that mixes L_t content with L_s
+lexical insertions, creating a synthetic parallel-like signal without requiring
+a full translation model.
+
+Stage3: Joint Encoder Pretraining on Cognate Detection. Pretrain a6-layer
+Transformer encoder on a binary classification task: given a pair of sentences
+(s_i, t_j) — one from L_s, one from L_t — predict whether they are translations.
+The positive pairs come from (a) the seed parallel corpus, (b) synthetic
+translation pairs where t_j is the code-switched version of s_i, and (c)
+back-translated pairs from a preliminary unsupervised NMT model. Negative pairs
+are sampled from mismatched corpora. This is a scaled-down version of the XLM
+translation-pair pretraining objective, but with two key differences: (i) the
+training set is heavily weighted toward cognate-rich sentences (oversampled3×),
+and (ii) the encoder is shallow (6 layers vs.12–24 in XLM-R) to match
+low-resource compute budgets.
+
+Stage4: Finetuning with Downsampling Curriculum. Finetune the pretrained
+encoder–decoder on the seed parallel corpus (10k sentences) using a curriculum
+that sorts training examples by cognate density from high to low. The intuition:
+early training on cognate-dense examples anchors the cross-lingual mappings, and
+later examples with fewer cognates force generalization beyond lexical overlap.
+Decoding uses beam search with length penalty α =0.6. All experiments use
+fairseq with a single GPU (12 GB VRAM).
+
+Dataset and BenchmarkExperiments target three language pairs spanning the
+cognate-density spectrum:
+
+
+                 Cognate Density                  Monolingual
+ Language Pair   (est.)           Seed Parallel   (target)         Family
+ Spanish →       ~35%             10k (FLoRes     200k (OSCAR)     Romance
+ Catalan                          dev)
+ Indonesian →    ~25%             10k (FLoRes     200k (OSCAR)     Austronesian
+ Malay                            dev)
+ Hindi →         ~15%             10k             200k (OSCAR)     Indo-Aryan
+ Bengali                          (Samanantar
+                                  sample)
+
+
+All evaluation uses the FLoRes-101 test sets (101-way translation). Development
+sets are held out from the training data (1k sentences per pair).
+
+Justification. These pairs cover moderate to high cognate density within a
+single family branch. Spanish–Catalan tests near the upper bound of expected
+utility; Hindi–Bengali tests the middle region where the method should produce
+maximum relative gain; Indonesian–Malay tests a pair with high lexical overlap
+but low orthographic convergence (both use Latin script, but phoneme-to-grapheme
+mappings differ). An additional low-density pair (Swahili → Zulu, ~8% detectable
+cognate rate) is included to test the lower bound of the U-shaped hypothesis.
+
+Evaluation Metrics- Primary: BLEU (sacrébleu, signature:
+nrefs:1|case:mixed|eff:no|tok:13a|smooth:exp)
+
+ • Secondary: chrF2++ (character-level metric robust to cognate surface forms);
+   COMET (crosslingual embedding-based metric, wmt20-comet-da model)
+ • Ablation diagnostics: cognate-BLEU (BLEU computed only on sentences with ≥3
+   detected cognates), non-cognate-BLEU (sentences with ≤1 cognate) — to
+   localize where gains come from- Statistical rigor: each condition run with3
+   different random seeds;95% bootstrap confidence intervals reported for all
+   main comparisons### Baselines1. Back-translation only (Edunov et al.,2018):
+   unsupervised NMT baseline using target-side monolingual data with no
+   code-switching or cognate signal.
+
+ 2 XLM-R + finetune (Conneau et al.,2020): initialize encoder with XLM-R-base,
+   finetune on the10k seed parallel data (no cognate augmentation).
+ 3 Lexical substitution baseline (Lample et al.,2018): replace random target
+   words with source-word translations from a bilingual dictionary (MUSE induced
+   lexicon) at rate p =0.3, without cognate filtering.
+ 4 Full-data upper bound (Transformer-base,100k parallel sentences from OPUS, no
+   augmentation): establishes the performance ceiling for each pair given
+   abundant data.
+
+Ablations| Ablation | Component Removed | Expected Impact |
+
+|---|---|---| | A1 | Cognate detection (use MUSE lexicon instead) | BLEU drops
+~1–2 pts; MUSE covers fewer cognates and includes false positives | | A2 |
+Code-switching (use back-translation only in Stage3 pretraining) | BLEU drops
+~2–3 pts; confirms cognate augmentation is the key signal | | A3 | No syntactic
+constraints in code-switching (replace all words, including function words) |
+BLEU gains diminish; function-word replacement increases noise | | A4 | Flat
+training (no curriculum; shuffle all training data) | BLEU drops ~0.5–1 pt;
+curriculum matters at the margin but is not the core driver | | A5 | Pretrain
+without cognate weighting (uniform oversampling) | BLEU drops ~1 pt;
+cognate-rich pretraining provides a measurable boost |
+
+Expected Failure Modes1. Cognate detection error propagates. If the induced
+cognate lexicon has high precision but low recall (the expected failure mode of
+edit-distance-based detection), the augmentation signal will be sparse. A recall
+<10% would make Stage2 indistinguishable from random lexical substitution.
+Mitigation: if Stage1 recall is below15% on a held-out cognate gold set, fall
+back to a dictionary-based method (A1 configuration) and flag the result as a
+non-cognate-driven outcome.
+
+ 2 Code-switching degrades target-language fluency. Replacing content words with
+   source-language cognates may produce sentences that are locally
+   understandable but whose global syntactic structure is corrupted (e.g.,
+   verb-argument order mismatches between L_s and L_t in the Hindi–Bengali pair,
+   where word order is more flexible). Mitigation: the syntactic constraint
+   (Stage2) blocks function-word replacement; if LM perplexity on augmented
+   sentences exceeds1.5× the perplexity on natural text, reduce p from0.3
+   to0.15.
+ 3 Pretrained encoder overfits to cognate-detection proxy. The Stage3 binary
+   classification task may produce an encoder that learns shallow orthographic
+   cues (e.g., "if both sentences share the character sequence 'tion', predict
+   positive") rather than deeper cross-lingual alignment. Mitigation: evaluate
+   the pretrained encoder on the XL-Speech sentence retrieval task after Stage3;
+   if recall@1 <20%, add a masked language modeling objective (λ =0.3) as
+   regularization.
+ 4 Curriculum training causes catastrophic forgetting. If early
+   high-cognate-density examples over-represent one domain (e.g., news text),
+   the model may forget later low-cognate examples from other domains.
+   Mitigation: monitor per-domain BLEU during finetuning; if a domain regresses
+   by ≥2 BLEU relative to its starting point, revert to uniform shuffling.
+ 5 U-shaped curve is not observed — cognate density does not predict gain
+   magnitude. This would falsify H3 and suggest that typological similarity
+   (rather than lexical overlap per se) drives the improvement. If H3 fails, the
+   paper will report the negative result and argue for a broader typological
+   feature analysis instead.
+
+Limitations1. Gold cognate lexicons are unavailable for most language pairs. The
+evaluation relies on automatic cognate detection, which is itself an open
+research problem for distantly related languages. Results on Spanish→Catalan may
+overestimate performance on pairs with no standardized orthography.
+
+ 2 Monolingual corpus size is assumed (200k sentences). For languages with truly
+   minimal digitization (e.g., <50k sentences total), the code-switching stage
+   produces too few augmented sentences to affect training. The method is
+   designed for languages with moderate digital presence (Wikipedia-sized or
+   larger) rather than "extreme" low-resource languages (<10k sentences).
+ 3 No morphological handling. CognateBoot treats each word as an atomic unit. In
+   morphologically rich languages (e.g., Bengali, Swahili), a single lemma may
+   have dozens of surface forms, many of which will not be recognized by the
+   edit-distance-based cognate detector. This systematically underestimates the
+   true cognate density for inflected forms. A future extension would
+   incorporate morphological segmentation (e.g., BPE over morphemes).
+ 4 Single GPU constraint limits encoder depth. The6-layer encoder may be too
+   shallow to capture the cross-lingual abstraction that cognate-rich
+   pretraining should provide, particularly for the Hindi→Bengali pair where
+   script divergence adds visual noise. Results with a deeper encoder (12
+   layers) on a subset of the data are reported as a secondary analysis but are
+   not the primary claim.
+ 5 Evaluation languages are all from the same macro-family (Indo-European +
+   Austronesian). The typological range is limited. Claims about
+   generalizability to unrelated language families (Niger-Congo, Sino-Tibetan,
+   Pama-Nyungan) are speculative until tested.
+ 6 Negative result risk on Swahili→Zulu. If the low cognate density (~8%)
+   produces no measurable gain over back-translation, the U-shaped hypothesis is
+   not fully tested (it requires a point near zero gain, not negative gain). A
+   zero-result on this pair would be inconclusive rather than confirming the
+   lower bound.

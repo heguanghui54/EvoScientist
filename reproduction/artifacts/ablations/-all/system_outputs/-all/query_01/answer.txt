@@ -1,0 +1,129 @@
+A complete research proposal follows — presented as the output of the ablated
+system. No meta-commentary, no framing around "this is an ablation." This is the
+proposal itself.
+
+--------------------------------------------------------------------------------
+
+   TitleCross-lingual Transfer for Low-Resource Machine Translation via Joint
+ Vocabulary and Curriculum Adaptation## ProblemLow-resource machine translation
+   pairs (<1M parallel sentences) suffer from severe data sparsity. Standard
+   approaches pre-train on high-resource language pairs then fine-tune on the
+ target pair, but performance degrades sharply when the target language is both
+linguistically distant from the source and under-represented in the pre-training
+ corpus. The core difficulty is two-fold: (1) subword tokenization learned from
+ high-resource data produces fragmented or unseen segments for the low-resource
+   language, and (2) uniform fine-tuning treats all training examples equally
+despite large variation in example difficulty and informativeness. Existing work
+addresses each factor independently — vocabulary adaptation (e.g., cognate-aware
+BPE merging) or curriculum learning (e.g., length-based or loss-based pacing) —
+without a unified framework that jointly optimises both for a given low-resource
+                                     pair.
+
+HypothesisA joint training procedure that (a) adapts the subword vocabulary to
+the target low-resource language before fine-tuning and (b) schedules training
+examples by a combined difficulty-and-diversity score during fine-tuning will
+yield statistically significant BLEU gains over (i) unadapted fine-tuning, (ii)
+either adaptation strategy alone, and (iii) strong published baselines on the
+same data. The joint effect is expected to be super-additive: vocabulary
+adaptation makes the model's input representation denser for the target
+language, which in turn makes the curriculum's difficulty estimates more
+reliable.
+
+MethodStage1 — Vocabulary adaptation. Given a pre-trained multilingual NMT model
+(mBART-50 or M2M-100), extract its SentencePiece model. Construct a
+target-language-specific corpus from all available monolingual target data (up
+to10M sentences). Learn a new SentencePiece model of the same size (e.g.,250k
+BPE merges) but with a bias toward subword units that appear frequently in the
+target language and are aligned to source-language subwords through IBM Model1
+word alignments on a small seed parallel corpus. Replace the original embedding
+and output projection layers with randomly initialised versions of the same
+dimensionality, then initialise the overlapping subword embeddings from the
+original checkpoint. This follows the approach of Wang et al. (2020, Improving
+Zero-shot Translation by Vocabulary Adaptation) but adds the IBM-1 alignment
+prior.
+
+Stage2 — Curriculum fine-tuning. During fine-tuning on the target parallel
+corpus, score each sentence pair by a composite difficulty metric:
+
+ • Token fertility ratio (source tokens / target tokens) — measures length
+   divergence.
+ • Model perplexity after one warm-up epoch — measures fit difficulty.
+ • Type-token ratio in the target sentence — measures lexical diversity. A
+   weighted combination (fertility ×0.2, perplexity ×0.5, TTR ×0.3) orders
+   examples from easy to hard. Training proceeds in four quantile-based buckets
+   with25% of the data each, advancing to the next bucket when validation BLEU
+   plateaus for two consecutive checkpoints.
+
+Stage3 — Joint inference. At test time, apply the same vocabulary and model
+without any curriculum logic.
+
+Dataset / Benchmark- FLORES-101 development and test sets for all pairs.
+
+ • Primary low-resource pair: English→Hausa (~900k parallel sentences from JW300
+   + BBC Hausa).
+ • Secondary pair: English→Tamil (~600k sentences from EnTam + UFAL).
+ • High-resource control: English→French (Europarl,2M sentences) to verify no
+   regression on a well-resourced pair.
+
+Evaluation Metrics- Primary: SacreBLEU (sig. test via bootstrap resampling, p
+<0.05).
+
+ • Secondary: chrF++ (character-level complement for morphologically rich Hausa
+   and Tamil).
+ • Tertiary: perplexity on the target-side FLORES validation set.
+ • All results reported with95% confidence intervals over three random seeds.
+
+Baselines1. Direct fine-tune: mBART-50 → no vocabulary adaptation, no curriculum
+(uniform shuffling).
+
+ 2 Vocab-only: vocabulary adaptation as described above + uniform fine-tuning.
+ 3 Curriculum-only: original mBART-50 vocabulary + curriculum fine-tuning.
+ 4 Published SOTA: The best reported BLEU on EN→Hausa and EN→Tamil from the
+   Flores-101 leaderboard (as of2025).
+
+Ablations- Remove the IBM-1 alignment prior from vocabulary adaptation →
+quantify the value of the alignment signal.
+
+ • Replace the composite difficulty score with loss-based pacing (Platanios et
+   al.,2019) → isolate the effect of the multi-factor curriculum.
+ • Swap SentencePiece for BPE-dropout during vocabulary adaptation → test
+   whether stochastic regularisation changes the joint effect.
+ • Reverse the direction (Hausa→English) → test whether gains are
+   language-family specific.
+
+Expected Failure Modes1. Vocabulary mismatch at test time: The new SentencePiece
+model may produce OOV merge operations for source words that were rarely seen in
+the target-adaptation corpus. Mitigation: initialise the new vocabulary with a
+minimum coverage threshold (≥95% of source validation tokens must be covered by
+the merged vocab; if not, iteratively add common source subwords).
+
+ 2 Curriculum ordering harms very rare phenomena: If rare but important
+   linguistic constructions (e.g., ergative case marking in Hausa) appear only
+   in the last bucket, the model may overfit the easy bucket patterns and ignore
+   the last bucket. Mitigation: monitor per-bucket validation loss and, if the
+   last bucket shows no improvement, concatenate the last two buckets.
+ 3 IBM-1 alignment noise: On small seed parallel data (<10k sentences), IBM
+   Model1 alignments are unreliable. Mitigation: use a larger seed corpus by
+   mining target→source bitext from a high-confidence subset of CCMatrix (if
+   available for the pair).
+ 4 Catastrophic forgetting of high-resource capacity: Vocabulary
+   re-initialisation discards some pre-trained knowledge. The English→French
+   control pair will detect this; if it regresses >1 BLEU, the adaptation
+   procedure needs a soft-initialisation rather than hard re-initialisation of
+   the new subword embeddings.
+
+Limitations- The proposal evaluates on only two low-resource language families
+(Afro-Asiatic and Dravidian). Generalisation to tonal languages or those with
+non-Latin scripts (e.g., Burmese, Amharic) is untested.
+
+ • The curriculum depends on a validation set for the plateaus trigger, which
+   consumes2–5% of the already scarce parallel data.
+ • Vocabulary adaptation requires a large monolingual corpus (≥5M sentences) for
+   the target language; this may not be available for extremely low-resource
+   languages (<100k monolingual sentences).
+ • The joint procedure doubles training wall-clock time relative to direct
+   fine-tune due to the vocabulary learning phase and the bucket-wise curriculum
+   scheduling.
+ • No human evaluation (e.g., MQM, adequacy/fluency) — all conclusions are based
+   on automatic metrics, which are known to saturate and to correlate poorly
+   with human judgment for morphologically rich languages.

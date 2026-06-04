@@ -1,0 +1,185 @@
+Table3 Ablation -all: Non-Evolving Single-Run Research Proposal## TitleMetaEval:
+ A Calibrated Multi-Dimensional Framework for Accurate Automated LLM Evaluation
+
+ProblemAutomated evaluation of Large Language Models — using metrics like BLEU,
+ROUGE, METEOR, BERTScore, and LLM-as-Judge (e.g., GPT-4, Claude, or open-source
+judges like Prometheus) — suffers from systematic inaccuracies:
+
+ 1 Reference-metric saturation: Lexical overlap metrics (BLEU, ROUGE) plateau
+   and misorder outputs once generation quality surpasses a moderate threshold.
+   They penalize valid paraphrases and reward surface-form similarity over
+   semantic correctness.
+ 2 LLM-as-Judge biases: Position bias (preferring the first candidate),
+   verbosity bias (preferring longer outputs), self-enhancement bias (preferring
+   outputs from the same model family), and intra-model consistency are
+   well-documented but not reliably corrected.
+ 3 Task-specific metric collapse: On code generation, reasoning, and math,
+   pass@k and execution-based checks have high resolution but narrow coverage;
+   semantic metrics fail to capture functional correctness. On open-ended
+   generation, no single metric correlates reliably with human judgment across
+   domains.
+ 4 Absence of uncertainty-aware aggregation: Point estimates of evaluation
+   scores are reported without calibration or confidence intervals, making it
+   impossible to distinguish genuine gains from evaluation noise.
+
+The research question is: Can a multi-dimensional evaluation framework with
+explicit bias correction, per-dimension calibration, and uncertainty-aware
+aggregation produce evaluations that correlate with human judgment more
+consistently than any single existing metric or LLM judge?
+
+HypothesisA meta-evaluation framework that (a) scores model outputs across four
+disjoint dimensions — factual accuracy, instruction following, fluency, and
+efficiency — using separate calibrated probes per dimension, (b) applies
+per-probe debiasing transforms learned from a small human-annotated calibration
+set, and (c) aggregates dimension scores with a Bayesian hierarchical model that
+outputs posterior distributions (not point estimates), will achieve a Spearman
+correlation with pooled human judgments ≥0.85 on held-out evaluation data,
+exceeding the best single-metric baseline (GPT-4-as-Judge) by ≥0.08.
+
+MethodMetaEval is designed as a four-stage pipeline, with no evolutionary
+component — each stage is static and defined upfront:
+
+Stage1 — Multi-Dimension Decomposition. Define four evaluation dimensions
+formalized as scoring rubrics:
+
+ • Factual Accuracy: Proportion of claims in the output supported by the
+   provided context or world knowledge. Scored0–3 per claim, averaged.
+ • Instruction Following: Binary or graded checklist of request constraints
+   (length, format, tone, content restrictions). Scaled0–1 per constraint.
+ • Fluency: Perplexity under a small LM (e.g., TinyLlama) + grammatical error
+   rate. Normalized0–1.
+ • Efficiency: Output length / required length ratio penalized by verbosity
+   threshold. Scaled0–1.
+
+Stage2 — Calibrated Probe Assignment. Each dimension is scored by a different
+lightweight evaluator LLM fine-tuned on that dimension only (LoRA fine-tuned
+from a7B base, e.g., Llama-3-8B-Instruct). The four probes share no parameters.
+Training data:2,000 human-annotated examples per dimension from the evaluation
+benchmark.
+
+Stage3 — Per-Probe Debiasing. For each probe, compute a debiasing transform on a
+held-out calibration set (500 examples):
+
+ • Fit a linear correction: corrected_score = α · raw_score + β, where α, β are
+   dimension-specific, optimized to minimize mean squared error against human
+   scores on the calibration set.
+ • Optionally fit a dimension-wise position-bias correction: score each
+   candidate in both orders (A→B, B→A) and average.
+
+Stage4 — Bayesian Aggregation. The four corrected dimension scores per output
+are combined via a hierarchical Bayesian model:
+
+ • Likelihood: s_d ~ Normal(μ_d, σ_d²) for each dimension d.
+ • Prior: flat (no cross-run updates — fixed at initialization).
+ • Posterior output: Overall Score = Σ w_d · μ_d with credible intervals, where
+   weights w_d are estimated from human preference data.
+ • Report: posterior mean +90% credible interval, enabling uncertainty-aware
+   comparisons.
+
+Dataset / BenchmarkEvalHarvest — a composite benchmark assembled from four
+existing evaluation suites, ensuring diversity across evaluation paradigms:
+
+ 1 MT-Bench (multi-turn chat, open-ended):80 multi-turn queries with human
+   preference judgments.
+ 2 AlpacaEval2.0 (single-turn instruction following):805 examples with
+   length-controlled win rates.
+ 3 CodeEval (HumanEval+) (functional correctness):164 problems with both pass@1
+   and human pass/fail judgments.
+ 4 TruthfulQA (factual accuracy):817 questions with human-reviewed truthfulness
+   scores.
+
+Total: ~1,860 annotated examples. Split:2,000 (Stage2 training),500 (Stage3
+calibration),1,360 (Stage4 evaluation held-out). The held-out set has ≥3 human
+annotators per example (majority-vote ground truth).
+
+Evaluation MetricsPrimary metric:
+
+ • Spearman's ρ between MetaEval's posterior mean score and pooled human
+   judgments on the held-out set (n =1,360).
+
+Secondary metrics:
+
+ • Kendall's τ (more robust to ties) for the same comparison.
+ • Per-dimension Spearman ρ to diagnose which dimensions drive agreement.
+ • Coverage of90% credible interval: proportion of human judgments falling
+   within the CI (calibration check).
+ • Metric dispersion: standard deviation of scores across five random seeds of
+   probe training, to measure sensitivity.
+
+Baselines1. BLEU — lexical overlap baseline (unweighted average of BLEU-1
+through BLEU-4).
+
+ 2 ROUGE-L — longest common subsequence recall.
+ 3 BERTScore (DeBERTa-large) — reference-based semantic similarity.
+ 4 GPT-4-as-Judge (direct) — single prompt instructing GPT-4 to score on a1–10
+   scale (no rubric decomposition).
+ 5 GPT-4-as-Judge (rubric) — same with a detailed scoring rubric per dimension,
+   averaging dimension scores.
+ 6 Prometheus2 (7B) — open-source LLM judge fine-tuned for evaluation, used
+   as-is.
+ 7 Single-Probe MetaEval (ablation of the multi-probe design): one evaluator LLM
+   scores all four dimensions at once.
+
+All baselines report Spearman ρ against the same held-out human judgments.
+
+Ablations1. -probes: replace four specialized probes with a single general probe
+scoring all dimensions (isolates the value of decomposition).
+
+ 2 -debias: skip the per-probe debiasing transform (isolates the value of
+   calibration).
+ 3 -bayesian: replace Bayesian aggregation with a simple arithmetic mean of
+   dimension scores (isolates the value of uncertainty-aware weighting).
+ 4 -dimensions: score on a single aggregate rubric (no decomposition) using the
+   best-performing single probe (isolates the value of multi-dimension design).
+ 5 -all (this variant): non-evolving single-run proposal — no cross-run memory,
+   no iterative refinement of the framework parameters or rubric definitions.
+   The design above is frozen before evaluation begins.
+
+Expected Failure Modes1. Probe specialization collapse: The four fine-tuned
+probes may produce highly correlated scores despite being trained on separate
+dimensions, reducing the benefit of decomposition. Mitigation: enforce
+orthogonality via contrastive loss during fine-tuning (requires a validation
+check on probe score covariance).
+
+ 2 Calibration set mismatch: If the500-example calibration set does not cover
+   the distribution of errors in the held-out set, the per-probe debiasing could
+   overfit and reduce held-out performance. Mitigation: stratify calibration
+   sampling by domain and output length.
+ 3 Bayesian prior specification: Without evolution memory to inform prior
+   parameters, the flat priors may produce wide credible intervals that reduce
+   discriminability (overlap between systems). Mitigation: report posterior
+   overlap matrices in addition to point rankings.
+ 4 Fluency dimension ceiling: Most LLM outputs in the benchmark are already
+   highly fluent, making the fluency dimension nearly constant and effectively
+   reducing the framework to three dimensions. Mitigation: if fluency variance
+   <5% of total variance, drop it and report a3-dimension version as a
+   sensitivity analysis.
+ 5 Position bias in probes: Even after the A→B / B→A averaging correction,
+   residual position bias may persist if probe preference is asymmetric across
+   dimensions. Mitigation: compute δ = score(A→B) − score(B→A) as a diagnostic
+   and flag examples where |δ| >0.2 for manual review.
+
+Limitations1. No evolutionary adaptation: The framework is frozen at deployment.
+If evaluation standards shift (e.g., new evaluation dimensions become relevant),
+the full pipeline must be retrained. A memory-enabled system would incrementally
+adapt its rubric and debiasing transforms across evaluation cycles.
+
+ 2 Language and scale dependence: The calibration set and probe training use
+   English-only data at ≤7B parameter scale. The effectiveness of the
+   per-dimension decomposition on non-English or multilingual evaluation, or
+   with larger judges (70B+), is not tested.
+ 3 Human annotation ceiling: The primary metric (Spearman ρ against human
+   judgments) is bounded by inter-annotator agreement. If the pooled human
+   judgments themselves have low agreement (≤0.80 Fleiss' κ), then even a
+   perfect evaluation framework would appear to cap out. The benchmark's actual
+   inter-annotator agreement is reported but not controlled.
+ 4 Cost: Four fine-tuned probes × inference on each candidate increases
+   evaluation cost approximately4× over a single LLM judge. For most research
+   use cases this is acceptable, but large-scale leaderboard evaluations would
+   require cost optimizations (e.g., cascading: run only until a confident
+   decision is reached per dimension).
+ 5 No generative improvement: This proposal addresses measurement accuracy, not
+   generation quality. Improving evaluation accuracy does not directly improve
+   model outputs — it only makes ranking and selection more reliable. A full
+   research program would pair improved evaluation with training-time reward
+   shaping, which is outside scope.

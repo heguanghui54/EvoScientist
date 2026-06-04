@@ -1,0 +1,502 @@
+{
+  "schema": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/paper_artifact_schema.json",
+  "artifacts_root": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/artifacts",
+  "components": {
+    "human_evaluation": {
+      "root": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/artifacts/human_evaluation",
+      "files": {
+        "inputs.jsonl": {
+          "path": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/artifacts/human_evaluation/inputs.jsonl",
+          "exists": false,
+          "complete": false,
+          "missing_records": [
+            "file"
+          ]
+        },
+        "labels.jsonl": {
+          "path": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/artifacts/human_evaluation/labels.jsonl",
+          "exists": false,
+          "complete": false,
+          "missing_records": [
+            "file"
+          ]
+        },
+        "aggregate.json": {
+          "path": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/artifacts/human_evaluation/aggregate.json",
+          "exists": false,
+          "complete": false,
+          "missing_fields": [
+            "file"
+          ]
+        }
+      },
+      "complete": false
+    },
+    "ablation": {
+      "root": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/artifacts/ablations",
+      "variants": {
+        "-IDE": {
+          "root": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/artifacts/ablations/-IDE",
+          "files": {
+            "system_outputs_complete.json": {
+              "path": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/artifacts/ablations/-IDE/system_outputs_complete.json",
+              "exists": true,
+              "missing_fields": [],
+              "complete": false,
+              "expected_query_count": 30,
+              "complete_query_count": 3,
+              "missing_query_ids": [
+                4,
+                5,
+                6,
+                7,
+                8,
+                9,
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16,
+                17,
+                18,
+                19,
+                20,
+                21,
+                22,
+                23,
+                24,
+                25,
+                26,
+                27,
+                28,
+                29,
+                30
+              ],
+              "unexpected_query_ids": []
+            },
+            "judge_inputs.jsonl": {
+              "path": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/artifacts/ablations/-IDE/judge_inputs.jsonl",
+              "exists": true,
+              "records": 3,
+              "bad_records": [],
+              "complete": false,
+              "expected_records": 30,
+              "missing_query_ids": [
+                4,
+                5,
+                6,
+                7,
+                8,
+                9,
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16,
+                17,
+                18,
+                19,
+                20,
+                21,
+                22,
+                23,
+                24,
+                25,
+                26,
+                27,
+                28,
+                29,
+                30
+              ]
+            },
+            "judge_outputs.jsonl": {
+              "path": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/artifacts/ablations/-IDE/judge_outputs.jsonl",
+              "exists": true,
+              "records": 3,
+              "bad_records": [
+                {
+                  "line": 1,
+                  "missing_fields": [
+                    "scores"
+                  ]
+                },
+                {
+                  "line": 2,
+                  "missing_fields": [
+                    "scores"
+                  ]
+                },
+                {
+                  "line": 3,
+                  "missing_fields": [
+                    "scores"
+                  ]
+                }
+              ],
+              "complete": false,
+              "expected_records": 30,
+              "missing_query_ids": [
+                4,
+                5,
+                6,
+                7,
+                8,
+                9,
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16,
+                17,
+                18,
+                19,
+                20,
+                21,
+                22,
+                23,
+                24,
+                25,
+                26,
+                27,
+                28,
+                29,
+                30
+              ]
+            },
+            "aggregate.json": {
+              "path": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/artifacts/ablations/-IDE/aggregate.json",
+              "exists": true,
+              "missing_fields": [],
+              "complete": true
+            }
+          },
+          "complete": false
+        },
+        "-IVE": {
+          "root": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/artifacts/ablations/-IVE",
+          "files": {
+            "system_outputs_complete.json": {
+              "path": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/artifacts/ablations/-IVE/system_outputs_complete.json",
+              "exists": true,
+              "missing_fields": [],
+              "complete": false,
+              "expected_query_count": 30,
+              "complete_query_count": 3,
+              "missing_query_ids": [
+                4,
+                5,
+                6,
+                7,
+                8,
+                9,
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16,
+                17,
+                18,
+                19,
+                20,
+                21,
+                22,
+                23,
+                24,
+                25,
+                26,
+                27,
+                28,
+                29,
+                30
+              ],
+              "unexpected_query_ids": []
+            },
+            "judge_inputs.jsonl": {
+              "path": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/artifacts/ablations/-IVE/judge_inputs.jsonl",
+              "exists": true,
+              "records": 3,
+              "bad_records": [],
+              "complete": false,
+              "expected_records": 30,
+              "missing_query_ids": [
+                4,
+                5,
+                6,
+                7,
+                8,
+                9,
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16,
+                17,
+                18,
+                19,
+                20,
+                21,
+                22,
+                23,
+                24,
+                25,
+                26,
+                27,
+                28,
+                29,
+                30
+              ]
+            },
+            "judge_outputs.jsonl": {
+              "path": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/artifacts/ablations/-IVE/judge_outputs.jsonl",
+              "exists": true,
+              "records": 3,
+              "bad_records": [
+                {
+                  "line": 1,
+                  "missing_fields": [
+                    "scores"
+                  ]
+                },
+                {
+                  "line": 2,
+                  "missing_fields": [
+                    "scores"
+                  ]
+                },
+                {
+                  "line": 3,
+                  "missing_fields": [
+                    "scores"
+                  ]
+                }
+              ],
+              "complete": false,
+              "expected_records": 30,
+              "missing_query_ids": [
+                4,
+                5,
+                6,
+                7,
+                8,
+                9,
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16,
+                17,
+                18,
+                19,
+                20,
+                21,
+                22,
+                23,
+                24,
+                25,
+                26,
+                27,
+                28,
+                29,
+                30
+              ]
+            },
+            "aggregate.json": {
+              "path": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/artifacts/ablations/-IVE/aggregate.json",
+              "exists": true,
+              "missing_fields": [],
+              "complete": true
+            }
+          },
+          "complete": false
+        },
+        "-all": {
+          "root": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/artifacts/ablations/-all",
+          "files": {
+            "system_outputs_complete.json": {
+              "path": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/artifacts/ablations/-all/system_outputs_complete.json",
+              "exists": true,
+              "missing_fields": [],
+              "complete": false,
+              "expected_query_count": 30,
+              "complete_query_count": 3,
+              "missing_query_ids": [
+                4,
+                5,
+                6,
+                7,
+                8,
+                9,
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16,
+                17,
+                18,
+                19,
+                20,
+                21,
+                22,
+                23,
+                24,
+                25,
+                26,
+                27,
+                28,
+                29,
+                30
+              ],
+              "unexpected_query_ids": []
+            },
+            "judge_inputs.jsonl": {
+              "path": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/artifacts/ablations/-all/judge_inputs.jsonl",
+              "exists": true,
+              "records": 3,
+              "bad_records": [],
+              "complete": false,
+              "expected_records": 30,
+              "missing_query_ids": [
+                4,
+                5,
+                6,
+                7,
+                8,
+                9,
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16,
+                17,
+                18,
+                19,
+                20,
+                21,
+                22,
+                23,
+                24,
+                25,
+                26,
+                27,
+                28,
+                29,
+                30
+              ]
+            },
+            "judge_outputs.jsonl": {
+              "path": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/artifacts/ablations/-all/judge_outputs.jsonl",
+              "exists": true,
+              "records": 3,
+              "bad_records": [
+                {
+                  "line": 1,
+                  "missing_fields": [
+                    "scores"
+                  ]
+                },
+                {
+                  "line": 2,
+                  "missing_fields": [
+                    "scores"
+                  ]
+                },
+                {
+                  "line": 3,
+                  "missing_fields": [
+                    "scores"
+                  ]
+                }
+              ],
+              "complete": false,
+              "expected_records": 30,
+              "missing_query_ids": [
+                4,
+                5,
+                6,
+                7,
+                8,
+                9,
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16,
+                17,
+                18,
+                19,
+                20,
+                21,
+                22,
+                23,
+                24,
+                25,
+                26,
+                27,
+                28,
+                29,
+                30
+              ]
+            },
+            "aggregate.json": {
+              "path": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/artifacts/ablations/-all/aggregate.json",
+              "exists": true,
+              "missing_fields": [],
+              "complete": true
+            }
+          },
+          "complete": false
+        }
+      },
+      "complete": false
+    },
+    "code_execution": {
+      "root": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/artifacts/code_execution",
+      "files": {
+        "trajectories.jsonl": {
+          "path": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/artifacts/code_execution/trajectories.jsonl",
+          "exists": false,
+          "complete": false,
+          "missing_records": [
+            "file"
+          ]
+        },
+        "execution_logs.jsonl": {
+          "path": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/artifacts/code_execution/execution_logs.jsonl",
+          "exists": false,
+          "complete": false,
+          "missing_records": [
+            "file"
+          ]
+        },
+        "summary.json": {
+          "path": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/artifacts/code_execution/summary.json",
+          "exists": false,
+          "complete": false,
+          "missing_fields": [
+            "file"
+          ]
+        }
+      },
+      "complete": false
+    }
+  },
+  "complete": false
+}

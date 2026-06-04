@@ -1,0 +1,41 @@
+{
+  "date": "2026-06-04",
+  "status": "partial",
+  "paper_exact": false,
+  "artifact_root": "reproduction/artifacts/ablations",
+  "query_ids": [1, 2, 3],
+  "expected_query_count": 30,
+  "covered_query_count": 3,
+  "coverage_pct": 10.0,
+  "variants": ["-IDE", "-IVE", "-all"],
+  "judge": {
+    "provider": "deepseek",
+    "model": "deepseek-v4-flash",
+    "records_per_variant": 3,
+    "failed_records": 0
+  },
+  "aggregate_json": "reproduction/artifacts/ablations/combined_aggregate.json",
+  "aggregate_csv": "reproduction/artifacts/ablations/combined_aggregate.csv",
+  "compare_to_paper": {
+    "path": "reproduction/artifacts/ablations/table3_partial_compare_to_paper.json",
+    "status": "fail",
+    "failure_count": 39,
+    "expected_reason": "The artifact is a 3-query replacement subset judged by DeepSeek, while the paper reports a 30-query Gemini-3-flash Table 3 ablation."
+  },
+  "schema_gate": {
+    "script": "reproduction/verify_paper_artifact_schema.py",
+    "status": "incomplete",
+    "reason": "Coverage-aware validation requires all 30 paper query ids for each ablation variant."
+  },
+  "paper_level_audit": {
+    "script": "reproduction/audit_paper_level_completion.py",
+    "status": "incomplete",
+    "table3_blocker_remains": true
+  },
+  "variant_records": {
+    "-IDE": {"raw_records": 3, "usable_records": 3},
+    "-IVE": {"raw_records": 3, "usable_records": 3},
+    "-all": {"raw_records": 3, "usable_records": 3}
+  },
+  "caveat": "Replacement ablation run driven by prompt-level disabled-component constraints. The public checkout does not expose the paper's native IDE/IVE ablation switches."
+}

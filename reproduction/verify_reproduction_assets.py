@@ -749,6 +749,33 @@ def main() -> None:
     assert "Query-01 Ablation Smoke Report" in ablation_all_smoke_md_path.read_text(
         encoding="utf-8"
     )
+    ablation_partial_json_path = ROOT / "ablation_queries01_03_partial_report.json"
+    ablation_partial_md_path = ROOT / "ablation_queries01_03_partial_report.md"
+    assert ablation_partial_json_path.is_file(), "missing ablation queries01-03 partial JSON"
+    assert ablation_partial_md_path.is_file(), "missing ablation queries01-03 partial markdown"
+    ablation_partial = json.loads(ablation_partial_json_path.read_text(encoding="utf-8"))
+    assert ablation_partial["status"] == "partial"
+    assert ablation_partial["paper_exact"] is False
+    assert ablation_partial["query_ids"] == [1, 2, 3]
+    assert ablation_partial["expected_query_count"] == 30
+    assert ablation_partial["covered_query_count"] == 3
+    assert ablation_partial["schema_gate"]["status"] == "incomplete"
+    assert ablation_partial["paper_level_audit"]["table3_blocker_remains"] is True
+    formal_ablation_root = ROOT / "artifacts" / "ablations"
+    formal_combined = json.loads((formal_ablation_root / "combined_aggregate.json").read_text(encoding="utf-8"))
+    assert set(formal_combined["variants"]) == {"-IDE", "-IVE", "-all"}
+    for variant in ablation_partial["variants"]:
+        vroot = formal_ablation_root / variant
+        manifest = json.loads((vroot / "system_outputs_complete.json").read_text(encoding="utf-8"))
+        assert manifest["complete_query_ids"] == [1, 2, 3]
+        assert manifest["paper_exact"] is False
+        assert sum(1 for line in (vroot / "judge_outputs.jsonl").read_text(encoding="utf-8").splitlines() if line.strip()) == 3
+        assert formal_combined["variants"][variant]["usable_records"] == 3
+    schema_latest = json.loads((ROOT / "artifacts" / "audit" / "paper_artifact_schema_latest.json").read_text(encoding="utf-8"))
+    assert schema_latest["components"]["ablation"]["complete"] is False
+    assert "Ablation Queries 01-03 Partial Report" in ablation_partial_md_path.read_text(
+        encoding="utf-8"
+    )
     action_plan_json_path = ROOT / "paper_reproduction_action_plan.json"
     action_plan_md_path = ROOT / "paper_reproduction_action_plan.md"
     assert action_plan_json_path.is_file(), "missing paper reproduction action plan JSON"

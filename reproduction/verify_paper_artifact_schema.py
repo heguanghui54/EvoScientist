@@ -12,6 +12,7 @@ from typing import Any
 ROOT = Path(__file__).resolve().parent
 DEFAULT_SCHEMA = ROOT / "paper_artifact_schema.json"
 DEFAULT_ARTIFACTS = ROOT / "artifacts"
+DEFAULT_QUERIES = ROOT / "queries.json"
 
 
 def load_json(path: Path) -> dict[str, Any]:
@@ -28,6 +29,10 @@ def load_jsonl(path: Path) -> list[dict[str, Any]]:
             record["_line_number"] = line_number
             records.append(record)
     return records
+
+
+def expected_query_ids() -> set[int]:
+    return {item["id"] for item in load_json(DEFAULT_QUERIES)["queries"]}
 
 
 def missing_fields(record: dict[str, Any], fields: list[str]) -> list[str]:
@@ -90,6 +95,7 @@ def validate_human(schema: dict[str, Any], artifacts_root: Path) -> dict[str, An
 
 def validate_ablation(schema: dict[str, Any], artifacts_root: Path) -> dict[str, Any]:
     root = artifacts_root / "ablations"
+    expected_ids = expected_query_ids()
     variants = {}
     for variant in schema["variants"]:
         vroot = root / variant
@@ -98,14 +104,41 @@ def validate_ablation(schema: dict[str, Any], artifacts_root: Path) -> dict[str,
             vroot / "system_outputs_complete.json",
             files["system_outputs_complete.json"]["required_fields"],
         )
+        if system_outputs.get("exists"):
+            data = load_json(vroot / "system_outputs_complete.json")
+            complete_ids = set(data.get("complete_query_ids", []))
+            missing_ids = sorted(expected_ids - complete_ids)
+            unexpected_ids = sorted(complete_ids - expected_ids)
+            query_count = data.get("query_count")
+            system_outputs["expected_query_count"] = len(expected_ids)
+            system_outputs["complete_query_count"] = len(complete_ids)
+            system_outputs["missing_query_ids"] = missing_ids
+            system_outputs["unexpected_query_ids"] = unexpected_ids
+            system_outputs["complete"] = (
+                system_outputs["complete"]
+                and data.get("complete") is True
+                and query_count == len(expected_ids)
+                and not missing_ids
+                and not unexpected_ids
+            )
         judge_inputs = validate_jsonl(
             vroot / "judge_inputs.jsonl",
             files["judge_inputs.jsonl"]["record_required_fields"],
         )
+        if judge_inputs.get("exists"):
+            input_ids = {record["query_id"] for record in load_jsonl(vroot / "judge_inputs.jsonl")}
+            judge_inputs["expected_records"] = len(expected_ids)
+            judge_inputs["missing_query_ids"] = sorted(expected_ids - input_ids)
+            judge_inputs["complete"] = judge_inputs["complete"] and input_ids == expected_ids
         judge_outputs = validate_jsonl(
             vroot / "judge_outputs.jsonl",
             files["judge_outputs.jsonl"]["record_required_fields"],
         )
+        if judge_outputs.get("exists"):
+            output_ids = {record["query_id"] for record in load_jsonl(vroot / "judge_outputs.jsonl")}
+            judge_outputs["expected_records"] = len(expected_ids)
+            judge_outputs["missing_query_ids"] = sorted(expected_ids - output_ids)
+            judge_outputs["complete"] = judge_outputs["complete"] and output_ids == expected_ids
         aggregate = validate_json(vroot / "aggregate.json", files["aggregate.json"]["required_fields"])
         variants[variant] = {
             "root": str(vroot),
