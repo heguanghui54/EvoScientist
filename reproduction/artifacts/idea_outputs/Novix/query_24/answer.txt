@@ -1,0 +1,47 @@
+### 1. Title
+**Iterative Latent-Graph Refinement (ILGR): A Dynamic Evidence-Bridge Framework for Multi-Hop RAG**
+
+### 2. Problem and Motivation
+Standard Retrieval-Augmented Generation (RAG) systems typically operate on a "retrieve-then-read" paradigm, which is effective for single-fact lookups but fails on complex queries requiring multi-hop reasoning. The primary bottleneck is the "retrieval gap": the information needed for the second or third "hop" is often not semantically similar to the original user query, but rather to the *intermediate findings* of the first hop. Current iterative methods (like IRCoT) often suffer from query drift or redundant retrieval, where the model loses focus on the original intent while chasing tangential details.
+
+### 3. Core Hypothesis
+By explicitly modeling the reasoning process as a **dynamic latent graph**—where nodes represent extracted claims/entities and edges represent logical dependencies—a system can identify "dangling nodes" (missing logical links) to generate highly targeted search queries. This structured gap analysis will significantly improve retrieval precision and reasoning accuracy compared to unstructured iterative prompting.
+
+### 4. Method
+The ILGR workflow consists of four iterative stages:
+
+1.  **Decomposition & Initial Retrieval:** The LLM decomposes the complex query into a set of initial "anchor" questions. A standard vector search retrieves the first set of documents.
+2.  **Latent Graph Construction:** The model extracts key entities and claims from the retrieved text, forming a directed acyclic graph (DAG). Nodes are "known facts," and edges represent the reasoning path toward the final answer.
+3.  **Dangling Node Identification (Gap Analysis):** An "Analyst" agent inspects the graph to identify nodes that are necessary for the final answer but lack supporting evidence or logical connection to the anchor nodes.
+4.  **Targeted Re-Querying:** For each "dangling node," the system generates a specific bridge query (e.g., "What is the relationship between [Entity A] and [Entity B]?"). This is repeated for a maximum of $N$ hops (typically $N=3$).
+5.  **Final Synthesis:** Once the graph is saturated or the hop limit is reached, a "Synthesis" agent traverses the graph to generate the final response with citations.
+
+### 5. Dataset or Benchmark
+*   **HotpotQA (Distractor Setting):** To test the ability to find relevant information among noise.
+*   **MuSiQue-MultiHop:** A more challenging dataset designed to minimize "shortcut" reasoning that bypasses the multi-hop requirement.
+*   **2WikiMultiHopQA:** To evaluate performance on complex entity relationships.
+
+### 6. Evaluation Metrics
+*   **Answer Accuracy:** Exact Match (EM) and F1-score.
+*   **Retrieval Quality:** Recall@K and Precision@K for the supporting documents across all hops.
+*   **Reasoning Faithfulness:** Human or LLM-based evaluation of whether the final answer's logic matches the retrieved evidence (using a "NLI-based faithfulness" metric).
+*   **Efficiency:** Average number of tokens and API calls per query.
+
+### 7. Baselines
+*   **Vanilla RAG:** Single-turn retrieval using the original query.
+*   **Self-Ask with Search:** A prompting-based iterative approach.
+*   **IRCoT (Interleaving Retrieval and Chain-of-Thought):** The current state-of-the-art for step-by-step retrieval.
+*   **DSPy (Multi-hop Program):** An optimized pipeline using the DSPy framework.
+
+### 8. Ablations
+*   **No Graph Structure:** Replace the latent graph with a flat list of "missing facts" to test the value of relational modeling.
+*   **Static Decomposition:** Perform all decomposition at the start without iterative refinement based on retrieved text.
+*   **Oracle Retrieval:** Use the ground-truth supporting documents to determine the upper bound of the "Synthesis" agent's reasoning capability.
+
+### 9. Failure Modes and Feasibility Risks
+*   **Query Drift (Risk):** The "Targeted Re-Querying" might focus on irrelevant entities found in early hops.
+    *   *Control:* Implement a "Relevance Guard" that checks if a dangling node's path can logically lead back to the original user query.
+*   **Computational Latency (Risk):** Multiple LLM calls and retrieval steps increase response time.
+    *   *Control:* Parallelize the bridge queries for different dangling nodes and use a smaller, faster model (e.g., GPT-3.5 or Llama-3-8B) for the "Analyst" role.
+*   **Graph Explosion (Risk):** Extracting too many entities can lead to a noisy graph.
+    *   *Control:* Limit node extraction to the top-3 most salient entities per retrieved passage using a strict schema.

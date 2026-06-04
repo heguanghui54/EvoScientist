@@ -1,0 +1,49 @@
+### 1. Title
+**DEP-Code (Deep Execution & Perturbation for Code):** A Multi-Dimensional Framework for Evaluating Repository-Level Context Integration and Robustness in Code LLMs.
+
+### 2. Problem and Motivation
+Current code LLM benchmarks (e.g., HumanEval, MBPP) primarily focus on "Pass@k" metrics for isolated, standalone functions. This approach fails to reflect real-world software engineering in three ways:
+1.  **Context Neglect:** They do not test an LLM's ability to utilize existing repository structures, internal APIs, or cross-file dependencies.
+2.  **Surface-Level Correctness:** A snippet may pass unit tests while introducing security vulnerabilities, inefficient time complexity, or violating style guides.
+3.  **Lack of Robustness:** Minor perturbations in docstrings or variable names often lead to catastrophic failures in code generation.
+
+There is a critical need for an evaluation framework that moves beyond simple execution to assess semantic alignment, security, and architectural consistency within a multi-file environment.
+
+### 3. Core Hypothesis
+A multi-stage evaluation pipeline—combining repository-level dependency injection, static security analysis, and semantic perturbation—will reveal significant performance gaps in state-of-the-art LLMs that are currently masked by standard unit-test-based benchmarks.
+
+### 4. Method
+The DEP-Code framework operates in four distinct phases:
+
+*   **Phase 1: Contextual Prompt Engineering:** Instead of a single docstring, the system provides the LLM with a "mini-repo" context (3–5 related files). The prompt requires the LLM to use a specific internal utility class defined in a separate file.
+*   **Phase 2: Multi-Stage Execution:**
+    *   *Unit Testing:* Standard functional verification.
+    *   *Integration Testing:* Verifying the generated code interacts correctly with the provided mini-repo modules.
+*   **Phase 3: Static & Security Analysis:** Automated scanning of the generated code using tools like `Bandit` (for Python) or `Semgrep` to detect common vulnerabilities (e.g., SQL injection, unsafe deserialization) and technical debt.
+*   **Phase 4: Robustness Perturbation:** The framework automatically re-phrases the prompt or renames non-functional variables in the context files to measure the "Consistency Score"—how stable the LLM’s output remains under semantic-preserving changes.
+
+### 5. Dataset or Benchmark
+The framework will utilize a curated subset of **RepoBench** and **SWE-bench**, specifically selecting Python and Java samples that require cross-file reasoning.
+*   **Target Size:** 500 high-quality "Deep Tasks."
+*   **Structure:** Each task includes a `context/` folder (existing code), a `requirement.md` (the prompt), and a `tests/` folder (hidden unit and integration tests).
+
+### 6. Evaluation Metrics
+*   **Context-Aware Pass Rate (CAPR):** Percentage of solutions that pass tests *only if* they correctly utilized the provided repository utilities.
+*   **Security Vulnerability Index (SVI):** Number of critical/high vulnerabilities detected per 100 successful generations.
+*   **Perturbation Robustness Score (PRS):** The ratio of Pass@1 on perturbed prompts vs. original prompts.
+*   **Efficiency Ratio:** Execution time and memory overhead of the LLM solution compared to a human-authored gold standard.
+
+### 7. Baselines
+*   **GPT-4o / Claude 3.5 Sonnet:** To establish the current state-of-the-art ceiling for reasoning.
+*   **Llama-3-70B-Instruct:** To represent high-performing open-weights general-purpose models.
+*   **CodeLlama-34B / DeepSeek-Coder-V2:** To represent specialized code-generation models.
+
+### 8. Ablations
+*   **Context Removal:** Evaluate the LLM with only the immediate function docstring to measure how much the model relies on pre-trained knowledge versus the provided repository context.
+*   **Constraint Masking:** Remove specific security or style constraints from the prompt to see if the model defaults to "unsafe" but "functional" code.
+*   **Dependency Pruning:** Provide the full repository vs. only a "relevant snippet" (retrieved via RAG) to evaluate context-window sensitivity.
+
+### 9. Failure Modes and Feasibility Risks
+*   **Execution Safety:** Running LLM-generated code poses a risk to the host system. **Mitigation:** All evaluations must occur within gVisor or Docker-isolated sandboxes with restricted network access.
+*   **Compute Cost:** Running static analysis and multiple execution passes for every "k" in Pass@k is computationally expensive. **Mitigation:** Implement a tiered evaluation where static analysis filters out non-compiling code before running expensive integration tests.
+*   **Data Contamination:** High-performing models may have seen the benchmark repositories during training. **Mitigation:** Use the "Perturbation" phase to create novel variations of existing tasks that the model could not have memorized.

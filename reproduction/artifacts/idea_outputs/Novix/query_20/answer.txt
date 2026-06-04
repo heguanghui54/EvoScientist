@@ -1,0 +1,48 @@
+### 1. Title
+**Multi-Facet Diversity Decomposition (MFDD): A Holistic Framework for Evaluating Generative Variance**
+
+### 2. Problem and Motivation
+Current diversity metrics for Large Language Models (LLMs) are often reductive. Standard metrics like **Distinct-n** and **Self-BLEU** focus primarily on surface-level lexical overlap (n-grams). These fail to distinguish between "meaningful diversity" (exploring different concepts or perspectives) and "superficial diversity" (varying word choice while repeating the same underlying logic). Furthermore, they often ignore the **diversity-quality trade-off**, where a model may achieve high diversity scores by generating nonsensical or irrelevant content. There is a critical need for a metric that decomposes diversity into semantic, structural, and lexical components to provide a more granular diagnostic of model behavior.
+
+### 3. Core Hypothesis
+A composite metric that separately quantifies **Semantic Coverage** (using embedding space density), **Syntactic Heterogeneity** (using dependency tree variance), and **Lexical Richness** will correlate more strongly with human judgments of "creativity" and "variety" than traditional n-gram-based metrics.
+
+### 4. Method
+The MFDD framework consists of three implementation milestones:
+
+1.  **Semantic Coverage (SC):**
+    *   Generate $K$ completions for a single prompt.
+    *   Encode completions using a frozen Sentence-Transformer (e.g., `all-mpnet-base-v2`).
+    *   Calculate the **Centroid Distance Variance**: the average cosine distance of each completion from the centroid of the $K$ samples.
+2.  **Syntactic Heterogeneity (SH):**
+    *   Perform dependency parsing on all $K$ completions.
+    *   Extract the sequence of POS (Part-of-Speech) tags and dependency relations.
+    *   Compute the **Normalized Tree Edit Distance** or Jaccard similarity between the sets of syntactic structures to measure structural variety.
+3.  **Quality-Weighted Aggregation:**
+    *   To prevent "garbage-diversity," apply a weight $Q$ derived from a reference-free quality metric (e.g., perplexity or a reward model score).
+    *   Final Score: $MFDD = Q \times \text{HarmonicMean}(SC, SH, \text{Distinct-n})$.
+
+### 5. Dataset or Benchmark
+*   **Creative Writing:** The *WritingPrompts* dataset (for long-form diversity).
+*   **Task-Oriented:** *MS-COCO* image captions (for constrained diversity).
+*   **Adversarial:** A synthetic "Degenerate Diversity" set where models are prompted to repeat the same idea using different synonyms (to test the sensitivity of the semantic component).
+
+### 6. Evaluation Metrics
+*   **Human Correlation:** Spearman’s rank correlation coefficient between MFDD scores and human rankings of "most diverse/varied" model outputs.
+*   **Sensitivity Analysis:** The ability of the metric to detect "mode collapse" in models even when lexical variety remains high.
+*   **Redundancy Check:** Correlation with Self-BLEU (to ensure MFDD provides information not captured by simpler metrics).
+
+### 7. Baselines
+*   **Lexical:** Distinct-1/2/3, Self-BLEU.
+*   **Embedding-based:** VMF (Von Mises-Fisher) concentration parameters.
+*   **Entropy-based:** Expected Information Gain across a set of generated tokens.
+
+### 8. Ablations
+*   **Semantic-only:** Remove the syntactic component to see if embedding variance alone is sufficient.
+*   **Structure-only:** Remove the semantic component to test if syntactic variety is a proxy for overall diversity.
+*   **Unweighted vs. Quality-Weighted:** Evaluate how the metric behaves when models generate diverse but ungrammatical "word salad."
+
+### 9. Failure Modes and Feasibility Risks
+*   **Computational Overhead:** Dependency parsing for thousands of samples is slow. *Mitigation:* Use lightweight parsers like spaCy’s "en_core_web_sm."
+*   **Embedding Bias:** Semantic metrics are limited by the underlying encoder's ability to distinguish subtle meaning shifts. *Mitigation:* Use multiple encoders (e.g., SimCSE and MPNet) and average the results.
+*   **Length Correlation:** Longer sequences naturally tend toward higher diversity scores. *Mitigation:* Implement length-normalized scoring or fixed-token-window evaluation.

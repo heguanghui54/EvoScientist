@@ -1,0 +1,42 @@
+**1. Title**
+Self-Correcting Iterative Schema Alignment (SCISA): Improving Information Extraction through Multi-Agent Critique Loops in Small Language Models.
+
+**2. Problem and Motivation**
+Automated Information Extraction (IE) is often bottlenecked by two factors: the high cost of using frontier Large Language Models (LLMs) for high-volume processing and the tendency of smaller, more efficient models to hallucinate entities or fail to adhere to complex JSON schemas. Current one-pass extraction methods lack a mechanism for internal verification, leading to "silent failures" where extracted data is well-formatted but factually disconnected from the source text. There is a critical need for an extraction framework that provides the reliability of large models with the efficiency of smaller, local deployments.
+
+**3. Core Hypothesis**
+The accuracy and schema-adherence of a 7B-parameter model in complex IE tasks can be significantly improved—potentially matching a one-pass 70B-parameter model—by implementing a structured, iterative "Critique-and-Refine" loop. This loop separates the extraction logic from the validation logic, forcing the model to explicitly justify entity presence against the source text.
+
+**4. Method**
+The SCISA workflow follows a three-stage iterative process:
+*   **Stage 1: Initial Extraction.** A prompt instructs the model to extract entities and relations into a predefined JSON schema from the source text.
+*   **Stage 2: Structured Critique.** The model is re-initialized in a "Critic" role. It receives the source text and the generated JSON. It must output a list of "discrepancies" (e.g., "Entity X found in JSON but not supported by sentence Y," or "Field Z is missing but mentioned in the text").
+*   **Stage 3: Refinement.** The model receives the original text, the Stage 1 JSON, and the Stage 2 Critique to produce a final, corrected JSON output.
+
+This process can be implemented using a single fine-tuned model (e.g., Mistral-7B or Llama-3-8B) with role-specific system prompts to simulate a multi-agent environment without the overhead of multiple distinct weights.
+
+**5. Dataset or Benchmark**
+The proposal utilizes the **DocRED (Document-Level Relation Extraction)** dataset and the **Zero-Shot IE** benchmark. These datasets are selected because they require cross-sentence reasoning and adherence to strict relational schemas, which are more challenging than simple Named Entity Recognition (NER).
+
+**6. Evaluation Metrics**
+*   **Strict F1-Score:** Standard precision/recall for exact matches of entities and relations.
+*   **Schema Adherence Rate (SAR):** The percentage of outputs that are valid, parsable JSON following the requested schema.
+*   **Hallucination Rate:** Percentage of extracted entities that have no string-level or semantic overlap with the source document.
+*   **Token Efficiency:** The ratio of F1-score improvement to the total number of tokens consumed in the loop.
+
+**7. Baselines**
+*   **Zero-shot One-pass:** The same model (e.g., Llama-3-8B) performing extraction in a single step.
+*   **Few-shot One-pass:** The model provided with 3-5 examples in the prompt.
+*   **Frontier Benchmark:** GPT-4o or Claude 3.5 Sonnet (one-pass) to establish the performance ceiling.
+*   **Traditional Pipeline:** A BERT-based NER + Relation Extraction pipeline.
+
+**8. Ablations**
+*   **No Critique:** Skipping Stage 2 and simply asking the model to "double-check" in one prompt.
+*   **External Validator:** Replacing the Stage 2 Model Critic with a hard-coded regex/schema validator to isolate the value of "semantic critique" vs. "syntactic validation."
+*   **Single-Turn Refinement:** Limiting the process to exactly one correction vs. allowing multiple iterations until a "No Discrepancies" state is reached.
+
+**9. Failure Modes and Feasibility Risks**
+*   **Sycophancy:** The "Critic" role may simply agree with the "Extractor" role to minimize token usage, failing to identify errors.
+*   **Latency:** The iterative nature triples the inference time per document, which may be prohibitive for real-time applications.
+*   **Loop Instability:** The model may enter a loop where it adds and removes the same entity across iterations.
+*   **Mitigation:** To address these, the framework will include a "max-iteration" cap (N=3) and a temperature-scaled sampling strategy to ensure diversity in the critique phase.

@@ -1,0 +1,87 @@
+{
+  "date": "2026-06-04",
+  "status": "partial",
+  "completion_scope": "replacement_table1_novix_proxy",
+  "paper_exact": false,
+  "covered_baseline": "Novix",
+  "baseline_mode": "proxy_replacement_baseline",
+  "idea_outputs": {
+    "baseline": "Novix",
+    "answers": 30,
+    "root": "reproduction/artifacts/idea_outputs/Novix"
+  },
+  "judge": {
+    "provider": "monica",
+    "model": "gemini-3-flash-preview",
+    "input_records": 60,
+    "output_records": 60
+  },
+  "aggregate": {
+    "target_system": "EvoScientist",
+    "tie_threshold": 0.0,
+    "raw_records": 60,
+    "baselines": {
+      "Novix": {
+        "dimensions": {
+          "Clarity": {
+            "baseline": "Novix",
+            "dimension": "Clarity",
+            "n": 60,
+            "win": 29,
+            "tie": 7,
+            "lose": 24,
+            "win_pct": 48.33,
+            "tie_pct": 11.67,
+            "lose_pct": 40.0,
+            "gap": 8.33
+          },
+          "Novelty": {
+            "baseline": "Novix",
+            "dimension": "Novelty",
+            "n": 60,
+            "win": 27,
+            "tie": 4,
+            "lose": 29,
+            "win_pct": 45.0,
+            "tie_pct": 6.67,
+            "lose_pct": 48.33,
+            "gap": -3.33
+          },
+          "Feasibility": {
+            "baseline": "Novix",
+            "dimension": "Feasibility",
+            "n": 60,
+            "win": 27,
+            "tie": 4,
+            "lose": 29,
+            "win_pct": 45.0,
+            "tie_pct": 6.67,
+            "lose_pct": 48.33,
+            "gap": -3.33
+          },
+          "Relevance": {
+            "baseline": "Novix",
+            "dimension": "Relevance",
+            "n": 60,
+            "win": 11,
+            "tie": 35,
+            "lose": 14,
+            "win_pct": 18.33,
+            "tie_pct": 58.33,
+            "lose_pct": 23.33,
+            "gap": -5.0
+          }
+        },
+        "avg_gap": -0.83
+      }
+    }
+  },
+  "caveats": [
+    "Proxy replacement output generated with baseline-specific prompting, not the original Novix raw Table 1 output.",
+    "Public Novix artifacts do not expose a public batch runner or paper raw outputs.",
+    "Monica/Gemini judge completed 60 valid records with per-record retries enabled."
+  ],
+  "remaining_missing_baselines": [
+    "K-Dense"
+  ]
+}

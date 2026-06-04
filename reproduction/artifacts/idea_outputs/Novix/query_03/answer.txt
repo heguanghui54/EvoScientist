@@ -1,0 +1,46 @@
+### 1. Title
+**Multi-Perspective Reasoning Calibration (MPRC): Improving LLM-as-a-Judge Accuracy via Structured Rationalization and Uncertainty-Aware Weighting**
+
+### 2. Problem and Motivation
+Automated evaluation using Large Language Models (LLM-as-a-judge) is the current standard for scaling LLM benchmarking. However, this approach suffers from significant reliability issues, including:
+*   **Positional Bias:** Favoring the first response in pairwise comparisons.
+*   **Verbosity Bias:** Assigning higher scores to longer responses regardless of quality.
+*   **Self-Preference Bias:** Favoring outputs that mirror the evaluator’s own stylistic patterns.
+*   **Lack of Interpretability:** Direct scoring often provides a "black box" number without a verifiable logical trail.
+
+Addressing these issues is critical for the development of alignment techniques (like RLHF) that rely on automated feedback loops.
+
+### 3. Core Hypothesis
+By forcing an evaluator LLM to decompose its judgment into structured, independent dimensions (e.g., logical correctness, adherence to constraints, and stylistic tone) and weighting these scores by their cross-trial consistency (uncertainty), we can significantly increase the correlation between automated scores and expert human judgments compared to monolithic scoring.
+
+### 4. Method
+The MPRC framework operates in four distinct phases:
+1.  **Structured Rubric Decomposition:** Instead of a single prompt, the evaluator is provided with a multi-dimensional rubric. For each dimension, the model must generate a "Reasoning Trace" before assigning a numerical sub-score.
+2.  **Cross-Perspective Perturbation:** The evaluation is run across three distinct personas (e.g., "Technical Auditor," "Creative Critic," and "General User") to mitigate individual model biases.
+3.  **Uncertainty Estimation:** Each evaluation is sampled $N$ times at temperature $T > 0$. The variance in sub-scores serves as a proxy for evaluation uncertainty.
+4.  **Calibrated Aggregation:** The final score is calculated using a weighted average where dimensions with high variance (low confidence) are down-weighted, and dimensions with high consistency are prioritized. If total uncertainty exceeds a threshold, the sample is flagged for human intervention.
+
+### 5. Dataset or Benchmark
+*   **LMSYS Chatbot Arena Conversations:** Use the publicly available human preference dataset.
+*   **MT-Bench:** A set of 80 high-quality multi-turn questions across categories (coding, reasoning, etc.) with human-expert gold labels.
+*   **CritiqueBench:** To specifically test the model's ability to identify flaws in reasoning.
+
+### 6. Evaluation Metrics
+*   **Human Agreement (Primary):** Spearman and Pearson correlation coefficients between MPRC scores and human ground-truth scores.
+*   **Pairwise Accuracy:** The percentage of times the system correctly identifies the human-preferred winner in a side-by-side comparison.
+*   **Bias Sensitivity:** Measuring the change in score when swapping the order of responses (Positional Bias) or artificially inflating length (Verbosity Bias).
+
+### 7. Baselines
+*   **Direct Prompting (GPT-4/Claude 3.5):** Standard "Rate this on a scale of 1-10" approach.
+*   **G-Eval:** A state-of-the-art framework using CoT and weighted probabilities.
+*   **Prometheus:** An open-source model specifically fine-tuned for evaluation tasks.
+
+### 8. Ablations
+*   **No Reasoning Trace:** Evaluating the impact of removing the CoT requirement.
+*   **No Multi-Perspective:** Using only a single "General" persona.
+*   **Uniform Weighting:** Comparing the uncertainty-aware weighting against a simple arithmetic mean of sub-scores.
+
+### 9. Failure Modes and Feasibility Risks
+*   **Reasoning-Score Mismatch:** The model may generate a logical reasoning trace that points to a "Fail" but still output a high numerical score (hallucinated justification).
+*   **Computational Overhead:** Running multiple personas and $N$ iterations significantly increases API costs and latency.
+*   **Systemic Bias:** If all personas share the same underlying base model (e.g., all are variants of GPT-4), they may share the same blind spots, rendering the "multi-perspective" approach less effective. To mitigate this, the method should ideally use a mix of model families (e.g., Llama-3 and Claude).

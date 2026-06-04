@@ -1,0 +1,44 @@
+### 1. Title
+**Recursive State-Space Verification (RSV): Mitigating Error Propagation in Multi-Step Agentic Reasoning**
+
+### 2. Problem and Motivation
+Large Language Models (LLMs) frequently exhibit "logical drift" in complex, multi-step tasks. While techniques like Chain-of-Thought (CoT) improve performance, they suffer from error propagation: a single hallucination or logical fallacy in an early step often renders the entire subsequent reasoning chain invalid. Current agents lack a robust mechanism to treat intermediate reasoning steps as "verifiable states" that can be audited before the agent commits to a final trajectory. There is a critical need for a framework that treats reasoning not as a linear string, but as a state-space search where each transition is validated against logical consistency constraints.
+
+### 3. Core Hypothesis
+By implementing a recursive verification layer that evaluates the logical entailment between step $n$ and step $n+1$ using a secondary "Critic" model and a formal consistency check, an agent can significantly reduce cumulative error in long-horizon reasoning tasks compared to standard autoregressive generation.
+
+### 4. Method
+The RSV framework consists of three primary modules:
+1.  **Decomposition Module:** The agent breaks a complex query into a Directed Acyclic Graph (DAG) of atomic reasoning steps.
+2.  **Generative Search Module:** For each node in the DAG, the agent generates $K$ candidate reasoning paths using a high-temperature sampling strategy to explore the solution space.
+3.  **State Verification Layer:**
+    *   **Internal Consistency:** A secondary "Critic" LLM (or a smaller, fine-tuned reward model) scores each candidate path based on whether the conclusion of step $n+1$ is logically supported by the premises of step $n$.
+    *   **Backtracking:** If all $K$ candidates for a node fall below a verification threshold, the agent is forced to backtrack to the previous node and re-generate, preventing the "hallucination death spiral."
+4.  **Synthesis:** Once a path of verified nodes reaches a leaf node (conclusion), the agent synthesizes the verified steps into a final response.
+
+### 5. Dataset or Benchmark
+*   **Primary:** **GSM8K** (Grade School Math) for structured multi-step logic.
+*   **Secondary:** **ProntoQA** (Prototypical Reasoning) to test formal deductive logic and the ability to handle distractor information.
+*   **Complex:** **StrategyQA** for tasks requiring implicit multi-hop reasoning.
+
+### 6. Evaluation Metrics
+*   **Pass@1 Accuracy:** Correctness of the final answer.
+*   **Reasoning Path Integrity (RPI):** A manual or LLM-based audit of intermediate steps to identify the frequency of "right answer, wrong reasoning."
+*   **Backtrack Rate:** The frequency with which the verification layer triggers a re-generation, used to measure task difficulty and model confidence.
+*   **Inference Cost:** Measured in total tokens generated per successful answer (to assess efficiency).
+
+### 7. Baselines
+*   **Zero-Shot CoT:** "Let's think step by step" prompting.
+*   **Few-Shot CoT:** Standard prompting with $N$ exemplars.
+*   **Self-Consistency (SC):** Majority voting over multiple reasoning paths without intermediate verification.
+*   **Tree of Thoughts (ToT):** A baseline for BFS/DFS search without the specific recursive entailment verification proposed here.
+
+### 8. Ablations
+*   **No Backtracking:** The system identifies errors but continues the path anyway (tests the value of correction vs. detection).
+*   **Random Pruning:** Instead of logical verification, prune candidate paths at random (tests if the performance gain is simply due to increased sampling).
+*   **Single-Model vs. Dual-Model:** Using the same model instance for generation and verification vs. using a specialized Critic model.
+
+### 9. Failure Modes and Feasibility Risks
+*   **Verification Hallucination:** The "Critic" model may incorrectly validate a false step or reject a correct one. This can be mitigated by using a more capable model for the Critic or using an ensemble of critics.
+*   **Infinite Loops:** In extremely difficult tasks, the agent might backtrack indefinitely. A "max-retry" limit and a fallback to a simpler reasoning strategy are necessary.
+*   **Computational Latency:** The recursive nature and multiple candidate paths significantly increase wall-clock time. This makes the approach more suitable for non-real-time "System 2" thinking tasks rather than low-latency chat applications.

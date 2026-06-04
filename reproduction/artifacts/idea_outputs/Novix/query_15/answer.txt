@@ -1,0 +1,48 @@
+### 1. Title
+**Contrastive Counterfactual Fine-Tuning (CCFT): Mitigating Gender Bias in Machine Translation via Latent Space Alignment**
+
+### 2. Problem and Motivation
+Machine Translation (MT) systems frequently perpetuate societal biases, particularly gender stereotypes. When translating from gender-neutral languages (e.g., Turkish, Finnish) or gender-ambiguous contexts into gendered languages (e.g., English, Spanish), models often rely on occupational stereotypes (e.g., "The doctor" $\rightarrow$ "He," "The nurse" $\rightarrow$ "She"). Current debiasing methods, such as Counterfactual Data Augmentation (CDA), often lead to a "catastrophic forgetting" of linguistic nuances or a significant drop in general translation quality (BLEU/ChrF scores). There is a need for a method that enforces gender neutrality in ambiguous contexts without degrading the model's primary objective of translation accuracy.
+
+### 3. Core Hypothesis
+By applying a contrastive loss objective during the fine-tuning stage—specifically forcing the model to minimize the distance between the latent representations of gender-swapped counterfactual sentence pairs—we can achieve a more gender-invariant internal representation. This will reduce stereotypical associations while maintaining high translation fidelity.
+
+### 4. Method
+The proposed workflow follows a three-step implementation:
+
+1.  **Counterfactual Pair Generation:** Identify gendered terms in a parallel corpus and generate "mirrored" pairs (e.g., "The businessman finished his work" $\leftrightarrow$ "The businesswoman finished her work").
+2.  **Contrastive Fine-Tuning:** Fine-tune a pre-trained Transformer (e.g., mBART or NLLB-200) using a dual-objective function:
+    *   $\mathcal{L}_{total} = \mathcal{L}_{NLL} + \lambda \mathcal{L}_{contrastive}$
+    *   $\mathcal{L}_{NLL}$ is the standard negative log-likelihood for translation.
+    *   $\mathcal{L}_{contrastive}$ minimizes the Cosine Distance between the encoder’s output representations of the original and the counterfactual source sentences.
+3.  **Inference-Time Control:** Implement a "neutrality" prefix (e.g., `<neutral>`) during decoding to signal the model to avoid gendered assumptions when the source context is provably ambiguous.
+
+### 5. Dataset or Benchmark
+*   **Training:** A subset of the **OpenSubtitles** or **Europarl** corpus, filtered for occupational nouns.
+*   **Evaluation:**
+    *   **WinoMT:** A standard challenge set for gender bias in MT.
+    *   **MuST-SHE:** For evaluating gender bias in speech-to-text/translation contexts.
+    *   **WMT23 News Translation Sets:** To monitor general translation quality.
+
+### 6. Evaluation Metrics
+*   **Bias Metrics:**
+    *   **Accuracy (Acc):** Percentage of correctly translated gender pronouns.
+    *   **$\Delta G$ (Gender Gap):** The difference in accuracy between masculine and feminine target translations.
+*   **Quality Metrics:**
+    *   **BLEU / ChrF++:** To ensure general translation performance does not degrade.
+    *   **COMET:** To assess semantic preservation.
+
+### 7. Baselines
+*   **Vanilla Transformer:** Standard NMT model without debiasing.
+*   **CDA-Only:** A model fine-tuned on an augmented dataset without the contrastive loss component.
+*   **Post-Editing Heuristics:** A rule-based system that replaces pronouns in the output based on a predefined dictionary.
+
+### 8. Ablations
+*   **Loss Weight ($\lambda$):** Varying the influence of the contrastive loss to find the "Pareto frontier" between bias reduction and translation quality.
+*   **Encoder vs. Decoder Alignment:** Testing whether the contrastive loss is more effective when applied to the encoder hidden states or the decoder’s pre-softmax layer.
+*   **Data Volume:** Testing the effectiveness of the method with 10%, 25%, and 50% of the counterfactual data.
+
+### 9. Failure Modes and Feasibility Risks
+*   **Over-Correction:** The model might begin to use gender-neutral pronouns even when the source sentence explicitly provides gender context (e.g., "The actress...").
+*   **Morphological Consistency:** In highly inflected languages (e.g., French or Arabic), changing a pronoun requires changing adjectives and verb endings; the contrastive loss might not capture these long-range dependencies, leading to grammatical errors.
+*   **Computational Cost:** Contrastive learning requires larger batch sizes or memory-intensive pair processing, which may increase training time by 1.5x–2x compared to standard fine-tuning.

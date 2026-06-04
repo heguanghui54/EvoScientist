@@ -1,0 +1,42 @@
+### 1. Title
+**Phonetic Anchor Adapters: Leveraging Universal Phonetic Bottlenecks for Cross-Lingual Transfer in Low-Resource ASR**
+
+### 2. Problem and Motivation
+State-of-the-art Automatic Speech Recognition (ASR) systems typically require thousands of hours of labeled data, which is unavailable for the vast majority of the world’s 7,000+ languages. While Self-Supervised Learning (SSL) models like XLS-R or Wav2Vec 2.0 provide a strong foundation, fine-tuning them on extremely low-resource targets (e.g., <10 hours) often leads to catastrophic forgetting of the acoustic priors or overfitting to the source language’s phonology. There is a critical need for a method that bridges the gap between high-resource source representations and low-resource target scripts without requiring massive retraining.
+
+### 3. Core Hypothesis
+By inserting lightweight "Phonetic Anchor Adapters" into a frozen multilingual SSL backbone and training them to map acoustic features to a Universal Phonetic Alphabet (IPA) bottleneck, the model will learn language-agnostic articulatory features. This bottleneck will act as a superior transfer mechanism for low-resource languages compared to direct grapheme-based fine-tuning, as it reduces the search space to a finite set of universal human sounds.
+
+### 4. Method
+The implementation follows a three-stage workflow:
+1.  **Backbone Selection:** Utilize a pre-trained **XLS-R (300M)** model as the frozen feature extractor.
+2.  **Adapter Insertion:** Insert bottleneck adapter modules (residual layers with a reduction factor of 16) between the Transformer blocks of the XLS-R model.
+3.  **Phonetic Pre-training:** Train these adapters on a high-resource multilingual subset (e.g., English, Spanish, Mandarin) using a **Phone Error Rate (PER)** loss against IPA transcriptions. This creates a "Phonetic Anchor."
+4.  **Low-Resource Adaptation:** Freeze the backbone and the "Anchor" adapters. Add a small, language-specific linear head and fine-tune only the head and the final two adapter layers on the target low-resource language (e.g., <5 hours of data).
+5.  **Inference:** Map the IPA-based output to the target script using a simple Finite State Transducer (FST) or a small grapheme-to-phoneme (G2P) lookup table.
+
+### 5. Dataset or Benchmark
+*   **Source (High-Resource):** Common Voice 11.0 (English, French, German) for training the phonetic bottleneck.
+*   **Target (Low-Resource):**
+    *   **Common Voice:** Swahili, Kyrgyz, and Guarani (specifically using subsets of 1h, 5h, and 10h).
+    *   **Babel:** Zulu or Tok Pisin to test performance on non-Indo-European phonetic structures.
+
+### 6. Evaluation Metrics
+*   **Word Error Rate (WER):** Primary metric for downstream utility.
+*   **Phone Error Rate (PER):** To measure the accuracy of the phonetic bottleneck.
+*   **Data Efficiency Gain:** The ratio of WER improvement per hour of added training data compared to the baseline.
+
+### 7. Baselines
+*   **XLS-R Fine-tuning:** Standard fine-tuning of the full XLS-R model on the target language.
+*   **Vanilla Adapters:** Standard Houlsby adapters trained directly on target graphemes without the IPA bottleneck.
+*   **Cross-lingual Wav2Vec 2.0:** Direct transfer from a high-resource language model to the target.
+
+### 8. Ablations
+*   **Bottleneck Depth:** Testing the performance impact of placing adapters in early layers (acoustic) vs. late layers (linguistic).
+*   **IPA vs. Grapheme:** Training the adapters on source-language graphemes instead of IPA to isolate the benefit of phonetic universality.
+*   **Frozen vs. Unfrozen Backbone:** Assessing the trade-off between catastrophic forgetting and model expressivity.
+
+### 9. Failure Modes and Feasibility Risks
+*   **IPA Noise:** Many low-resource datasets lack gold-standard IPA transcriptions; relying on automated G2P for the bottleneck training may introduce systematic errors.
+*   **Tonal Languages:** The IPA bottleneck may struggle with languages where pitch/tone is phonemic (e.g., Yoruba) if the SSL backbone does not capture F0 features sufficiently.
+*   **Feasibility:** The approach is computationally efficient (training <5% of total parameters), making it feasible for researchers with limited GPU resources (e.g., a single A100 or 3090).

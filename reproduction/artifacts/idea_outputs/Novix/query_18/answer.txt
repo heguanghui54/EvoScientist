@@ -1,0 +1,45 @@
+### 1. Title
+**Quantifying Interaction Friction: A Multi-Dimensional Framework for Evaluating LLM User Experience in Iterative Task Refinement.**
+
+### 2. Problem and Motivation
+Current Large Language Model (LLM) evaluations primarily focus on static benchmarks (e.g., MMLU, HumanEval) or comparative preference rankings (e.g., LMSYS Chatbot Arena). These metrics fail to capture the **dynamic user experience (UX)** of multi-turn interactions. In real-world scenarios, a user’s satisfaction is determined not just by the final output, but by the "interaction friction"—the cognitive and manual effort required to guide the model toward a desired goal. As LLMs transition from chatbots to productivity agents, we lack a standardized method to quantify the efficiency of the human-AI feedback loop.
+
+### 3. Core Hypothesis
+The "Interaction Friction Index" (IFI)—a composite metric integrating prompt revision frequency, semantic drift across turns, and output volatility—will demonstrate a stronger correlation with long-term user retention and task success than traditional single-turn accuracy or Elo-based preference scores.
+
+### 4. Method
+The research follows a three-phase workflow:
+
+*   **Phase 1: Taxonomy Construction:** Define "Friction Events" including *Prompt Rephrasing* (user repeats intent with different words), *Correction Cycles* (user explicitly corrects a model error), and *Verbosity Overload* (model provides excessive irrelevant info).
+*   **Phase 2: Interaction Logging:** Develop a telemetry-enabled interface where users perform complex tasks (e.g., code debugging, creative drafting). The system logs:
+    *   Time-to-first-satisfactory-response.
+    *   Levenshtein distance between successive user prompts.
+    *   Token-level changes in model responses across turns.
+*   **Phase 3: Metric Synthesis:** Calculate the IFI using a weighted linear combination of the logged variables, normalized by task complexity.
+*   **Implementation Milestone:** Validate the IFI by comparing it against retrospective user interviews and Likert-scale satisfaction surveys.
+
+### 5. Dataset or Benchmark
+*   **Primary Source:** A subset of the **WildChat** dataset (1M+ real-world user-ChatGPT interactions), filtered for multi-turn conversations ($>3$ turns).
+*   **Synthetic Baseline:** The **MT-Bench** (Multi-turn Benchmark) to provide a controlled environment for testing specific friction types (e.g., the model's inability to follow constraints across turns).
+
+### 6. Evaluation Metrics
+*   **Primary Metric:** **Interaction Friction Index (IFI).**
+*   **Task Success Rate (TSR):** Binary outcome of whether the user’s final goal was met.
+*   **Prompt-to-Output Efficiency (POE):** Ratio of total user input tokens to the quality score of the final output.
+*   **Subjective Cognitive Load (SCL):** Measured via the NASA-TLX (Task Load Index) during user trials.
+
+### 7. Baselines
+*   **LMSYS Elo Rating:** The current gold standard for comparative model preference.
+*   **Standard Accuracy Benchmarks:** GPT-Eval scores for individual turn quality.
+*   **Time-on-Task (ToT):** A traditional HCI metric measuring the raw duration to complete a prompt sequence.
+
+### 8. Ablations
+*   **Turn-Count Weighting:** Testing the IFI by removing the "number of turns" component to see if high-friction interactions can still be "satisfying" if the final result is exceptional.
+*   **Semantic Similarity Filter:** Removing the prompt-revision distance metric to determine if user effort can be accurately measured through model output changes alone.
+*   **Expert vs. Novice Splits:** Evaluating if the friction framework remains consistent when users have varying levels of "prompt engineering" skill.
+
+### 9. Failure Modes and Feasibility Risks
+*   **Subjectivity of Intent:** Users may change their goals mid-interaction, which the IFI might misinterpret as model-induced friction rather than user exploration.
+*   **Data Privacy:** Real-world interaction logs (like WildChat) contain PII, necessitating rigorous de-identification before analysis.
+*   **Latency Bias:** User frustration is often tied to system latency rather than model intelligence; the method must isolate inference speed from interaction logic to ensure the UX evaluation is model-centric.
+*   **Resource Intensity:** Large-scale user studies are expensive. **Risk Control:** Utilize "LLM-as-a-Judge" (e.g., GPT-4o) to simulate a "user" and provide a preliminary synthetic friction score before human validation.

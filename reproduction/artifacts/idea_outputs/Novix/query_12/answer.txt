@@ -1,0 +1,44 @@
+### 1. Title
+**Contrastive Evidence-Weighting (CEW): A Multi-Stage Verification Framework for Resolving Parametric-Contextual Conflicts in LLMs**
+
+### 2. Problem and Motivation
+Large Language Models (LLMs) frequently exhibit "hallucinations" where they prioritize their internal parametric memory (learned during training) over external, non-parametric evidence provided in a prompt (Retrieval-Augmented Generation). This leads to factual inconsistency, especially when the model’s internal weights are outdated or biased. Current RAG systems often fail because the model merges contradictory information instead of resolving it. Resolving this is critical for high-stakes domains like medicine, law, and technical support where accuracy is non-negotiable.
+
+### 3. Core Hypothesis
+By explicitly identifying and labeling "conflict points" between a model’s initial draft and retrieved evidence before the final synthesis, we can significantly increase factual consistency. We hypothesize that a contrastive reasoning step—where the model must justify why it chooses external evidence over its internal prior—will reduce factual drift more effectively than standard RAG or simple self-correction.
+
+### 4. Method
+The CEW framework follows a four-stage pipeline:
+1.  **Drafting & Claim Extraction:** Given a query and retrieved documents, the model generates a set of atomic claims it *intends* to make.
+2.  **Contrastive Verification:** For each claim, a "Verifier" agent (a frozen instance of the LLM with a specific prompt) compares the claim against the retrieved snippets. It must categorize each claim as:
+    *   *Supported:* Matches evidence.
+    *   *Contradicted:* Conflicts with evidence.
+    *   *Unverifiable:* Evidence is silent on this claim.
+3.  **Conflict Resolution Prompting:** If a claim is *Contradicted*, the model is prompted to generate a "Resolution Rationale." It must explicitly state: "My internal memory suggested X, but the provided evidence states Y. Therefore, the factual answer is Y."
+4.  **Final Synthesis:** The model generates the final response, constrained by the results of the resolution rationale.
+
+### 5. Dataset or Benchmark
+*   **StrategyQA:** To test multi-step reasoning and factual retrieval.
+*   **FactScore:** A dataset specifically designed to evaluate the factual precision of long-form generation.
+*   **HaluEval:** To provide a diverse set of hallucination samples across different tasks (summarization, QA, etc.).
+
+### 6. Evaluation Metrics
+*   **FactScore (Primary):** Percentage of generated points that are factually correct.
+*   **Citation Accuracy:** The ratio of claims correctly attributed to the retrieved source vs. "hallucinated" citations.
+*   **Knowledge Conflict Accuracy:** A specific subset metric measuring how often the model chooses the correct external evidence when it contradicts a known (intentionally injected) internal falsehood.
+*   **ROUGE-L / METEOR:** To ensure the output remains fluent and coherent.
+
+### 7. Baselines
+*   **Standard RAG:** Prompting the LLM with "Use the following context to answer."
+*   **Chain-of-Thought (CoT):** Prompting the model to "think step-by-step" without the contrastive verification stage.
+*   **Self-Refine:** An iterative approach where the model critiques its own output in a single loop without explicit evidence-weighting.
+
+### 8. Ablations
+*   **No Conflict Labeling:** Removing the [Supported/Contradicted] labels to see if the categorization itself provides the performance gain.
+*   **No Rationale:** Providing the labels but skipping the "Resolution Rationale" step.
+*   **Random Evidence:** Replacing retrieved documents with random text to test the model’s sensitivity to the quality of external grounding.
+
+### 9. Failure Modes and Feasibility Risks
+*   **Inference Latency:** The multi-stage process (Extraction -> Verification -> Rationale -> Synthesis) significantly increases token usage and wall-clock time. *Mitigation:* Explore parallelizing the verification of atomic claims.
+*   **Retrieval Quality Dependency:** If the retriever fetches irrelevant or incorrect documents, the "Verification" step will enforce incorrect facts. *Mitigation:* Implement a "Confidence Threshold" where the model can fall back to parametric memory if retrieval scores are too low.
+*   **Over-Correction:** The model might become too "timid," refusing to answer questions if the evidence is slightly ambiguous. *Mitigation:* Fine-tune the "Unverifiable" label to allow for probabilistic reasoning when evidence is neutral.

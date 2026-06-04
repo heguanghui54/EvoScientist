@@ -1,0 +1,45 @@
+**1. Title**
+**UniAudio-Hierarchical:** A Unified Audio Foundation Model via Multi-Scale Residual Vector Quantization and Prefix-Prompting.
+
+**2. Problem and Motivation**
+Current audio foundation models are often bifurcated: discriminative models (e.g., WavLM, CLAP) excel at classification and retrieval but cannot generate audio, while generative models (e.g., AudioLM, AudioGen) struggle with fine-grained semantic downstream tasks without extensive fine-tuning. This gap exists because semantic understanding requires high-level abstraction, while generation requires high-fidelity temporal detail. To achieve a "general-purpose" status, a model must unify these capabilities into a single architecture that treats all audio tasks as sequence-to-sequence problems.
+
+**3. Core Hypothesis**
+A hierarchical discrete latent space—where "coarse" tokens capture semantic/phonetic content and "fine" tokens capture acoustic texture—can enable a single decoder-only Transformer to perform both discriminative (via latent pooling) and generative (via auto-regressive prediction) tasks through task-specific prefix prompting.
+
+**4. Method**
+*   **Stage 1: Neural Audio Tokenization.** Train a Residual Vector Quantizer (RVQ) based on a SoundStream or EnCodec architecture. This maps raw 24kHz audio into $K$ layers of discrete codes.
+*   **Stage 2: Hierarchical Modeling.** Implement a decoder-only Transformer (e.g., Llama-style architecture).
+    *   The model predicts the first $N$ layers (coarse) of RVQ tokens auto-regressively to establish global structure.
+    *   A secondary, smaller "texture" transformer or a non-autoregressive head predicts the remaining $M$ layers (fine) conditioned on the coarse tokens.
+*   **Stage 3: Unified Task Prompting.**
+    *   For **Generation:** Input a text prompt (encoded via a frozen BERT/T5) as a prefix; the model generates RVQ tokens.
+    *   For **Classification/Understanding:** Input the audio tokens; use a special `[CLS]` token at the end of the sequence to predict labels or extract embeddings for retrieval.
+*   **Implementation Milestone:** First, optimize the RVQ for reconstruction; then, pre-train the Transformer on a massive corpus using a "Next-Token Prediction" objective across all layers.
+
+**5. Dataset or Benchmark**
+*   **Pre-training:** A combination of **AudioSet** (2.1M clips), **LibriLight** (60k hours of speech), and **Free-to-use Music** datasets.
+*   **Evaluation Benchmarks:**
+    *   **HEAR Benchmark:** For general audio representation evaluation.
+    *   **AudioCaps / Clotho:** For text-to-audio generation and captioning.
+    *   **LibriSpeech:** For speech recognition (WER) and synthesis (MOS).
+
+**6. Evaluation Metrics**
+*   **Generative:** Fréchet Audio Distance (FAD), Kullback–Leibler (KL) Divergence, and CLAP-Score (text-audio alignment).
+*   **Discriminative:** mean Average Precision (mAP) on AudioSet-eval and Accuracy on ESC-50.
+*   **Efficiency:** Tokens-per-second generation speed and parameter count vs. performance trade-off.
+
+**7. Baselines**
+*   **AudioLM:** For hierarchical generative performance.
+*   **CLAP (Contrastive Language-Audio Pretraining):** For cross-modal retrieval and zero-shot classification.
+*   **WavLM / HuBERT:** For speech-centric representation benchmarks.
+
+**8. Ablations**
+*   **Codebook Depth:** Compare performance using 4, 8, and 16 RVQ layers to find the "semantic vs. acoustic" elbow.
+*   **Objective Mix:** Test the impact of adding a Masked Language Modeling (MLM) loss alongside the Next-Token Prediction loss.
+*   **Prompting Strategy:** Compare fixed task-tokens (e.g., `[GENERATE]`, `[CLASSIFY]`) against natural language instructions.
+
+**9. Failure Modes and Feasibility Risks**
+*   **Codebook Collapse:** The RVQ might underutilize its vocabulary, leading to poor audio quality. *Mitigation:* Use exponential moving averages (EMA) for codebook updates and restart dead vectors.
+*   **Inference Latency:** Autoregressive generation of multi-layer tokens is computationally expensive. *Mitigation:* Implement a "Coarse-to-Fine" inference scheme where fine tokens are generated in parallel or via a non-autoregressive diffusion head.
+*   **Modality Dominance:** The model might perform well on speech but fail on complex environmental sounds. *Mitigation:* Ensure balanced sampling in the pre-training data mixture.

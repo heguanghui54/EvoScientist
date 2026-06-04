@@ -1,0 +1,48 @@
+### Research Proposal: Semantic Density Contrastive Filtering (SDCF) for Domain-Specific Model Pre-training
+
+#### 1. Title
+Semantic Density Contrastive Filtering (SDCF): Leveraging Domain-Specific Embedding Divergence to Recover High-Utility Specialized Data.
+
+#### 2. Problem and Motivation
+Standard data cleaning pipelines for Large Language Models (LLMs) rely heavily on general-purpose quality heuristics, such as KenLM perplexity scores or fastText classifiers trained on Wikipedia/OpenWebText. While effective for general web-crawls, these filters often penalize domain-specific data (e.g., legal briefs, clinical notes, or proprietary code) because specialized terminology and structural syntax are statistically treated as "low-quality" or "gibberish" relative to standard English. This results in the accidental removal of the most valuable training tokens for domain-specific models, forcing researchers to either accept high-noise datasets or manually curate small, expensive "gold" corpora.
+
+#### 3. Core Hypothesis
+A sample's utility for domain-specific pre-training is proportional to its "Semantic Density"—defined as the ratio of its alignment with a specialized domain manifold versus its alignment with a general-purpose linguistic manifold. By filtering data based on the *divergence* between a domain-specific encoder and a generalist encoder, we can isolate high-value specialized content that standard filters would otherwise discard.
+
+#### 4. Method
+The proposed SDCF workflow consists of four implementation milestones:
+1.  **Seed Manifold Construction:** Identify a small "gold-standard" corpus (e.g., 500MB of peer-reviewed medical journals). Train a lightweight domain-specific BERT-style encoder ($E_{dom}$) on this seed.
+2.  **Generalist Baseline:** Utilize a frozen, general-purpose encoder ($E_{gen}$) such as RoBERTa-base.
+3.  **Contrastive Scoring:** For each candidate document $D$ in a noisy raw pool:
+    *   Calculate the reconstruction error or the mean-pooled embedding distance to the domain centroid using $E_{dom}$.
+    *   Calculate the same for $E_{gen}$.
+    *   Assign a score $S = \text{dist}(D, E_{gen}) / \text{dist}(D, E_{dom})$.
+4.  **Thresholding & Sampling:** Select documents with the highest $S$ scores. This prioritizes documents that are "well-structured" in the domain context but "outliers" in the general context.
+
+#### 5. Dataset or Benchmark
+*   **Target Domain:** Biomedicine.
+*   **Source Pool:** The "Pile-CC" (Common Crawl) subset of the Pile, which contains significant noise.
+*   **Gold Seed:** PubMed Central Open Access subset.
+*   **Downstream Evaluation:** The PubMedQA and MedQA (USMLE) benchmarks.
+
+#### 6. Evaluation Metrics
+*   **Filtering Efficiency:** The ratio of "tokens kept" to "downstream accuracy gain" (Accuracy per Billion Tokens).
+*   **Perplexity:** Zero-shot perplexity on a held-out set of high-quality medical textbooks.
+*   **Downstream Task Performance:** Accuracy on MedQA and MMLU-Medical subtasks after fine-tuning a base model (e.g., Llama-3-8B) on the filtered data.
+
+#### 7. Baselines
+*   **Heuristic-based:** KenLM perplexity filtering (standard CCNet approach).
+*   **Classifier-based:** A fastText classifier trained to distinguish "Medical" vs "Non-medical" using Wikipedia categories.
+*   **Random Sampling:** A control group using an unfiltered subset of the same size.
+
+#### 8. Ablations
+*   **Seed Size Sensitivity:** Testing the method with 10MB, 100MB, and 1GB of "gold" seed data to determine the minimum required for an effective manifold.
+*   **Encoder Architecture:** Comparing the use of simple TF-IDF vectors versus Transformer-based embeddings for the $E_{dom}$ and $E_{gen}$ components.
+*   **Static vs. Dynamic Thresholding:** Comparing a fixed top-K cutoff versus a percentile-based distribution cutoff.
+
+#### 9. Failure Modes and Feasibility Risks
+*   **Domain Narrowing:** The filter may become *too* specific, selecting only documents that mirror the "gold seed" exactly, leading to a loss of linguistic diversity and poor generalization (overfitting the filter).
+*   **Computational Overhead:** Running two encoders over multi-terabyte datasets is computationally expensive compared to fastText.
+    *   *Mitigation:* Use dimensionality reduction (PCA) on embeddings or use a "two-stage" approach where fastText narrows the pool before SDCF is applied.
+*   **Seed Bias:** If the gold seed contains specific formatting artifacts (e.g., LaTeX strings), the filter may learn to prefer "formatting" over "knowledge."
+    *   *Mitigation:* Aggressive de-biasing of the seed data via regex-based normalization before manifold construction.

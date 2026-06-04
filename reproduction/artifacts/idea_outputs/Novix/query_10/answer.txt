@@ -1,0 +1,44 @@
+This research proposal serves as a baseline proxy for an autonomous research assistant (Novix), focusing on a structured, iterative approach to the Text-to-SQL task.
+
+### 1. Title
+**Iterative Sub-Graph Pruning (ISGP): Enhancing Text-to-SQL for Large-Scale Databases via Multi-Step Schema Distillation**
+
+### 2. Problem and Motivation
+State-of-the-art Text-to-SQL models struggle with "Large-Scale Schema Linking." When a database contains hundreds of tables and columns (e.g., the BIRD benchmark), providing the entire schema in the LLM context window introduces significant noise, leads to context overflow, and increases the likelihood of "hallucinated" joins. Existing retrieval-based methods (like BM25 or embedding-based search) often miss intermediate "bridge tables" necessary for complex joins because those tables may not share semantic keywords with the natural language query.
+
+### 3. Core Hypothesis
+By treating the database schema as a graph and employing an iterative "pruning and expansion" reasoning loop, an LLM can identify a minimal, high-recall sub-schema that includes both semantically relevant tables and structurally necessary join-path tables, thereby improving execution accuracy on complex queries.
+
+### 4. Method
+The proposed workflow follows a four-stage pipeline:
+1.  **Entity-Centric Retrieval:** Use a lightweight bi-encoder to retrieve the top-K tables and columns based on semantic similarity to the user query.
+2.  **Schema Graph Expansion:** Construct a graph where nodes are tables and edges are Foreign Key relationships. Expand the retrieved set to include all tables within a 2-hop distance of the initial candidates to capture potential join paths.
+3.  **Iterative LLM Pruning:**
+    *   Pass the expanded sub-schema to the LLM with a "Reason-then-Prune" prompt.
+    *   The LLM generates a "Chain-of-Thought" (CoT) explanation of which tables are needed for the logic and prunes those it deems irrelevant.
+    *   If the pruned schema lacks connectivity between selected tables, the system automatically re-inserts the shortest-path bridging tables.
+4.  **Constrained SQL Generation:** Generate the final SQL query using only the distilled sub-schema, ensuring the model's attention is focused on relevant schema elements.
+
+### 5. Dataset or Benchmark
+*   **BIRD (Big Bench for Large-scale Database Grounded Text-to-SQL Evaluation):** Chosen for its large schemas and emphasis on database values.
+*   **Spider:** Used for cross-domain validation to ensure the method generalizes to smaller, diverse schemas.
+
+### 6. Evaluation Metrics
+*   **Execution Accuracy (EX):** The primary metric, measuring whether the SQL returns the correct result.
+*   **Valid Efficiency Score (VES):** To measure the computational efficiency of the generated SQL.
+*   **Schema Recall:** The percentage of "ground truth" tables included in the final pruned sub-schema.
+
+### 7. Baselines
+*   **RESDSQL:** A standard cross-encoder-based schema linking baseline.
+*   **DIN-SQL:** A multi-prompt decomposition approach (current SOTA-style baseline).
+*   **C3:** A ChatGPT-based zero-shot baseline that uses simple schema pruning.
+
+### 8. Ablations
+*   **No Iterative Pruning:** Directly generating SQL from the expanded 2-hop graph.
+*   **No Graph Expansion:** Using only the top-K semantically retrieved tables without considering Foreign Key paths.
+*   **Fixed-K Retrieval:** Comparing the adaptive pruning against a fixed top-10 table retrieval strategy.
+
+### 9. Failure Modes and Feasibility Risks
+*   **Connectivity Blindness:** The LLM might prune a table that serves as the only link between two critical data points. *Mitigation:* The automated shortest-path re-insertion step in Stage 3.
+*   **Inference Latency:** Multi-step pruning increases the time-per-query. *Mitigation:* Use a smaller, faster model (e.g., GPT-3.5-Turbo or Llama-3-8B) for pruning and a larger model (GPT-4) only for final SQL generation.
+*   **Token Limits:** For exceptionally large schemas, even the 2-hop expansion might exceed context limits. *Mitigation:* Implement a hard cap on expansion and prioritize nodes by edge degree.

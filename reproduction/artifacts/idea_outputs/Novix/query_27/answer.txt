@@ -1,0 +1,44 @@
+**Title:** Dynamic Semantic Density Pruning (DSDP): Adaptive KV Cache Management for Long-Context LLMs
+
+**Problem and Motivation**
+Current Large Language Models (LLMs) struggle with long-context windows due to the quadratic memory scaling of the Key-Value (KV) cache. Existing solutions like static windowing (StreamingLLM) or simple importance-based eviction (H2O) often discard tokens that appear "unimportant" locally but are crucial for global coherence or specific downstream retrieval tasks. There is a need for a mechanism that differentiates between "background" filler text and "semantic anchors" to maintain high fidelity over 100k+ tokens without linear memory growth.
+
+**Core Hypothesis**
+By utilizing a lightweight, cross-layer attention-scoring mechanism to calculate "Semantic Density," a model can selectively prune the KV cache by 80–90% while retaining the most informative tokens. This approach will outperform static eviction policies in tasks requiring global information synthesis (e.g., multi-document summarization).
+
+**Method**
+The DSDP approach follows a three-stage implementation:
+1.  **Density Mapping:** During the pre-filling phase, compute an Importance Score ($I$) for each token based on its cumulative attention weight across the middle layers of the transformer. Middle layers are targeted as they typically represent semantic integration better than early (syntax) or late (prediction) layers.
+2.  **Tiered Eviction:** Implement a tiered KV cache.
+    *   *Tier 1 (Anchor Cache):* Top 10% of tokens with the highest $I$ scores are pinned permanently.
+    *   *Tier 2 (Recency Cache):* A sliding window of the most recent 1024 tokens to maintain local fluency.
+    *   *Tier 3 (Eviction Pool):* All other tokens are pruned or moved to CPU memory.
+3.  **Dynamic Re-entry:** During generation, if the model’s internal uncertainty (entropy) exceeds a threshold, the system triggers a "back-check" to the CPU-offloaded tokens to re-populate the Anchor Cache.
+
+**Dataset or Benchmark**
+*   **LongBench:** To evaluate performance across summarization, QA, and few-shot learning.
+*   **Needle In A Haystack (NIAH):** To test precise retrieval at various depths (1k to 128k tokens).
+*   **InfiniteBench:** Specifically for evaluating processing of extremely long sequences (up to 214k tokens).
+
+**Evaluation Metrics**
+*   **Retrieval Accuracy:** Success rate in "Needle In A Haystack" tests.
+*   **Perplexity (PPL):** To ensure language modeling capabilities do not degrade over long sequences.
+*   **Memory Efficiency:** Peak VRAM usage compared to the full KV cache baseline.
+*   **Latency:** Time Per Output Token (TPOT) and Time To First Token (TTFT).
+
+**Baselines**
+*   **Full Attention:** Standard implementation without pruning (where VRAM allows).
+*   **H2O (Heavy-Hitter Oracle):** A state-of-the-art importance-based KV pruning method.
+*   **StreamingLLM:** A window-based approach focusing on "attention sinks."
+*   **FlashAttention-2:** As the standard for optimized attention computation.
+
+**Ablations**
+*   **Layer Selection:** Testing density mapping on early vs. middle vs. late layers.
+*   **Pruning Ratio:** Testing performance at 50%, 75%, 90%, and 95% cache reduction.
+*   **Fixed vs. Dynamic Anchors:** Comparing the "Tiered Eviction" strategy against a strategy that only uses a sliding window.
+
+**Failure Modes and Feasibility Risks**
+*   **Computational Overhead:** The process of calculating density scores and managing tiered memory may introduce latency that offsets the memory gains.
+*   **Semantic Drift:** If the "Anchor Cache" selects the wrong tokens early in the sequence, the model may suffer from permanent "hallucination" or loss of context that cannot be recovered.
+*   **Hardware Constraints:** Efficiently moving KV pairs between GPU and CPU (Tier 3) requires high PCIe bandwidth; on consumer hardware, this may lead to significant bottlenecks.
+*   **Implementation Risk:** Modifying the KV cache management within optimized kernels (like FlashAttention) is non-trivial and may require custom CUDA kernels.

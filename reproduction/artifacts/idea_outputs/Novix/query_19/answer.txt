@@ -1,0 +1,44 @@
+### 1. Title
+**Infogain-Eval: Information-Theoretic Active Sampling for Resource-Efficient LLM Leaderboards**
+
+### 2. Problem and Motivation
+Current LLM leaderboards (e.g., LMSYS Chatbot Arena) rely on massive amounts of pairwise comparisons to generate Elo ratings. As the number of models ($N$) grows, the number of potential pairings grows quadratically ($O(N^2)$). Furthermore, evaluating every model on every prompt in static benchmarks is computationally prohibitive and often redundant, as many prompts do not help differentiate between models of similar capabilities. There is a critical need for a methodology that identifies the true ranking of models using the minimum number of expensive "judge" calls (whether human or high-tier LLM-as-a-judge).
+
+### 3. Core Hypothesis
+By modeling model performance as a Bayesian Bradley-Terry distribution and employing **Active Learning**—specifically selecting model-pair-prompt triplets that maximize **Expected Information Gain (EIG)** regarding the global ranking—we can achieve a Spearman’s Rank Correlation of $>0.95$ with the "ground truth" leaderboard using less than 30% of the total evaluation budget.
+
+### 4. Method
+The workflow is divided into four implementation phases:
+
+1.  **Probabilistic Ranking Engine:** Initialize each model $M_i$ with a skill rating $\theta_i$ following a Gaussian distribution $\mathcal{N}(\mu_i, \sigma_i^2)$. Use a Bradley-Terry model where the probability of $M_i$ beating $M_j$ is $\sigma(\theta_i - \theta_j)$.
+2.  **Active Sampling Policy:** Instead of random matching, implement an acquisition function based on **Predictive Entropy Search**. For each available prompt $P_k$ in a pool, calculate which pair $(M_i, M_j)$ is most likely to reduce the joint posterior uncertainty of the entire ranking.
+3.  **Tiered Anchoring:** To prevent "island effects" (where clusters of models are compared only to each other), the algorithm will force periodic comparisons against "Anchor Models" (stable, well-known versions like GPT-4o or Llama-3-70B) to calibrate the scale.
+4.  **Inference & Update:** After each judge result, update the posterior distributions using Expectation Propagation (EP) or Variational Inference to maintain a real-time leaderboard with confidence intervals.
+
+### 5. Dataset or Benchmark
+*   **Prompt Pool:** 2,000 diverse prompts sampled from the *ShareGPT* or *WildChat* datasets, categorized by task (coding, creative writing, reasoning).
+*   **Model Pool:** A set of 20–30 open-source models (e.g., Llama-3, Mistral, Gemma, Phi-3) across different size tiers (7B to 70B parameters).
+*   **Judge:** GPT-4o-mini or a dedicated reward model (e.g., Skywork-Reward-Llama-3.1-70B) will serve as the "Ground Truth Judge" for the simulation.
+
+### 6. Evaluation Metrics
+*   **Spearman’s Rho ($\rho$):** Rank correlation between the Infogain-Eval ranking and the "Full Evaluation" (where every model is compared to every other model 100 times).
+*   **Efficiency Ratio:** The number of judge calls required to reach a stable ranking (standard deviation of ranks $< 0.5$) compared to random sampling.
+*   **Brier Score:** To measure the accuracy of the Bradley-Terry model’s predicted win probabilities.
+
+### 7. Baselines
+*   **Random Sampling:** Pairs and prompts chosen uniformly at random (the standard Arena approach).
+*   **Round Robin:** Every model compared against every other model an equal number of times.
+*   **Elo-based Matchmaking:** Traditional matchmaking used in competitive gaming, which pairs models with similar current Elo ratings.
+
+### 8. Ablations
+*   **Fixed vs. Dynamic Prompts:** Compare the efficiency gain of selecting specific *prompts* versus just selecting specific *model pairs*.
+*   **Prior Knowledge Influence:** Test how much the system benefits from initializing $\mu_i$ using model parameter counts or MMLU scores versus a flat prior.
+*   **Anchor Density:** Vary the frequency of comparisons against "Anchor Models" (0%, 5%, 10%, 25%) to find the optimal calibration rate.
+
+### 9. Failure Modes and Feasibility Risks
+*   **Judge Bias:** If the judge (e.g., GPT-4o) prefers a certain style, active sampling might over-exploit that bias, leading to a "biased-efficient" ranking that doesn't reflect human preference.
+    *   *Mitigation:* Use a diverse ensemble of judge models or incorporate a small percentage of human-in-the-loop labels.
+*   **Cold Start Problem:** Early in the process, uncertainty is high, potentially leading to suboptimal initial pairings.
+    *   *Mitigation:* Use a "warm-up" phase of 100 random comparisons to establish a baseline variance.
+*   **Computational Overhead of EIG:** Calculating EIG for every possible triplet in a large pool can be slow.
+    *   *Mitigation:* Use a greedy approximation or sub-sample the candidate space for the acquisition function.

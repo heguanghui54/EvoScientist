@@ -1,0 +1,45 @@
+**1. Title**
+Iterative Semantic-Consistent Back-Translation (ISC-BT): Enhancing Low-Resource NMT via Cross-Lingual Embedding Alignment and Quality-Aware Filtering.
+
+**2. Problem and Motivation**
+Neural Machine Translation (NMT) typically requires millions of parallel sentence pairs to achieve high fluency and accuracy. For the majority of the world’s languages (e.g., Yoruba, Quechua, or Wolof), such corpora do not exist. While standard Back-Translation (BT) utilizes monolingual data to bridge this gap, it often introduces significant noise and "hallucinations" into the training set when the initial translation model is weak. This leads to a feedback loop of poor quality. There is a critical need for a method that filters synthetic data based on semantic preservation rather than just surface-level fluency.
+
+**3. Core Hypothesis**
+Integrating a cross-lingual semantic consistency constraint—derived from a frozen, pre-trained multilingual encoder (e.g., LaBSE)—into the back-translation loop will significantly reduce the propagation of translation errors. Specifically, by filtering synthetic pairs that fall below a semantic similarity threshold and applying a consistency loss during fine-tuning, the model will achieve higher BLEU and COMET scores compared to vanilla back-translation.
+
+**4. Method**
+The workflow is divided into three distinct implementation phases:
+
+*   **Phase 1: Warm-up.** Fine-tune a pre-trained multilingual model (e.g., mBART-50) on the available small-scale parallel data for the target language pair ($L_{src} \leftrightarrow L_{tgt}$).
+*   **Phase 2: Semantic-Consistent Generation.**
+    *   Use the backward model ($L_{tgt} \to L_{src}$) to translate a large corpus of monolingual $L_{tgt}$ data into synthetic $L_{src}'$.
+    *   **Filtering:** Calculate the cosine similarity between the embeddings of the synthetic $L_{src}'$ and the original $L_{tgt}$ using the Language-Agnostic BERT Sentence Embedding (LaBSE). Discard pairs with a similarity score below a tuned threshold $\tau$.
+*   **Phase 3: Iterative Fine-tuning.**
+    *   Train the forward model ($L_{src} \to L_{tgt}$) on the combined gold and filtered synthetic data.
+    *   **Regularization:** Introduce a "Semantic Consistency Loss" ($L_{sc}$) which minimizes the Mean Squared Error (MSE) between the encoder hidden states of the synthetic source and the gold target, ensuring the model focuses on invariant semantic features.
+*   **Phase 4: Iteration.** Repeat Phase 2 and 3 once more using the improved models to refine the synthetic corpus.
+
+**5. Dataset or Benchmark**
+*   **Languages:** English-Yoruba (yo) and English-Quechua (qu).
+*   **Data Source:** Use the **FLORES-200** dataset for evaluation (dev and test sets).
+*   **Training Data:** Use the **JW300** corpus or **OPUS** for initial parallel data (limited to 50k pairs to simulate low-resource conditions) and the **NLLB Monolingual Cleaned** dataset for the back-translation source.
+
+**6. Evaluation Metrics**
+*   **Primary:** BLEU (sacreBLEU implementation) and chrF++.
+*   **Neural Metric:** COMET (Cross-lingual Optimized Metric for Evaluation of Translation), which correlates better with human judgment in low-resource settings.
+*   **Semantic Drift:** Average LaBSE similarity between test source and model output.
+
+**7. Baselines**
+*   **Supervised mBART-50:** Fine-tuning on the limited parallel data only.
+*   **Vanilla Back-Translation:** Standard iterative BT without semantic filtering or consistency loss.
+*   **Pivot-based MT:** Using a high-resource related language (e.g., Spanish for Quechua) as an intermediary.
+
+**8. Ablations**
+*   **No Filtering:** Evaluate the impact of removing the LaBSE-based similarity filter.
+*   **No Consistency Loss:** Evaluate the model using only the filtered data without the MSE regularization in the loss function.
+*   **Fixed vs. Iterative:** Compare a single round of BT against the proposed two-iteration approach.
+
+**9. Failure Modes and Feasibility Risks**
+*   **Domain Mismatch:** If the monolingual data is from a vastly different domain (e.g., news) than the parallel data (e.g., religious texts), the semantic filter may discard too much data. *Mitigation:* Use domain-adversarial training or ensure monolingual data diversity.
+*   **Embedding Bias:** LaBSE itself might have lower performance on extremely rare languages. *Mitigation:* Validate LaBSE alignment on the small gold parallel set before proceeding.
+*   **Computational Cost:** Iterative training and embedding generation are resource-intensive. *Mitigation:* Use 8-bit quantization for the LaBSE encoder and limit the synthetic corpus size to 5x the parallel corpus.

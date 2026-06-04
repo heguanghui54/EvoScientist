@@ -1,0 +1,41 @@
+**1. Title**
+Hierarchical Multi-Agent Synthesis (H-MAS): A Structured Planning and Critique Framework for Systematic Literature Reviews.
+
+**2. Problem and Motivation**
+Current Large Language Model (LLM) approaches to automated literature review generation often suffer from three primary defects: (1) lack of narrative coherence, where the output resembles a list of summaries rather than a synthesized argument; (2) "citation drift," where claims from one paper are erroneously attributed to another; and (3) limited coverage of the "intellectual genealogy" of a field. As scientific output grows exponentially, researchers need tools that do more than summarize; they need tools that categorize, compare, and identify research gaps across hundreds of documents.
+
+**3. Core Hypothesis**
+A hierarchical workflow—separating the process into (a) taxonomy discovery, (b) targeted evidence retrieval, and (c) multi-agent adversarial critique—will produce literature reviews with significantly higher factual density and thematic integration compared to single-pass retrieval-augmented generation (RAG) systems.
+
+**4. Method**
+The H-MAS framework operates in four discrete stages:
+*   **Stage 1: Taxonomy Discovery:** Given a research query, the system retrieves metadata for the top 100 relevant papers. An "Architect Agent" clusters these papers by methodology and findings to generate a hierarchical outline (e.g., Introduction -> Theoretical Foundations -> Empirical Trends -> Open Challenges).
+*   **Stage 2: Targeted Retrieval & Extraction:** For each section in the outline, a "Sourcing Agent" performs targeted RAG. Instead of retrieving chunks, it extracts specific "Evidence Triplets" (Claim, Evidence, Citation) from the full text of relevant papers.
+*   **Stage 3: Synthesis:** A "Writer Agent" drafts sections using the Evidence Triplets, constrained by a prompt that enforces comparative language (e.g., "In contrast to [A], [B] argues...").
+*   **Stage 4: Adversarial Critique:** A "Reviewer Agent" is provided with the draft and the original source snippets. Its sole task is to flag hallucinations and citation mismatches. The Writer Agent must then revise the draft based on this feedback loop.
+
+**5. Dataset or Benchmark**
+*   **Multi-XScience:** A large-scale dataset for multi-document summarization specifically designed for scientific literature reviews.
+*   **PubMed/arXiv Open Access:** A custom test set of 50 recent (post-2023) survey papers. The system will be tasked with "re-generating" these reviews using only the primary sources cited within them.
+
+**6. Evaluation Metrics**
+*   **FactScore:** Percentage of generated claims that can be directly supported by the provided source documents.
+*   **Citation Accuracy (CA):** A binary check of whether the cited paper actually contains the specific finding attributed to it.
+*   **Coherence Score:** A Likert-scale human evaluation (or LLM-as-a-judge) measuring the logical flow between paragraphs.
+*   **Structure Alignment:** Comparison of the generated taxonomy against a human-authored "Gold Standard" outline.
+
+**7. Baselines**
+*   **Vanilla RAG:** Standard LangChain-style retrieval with a single prompt (e.g., "Write a literature review on [Topic] using these chunks").
+*   **Long-Context LLM:** Feeding the top 20 full-text papers directly into a high-context window (e.g., Claude 3.5 Sonnet or GPT-4o) without structured planning.
+*   **Lead-S:** A simple baseline that concatenates the abstracts of the most relevant papers.
+
+**8. Ablations**
+*   **No Taxonomy:** Generating the review without the Stage 1 outline.
+*   **No Critique:** Removing the Stage 4 adversarial feedback loop to measure the impact of the self-correction mechanism.
+*   **Chunk-based vs. Triplet-based:** Comparing standard vector-chunk retrieval against the extraction of specific "Evidence Triplets."
+
+**9. Failure Modes and Feasibility Risks**
+*   **Context Fragmentation:** If the taxonomy is too granular, the synthesis might lose the "big picture" of the research field.
+*   **Computational Cost:** The multi-agent loop requires multiple calls to high-reasoning models, which may be expensive for very large document sets.
+*   **Source Quality Dependency:** If the retrieved primary sources are of low quality or contradictory, the system may struggle to resolve the conflict without human expert intervention.
+*   **Feasibility:** High. The components (vector databases, agentic frameworks like AutoGen or LangGraph) are mature and ready for implementation.

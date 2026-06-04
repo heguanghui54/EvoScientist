@@ -11,23 +11,6 @@ paper-level completion audit can pass.
 
 ### 1. table1_llm_idea_generation / baseline_output_import_or_generation
 
-Required evidence: 30 answer.txt files under reproduction/artifacts/idea_outputs/Novix/
-
-System: Novix
-Probe: reproduction/novix_baseline_probe.json
-Note: Current probe found Novix is a hosted UI adapter candidate linked to AI-Researcher, with visible login/session/task endpoints but no public batch runner or raw Table 1 outputs.
-
-Commands:
-
-```bash
-# With Novix account access: open https://novix.science/chat under a pinned browser/profile state.
-# Submit one recovered query per fresh session and capture the final assistant answer plus session metadata.
-# Save outputs as $HOME/research/novix/outputs/evoscientist_table1_queries/novix/query_XX.md
-.venv/bin/python reproduction/import_baseline_outputs.py --system-name Novix --source $HOME/research/novix/outputs/evoscientist_table1_queries/novix --source-format directory --output-root reproduction/artifacts/idea_outputs --strict
-```
-
-### 2. table1_llm_idea_generation / baseline_output_import_or_generation
-
 Required evidence: 30 answer.txt files under reproduction/artifacts/idea_outputs/K-Dense/
 
 System: K-Dense
@@ -43,7 +26,7 @@ git clone https://github.com/K-Dense-AI/k-dense-byok $HOME/research/k-dense-byok
 .venv/bin/python reproduction/import_baseline_outputs.py --system-name K-Dense --source $HOME/research/k-dense-byok/outputs/evoscientist_table1_queries/k_dense --source-format directory --output-root reproduction/artifacts/idea_outputs --strict
 ```
 
-### 3. table1_llm_idea_generation / paper_judge_completion
+### 2. table1_llm_idea_generation / paper_judge_completion
 
 Required evidence: 420 swapped pairwise records plus Gemini-3-flash judge outputs
 
@@ -57,7 +40,7 @@ Commands:
 .venv/bin/python reproduction/compare_reproduction_to_paper.py --actual-json reproduction/artifacts/tables/idea_generation_win_tie_lose.json --section table1_llm_idea_generation --require-all
 ```
 
-### 4. table2_human_idea_generation / human_label_import
+### 3. table2_human_idea_generation / human_label_import
 
 Required evidence: inputs.jsonl, labels.jsonl, and aggregate.json for three PhD-level annotators
 

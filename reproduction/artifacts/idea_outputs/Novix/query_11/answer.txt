@@ -1,0 +1,46 @@
+### 1. Title
+**Selective Subspace Projection (SSP): Decoupling Factual Association from Logical Inference in Large Language Models**
+
+### 2. Problem and Motivation
+Current Large Language Models (LLMs) are monolithic: factual knowledge (e.g., "The capital of France is Paris") and logical reasoning capabilities (e.g., "If A implies B, and A is true, then B") are stored within the same weight matrices. This entanglement causes two primary issues:
+1.  **Knowledge Interference:** Models often fail logical tasks because internal factual biases override the logic required by the prompt (e.g., failing a syllogism because the conclusion is factually false but logically valid).
+2.  **Rigidity:** Updating a model’s knowledge often requires fine-tuning that inadvertently degrades its reasoning performance.
+
+Decoupling these capabilities would allow for "pluggable" knowledge bases while maintaining a stable, high-performance reasoning engine.
+
+### 3. Core Hypothesis
+The neural representations for **Factual Association** (retrieval-heavy) and **Logical Inference** (process-heavy) reside in distinct, identifiable low-rank subspaces of the transformer’s latent space. By applying orthogonal projections to the activations, we can "nullify" factual recall without damaging the model's ability to perform abstract logical operations on provided context.
+
+### 4. Method
+The workflow follows a three-stage implementation:
+
+*   **Stage 1: Circuit Identification.** Use Causal Mediation Analysis (CMA) to identify "Knowledge Heads" (typically in mid-layers) and "Reasoning Heads" (typically in late-layers or induction heads).
+*   **Stage 2: Subspace Decomposition.** For a set of hidden states $H$, perform Singular Value Decomposition (SVD) on activations during a factual recall task vs. a symbolic logic task. Identify the principal components $V_{fact}$ and $V_{logic}$.
+*   **Stage 3: Intervention via SSP.**
+    *   Define a projection matrix $P = I - V_{fact}V_{fact}^T$ that projects activations into the null space of factual recall.
+    *   During inference on reasoning tasks, apply $P$ to the identified "Knowledge Layers" to force the model to rely on provided in-context information rather than internal weights.
+
+### 5. Dataset or Benchmark
+*   **CounterFact Dataset:** To identify and isolate factual association circuits.
+*   **LogiQA / RuleTaker:** To evaluate logical reasoning performance.
+*   **Counterfactual-Reasoning Benchmark (CRB):** A custom-generated set where logical premises contradict real-world facts (e.g., "The sun rises in the West. If it rises in the West, it is night. The sun rose. Is it night?").
+
+### 6. Evaluation Metrics
+*   **Reasoning Fidelity (RF):** Accuracy on LogiQA when internal factual knowledge is suppressed.
+*   **Knowledge Suppression Score (KSS):** The drop in accuracy on factual trivia when the projection is applied (higher is better for decoupling).
+*   **Logical Robustness (LR):** Accuracy on counterfactual reasoning (where internal knowledge and logic conflict).
+
+### 7. Baselines
+*   **Standard SFT:** LLAMA-3 or Mistral-7B without intervention.
+*   **RAG (Retrieval-Augmented Generation):** Providing the correct facts in-context without suppressing internal weights.
+*   **ROME (Rank-One Model Editing):** Using model editing to "erase" specific facts, comparing if this is more or less efficient than subspace projection.
+
+### 8. Ablations
+*   **Layer-wise Projection:** Apply SSP only to early, middle, or late layers to find where the "reasoning engine" is most sensitive.
+*   **Rank Variation:** Vary the number of principal components removed ($k$) to find the "Pareto front" between knowledge suppression and reasoning preservation.
+*   **Random Projection:** Replacing $V_{fact}$ with a random orthogonal matrix to ensure the effect is not due to general noise injection.
+
+### 9. Failure Modes and Feasibility Risks
+*   **Entanglement Limit:** It is possible that reasoning and knowledge are so deeply intertwined (e.g., "reasoning" is just "retrieving a reasoning pattern") that no clean subspace exists.
+*   **Performance Degradation:** Projecting out factual subspaces may inadvertently remove "linguistic" knowledge (syntax/grammar), rendering the model incoherent.
+*   **Compute Risk:** Identifying subspaces via SVD on large-scale activations requires significant GPU memory; this will be mitigated by using a "mini-batch" activation collection strategy on a representative subset of the data.

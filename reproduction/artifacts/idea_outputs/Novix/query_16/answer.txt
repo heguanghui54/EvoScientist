@@ -1,0 +1,42 @@
+### 1. Title
+**Dynamic Knowledge-Anchored Adapters (DKAA): Mitigating Catastrophic Forgetting in Domain-Specific Knowledge Injection**
+
+### 2. Problem and Motivation
+Large Language Models (LLMs) often struggle with "knowledge injection"—the process of updating a model with specialized, domain-specific information (e.g., legal, medical, or proprietary corporate data). Traditional fine-tuning often leads to **catastrophic forgetting**, where the model loses its general reasoning capabilities or its ability to follow instructions. Conversely, Retrieval-Augmented Generation (RAG) can suffer from "contextual noise" and high latency. There is a critical need for a method that integrates domain-specific facts into the model's weights while maintaining the structural integrity of its pre-trained general-purpose reasoning.
+
+### 3. Core Hypothesis
+By implementing a dual-pathway adapter architecture—where one pathway is dedicated to new domain-specific facts and the second pathway acts as a "General Knowledge Anchor" regularized against the base model’s original distribution—we can achieve high domain accuracy with significantly lower degradation of general-purpose reasoning compared to standard Low-Rank Adaptation (LoRA).
+
+### 4. Method
+The proposed workflow follows a stepwise implementation:
+
+1.  **Architecture Setup:** Insert LoRA-style adapters into the Attention and MLP blocks. However, split the adapter into two parallel heads: a **Domain Head** and an **Anchor Head**.
+2.  **Stepwise Training:**
+    *   **Phase A (Anchor Calibration):** Freeze the base model. Train the Anchor Head on a small subset of the model’s original pre-training data (or a general instruction set like Alpaca) to learn the "residual" of its own general knowledge.
+    *   **Phase B (Domain Injection):** Train the Domain Head on the target domain dataset. Use a **Gated Fusion Mechanism** that learns a scalar weight $\alpha$ to balance the output of the Domain Head and the Anchor Head.
+3.  **Regularization:** Apply a KL-Divergence loss between the output distribution of the DKAA-enhanced model and the original frozen base model during the domain injection phase. This ensures that the model’s "language DNA" remains intact while the "knowledge layer" is updated.
+4.  **Implementation Milestone:** Development of a custom loss function that penalizes the model when the logits for general-purpose tokens (determined by a reference set) deviate significantly from the baseline.
+
+### 5. Dataset or Benchmark
+*   **Domain Data:** *PubMedQA* (Medical) or *CUAD* (Legal) for the injection phase.
+*   **General Capability Benchmark:** *MMLU (Massive Multitask Language Understanding)* and *GSM8K* (Mathematical Reasoning) to measure the extent of catastrophic forgetting.
+
+### 6. Evaluation Metrics
+*   **Domain Success:** Accuracy and F1-score on the domain-specific test set.
+*   **Forgetting Rate (FR):** $FR = 1 - (Score_{post-train} / Score_{pre-train})$ on MMLU.
+*   **Knowledge Fidelity:** A "Hallucination Rate" measured by comparing model outputs against a ground-truth knowledge base using ROUGE-L and BERTScore.
+
+### 7. Baselines
+*   **Standard LoRA:** Fine-tuning only the rank-decomposition matrices on domain data.
+*   **Full Fine-Tuning (FFT):** Updating all parameters (if computationally feasible, otherwise a high-parameter subset).
+*   **Naive RAG:** Using the frozen base model with a vector database of the domain data to establish a performance floor for non-parametric injection.
+
+### 8. Ablations
+*   **No Anchor Head:** Testing the Domain Head alone with KL-divergence to see if the dual-pathway structure is necessary.
+*   **Fixed vs. Learned Gating:** Comparing a static 50/50 split between Domain/Anchor heads versus the learned $\alpha$ gate.
+*   **Layer-Specific Injection:** Applying DKAA only to the MLP layers versus both Attention and MLP layers.
+
+### 9. Failure Modes and Feasibility Risks
+*   **Resource Intensiveness:** Training two adapter heads increases the parameter count (though still far less than full fine-tuning).
+*   **Conflict of Facts:** If the domain data directly contradicts the pre-training data (e.g., a specific legal interpretation that differs from general consensus), the Gated Fusion might produce incoherent or "averaged" results.
+*   **Risk Control:** To mitigate this, the project will implement a "Conflict Detection" step using a small validation set to identify tokens where the Anchor and Domain heads provide high-entropy, divergent predictions.

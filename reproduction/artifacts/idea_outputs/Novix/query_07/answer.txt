@@ -1,0 +1,43 @@
+**1. Title**
+Dynamic Recurrent Refinement (DRR): Extending the Reasoning Horizon of Small Language Models via Iterative Latent Distillation.
+
+**2. Problem and Motivation**
+Small Language Models (SMLMs), typically defined as having fewer than 3 billion parameters, face a "performance ceiling" where their limited depth and width prevent them from capturing the complex logical dependencies and world knowledge found in Large Language Models (LLMs). Current distillation methods focus on matching the output distribution (Logit Distillation) or intermediate feature maps (Feature Distillation). However, these methods are constrained by the SMLM’s fixed computational budget per token. While LLMs use their vast parameter count to process information in a single forward pass, SMLMs lack the "internal workspace" to resolve multi-step reasoning tasks, leading to a plateau in performance regardless of training data volume.
+
+**3. Core Hypothesis**
+The performance ceiling of SMLMs can be raised by substituting model *breadth* (parameters) with model *depth over time* (iterations). By implementing a recurrent architecture where hidden states are iteratively refined through the same set of parameters, and supervising this refinement using a teacher LLM’s deep-layer representations, an SMLM can emulate the reasoning depth of a much larger model without a proportional increase in parameter count.
+
+**4. Method**
+The proposed workflow follows a three-stage implementation:
+
+*   **Stage 1: Architectural Modification (Recurrent Transformer Blocks):** Modify a standard decoder-only architecture (e.g., Llama-3-style) to include a "Recurrent Core." A subset of middle layers is tied (weight-sharing), allowing the model to pass the hidden state through the same parameters $N$ times.
+*   **Stage 2: Iterative Latent Distillation (ILD):** During training, a frozen teacher LLM (e.g., Llama-3-70B) generates hidden states for a given input. The student (SMLM) is trained to minimize the distance (Cosine Similarity + MSE) between its *final* iterated hidden state and the teacher’s corresponding deep-layer state.
+*   **Stage 3: Adaptive Exit Strategy:** Implement a "halt mechanism" using a lightweight classifier trained to predict when further iterations will no longer significantly change the output distribution. This ensures computational efficiency, allowing the model to "think harder" only on difficult tokens.
+
+**5. Dataset or Benchmark**
+*   **Training:** SlimPajama (subset) for general knowledge; Open-Math-Instruct-1 for reasoning-heavy distillation.
+*   **Evaluation:**
+    *   Reasoning: GSM8K, MATH (Level 1-3).
+    *   Knowledge/MMLU: TinyMMLU.
+    *   Commonsense: ARC-Challenge, Hellaswag.
+
+**6. Evaluation Metrics**
+*   **Accuracy-per-Parameter:** A ratio of benchmark score to model size.
+*   **FLOPs-Equivalence:** Comparing DRR performance against larger models with the same total inference FLOPs.
+*   **Convergence Rate:** Speed of reaching baseline performance compared to standard SFT.
+*   **Inference Latency:** Measured in tokens per second (TPS) across different iteration counts.
+
+**7. Baselines**
+*   **Standard SMLMs:** Llama-3-8B (as a performance ceiling reference) and Phi-3-mini (as a competitive small model).
+*   **Knowledge Distillation (KD) Baselines:** Standard Minions or TinyBERT-style logit distillation applied to a non-recurrent version of the student.
+*   **Deep Equilibrium Models (DEQs):** To compare against existing implicit-depth modeling techniques.
+
+**8. Ablations**
+*   **Iteration Count ($N$):** Testing performance with $N=1$ (baseline) vs. $N=2, 4, 8$.
+*   **Weight Sharing:** Comparing the recurrent core against a standard "deep" model with the same number of total layers but unique weights (to isolate the effect of recurrence vs. parameter count).
+*   **Loss Components:** Removing the Latent Distillation loss to see if the architecture alone provides the benefit or if the teacher guidance is necessary.
+
+**9. Failure Modes and Feasibility Risks**
+*   **Vanishing/Exploding Gradients:** Repeated application of the same weights can lead to numerical instability. *Mitigation:* Apply Weight Normalization and strong residual connections within the recurrent block.
+*   **Inference Overhead:** If the "halt mechanism" fails, the SMLM may become slower than a model twice its size. *Mitigation:* Strict FLOPs budgeting during the adaptive exit training.
+*   **Overfitting to Teacher Biases:** The student may mimic the teacher's errors or stylistic quirks. *Mitigation:* Multi-teacher distillation or mixing distillation with raw data pre-training.

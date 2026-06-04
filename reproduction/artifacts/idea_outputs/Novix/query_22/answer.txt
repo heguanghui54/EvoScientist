@@ -1,0 +1,49 @@
+**Research Proposal: Contextual Poisoning – Vulnerability Injection in Code LLMs via Adversarial Documentation**
+
+### 1. Title
+Contextual Poisoning: Investigating Vulnerability Injection in Code LLMs via Adversarial Documentation and RAG Contexts.
+
+### 2. Problem and Motivation
+As developers increasingly integrate Large Language Models (LLMs) into their workflows, they rely on Retrieval-Augmented Generation (RAG) and long-context windows to provide the model with project-specific documentation and API references. Current security research focuses on direct prompt injection or training-set poisoning. However, a significant surface remains unexplored: **Contextual Poisoning**.
+
+If an attacker can inject adversarial snippets into public documentation, README files, or StackOverflow-style datasets, they can influence the LLM to generate insecure code (e.g., hardcoded credentials, SQL injection, or disabled SSL verification) specifically when the LLM "references" that poisoned context. This is particularly dangerous as the malicious intent is hidden within seemingly benign documentation.
+
+### 3. Core Hypothesis
+Small, semantically plausible modifications to API documentation or project-level context can significantly increase the probability of an LLM generating insecure code for targeted functions, even if the model has undergone standard safety alignment.
+
+### 4. Method
+The research will follow a three-phase execution plan:
+
+*   **Phase 1: Adversarial Context Generation.** Develop a set of "poisoned" documentation snippets for common libraries (e.g., `cryptography`, `sqlite3`, `requests`). These snippets will describe an API correctly but provide a "usage example" that contains a subtle security vulnerability (e.g., using `MD5` instead of `SHA-256`).
+*   **Phase 2: RAG-Simulation.** Implement a RAG pipeline where the LLM is prompted to "Write a Python function using [Library X] based on the provided documentation." The documentation provided in the prompt will be the adversarial version.
+*   **Phase 3: Automated Vulnerability Probing.** Use a controlled environment to prompt the model with a variety of coding tasks. The generated output is then passed through static analysis tools (SAST) and a runtime sandbox to verify if the vulnerability is functional and exploitable.
+
+### 5. Dataset or Benchmark
+*   **HumanEval-Security:** An extension of the HumanEval dataset specifically modified to include security-sensitive prompts.
+*   **Adversarial-Doc-Bench:** A custom-curated dataset of 500 documentation-code pairs across Python, JavaScript, and Go, where 20% of documentation entries are modified with adversarial usage patterns.
+
+### 6. Evaluation Metrics
+*   **Vulnerability Success Rate (VSR):** The percentage of generated code snippets that contain the specific vulnerability suggested by the adversarial context.
+*   **Stealthiness Score:** A metric based on a separate "Critic LLM" or human review to determine if the poisoned documentation is distinguishable from authentic documentation.
+*   **Code Correctness (Pass@k):** Ensuring that the poisoned code remains functional, as non-functional code is less likely to be adopted by a developer.
+
+### 7. Baselines
+*   **Zero-Shot Baseline:** Standard LLM generation without any provided documentation.
+*   **Clean Context Baseline:** LLM generation using original, un-modified documentation.
+*   **Naive Poisoning:** Directly instructing the model to "be malicious" (to measure the effectiveness of the documentation-based approach vs. direct injection).
+
+### 8. Ablations
+*   **Trigger Location:** Does placing the poison in the "Description" vs. the "Example" section change the VSR?
+*   **Context Volume:** Does providing 10 clean documents alongside 1 poisoned document dilute the effect?
+*   **Model Size:** Comparing the susceptibility of 7B parameter models vs. 70B+ parameter models.
+
+### 9. Failure Modes and Feasibility Risks
+*   **Model Robustness:** High-end models (e.g., GPT-4o, Claude 3.5) may have strong internal priors that override adversarial documentation.
+*   **SAST Limitations:** Static analysis tools may produce false positives; manual verification of the "exploitable" nature of the code will be required for a subset of results.
+*   **Ethical Risk:** To mitigate the risk of creating a "how-to" for attackers, all experiments will use synthetic, controlled environments, and the adversarial documentation will target well-known, patchable vulnerabilities rather than zero-days.
+
+**Implementation Milestones:**
+1.  **Month 1:** Dataset curation and SAST pipeline setup.
+2.  **Month 2:** Baseline testing on Llama-3 and Mistral models.
+3.  **Month 3:** Adversarial context testing and ablation studies.
+4.  **Month 4:** Result synthesis and mitigation strategy (e.g., "Context-Aware Safety Filtering") development.

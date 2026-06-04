@@ -1,0 +1,41 @@
+### 1. Title
+**Graph-Augmented Cross-Source Verification (GACSV): Mitigating Information Conflict in Multi-Hop Reasoning**
+
+### 2. Problem and Motivation
+Large Language Models (LLMs) increasingly rely on Retrieval-Augmented Generation (RAG) to solve complex tasks. However, when reasoning requires integrating information from multiple sources, two primary failures occur: (1) **Contextual Interference**, where irrelevant data from one source distracts the model from relevant data in another, and (2) **Unresolved Contradictions**, where sources provide conflicting facts, leading the model to hallucinate a "compromise" that is factually incorrect. Current systems often treat retrieved documents as a flat sequence of text, failing to model the logical dependencies or provenance of specific claims.
+
+### 3. Core Hypothesis
+Explicitly structuring retrieved multi-source information into an **Atomic Evidence Graph**—where nodes represent discrete claims and edges represent logical relationships (support, contradiction, or entailment)—will improve the accuracy of multi-hop reasoning compared to standard long-context concatenation.
+
+### 4. Method
+The proposed workflow follows a four-stage pipeline:
+1.  **Atomic Extraction:** Given a query, the system retrieves $N$ documents. An LLM (acting as an extractor) breaks these documents into "Atomic Fact Units" (AFUs), each tagged with its source ID.
+2.  **Relational Mapping:** A secondary agent identifies overlaps between AFUs across different sources. It labels edges as *Consistent*, *Conflicting*, or *Additive*.
+3.  **Conflict Resolution via Provenance:** If a conflict is detected (e.g., Source A says "X" and Source B says "Not X"), the system prompts the LLM to evaluate source metadata (e.g., publication date, domain authority) to assign a weight to each node.
+4.  **Graph-to-Reasoning Path:** The LLM generates a Chain-of-Thought (CoT) response by traversing the graph, explicitly citing the AFU nodes used to reach the final answer.
+
+### 5. Dataset or Benchmark
+*   **MuSiQue-Ans:** A multi-hop QA dataset that requires combining 2–4 fragments of information.
+*   **StrategyQA:** For testing implicit reasoning steps.
+*   **Conflict-Wiki (Customized):** A subset of Wikipedia where specific facts (e.g., dates, names) are intentionally perturbed in some sources to test the model's ability to handle multi-source contradictions.
+
+### 6. Evaluation Metrics
+*   **Exact Match (EM) & F1 Score:** Standard accuracy metrics for the final answer.
+*   **Citation Accuracy:** The percentage of reasoning steps correctly attributed to the supporting source.
+*   **Conflict Resolution Rate:** Accuracy specifically on questions where the retrieved sources contain contradictory information.
+*   **Faithfulness Score:** Using an NLI (Natural Language Inference) model to ensure the answer is logically entailed by the retrieved graph.
+
+### 7. Baselines
+*   **Standard RAG:** Direct prompting with the top-$k$ retrieved chunks.
+*   **Long-Context LLM:** Providing the entire retrieved corpus to a model with a large context window (e.g., GPT-4-Turbo or Claude 3.5 Sonnet) without structured extraction.
+*   **Self-Refine RAG:** A baseline where the model generates an initial answer and then "self-corrects" by looking at the sources again.
+
+### 8. Ablations
+*   **No-Graph Control:** Extracting AFUs but presenting them as a flat list rather than a relational graph.
+*   **No-Provenance Control:** Removing source metadata (e.g., dates/authorship) to see if the model can resolve conflicts based on logic alone.
+*   **Single-Source Extraction:** Forcing the model to use only one source per reasoning hop to measure the necessity of multi-source integration.
+
+### 9. Failure Modes and Feasibility Risks
+*   **Extraction Overhead:** The "Atomic Extraction" phase significantly increases token usage and latency. This can be mitigated by using a smaller, distilled model for extraction and a larger model for final reasoning.
+*   **Graph Complexity:** If the number of retrieved documents is high, the evidence graph may become too dense for the LLM to process in a single prompt.
+*   **Dependency on Extraction Quality:** If the initial agent fails to extract a crucial fact, the entire reasoning chain will break. This risk will be managed by using a "multi-pass" extraction strategy with diverse prompts.

@@ -1,0 +1,5 @@
+baseline,dimension,n,win,tie,lose,win_pct,tie_pct,lose_pct,gap
+Novix,Clarity,60,29,7,24,48.33,11.67,40.0,8.33
+Novix,Novelty,60,27,4,29,45.0,6.67,48.33,-3.33
+Novix,Feasibility,60,27,4,29,45.0,6.67,48.33,-3.33
+Novix,Relevance,60,11,35,14,18.33,58.33,23.33,-5.0

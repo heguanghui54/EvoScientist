@@ -1,0 +1,45 @@
+**1. Title**
+Adaptive Layer-Pruning for Speculative Decoding: A Self-Drafting Framework for Low-Latency Inference
+
+**2. Problem and Motivation**
+The primary bottleneck in Large Language Model (LLM) inference is the autoregressive nature of decoding, which is memory-bound. Each token requires a full forward pass, leading to high latency and low GPU utilization. While "Speculative Decoding" mitigates this by using a smaller "draft" model to predict tokens that a larger "target" model verifies in parallel, it introduces two challenges: (1) the need to train and maintain a separate draft model with a matching vocabulary, and (2) the synchronization overhead between two distinct models. There is a need for a "self-drafting" mechanism that leverages the target model’s own weights to reduce complexity and memory footprint.
+
+**3. Core Hypothesis**
+Intermediate layers in deep transformer architectures exhibit high feature redundancy for high-confidence tokens. By dynamically skipping a subset of transformer blocks to create an "internal" draft model, we can generate speculative token sequences with significantly lower latency and high acceptance rates from the full model, without requiring a separate draft model architecture.
+
+**4. Method**
+The proposed workflow follows a three-stage implementation:
+*   **Stage 1: Layer Importance Profiling:** Conduct an offline analysis of the target LLM (e.g., Llama-3 70B) to identify "anchor layers" that contribute most to output logit stability.
+*   **Stage 2: Dynamic Exit Mechanism:** Implement a lightweight classification head (or use hidden state norm) after a shallow layer (e.g., layer 8 of 80) to decide if the current context allows for "fast-tracking."
+*   **Stage 3: Speculative Execution:**
+    1.  **Draft Phase:** The model executes only the anchor layers to generate $K$ speculative tokens.
+    2.  **Verification Phase:** The full model processes the $K$ tokens in a single parallel forward pass using the complete KV cache.
+    3.  **Correction:** Standard rejection sampling is applied. If a token is rejected, the KV cache is truncated, and the process repeats.
+*   **Implementation Milestone:** Integration into a high-performance inference engine (e.g., vLLM or Hugging Face TGI) using custom CUDA kernels to manage the skipping logic without re-allocating memory.
+
+**5. Dataset or Benchmark**
+*   **MT-Bench:** To evaluate multi-turn conversation speed and quality.
+*   **GSM8K:** To test performance on reasoning tasks where token dependencies are high.
+*   **HumanEval:** To assess code generation, where syntax-heavy structures may benefit from speculative skipping.
+
+**6. Evaluation Metrics**
+*   **Tokens Per Second (TPS):** Absolute wall-clock speed.
+*   **Speedup Factor:** Ratio of TPS (Proposed) to TPS (Standard Autoregressive).
+*   **Mean Acceptance Rate ($\alpha$):** The average number of draft tokens accepted by the target model per block.
+*   **Perplexity/Task Accuracy:** To ensure the verification phase maintains 100% of the original model's output distribution.
+
+**7. Baselines**
+*   **Standard Autoregressive Decoding:** No speculation.
+*   **Standard Speculative Decoding:** Using a smaller model (e.g., Llama-7B drafting for Llama-70B).
+*   **Medusa:** Using multiple decoding heads for speculation.
+*   **Lookahead Decoding:** N-gram based speculation without a draft model.
+
+**8. Ablations**
+*   **Fixed vs. Adaptive Skipping:** Compare a static set of skipped layers against the dynamic exit gate.
+*   **Skip Depth:** Varying the ratio of skipped layers (e.g., 25%, 50%, 75%) to find the "sweet spot" between draft speed and acceptance rate.
+*   **Speculation Window ($K$):** Testing $K=1$ through $K=8$ to optimize the verification overhead.
+
+**9. Failure Modes and Feasibility Risks**
+*   **Hidden State Divergence:** If the pruned "draft" layers produce hidden states too dissimilar from the full model, the acceptance rate may drop to near zero, making the process slower than standard decoding due to verification overhead.
+*   **Kernel Overhead:** The overhead of switching between "pruned" and "full" execution modes in a GPU environment might offset the gains from reduced FLOPs.
+*   **Risk Control:** We will implement a "fallback" threshold—if the acceptance rate falls below 1.1 tokens per pass over a moving window, the system will disable speculation and return to standard decoding to maintain a latency floor.

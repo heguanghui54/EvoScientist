@@ -1,0 +1,50 @@
+### 1. Title
+**LEAQ: Layer-wise Entropy-Aware Quantization for Mixed-Precision Edge Deployment**
+
+### 2. Problem and Motivation
+Deploying Large Language Models (LLMs) on edge devices (e.g., mobile SoCs, embedded NPUs) faces a critical trade-off between model size and reasoning accuracy. Standard Post-Training Quantization (PTQ) techniques, such as uniform 4-bit or 8-bit quantization, treat all layers equally. However, empirical evidence suggests that specific layers—particularly early attention layers and specific MLP bottlenecks—are significantly more sensitive to precision loss than others. Applying aggressive quantization uniformly leads to a "performance cliff" where the model's logic collapses. Conversely, keeping the entire model in high precision exceeds the limited VRAM/RAM of edge hardware.
+
+### 3. Core Hypothesis
+A layer-wise mixed-precision strategy, guided by a lightweight entropy-based sensitivity metric, can achieve a 20–30% reduction in memory footprint compared to uniform INT4 quantization while maintaining >98% of the FP16 predictive accuracy. By assigning higher bit-widths (e.g., 6-bit or 8-bit) only to high-entropy "anchor layers" and aggressive quantization (e.g., 2-bit or 3-bit) to "redundant layers," edge devices can run larger parameter-count models within strict hardware constraints.
+
+### 4. Method
+The proposed research follows a three-stage workflow:
+
+1.  **Sensitivity Profiling (Calibration):**
+    Using a small calibration dataset (e.g., 128 samples from WikiText-2), calculate the *Activation Entropy* and *Hessian-based weight sensitivity* for each transformer block. Identify "anchor layers" where the Fisher Information Matrix indicates high sensitivity to perturbations.
+2.  **Bit-Width Optimization:**
+    Formulate a constrained optimization problem: Minimize global perplexity subject to a total memory budget $M$ (e.g., 4GB for an 8GB RAM device). Assign bit-widths $b \in \{2, 3, 4, 6, 8\}$ to each layer using a greedy search or a genetic algorithm based on the profiling scores.
+3.  **Quantization-Aware Fine-Tuning (QAFT) Lite:**
+    Apply a localized, parameter-efficient fine-tuning (using LoRA) on the quantized weights for only the most sensitive 10% of layers to recover accuracy lost during the discretization of anchor layers.
+4.  **Edge Kernel Mapping:**
+    Implement a custom inference wrapper using a library like *MLX* (for Apple Silicon) or *TVM* to handle the mixed-precision dequantization kernels efficiently during runtime.
+
+### 5. Dataset or Benchmark
+*   **Calibration:** WikiText-2 (subset).
+*   **Evaluation:**
+    *   **Zero-shot Reasoning:** MMLU (Massive Multitask Language Understanding).
+    *   **Common Sense:** HellaSwag, ARC-Challenge.
+    *   **Coding/Logic:** HumanEval.
+*   **Models:** Llama-3-8B and Mistral-7B-v0.3.
+
+### 6. Evaluation Metrics
+*   **Accuracy:** Perplexity (PPL) on WikiText-2 and Top-1 Accuracy on MMLU/HellaSwag.
+*   **Efficiency:** Peak Memory Usage (MB), Latency (Tokens per second), and Energy Consumption (mJ/token) on a target edge device (e.g., Jetson Orin or MacBook M-series).
+*   **Compression Ratio:** Model size reduction relative to FP16.
+
+### 7. Baselines
+*   **RTN (Round-To-Nearest):** Standard uniform 4-bit quantization.
+*   **GPTQ:** Optimal Brain Quantization-based uniform 4-bit.
+*   **AWQ (Activation-aware Weight Quantization):** Current state-of-the-art for uniform low-bit deployment.
+*   **FP16:** The original uncompressed model (upper bound).
+
+### 8. Ablations
+*   **Uniform vs. Mixed-Precision:** Compare LEAQ against uniform 3-bit and 4-bit versions with the same total memory footprint.
+*   **Sensitivity Metric:** Compare Entropy-based selection against random layer selection and magnitude-based selection.
+*   **QAFT Impact:** Measure accuracy recovery with and without the localized LoRA fine-tuning step.
+
+### 9. Failure Modes and Feasibility Risks
+*   **Kernel Overhead:** Mixed-precision can introduce significant runtime overhead if the hardware kernels do not support rapid switching between bit-widths, potentially negating latency gains despite memory savings.
+*   **Calibration Drift:** The sensitivity profile generated on WikiText-2 may not generalize to specialized domains (e.g., medical or legal text).
+*   **Hardware Support:** Many edge NPUs are optimized for fixed INT8/INT4; implementing 3-bit or 6-bit logic may require custom SIMD kernels which are complex to optimize.
+*   **Mitigation:** The project will prioritize "hardware-friendly" bit-widths (e.g., 2, 4, 8) if intermediate widths (3, 6) show poor latency scaling during initial testing.

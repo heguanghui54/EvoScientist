@@ -1,0 +1,42 @@
+### 1. Title
+**Dynamic Cultural Constitution: Multi-Objective Alignment via Contextual Reward Modeling (DCC-MARM)**
+
+### 2. Problem and Motivation
+Current Large Language Models (LLMs) are predominantly aligned using Reinforcement Learning from Human Feedback (RLHF) or Direct Preference Optimization (DPO) based on datasets sourced from Western, Educated, Industrialized, Rich, and Democratic (WEIRD) populations. This results in "cultural erasure," where the model imposes Western normative values (e.g., extreme individualism, specific views on secularism) onto users from diverse cultural backgrounds. Existing attempts to fix this often rely on simple translation or language-specific fine-tuning, which fails to capture the nuanced value systems (e.g., collectivism vs. individualism, power distance) inherent in different societies.
+
+### 3. Core Hypothesis
+By training a **Multi-Cultural Reward Model (MARM)** that takes both a response and a cultural context vector (derived from the World Values Survey) as input, an LLM can be fine-tuned to shift its alignment profile dynamically. This will result in higher cultural resonance and user satisfaction across diverse regions without compromising universal safety constraints.
+
+### 4. Method
+The research will follow a four-stage implementation plan:
+
+1.  **Contextual Value Mapping:** Map target cultures (e.g., East Asian, Middle Eastern, Latin American) to high-dimensional vectors based on the World Values Survey (WVS) and Hofstede’s Cultural Dimensions.
+2.  **Reward Model Training:** Train a Reward Model (RM) on a curated dataset of triples: `(Query, Culture_ID, Response_A > Response_B)`. The `Culture_ID` allows the RM to learn that preference is conditional on cultural context.
+3.  **Constrained Optimization:** Perform RLHF (using PPO) or DPO using the MARM. The loss function will include a "Universal Safety Constraint" to ensure that while cultural values shift, the model does not generate harmful content (e.g., hate speech or instructions for violence).
+4.  **Inference-Time Steering:** At inference, the model is prompted with a latent cultural anchor or an explicit geographic tag to activate the corresponding alignment profile.
+
+### 5. Dataset or Benchmark
+*   **Training Data:** A synthesized "Cultural Preference Dataset" created by prompting GPT-4o to act as personas from 10 distinct global regions, validated by a small-scale human expert review from those regions.
+*   **Evaluation Benchmark:** Use **Global-Values-QA**, a dataset derived from the World Values Survey and the Moral Foundations Questionnaire, translated and localized into 10 languages (Arabic, Mandarin, Hindi, Spanish, etc.).
+
+### 6. Evaluation Metrics
+*   **Cultural Alignment Score (CAS):** The statistical correlation between model outputs and the majority opinions of the target culture in the WVS.
+*   **Value Sensitivity (VS):** A metric measuring the variance in model responses to the same ethical prompt when the `Culture_ID` is changed.
+*   **Safety Robustness (SR):** Percentage of prompts that trigger safety violations (ensuring cultural adaptation doesn't bypass safety filters).
+*   **Perplexity/MMLU:** To ensure general reasoning capabilities are not degraded (tax on alignment).
+
+### 7. Baselines
+1.  **Standard RLHF:** A model aligned with standard English-centric preference data (e.g., Llama-3-Instruct).
+2.  **Constitutional AI (CAI):** A model aligned using a single "Global Constitution" (e.g., UN Declaration of Human Rights).
+3.  **Language-Specific Fine-tuning:** Models fine-tuned on localized corpora without explicit value modeling (e.g., Bloomz).
+
+### 8. Ablations
+*   **Single vs. Multi-Objective RM:** Comparing a standard RM against the MARM to see if the `Culture_ID` vector is the primary driver of performance.
+*   **Context Vector Granularity:** Testing if broad regional tags (e.g., "Asia") perform better or worse than specific country tags (e.g., "Vietnam").
+*   **Safety Filter Placement:** Testing safety at the RM level versus a hard-coded post-processing filter.
+
+### 9. Failure Modes and Feasibility Risks
+*   **Stereotyping Risk:** The model may default to "caricatures" of a culture rather than nuanced understanding, leading to offensive generalizations.
+*   **Value Conflict:** In cases where local cultural norms directly contradict universal human rights (e.g., views on gender equality), the model may produce inconsistent or "hedging" responses that satisfy neither constraint.
+*   **Data Scarcity:** High-quality preference data for non-English languages and smaller cultural groups is difficult to obtain, potentially leading to "hallucinated" cultural values.
+*   **Feasibility:** Training a multi-cultural reward model requires significant compute; a mitigation strategy is to use LoRA (Low-Rank Adaptation) for the reward model to reduce memory overhead.

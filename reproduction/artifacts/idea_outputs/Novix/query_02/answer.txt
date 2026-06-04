@@ -1,0 +1,42 @@
+**Title:** Graph-Augmented Iterative Refinement (GAIR): Enhancing Repository-Wide Code Refactoring via Static Analysis Feedback Loops
+
+**Problem and Motivation**
+Large Language Models (LLMs) have demonstrated proficiency in generating localized code snippets but frequently fail at repository-scale refactoring. When a developer modifies a function signature or moves a class in a large codebase, the change often necessitates cascading updates across multiple files. Current LLM-based agents often suffer from "contextual blindness," where they modify the target file correctly but fail to identify or update downstream dependencies, leading to compilation errors or broken API contracts. Existing RAG (Retrieval-Augmented Generation) methods primarily rely on semantic similarity, which often misses structural dependencies critical for software integrity.
+
+**Core Hypothesis**
+Integrating a Static Analysis Call Graph (SACG) directly into the LLM’s reasoning loop—allowing the model to query structural dependencies before and after a code transformation—will significantly reduce "broken-dependency" regressions compared to standard text-based retrieval or long-context window models.
+
+**Method**
+The GAIR framework follows a three-stage iterative process:
+1.  **Dependency Mapping:** For a given refactoring task (e.g., "Rename class X and update all usages"), the system uses a language server (LSP) to generate a local dependency graph of the affected symbols.
+2.  **Context Construction:** The system populates the LLM's prompt with (a) the target code to be modified and (b) a structural summary of all files identified in the dependency map (e.g., function signatures and file paths).
+3.  **Iterative Verification Loop:**
+    *   The LLM proposes a set of multi-file edits.
+    *   A static analysis tool (e.g., Tree-sitter or a compiler) checks for "undefined symbol" errors or signature mismatches.
+    *   If errors are found, the error logs and the relevant nodes from the call graph are fed back to the LLM for a corrective pass.
+    *   This continues until the code passes static verification or a maximum iteration limit is reached.
+
+**Dataset or Benchmark**
+*   **SWE-bench (Lite):** A subset of real-world GitHub issues that require multi-file edits.
+*   **RefactorBench:** A synthetic dataset created by applying common refactoring patterns (extract method, move class, change signature) to popular open-source repositories (e.g., Django, Flask, Transformers) and verifying the ground truth via manual PRs.
+
+**Evaluation Metrics**
+*   **Success Rate (Pass@1):** Percentage of tasks where the final code passes all unit tests.
+*   **Compilation Rate:** Percentage of generated solutions that are syntactically correct and resolve all internal dependencies.
+*   **Dependency Recall:** The ratio of required file changes correctly identified by the model vs. the total files that needed modification for a successful refactor.
+*   **Edit Distance (to Ground Truth):** Measuring how closely the structural changes match the human-authored PR.
+
+**Baselines**
+1.  **Vanilla GPT-4 / Claude 3.5 Sonnet:** Providing the full repository context (within token limits) without explicit structural guidance.
+2.  **BM25 RAG:** A standard retrieval-augmented baseline that fetches files based on keyword similarity to the refactoring instruction.
+3.  **RepoCoder:** A baseline that utilizes a similarity-based search-and-generate iteration without formal static analysis feedback.
+
+**Ablations**
+*   **No-Feedback Pass:** The model generates the refactor in one shot using the graph context but without the iterative verification loop.
+*   **Text-only Feedback:** The model receives error logs from the compiler but no structural information from the call graph.
+*   **Localized Graph:** Limiting the call graph to only immediate (1-hop) dependencies to test the necessity of deep dependency tracking.
+
+**Failure Modes and Feasibility Risks**
+*   **State Space Explosion:** In highly coupled repositories, the dependency graph may be too large for the context window. *Mitigation:* Implement graph pruning to include only "high-probability" affected nodes.
+*   **Dynamic Language Limitations:** For languages like Python, static analysis can be imprecise due to dynamic typing. *Mitigation:* Supplement static analysis with type hints and runtime execution traces where available.
+*   **Computational Cost:** Multiple LLM calls per refactoring task increase latency and cost. *Mitigation:* Use a smaller "critic" model for the iterative verification and only call the "actor" model for major structural changes.

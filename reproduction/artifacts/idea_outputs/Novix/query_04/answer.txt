@@ -1,0 +1,41 @@
+**Title:** MedReflect: A Multi-Step Self-Correcting Agentic Framework for Evidence-Based Differential Diagnosis
+
+**Problem and Motivation**
+Current Large Language Models (LLMs) used in clinical settings often suffer from "anchoring bias" and "hallucinated reasoning," where they commit to an initial diagnosis and ignore contradictory evidence in patient records. While Retrieval-Augmented Generation (RAG) provides external data, standard RAG systems are passive; they do not actively interrogate the medical literature to disprove their own initial hypotheses. In healthcare, the cost of a false positive or an overlooked contraindication is high, necessitating an agentic workflow that mimics the "Socratic" peer-review process used by medical boards.
+
+**Core Hypothesis**
+An autonomous agentic framework that employs a "Critique-and-Verify" loop—specifically tasked with identifying contradictions between an initial diagnosis and established clinical guidelines—will achieve a higher diagnostic accuracy and a lower rate of clinical hallucination than single-pass RAG or zero-shot LLM baselines.
+
+**Method**
+The MedReflect framework consists of three specialized agentic modules operating in a loop:
+1.  **The Diagnostic Proposer:** Analyzes patient symptoms/vitals and generates a prioritized differential diagnosis (Top-3) using internal knowledge.
+2.  **The Adversarial Critic:** For each proposed diagnosis, this module is prompted to act as a "skeptical consultant." It identifies missing information or clinical findings in the patient record that *contradict* the proposed diagnosis.
+3.  **The Knowledge Verifier:** Based on the Critic’s findings, this module performs targeted queries against structured medical databases (e.g., PubMed, clinical guidelines). It retrieves specific evidence to either resolve the contradiction or demote the diagnosis.
+4.  **Synthesis:** The Proposer integrates the verified evidence to produce a final clinical report with explicit "confidence scores" and "counter-evidence" sections.
+
+**Dataset or Benchmark**
+*   **MedQA (USMLE):** To test general medical knowledge and reasoning.
+*   **MIMIC-IV (De-identified Clinical Notes):** A subset of complex cases where initial symptoms are ambiguous or misleading, requiring multi-step reasoning to reach the correct discharge diagnosis.
+*   **PubMedQA:** For evaluating the agent's ability to ground its reasoning in actual medical literature.
+
+**Evaluation Metrics**
+*   **Diagnostic Accuracy (Top-1 and Top-3):** Comparison against the "gold standard" diagnosis in the dataset.
+*   **Hallucination Rate:** Percentage of generated clinical "facts" or citations that cannot be verified in the provided knowledge base.
+*   **Citation Precision/Recall:** Measuring if the agent cites the correct, relevant medical guidelines for its reasoning.
+*   **Reasoning Quality (Human-in-the-loop):** Expert clinician rating (1-5 scale) of the logic used in the "Critique" phase.
+
+**Baselines**
+*   **Zero-Shot GPT-4/Claude 3.5 Sonnet:** Standard prompting without agentic loops.
+*   **Standard RAG:** A single-pass retrieval system that fetches documents based on the initial query before generating an answer.
+*   **Med-PaLM 2 (via literature benchmarks):** To compare against state-of-the-art medical-specific models.
+
+**Ablations**
+*   **No-Critique:** Removing the Adversarial Critic to see if retrieval alone (Standard RAG) is sufficient.
+*   **No-Verification:** Allowing the agent to critique itself using only internal weights without external database access.
+*   **Single-Step vs. Multi-Step:** Limiting the "Critique-and-Verify" loop to one iteration versus allowing up to three.
+
+**Failure Modes and Feasibility Risks**
+*   **Inference Latency:** Multi-step agentic loops are significantly slower than single-pass models, which may limit use in emergency "real-time" clinical settings.
+*   **Recursive Hallucination:** The "Adversarial Critic" might hallucinate a contradiction that does not exist, leading the "Verifier" down a rabbit hole of irrelevant searches.
+*   **API Costs:** Extensive use of LLM tokens for iterative reasoning can become prohibitively expensive for large datasets.
+*   **Data Privacy:** Ensuring that the Knowledge Verifier does not leak PII (Personally Identifiable Information) from clinical notes into public search queries (mitigated by using local embeddings or de-identified datasets).
