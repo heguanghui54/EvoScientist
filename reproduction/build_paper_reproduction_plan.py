@@ -220,6 +220,7 @@ def table3_actions(components: dict[str, Any]) -> list[dict[str, Any]]:
             "commands": [
                 ".venv/bin/python reproduction/build_paper_level_evidence_runbook.py",
                 ".venv/bin/python reproduction/verify_paper_level_evidence_gate.py",
+                ".venv/bin/python reproduction/run_ablation_variants.py --variant all --proposal-only --timeout 1800",
                 ".venv/bin/python reproduction/aggregate_ablation_results.py --artifacts-root reproduction/artifacts/ablations --combined-json reproduction/artifacts/ablations/combined_aggregate.json --combined-csv reproduction/artifacts/ablations/combined_aggregate.csv --strict",
                 ".venv/bin/python reproduction/compare_reproduction_to_paper.py --actual-json reproduction/artifacts/ablations/combined_aggregate.json --section table3_ablation_idea_generation --require-all",
             ],

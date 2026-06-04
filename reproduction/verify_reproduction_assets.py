@@ -80,6 +80,7 @@ def main() -> None:
         "aggregate_human_labels.py",
         "aggregate_ablation_results.py",
         "aggregate_code_execution.py",
+        "run_ablation_variants.py",
         "build_paper_level_evidence_runbook.py",
         "verify_paper_level_evidence_gate.py",
         "build_paper_reproduction_plan.py",
@@ -695,6 +696,8 @@ def main() -> None:
     assert paper_level_runbook["human_evaluation"]["comparison_count"] == 120
     assert paper_level_runbook["human_evaluation"]["label_template_count"] == 1440
     assert paper_level_runbook["ablation"]["variants"] == ["-IDE", "-IVE", "-all"]
+    assert paper_level_runbook["ablation"]["runner"] == "reproduction/run_ablation_variants.py"
+    assert "run_ablation_variants.py" in "\n".join(paper_level_runbook["ablation"]["commands"])
     assert paper_level_runbook["code_execution"]["execution_log_template_count"] == 240
     assert (paper_level_runbook_root / "human_evaluation" / "inputs_template.jsonl").is_file()
     assert (paper_level_runbook_root / "human_evaluation" / "labels_template.jsonl").is_file()
@@ -723,6 +726,8 @@ def main() -> None:
     assert action_plan["baseline_readiness_counts"]["paper_exact_available"] == 0
     assert any(action.get("runbook") == "reproduction/paper_level_evidence_runbook/paper_level_evidence_runbook.json" for action in action_plan["actions"])
     assert any(action.get("gate") == "reproduction/paper_level_evidence_gate.json" for action in action_plan["actions"])
+    table3_actions = [action for action in action_plan["actions"] if action["component"] == "table3_ablation_idea_generation"]
+    assert table3_actions and "run_ablation_variants.py" in "\n".join(table3_actions[0]["commands"])
     action_plan_md = action_plan_md_path.read_text(encoding="utf-8")
     assert "Paper Reproduction Action Plan" in action_plan_md
     assert "gemini-3-flash" in action_plan_md
