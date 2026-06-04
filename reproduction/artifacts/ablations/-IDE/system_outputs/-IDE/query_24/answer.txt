@@ -1,0 +1,114 @@
+Title: Bridging the Gap: Structured Decomposition for Multi-Hop Reasoning in
+Retrieval-Augmented Generation---
+
+ProblemCurrent RAG systems retrieve a single set of passages and feed them into
+an LLM in one pass. This breaks down under multi-hop queries — questions that
+require chaining information across multiple documents (e.g., "What university
+did the founder of Company X attend?"). The LLM must retrieve facts about
+Company X, extract its founder, then retrieve again. Standard RAG cannot
+re-retrieve based on intermediate answers, and simply concatenating many
+retrieved passages overwhelms the context window with noise. Existing multi-hop
+datasets (HotPotQA,2WikiMultihop) report low recall on the second hop even with
+state-of-the-art retrievers.
+
+HypothesisDecomposing a multi-hop query into a directed acyclic graph of
+sub-queries — each sub-query resolved by a dedicated retrieve-then-answer step —
+will improve end-to-end answer accuracy compared to single-pass RAG and to naive
+chain-of-thought prompting over retrieved passages. The key bottleneck is not
+the LLM's reasoning ability but the retriever's inability to condition on
+intermediate evidence; structured decomposition addresses this directly.
+
+MethodWe propose Structured Stepwise RAG (SSRAG), a three-module pipeline:
+
+ 1 Query Decomposer — A fine-tuned7B-parameter LLM that takes the original
+   question and outputs a sequence of sub-queries, each tagged with its
+   dependency parent(s). This produces a DAG: e.g., for "What university did the
+   founder of Company X attend?", the decomposer outputs [Q1: "Who founded
+   Company X?", Q2: "What university did [A1] attend?"] with Q2 ← Q1.
+ 2 Iterative Retriever — For each sub-query in topological order, retrieve top-5
+   passages (BM25 + DPR hybrid). When a sub-query contains [A<id>] placeholders,
+   substitute the extracted answer from the parent step before encoding the
+   query. This ensures the retriever sees grounded context.
+ 3 Selective Fusion Decoder — A frozen13B-parameter LLM that receives the
+   original question plus the set of sub-query answers (not raw passages) and
+   produces a final answer. This keeps the reasoning context compact and avoids
+   passage-level noise.
+
+All modules are trained end-to-end with a two-stage curriculum: (i) train the
+decomposer on synthetic decomposition data generated from knowledge graph paths,
+(ii) fine-tune the iterative retriever with REINFORCE using answer accuracy as
+the reward.
+
+Dataset / Benchmark- HotPotQA (distractor setting) — the standard multi-hop
+benchmark with113k questions requiring2–3 hops. Use the official
+train/validation/test split.
+
+ • 2WikiMultihop —192k questions requiring fusion of information across two
+   Wikipedia articles. Used for cross-domain generalization.
+ • MuSiQue —25k questions requiring2–4 hops, designed to be less solvable by
+   single-hop shortcuts. Used for robustness evaluation.
+
+Evaluation Metrics- Exact Match (EM) and F1 score on answer strings (primary
+metrics).
+
+ • Hop-wise Recall — whether each intermediate answer in the gold decomposition
+   is correctly recovered. This isolates failures in retrieval vs. reasoning.
+ • Passage Overhead — average number of passages retrieved per question. Tracks
+   efficiency gains over naive multi-passage RAG.
+ • Oracle upper bound — EM when gold sub-query decompositions are provided
+   instead of predicted, measuring the ceiling of the retrieval+reasoning
+   components.
+
+Baselines1. Standard RAG — single-pass retrieval of top-20 passages with the
+same frozen LLM for answer generation.
+
+ 2 Chain-of-Thought RAG — retrieve top-20 passages, prompt the LLM to first
+   reason step-by-step, then answer (no re-retrieval).
+ 3 IRCoT (Trivedi et al.,2023) — interleaves chain-of-thought reasoning with
+   retrieval, using the LLM's own intermediate text as the next query. Reproduce
+   with the same retriever backbone.
+ 4 Self-Ask (Press et al.,2023) — prompt the LLM to generate follow-up questions
+   and use a search engine; adapt to our retriever.
+ 5 SSRAG (oracle decomposer) — our method with gold sub-queries to establish the
+   upper bound.
+
+Ablations1. –Decomposer — replace learned decomposer with a fixed template
+(split on "and", "then", "before"). Tests whether learned decomposition adds
+value beyond heuristics.
+
+ 2 –Iterative Retrieval — feed all sub-queries at once to the retriever instead
+   of sequentially. Isolates the benefit of conditioning on intermediate
+   answers.
+ 3 –Fusion Decoder — feed raw passages (not sub-answer summaries) to the
+   decoder. Tests whether selective fusion is necessary.
+ 4 –REINFORCE — train the iterative retriever with supervised max-margin loss
+   instead of reward-based learning.
+ 5 Single retriever variant — use only DPR (no BM25 hybrid). Measures robustness
+   of the hybrid strategy.
+
+Expected Failure Modes1. Decomposition cascading errors — if the decomposer
+produces a wrong sub-query or dependency, all downstream steps fail. Mitigation:
+train with a recovery mechanism (if a sub-query returns empty passages, re-route
+to a fallback retriever with the full context).
+
+ 2 Semantic drift in iterative retrieval — substituting a verbose or incorrect
+   intermediate answer into the next query may mislead the retriever.
+   Mitigation: constrain extracted answers to named entities or short phrases
+   (≤5 tokens).
+ 3 Dependency DAG depth — performance likely degrades for ≥4 hops due to
+   compounding retrieval noise. The MuSiQue results will reveal this ceiling.
+ 4 Decomposer over-generation — the decomposer may create unnecessary
+   sub-queries for questions that are actually single-hop. The oracle upper
+   bound ablation will quantify this waste.
+
+Limitations- The method assumes decomposability — queries that are inherently
+parallel (e.g., "Compare X and Y") may not benefit from sequential
+decomposition.
+
+ • Training requires synthetic decomposition data, which may introduce
+   distributional bias toward Wikipedia-style facts.
+ • End-to-end training with REINFORCE is high-variance; we report results over5
+   seeds with95% confidence intervals.
+ • No evaluation on non-English or domain-specific multi-hop queries
+   (biomedical, legal). Generalization to specialized corpora is left to future
+   work.

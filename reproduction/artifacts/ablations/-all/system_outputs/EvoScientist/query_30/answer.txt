@@ -1,0 +1,114 @@
+Research Proposal: Reproducing and Extending Masked Audio Modeling for
+General-Purpose Audio Foundation Models## Title
+Are Masked Autoencoders
+Sufficient for General-Purpose Audio Representation Learning? A Reproducibility
+and Extension Study of AudioMAE
+
+--------------------------------------------------------------------------------
+
+Problem
+Self-supervised audio foundation models promise a single pretrained
+backbone that transfers to speech, music, and environmental sound tasks. The
+AudioMAE (Xu et al.,2022) architecture—an asymmetric encoder-decoder with a high
+mask ratio (75–80%) applied to mel-spectrogram patches—claimed state-of-the-art
+transfer on AudioSet, ESC-50, and Speech Commands v2. However, the community
+lacks:
+
+1 Independent reproduction — the original code was released late and the
+results have not been systematically verified by a separate group.
+2 A controlled comparison against reconstruction-based (AudioMAE) vs.
+contrastive (CLAP, ImageBind) pretraining objectives for general-purpose use.
+3 An ablation isolating what drives performance: high mask ratio, decoder
+depth, or patch size?
+
+We aim to reproduce AudioMAE's core results and extend them by introducing a
+hybrid objective that combines masked reconstruction with a contrastive
+alignment loss (audio-text), testing the hypothesis that reconstruction alone is
+insufficient for general-purpose transfer.
+
+--------------------------------------------------------------------------------
+
+Hypothesis
+Null hypothesis (H₀): AudioMAE's masked reconstruction objective
+yields representations that transfer to speech, music, and environmental tasks
+as well as or better than a hybrid reconstruction + contrastive objective.
+
+Alternative hypothesis (H₁): Adding a contrastive alignment loss (audio-text)
+during pretraining significantly improves downstream transfer on tasks requiring
+high-level semantics (e.g., audio captioning, zero-shot sound classification),
+while maintaining or improving performance on acoustic-only tasks (e.g., scene
+classification).
+
+Falsification condition: If the hybrid model does not outperform AudioMAE on at
+least2 out of3 semantic-level downstream tasks (by >2% absolute in the primary
+metric) while not regressing by more than1% on acoustic-level tasks, H₁ is
+rejected.
+
+--------------------------------------------------------------------------------
+
+Method
+### Stage1 — Reproduce AudioMAEExact reproduction of the AudioMAE baseline
+(Xu et al.,2022) using the official configuration:
+
+• Input: Log-mel spectrograms (128 mel bins,1024 FFT,512 hop), patchified
+into16×16 patches (time×freq).
+• Encoder: ViT-B/16 (12 layers,768 hidden,12 heads).
+• Decoder: Lightweight4-layer ViT (384 hidden,6 heads).
+• Mask ratio:80% of patches masked.
+• Pretraining objective: L2 reconstruction loss in the spectrogram space
+(normalized patches).
+• Pretraining data: AudioSet-2M (balanced subset of ~2M clips from AudioSet).
+• Optimization: AdamW, lr=1.5e-4, cosine decay, batch size1024,800 epochs.
+
+Stage2 — Hybrid Objective (AudioMAE + CLAP-style contrastive head)
+
+Attach a contrastive head to the [CLS] token of the encoder. During
+pretraining,50% of batches use reconstruction loss and50% use the InfoNCE loss
+aligning audio embeddings with paired text descriptions (from AudioSet labels +
+synthetic captions via LaCLAP pipeline). Total loss: L = λ·L_recon +
+(1-λ)·L_contrastive, with λ annealed from1.0 →0.5 across training.
+
+Stage3 — Downstream transfer evaluationFreeze encoder, train linear probes (and
+separately, full fine-tuning) on each benchmark.
+
+--------------------------------------------------------------------------------
+
+Dataset / Benchmark| Task | Dataset | Metric | Type |
+
+|------|---------|--------|------| | Sound event classification | ESC-50 (50
+classes,2000 clips) | Accuracy | Acoustic | | Action recognition (audio) |
+AudioSet-20K (20-class subset,20K clips) | mAP | Acoustic | | Speech command
+recognition | Speech Commands v2 (35 classes,105K clips) | Accuracy | Acoustic |
+| Music genre classification | GTZAN (10 genres,1000 clips) | Accuracy |
+Acoustic | | Audio captioning (zero-shot) | Clotho (4981 audio-text pairs) |
+SPICE / CIDEr | Semantic | | Zero-shot sound classification | ESC-50 (zero-shot
+via text labels) | Accuracy | Semantic |
+
+All splits follow standard published train/validation/test splits.
+
+--------------------------------------------------------------------------------
+
+Evaluation Metrics- Primary: Accuracy (classification), mAP (multi-label),
+SPICE/CIDEr (captioning)
+
+• Secondary: F1-score per class, average precision, zero-shot top-1 / top-5-
+Uncertainty:5 random seeds for every downstream result; report mean ± std-
+Statistical test: Paired bootstrap test (p <0.05) for the primary metric on
+each task, with Bonferroni correction across6 tasks (threshold p <0.0083)
+
+--------------------------------------------------------------------------------
+
+Baselines| Model | Pretraining Objective | Reference |
+
+|-------|----------------------|-----------| | AST (supervised) | Cross-entropy
+on AudioSet | Gong et al.,2021 | | AudioMAE (reproduced) | Masked reconstruction
+(80% mask) | Xu et al.,2022 | | CLAP | Contrastive (audio-text) | Elizalde et
+al.,2023 | | Hybrid (Ours) | Reconstruction + contrastive | This work | |
+ImageBind | Multimodal contrastive (6 modalities) | Girdhar et al.,2023 |
+
+All baselines use ViT-B/16 encoders with comparable capacity. All linear probes
+and fine-tuning protocols are identical across models.
+
+--------------------------------------------------------------------------------
+
+Ablations1. Mask ratio sweep:                                                   Goodbye!

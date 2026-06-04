@@ -1,0 +1,221 @@
+Cross-Cultural Alignment for Large Language Models: A Value-Sensitive Framework
+for Pluralistic Objective Specification### ProblemCurrent LLM alignment
+techniques (RLHF, DPO, constitutional AI) implicitly encode a monolithic,
+Western-centric value system. Preference datasets used for alignment —
+Helpful/Honest/Harmless (Anthropic), OpenAssistant, ShareGPT — overwhelmingly
+reflect English-speaking, WEIRD (Western, Educated, Industrialized, Rich,
+Democratic) cultural norms. This creates two interrelated problems:
+
+ 1 Value erasure: Culturally specific values (e.g., ubuntu in Southern Africa
+   emphasizing community over individual autonomy, wa in Japan emphasizing
+   social harmony, face in East Asian interaction norms) are not represented in
+   preference data, so aligned models default to Western defaults even when
+   serving non-Western users.
+ 2 False universalism: Models confidently assert ethical judgments that vary
+   across cultures (e.g., attitudes toward filial piety, privacy, censorship, or
+   politeness strategies) as if they were universal truths, undermining trust
+   and usability in global deployment.
+
+Existing cross-cultural work in NLP focuses on detecting cultural bias in model
+outputs but rarely proposes a method for aligning models to specified cultural
+value profiles. The core challenge is that cultural alignment is not a single
+target — it requires pluralistic alignment where the same model can adapt its
+behavior to different cultural contexts without full retraining.
+
+HypothesisPrimary: Specifying cultural value profiles as explicit, structured
+preference criteria — rather than relying on implicit cultural signal in
+training data — enables controllable cross-cultural alignment of LLMs via
+post-training methods, without degrading core capabilities.
+
+Secondary: Value-sensitive preference optimization (using culturally grounded
+constraints during DPO/RLHF training) produces better cultural adherence than
+prompting alone (in-context cultural framing) and generalizes to held-out
+cultural scenarios, while prompting alone only captures surface-level cultural
+markers (greetings, honorifics, lexical choices) without deeper value-consistent
+reasoning.
+
+MethodWe propose Culturally Constrained Preference Optimization (C²PO), a
+three-stage framework:
+
+Stage1: Cultural Value Profile Extraction For each target culture, construct a
+machine-readable value profile consisting of:
+
+ • Values Inventory:8–12 culturally salient value dimensions drawn from
+   cross-cultural psychology literature (Hofstede, Schwartz, GLOBE, World Values
+   Survey) — e.g., individualism/collectivism, power distance, uncertainty
+   avoidance, long-term orientation, indulgence/restraint, harm avoidance,
+   loyalty vs. impartiality, purity/sanctity.
+ • Behavioral Anchors:3–5 concrete behavioral indicators per value dimension,
+   phrased as decision rules (e.g., under high power distance: "When a junior
+   colleague expresses disagreement with a senior figure, prefer indirect or
+   deferential phrasing over direct contradiction").
+ • Conflict Resolution Heuristics: Prioritization rules for when value
+   dimensions conflict (e.g., collectivism may override directness).
+
+Profiles are validated by native-language informants from each culture (≥3 per
+culture) through structured surveys.
+
+Stage2: Culturally-Grounded Preference Data Generation For each target culture:
+
+ • Sample500–1,000 prompts from culturally diverse sources (parallel cultural
+   web corpora, translated GlobalOpinion survey questions, culturally grounded
+   social scenarios from CCC and KultFace benchmarks).
+ • For each prompt, generate two model responses per value profile: one that
+   satisfies the profile's decision rules and one that violates them (using
+   automated rule-checking + human verification).
+ • Construct preference pairs labeled by cultural adherence, not generic
+   helpfulness/harmlessness.
+
+Stage3: Pluralistic Preference Optimization Train one base model per family
+(e.g., Llama-3-8B, Mistral-7B) using Direct Preference Optimization on combined
+preference pairs across cultures. During training, condition on a culture
+identifier token prepended to the prompt. At inference, the user specifies their
+cultural context either explicitly ("Respond for a [culture] context") or
+implicitly (predicted from user interaction signals).
+
+Evaluate three configurations:
+
+ • C²PO-full: Full profile-guided preference data + DPO with culture
+   conditioning- C²PO-prompt-only: No DPO; same base model with in-context
+   cultural framing ("Respond as a helpful assistant in [culture] context")
+ • C²PO-generic: DPO on generic (non-culturally-grounded) preference data
+   equivalent in size### Dataset & BenchmarkTraining data: Culturally grounded
+   preference pairs (described above) constructed from:
+ • CCC (Cultural Common-sense Corpus): ~5K culturally annotated scenarios
+   across10 countries- KultFace: Culturally grounded negotiation/conflict
+   scenarios- GlobalOpinion survey items:100+ value-laden questions covering
+   moral dilemmas, social norms, political attitudes- Synthetic generation:
+   Prompted cultural scenarios validated by informantsEvaluation benchmark
+   (constructed for this work):
+ • CrossCulturalAlign (CCA):200 test prompts per target culture (5 cultures: US,
+   Japan, India, Saudi Arabia, Brazil), each annotated with:
+ • Expected cultural value profile adherence (binary per value dimension)
+ • "Best" and "worst" response exemplars from culturally native annotators -
+   Cultural authenticity rating (Likert1–5, "How well does this response reflect
+   [culture] norms?")
+ • CCA-HeldOut:50 prompts per culture testing unseen cultural scenarios to
+   measure generalization beyond memorized patternsTarget cultures selected to
+   maximize value-profile diversity: US (high individualism, low power
+   distance), Japan (high collectivism, high uncertainty avoidance, high
+   long-term orientation), India (high power distance, moderate collectivism),
+   Saudi Arabia (high power distance, high conservatism), Brazil (high
+   indulgence, moderate collectivism).
+
+Evaluation MetricsPrimary:
+
+ • Cultural Adherence@k (CA@k): Proportion of outputs where the model selects
+   the culturally preferred response over alternatives in a multiple-choice
+   setup (k response candidates generated from the same prompt under different
+   value profiles). Target: ≥80% agreement with native annotator judgments.
+ • Cultural Authenticity Score: Average Likert rating (1–5) from ≥3 native
+   annotators per culture, blinded to model condition. Minimum acceptable:3.5/5
+   for target culture.
+
+Secondary:
+
+ • Capability Retention: No >5% degradation on MMLU, BBH, or HumanEval compared
+   to the base model (untrained).
+ • Cross-Cultural Confusion Rate: Rate at which responses intended for culture A
+   are re-identified by annotators from culture B as better fitting culture B
+   (ideal: near0%; threshold: <15%).
+ • Value Conflict Resolution Accuracy: When a prompt activates two competing
+   value dimensions, does the model apply the correct priority rule from the
+   profile?
+
+Robustness:
+
+ • Per-culture performance variance (target: <20% relative across cultures — no
+   culture should be significantly worse served)
+ • Ablation sensitivity (removing one value dimension from the profile reduces
+   adherence specifically on that dimension)
+
+Baselines1. Vanilla base model (no alignment): Llama-3-8B, Mistral-7B —
+establishes minimum cultural sensitivity from pretraining alone.
+
+ 2 Standard RLHF model: Off-the-shelf aligned models (Llama-3-8B-Instruct,
+   Mistral-7B-Instruct) — represents status quo of monolithic alignment.
+ 3 In-context cultural prompting (C²PO-prompt-only): Same base model with
+   culturally framed system prompt — isolates the effect of profile-guided
+   training from pure prompting.
+ 4 Generic-alignment DPO (C²PO-generic): DPO trained on same volume of
+   non-culturally-grounded preferences — controls for data quantity vs. cultural
+   specificity.
+ 5 Culture-specific fine-tuning: Independently fine-tune one LoRA adapter per
+   culture on value-aligned data — establishes an upper bound at the cost of
+   parameter multiplicity.
+
+Ablations1. -Value Rules: Remove explicit value profile decision rules; use only
+raw annotator preferences without structured value annotations. Tests whether
+structured value specification improves over raw human judgments.
+
+ 2 -Conflict Heuristics: Remove conflict resolution priority rules; let the
+   model resolve value conflicts implicitly. Tests whether explicit
+   prioritization is necessary.
+ 3 -Culture Conditioner: Train DPO without culture identifier conditioning; use
+   a single merged model. Tests whether conditioning is needed for pluralistic
+   alignment or if profiles can be distinguished from prompt content alone.
+ 4 -Annotator Validation: Replace validated value profiles with automated
+   extraction from World Values Survey data alone. Tests whether
+   machine-extracted cultural profiles suffice or human validation is critical.
+
+Expected Failure Modes1. Cultural homogenization from shared training: Training
+on preference data from multiple cultures simultaneously may wash out distinct
+cultural signals, producing a bland "middle culture" that satisfies no group
+well. Mitigated by culture-conditioned training + per-culture evaluation. If
+this fails, switch to independent adapters per culture.
+
+ 2 Profile overspecification: Value rules may be too rigid for nuanced scenarios
+   where cultural norms depend on context (e.g., formal vs. informal settings,
+   urban vs. rural). The dichotomous decision rules likely underrepresent
+   within-culture variance. Expected to manifest as high annotator disagreement
+   on scenarios at the boundaries of profiles. Mitigation: report within-culture
+   variance explicitly; consider probabilistic (rather than binary) value
+   adherence.
+ 3 Annotator bias: Native informants may disagree on what constitutes culturally
+   appropriate behavior, especially in heterogeneous cultures (India, Brazil).
+   Using ≥3 annotators and measuring inter-annotator agreement (Fleiss' kappa)
+   is essential but may still yield low agreement for culturally contested
+   scenarios. If agreement is low (<0.4), flag these items as "culturally
+   ambiguous" rather than dropping them.
+ 4 Surface mimicry without deep alignment: The model may learn to produce
+   surface-level cultural markers (honorifics, indirect phrasing, local idioms)
+   while failing at deeper value-consistent reasoning (e.g., using polite
+   language but endorsing an individualistic value judgment in a collectivist
+   context). The C²PO-prompt-only baseline is designed to detect this failure by
+   comparing surface-only (prompting) vs. trained alignment.
+ 5 Language confounding: Corpora for non-English cultures are predominantly in
+   the local language. Results may conflate cultural alignment with language
+   capability. Include English-translated variants of non-English test prompts
+   to disentangle.
+ 6 English-dominant pretraining interference: Base models are trained on
+   predominantly English data and may have strong priors against certain
+   cultural value profiles. This may make DPO optimization harder for value
+   profiles far from Western defaults. Monitor and report per-culture training
+   loss trajectories.
+
+Limitations1. Coverage restricted to five cultures. Generalizability to the ~200
+countries and thousands of cultural groups is unknown. The framework is designed
+to be extensible, but validation is limited to the chosen cultures.
+
+ 2 Within-culture variation is compressed. Value profiles aggregate to
+   national-level cultural tendencies, masking variation by region, ethnicity,
+   class, age, and religion. The approach risks reinforcing cultural stereotypes
+   if users interpret profile-conditional outputs as universally representative
+   of all members of a culture.
+ 3 Cultural profile construction requires expert labor. Scaling to many cultures
+   is constrained by the availability of culturally knowledgeable annotators.
+   Automated value extraction from WVS or social media may reduce cost but has
+   unknown validity (see ablation4).
+ 4 No dynamic cultural adaptation. The framework uses a static per-culture
+   profile at inference time. Real cultural adaptation likely requires updating
+   the cultural model from user interaction, which is not addressed here.
+ 5 Cross-cultural comparison metrics are inherently normative. Defining "good"
+   cultural alignment presupposes a standard for what constitutes authentic
+   cultural representation — a standard that may itself be culturally contested.
+   We measure agreement with native annotator judgments, but annotators are not
+   unbiased oracles of cultural authenticity.
+ 6 Safety implications of controllable cultural alignment. The same mechanism
+   that enables culturally appropriate responses could be used to align models
+   to harmful cultural norms (e.g., justifying discrimination under "cultural
+   values"). The framework does not include safeguards against alignment to
+   values that violate universal human rights.

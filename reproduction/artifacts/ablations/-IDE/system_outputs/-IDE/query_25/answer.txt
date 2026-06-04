@@ -1,0 +1,49 @@
+● think_tool(The user wants a Table 3 ablation — s…)
+
+Structured Resolution Reasoning: A Framework for Multi-Source Information
+Aggregation with Conflict Detection### ProblemModern LLMs are routinely asked to
+answer questions that require synthesizing information from multiple documents,
+databases, or modalities. The dominant approach — concatenating sources into a
+long context and prompting for an answer — treats all sources as equally
+reliable and linearly structured. This fails along three dimensions:
+
+ 1 Source conflict: When two sources disagree (e.g., a2023 paper vs. a2025
+   retraction), the model typically memorizes the more frequent or more recent
+   signal without explicitly detecting or resolving the contradiction.
+ 2 Variable reliability: Sources carry different authority levels (e.g.,
+   peer-reviewed study vs. blog post), yet current methods provide no mechanism
+   for weighting evidence by provenance.
+ 3 Granularity mismatch: One source may report an aggregate statistic while
+   another provides per-instance data; models lack a structured representation
+   for mapping between these levels.
+
+We define multi-source complex reasoning as the task of answering a question
+given a set of sources (S = {s_1, \ldots, s_n}) where at least two of the
+following hold: sources disagree on a relevant fact, sources carry heterogeneous
+reliability signals, or the answer requires composing information across sources
+in a non-trivial way (e.g., merging partially overlapping sets, resolving
+temporal dependencies, or applying source-specific qualifiers).
+
+Current approaches — including chain-of-thought prompting, retrieved-augmented
+generation, and agentic tool-use — address the retrieval and linear composition
+subproblems but not the structured resolution subproblem. The core gap is
+architectural: models have no native representation for source-level
+uncertainty, contradiction, or provenance.
+
+HypothesisConstructing an explicit resolution graph — where source-derived
+claims are extracted into typed nodes (assertion, reliability score,
+temporality, evidential support), edges represent relations (contradiction,
+entailment, subsumption, temporal succession), and a secondary reasoning pass
+traverses this graph to resolve conflicts before producing a final answer — will
+improve accuracy on multi-source complex reasoning tasks by at least12 points
+over direct long-context prompting and by at least6 points over chain-of-thought
+with source citation, while providing demonstrably better conflict detection and
+provenance tracing.
+
+MethodStructured Resolution Reasoning (SRR) proceeds in four stages:
+
+Stage1 — Decomposition and Extraction. For each source (s_i), an extraction
+model produces a set of atomic claims (C_i = {c_{i1}, \ldots, c_{im_i}}). Each
+claim is represented as a tuple:
+
+[c = \langle \text

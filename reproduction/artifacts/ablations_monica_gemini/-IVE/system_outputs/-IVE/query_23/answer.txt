@@ -1,0 +1,211 @@
+● glob(memories/**/*)
+● glob(*.md)
+● read_file(.../assets/proposal-template.md)
+● Reading memory
+● read_file(/skills/research-ideation/SKILL.md)
+● read_file(.../references/problem-selection.md)
+● write_file(/ablation-ive_proposal.md)
+
+Ablation -IVE: DeepCodeEval — A Multi-Dimensional, Execution-Grounded Evaluation
+Framework for Code LLMs---
+
+TitleDeepCodeEval: A Multi-Dimensional, Execution-Grounded Evaluation Framework
+for Code LLMs
+
+--------------------------------------------------------------------------------
+
+ProblemCurrent code LLM benchmarks have reached a critical impasse. HumanEval
+reports pass@k above90% for frontier models; MBPP saturates similarly; SWE-bench
+now exceeds40% solve rates with agentic scaffolding. Yet practitioners report
+that these same models fail on structurally novel coding tasks — multi-file
+refactoring, dependency-aware edits, adapting to evolving APIs. The gap between
+benchmark saturation and real-world failure signals a crisis in evaluation
+validity.
+
+Three root causes: (1) existing benchmarks measure functional correctness on
+isolated single-function problems, missing software engineering capabilities;
+(2) pass@k conflates sampling luck with genuine competence; (3) contamination
+between training corpora and evaluation sets is well-documented, and static
+n-gram detection systematically underestimates it for paraphrase-capable models.
+
+What is missing is an evaluation framework that is multi-dimensional (measuring
+correctness alongside quality, robustness, edit precision, and efficiency),
+execution-grounded (automated validation across multiple language runtimes with
+realistic project structures), and contamination-resistant (dynamic generation
+of instances rather than static problem banks).
+
+--------------------------------------------------------------------------------
+
+HypothesisA multi-dimensional evaluation framework built on dynamically
+generated programming problems with execution-grounded validation across five
+orthogonal axes — functional correctness, structural soundness, edit fidelity,
+robustness under perturbation, and reasoning economy — will reveal meaningful
+performance variance concealed under pass@k on static benchmarks, and will
+resist saturation beyond30-40% average scores across axes, providing a useful
+evaluation lifetime of at least three years.
+
+Formally: Let M be a code LLM, S(M) its scalar pass@k on static benchmarks, and
+D(M) its5-dimensional score vector under the proposed framework. There exists a
+population of models M₁,…,Mₙ such that for a pair (Mᵢ, Mⱼ) with S(Mᵢ) ≈ S(Mⱼ),
+‖D(Mᵢ) − D(Mⱼ)‖₂ > τ for a meaningful threshold τ, demonstrating that the
+framework captures signal missed by pass@k alone.
+
+--------------------------------------------------------------------------------
+
+MethodComponent1 — Dynamic Problem Generator. Rather than drawing from a static
+problem bank, evaluation instances are generated programmatically from
+parameterized program schemas. Each schema defines a signature template with
+holes for variable names, types, and structural parameters (nesting depth,
+branching factor, argument count); an execution oracle mapping inputs to
+expected outputs; and a set of distractors — semantic variants that change
+difficulty without changing surface form (switching iteration direction,
+inverting comparison operators, altering base cases). Generation samples from
+each schema's parameter space, producing instances isomorphic to known problem
+classes but textually novel, resisting n-gram contamination.
+
+Component2 — Five-Axis Evaluation. Every model output is scored along:
+
+ • Functional Correctness (FC) — pass@1 estimated across ≥20 hidden test cases
+   (normal, edge, adversarial), with a confidence-calibrated variant that
+   penalizes lucky sampling: FC_conf = pass@1 − (pass@10 − pass@1).
+ • Structural Soundness (SS) — static analysis measuring cyclomatic complexity
+   vs. reference, style-guide adherence (PEP8, Google C++ Style, etc.),
+   comment-to-code ratio, and anti-pattern detection. Scored0–1 per dimension
+   and aggregated via weights learned from expert judgments (N=100,3
+   annotators/sample).
+ • Edit Fidelity (EF) — for modification problems, token-level precision and
+   recall of model-generated diffs against ground-truth diffs, weighted by
+   structural importance (function-signature changes > local variable renames).
+   Reported as F1.
+ • Robustness Under Perturbation (RP) — variance in FC across K≥5 natural
+   perturbations of the problem spec (synonym substitution in docstrings,
+   reordered arguments, irrelevant context). RP =1 − σ(FC_perturbed) /
+   μ(FC_perturbed).
+ • Reasoning Economy (RE) — solution quality per unit cost: RE = FC /
+   (log(tokens_generated) × log(inference_time_ms)). Penalizes brute-force
+   sampling.
+
+The aggregate DeepCodeEval Score is a weighted harmonic mean of the five axes,
+weights learned from a calibration study predicting downstream human-judged task
+performance.
+
+Component3 — Multi-Language Runtime Harness. Supports Python3.11+, Node20+,
+TypeScript, Java21, C++20, Go1.22+, Rust1.75+. Manages environment setup,
+dependency installation, compilation, sandboxed execution with resource limits.
+Multi-file problems use temporary project directories with build-system
+scaffolding.
+
+Component4 — Contamination Monitoring Suite. Tracks contamination at evaluation
+time via: (a) exact n-gram overlap with known training corpora; (b) membership
+inference via reference-model perplexity; (c) a canary test set — trivially
+solvable by any model that has memorized a specific pattern — to flag
+inconsistent performance trajectories.
+
+--------------------------------------------------------------------------------
+
+Dataset / BenchmarkDeepCodeEval-Bench:500 parameterized program schemas across7
+languages.
+
+
+ Category               Schemas  Languages               Problem Types
+ Data structures &      150      All7                    Implement, modify,
+ algorithms                                              optimize
+ API usage & library    80       Python, JS, TS, Java    Read docs → implement
+ integration                                             caller; fix API bugs
+ Multi-file             80       Python, Java, Go, Rust  Move/extract/rename
+ refactoring                                             across files
+ Code comprehension &   80       All7                    Locate and fix bugs
+ repair                                                  with annotated spec
+ Specification-to-code  60       Python, TS, Go          Docstring + type stub
+                                                         → implementation
+ Cross-language         50       All pairs               Translate with
+ translation                                             equivalence proofs
+
+
+Each schema supports ≥10 parameter instantiations → ≥10,000 unique instances.
+Reference solutions and test suites curated by10 domain experts. Released in two
+tiers: a public seed set (50 schemas,500 instances) and a held-out private set
+(450 schemas) used only for final evaluation.
+
+--------------------------------------------------------------------------------
+
+Evaluation Metrics- Primary: DeepCodeEval Score (weighted harmonic mean of five
+axes)
+
+ • Per-axis scores: ⟨FC, SS, EF, RP, RE⟩ for diagnostic profiling- Saturation
+   rate: Fraction of models exceeding90% on any single axis- Rank divergence:
+   Kendall τ between DeepCodeEval ranking and HumanEval ranking- Contamination
+   correlation: Spearman ρ between n-gram overlap score and per-axis
+   performance- Test-retest reliability: ICC across three evaluations on
+   different generated instances from the same schemas---
+
+BaselinesThree classes:
+
+ • Static benchmarks: HumanEval, MBPP, HumanEval-X, SWE-bench- Execution-based
+   evaluations: CodeScope, CodeXGLUE, CRUXEval- Contamination-mitigated
+   evaluations: EvalPlus, LiveCodeBenchFor each, we reproduce the published
+   ranking on our model population, compute rank divergence against
+   DeepCodeEval, and measure saturation rate and contamination vulnerability.
+
+--------------------------------------------------------------------------------
+
+Ablations- A — Single-axis evaluation: Replace5D vector with each single axis in
+isolation to test whether multiple axes provide non-redundant information.
+
+ • B — Static problem set: Replace dynamic generation with a fixed snapshot
+   of5,000 instances; compare saturation rates at6 and12 months to isolate
+   contamination-resistance contribution.
+ • C — Test-count reduction: Reduce hidden tests from N=20 to N=5 to test
+   whether test coverage confounds ranking.
+ • D — Perturbation removal: Remove the RP axis and measure whether remaining
+   axes saturate faster.
+ • E — Language coverage reduction: Restrict to Python-only and measure rank
+   divergence vs. full7-language evaluation.
+
+--------------------------------------------------------------------------------
+
+Expected Failure Modes1. Dynamic generation produces easier problems than
+hand-crafted ones. Mitigation: Calibrate difficulty on a reference population
+of5 models; discard schemas where all generated instances have FC >0.9 for the
+weakest model. Applied during the public seed phase before the private set is
+frozen.
+
+ 2 Five-axis evaluation introduces measurement noise. Axes relying on human
+   calibration (SS, EF) risk annotator bias. Mitigation: Compute Fleiss' κ;
+   redesign axes with κ <0.6. Calibration set frozen before evaluation.
+ 3 Rank divergence from HumanEval is noise, not signal. Mitigation: Estimate
+   noise ceiling for each benchmark via test-retest ICC; only rank divergences
+   exceeding the noise ceiling are interpreted as evidence of new signal.
+ 4 Multi-language support introduces cross-language confounds. A model weaker in
+   an underrepresented language may receive an unfairly low aggregate score.
+   Mitigation: Report per-language scores alongside the aggregate; weight each
+   language by its prevalence in the model's documented training data.
+ 5 Perturbation axis penalizes harmless linguistic variation. Mitigation: All
+   perturbations validated for semantic equivalence by3 annotators; only those
+   preserving problem semantics are retained.
+
+--------------------------------------------------------------------------------
+
+LimitationsComputational cost. Full evaluation of one model is estimated
+at500–2000 GPU-hours (inference) plus100–500 CPU-hours (execution). A
+reduced-cost variant (1 language,5 test cases,100 schemas) is released for rapid
+iteration.
+
+Schema design bottleneck. Each schema requires4–8 person-hours (reference
+implementation, test suite, perturbation validation, difficulty calibration).
+Likely does not scale trivially. The schema authoring toolkit is open-sourced to
+enable community contributions.
+
+Static analysis coverage is language-dependent. Structural soundness reliability
+varies across languages (Python > Java > Rust). Per-language SS scores are
+reported with language-specific confidence intervals.
+
+The five axes are not orthogonal. FC and SS are positively correlated. The full
+covariance matrix of axis scores is reported to enable independent analysis.
+
+No safety, bias, or alignment measurement. DeepCodeEval evaluates capability,
+not safety. Models can produce functionally correct code that is insecure,
+biased, or misaligned — these dimensions are left to future work.
+
+Generalization to natural language is untested. While components may transfer,
+no such claim is made here.

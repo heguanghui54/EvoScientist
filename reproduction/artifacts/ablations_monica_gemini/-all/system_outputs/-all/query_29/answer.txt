@@ -1,0 +1,36 @@
+Research Proposal: Stabilizing Value Alignment for Multi-Agent Systems via
+ Reciprocal Reward Shaping## TitleConvergent Value Alignment: Reciprocal Reward
+          Shaping for Norm Emergence in Heterogeneous Agent Societies
+
+--------------------------------------------------------------------------------
+
+ProblemValue alignment — ensuring AI agents act in accordance with human values
+— becomes radically more difficult in multi-agent settings. When independently
+aligned agents interact, emergent behaviors often violate the very values each
+agent was trained to uphold: competing reward functions produce reward hacking,
+value drift, and Pareto-suboptimal equilibria (e.g., speculative cooperation
+collapses under distribution shift). Existing approaches treat alignment as a
+per-agent property enforced at training time, then freeze it at deployment. This
+static approach fails because:
+
+ 1 Value disambiguation is underspecified — a single principle (e.g., "do no
+   harm") maps to different actions across contexts.
+ 2 Multi-agent dynamics create second-order effects — aligned agents can
+   mutually destabilize each other's value functions.
+ 3 Norm emergence is unguided — societies of agents converge to conventions, but
+   nothing guarantees those conventions are aligned with human values unless the
+   reward structure explicitly shapes them.
+
+The core problem: How can a population of heterogeneous agents converge to a
+shared, stable set of aligned behaviors without centralized reward supervision
+at runtime?
+
+--------------------------------------------------------------------------------
+
+HypothesisReciprocal reward shaping — where each agent's reward function
+includes a small learned term predicting the value-satisfaction of nearby agents
+— causes a heterogeneous multi-agent system to converge to a Pareto-optimal
+aligned equilibrium more reliably than either (a) individually aligned agents
+with static reward functions or (b) agents shaped by a global reward signal.
+
+Formal statement: Let ( \mathcal

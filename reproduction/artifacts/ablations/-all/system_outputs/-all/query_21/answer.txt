@@ -1,0 +1,153 @@
+Mitigating False Positives in AI-Generated Content Detection via
+Confidence-Calibrated Multi-Domain Ensembles### ProblemCurrent AI-generated text
+detectors (e.g., GPTZero, Originality.ai, DetectGPT) achieve high recall on
+held-out benchmarks but exhibit alarmingly high false positive rates (10–30%) on
+non-neural, out-of-distribution, or heavily edited human-written text. False
+positives erode user trust, produce false accusations in academic and
+journalistic settings, and create adversarial pressure that drives a
+race-to-the-bottom between generators and detectors. The core challenge is that
+detectors trained on one distribution of machine text (e.g., GPT-3.5
+completions) generalize poorly when the generator, prompt style, or
+post-processing changes — and always err on the side of flagging human text with
+unusual properties (non-native English, domain-specific jargon, formulaic prose)
+as AI-written.
+
+HypothesisA multi-domain ensemble detector that decouples domain identification
+from AI-vs-human classification, combined with per-sample conformal prediction
+intervals, will reduce false positive rates below5% at matched recall levels,
+without requiring access to the source generator at inference time.
+
+The key insight is that false positives cluster in specific latent subspaces — a
+detector confident in the wrong domain applies the wrong decision boundary. If
+we can quantify when the detector's domain assignment is uncertain and abstain
+or recalibrate those samples, false positives collapse.
+
+MethodStage1 — Domain-conditioned detector architecture
+
+Train a two-stage model:
+
+ 1 Domain encoder: A contrastively learned RoBERTa-large encoder maps each input
+   text to a latent domain representation. Domains include: academic prose,
+   news, social media, creative writing, technical documentation, and code. This
+   encoder is trained jointly on human and AI-generated text from each domain
+   (no domain labels needed at inference).
+ 2 Per-domain classifiers:6 lightweight (2-layer MLP) binary classifiers, one
+   per domain, each trained only on texts assigned to that domain by the
+   encoder. At inference, the domain encoder produces a soft assignment vector;
+   the final AI-vs-human score is the weighted average of the per-domain
+   classifier outputs.
+
+Stage2 — Conformal calibration for abstention
+
+Apply split conformal prediction on a held-out calibration set. For each test
+sample, compute a prediction set (abstain, human, AI) with marginal coverage1 −
+α =0.90. Samples whose prediction sets contain both "human" and "AI" are flagged
+as low-confidence and routed to a human-in-the-loop review. This eliminates the
+most egregious false positives by design — the detector says "I don't know"
+instead of guessing.
+
+Stage3 — Adversarial exposure synthesis
+
+To harden against evasion, generate synthetic near-boundary examples during
+training: take human-written texts and minimally perturb them toward the
+detector's current decision boundary through gradient-based adversarial attacks
+on the encoder embedding. These are included as "human" training examples (since
+they remain human-written) to shrink the false-positive region.
+
+Dataset and BenchmarkUse the RAID (Robust AI Detection) benchmark, which spans11
+domains,8 generators (GPT-2 through GPT-4, Llama, Claude, Mistral), and
+human-written references matched by domain, length, and topic. For each
+domain,2,000 human and2,000 AI-generated texts;20% held out as calibration for
+conformal prediction.
+
+For out-of-distribution evaluation, also test on:
+
+ • HC3 (human-ChatGPT comparison, Chinese + English)
+ • M4 (multilingual machine-generated text,4 languages)
+ • A curated set of500 human-written texts from non-native-English academic
+   authors (to directly probe the most common real-world false-positive source)
+
+Evaluation Metrics| Metric | Definition |
+
+|--------|------------| | FPR@95% TPR | False positive rate when recall is fixed
+at95% — primary metric | | AUROC | Standard detection AUC | | AUPRC (positive =
+AI) | Precision-recall AUC for AI detection | | Abstention rate | Fraction of
+test samples routed to human review | | Coverage efficiency | Average prediction
+set size (1.0 = always singleton,2.0 = always abstain) | | OOD FPR | False
+positive rate on the non-native-English human subset |
+
+Primary success criterion: FPR@95% TPR ≤5% and abstention rate ≤15% on the RAID
+test set.
+
+Baselines- DetectGPT — zero-shot, curvature-based detection (no training data
+required)
+
+ • Fast-DetectGPT — conditional probability curvature approximation- GhostBuster
+   — retrieves n-gram memorization evidence from the web- RoBERTa-base + linear
+   probe — standard fine-tuned binary classifier (single-domain)
+ • RoBERTa + domain-conditional (without conformal calibration) — ablation of
+   the calibration stage- RoBERTa + majority-vote ensemble —5 independently
+   trained classifiers, majority decisionAll baselines are evaluated on
+   identical train/test/calibration splits.
+
+Ablations| Variant | Change | Expected effect |
+
+|---------|--------|----------------| | No domain encoder | Single global
+classifier, no per-domain specialization | FPR rises5–10 points; domain
+imbalance drives false positives in rare domains | | No conformal calibration |
+Softmax threshold at0.5, no abstention | FPR@95% TPR roughly doubles; worst
+false positives appear at high confidence | | No adversarial exposure | Standard
+training only | FPR on near-boundary human texts increases; attacker can find
+false positives systematically | | Single-domain (academic only) | Train only on
+academic domain, test on all domains | Catastrophic OOD FPR >30%; confirms
+domain conditioning is essential | | Domain encoder frozen vs fine-tuned |
+Encoder gradients not propagated during classifier training | Small FPR increase
+(~1–2 pts); suggests joint training helps marginally |
+
+Expected Failure Modes1. Domain encoder collapse: If domains are not separable
+in embedding space, the soft assignment becomes uniform, reducing to a single
+global classifier. Mitigation: pre-train with contrastive loss on labeled domain
+data; if collapse persists, reduce to4 coarse domains (narrative, analytic,
+conversational, code).
+
+ 2 Calibration set shift: Conformal prediction guarantees marginal coverage only
+   when the calibration and test distributions match. A new generator (e.g.,
+   GPT-5) could shift the embedding distribution, invalidating the coverage
+   guarantee. Mitigation: maintain a rolling calibration buffer updated monthly
+   with newly observed generator outputs; monitor coverage tracking with a CUSUM
+   change-detection test.
+ 3 Adversarial overfitting: Synthetic adversarial examples could teach the
+   encoder to ignore surface-level cues, forcing it into brittle latent features
+   that fail on non-adversarial texts. Mitigation: limit adversarial
+   perturbation budget (ε ≤0.1 in embedding norm); evaluate on a clean held-out
+   set after each adversarial epoch; if clean FPR rises, halt adversarial
+   exposure.
+ 4 High abstention rate on non-native English: If the model treats non-native
+   constructions as intrinsically ambiguous, abstention may exceed30% on that
+   subset — operationally unacceptable. Mitigation: explicitly include
+   non-native human text in the calibration set so coverage guarantees apply;
+   accept higher abstention only if it is equalized across groups (demographic
+   parity of abstention rate).
+
+Limitations- Calibration staleness: The conformal guarantee holds only while the
+test distribution matches calibration. A real-world deployment would require
+continuous monitoring and periodic recalibration — not addressed in this
+proposal.
+
+ • No generator signature: The method relies purely on text artifacts, not
+   watermarking or logit access. It cannot detect AI-generated text that has
+   been extensively human-paraphrased or translated, since those operations
+   erase distributional cues. For those cases, watermarking (e.g., Kirchenbauer
+   et al.,2023) is a complementary approach.
+ • Compute cost: A three-stage pipeline (domain encoding, per-domain
+   classifiers, conformal calibration) is3–5× more expensive than a single
+   RoBERTa classifier at inference time. The latency trade-off may be
+   unacceptable for real-time applications.
+ • Domain granularity fixed at training: If a new domain emerges (e.g.,
+   AI-generated poetry in2026), the domain encoder has no slot for it and will
+   force it into the nearest existing domain, likely degrading accuracy. A
+   continual-learning extension is left for future work.
+ • The false-positive problem is not solved, only managed: Conformal prediction
+   bounds the rate of erroneous rejections at the group level but does not
+   eliminate individual false positives. For any specific flagged text, the
+   detector cannot explain why it is flagged; interpretability is out of scope.

@@ -1,0 +1,151 @@
+Enhancing Long-Context Understanding in Large Language Models via Hierarchical
+   Context Scaffolding## ProblemLarge Language Models (LLMs) exhibit a sharp
+degradation in reasoning quality as input context length increases beyond their
+    pre-training distribution. Even models with128K–1M token windows (e.g.,
+GPT-4-128K, Claude3, Gemini1.5) show a "lost-in-the-middle" effect: information
+present in the middle of long documents is recalled and used with significantly
+  lower accuracy than information at the beginning or end. Current solutions —
+position interpolation, RoPE scaling, and sliding-window attention — address the
+ engineering challenge of fitting long sequences into memory but do not address
+    the representational problem: the model lacks a structured, hierarchical
+      internal representation of context beyond local attention patterns.
+
+This work tackles the question: Can we explicitly augment an LLM with a
+hierarchical context scaffold that compresses, indexes, and surfaces the most
+relevant segments during generation, without full fine-tuning of the base model?
+
+HypothesisAdding a lightweight, hierarchical context scaffolding module —
+consisting of (1) a sliding-window compression layer that produces segment-level
+embeddings, (2) a relevance-retrieval mechanism over those compressed segments,
+and (3) a cross-attention gating module that injects retrieved segment
+representations into each decoding step — will significantly improve
+long-context QA accuracy and fact-retrieval precision for sequences ≥64K tokens,
+compared to the base model used in a zero-shot setting. The scaffold can be
+trained on a relatively small corpus (≤10K long-document examples) and plugged
+into a frozen LLM, making it sample-efficient and model-agnostic.
+
+MethodArchitecture. The scaffold consists of three components, inserted between
+the frozen LLM's embedding layer and its transformer stack:
+
+ 1 Segment Compressor. The input context is divided into fixed-size chunks
+   (e.g.,512 tokens each). A small bidirectional encoder (2-layer
+   Transformer,128 hidden dim) encodes each chunk into a single segment
+   embedding vector. These embeddings form an ordered embedding bank of size
+   N_segments.
+ 2 Relevance Retriever. At each decoding step, a learned query projection of the
+   current hidden state attends over the segment embedding bank via
+   cross-attention, producing a weighted segment representation. To maintain
+   tractability with1K+ segments, we use a top-k softmax (k=16) so only the most
+   relevant segments contribute gradients.
+ 3 Cross-Attention Gate. The aggregated segment representation is fused with the
+   main hidden state via a learned gating scalar (sigmoid), allowing the model
+   to learn when to rely on long-range retrieval vs. local attention. This gate
+   is the only component that directly modifies the LLM's hidden states.
+
+Training. The entire scaffold is trained via a combination of:
+
+ • A masked-content objective: randomly mask15% of tokens in the middle of the
+   context and train the scaffold to reconstruct them via retrieval from the
+   segment bank.
+ • A distillation objective: on a set of long-context QA pairs, minimize KL
+   divergence between the scaffold-augmented model's output distribution and the
+   output of an oracle that sees the full context unsegmented.
+
+Only scaffold parameters (~15M) are updated; the base LLM is frozen.
+
+Inference. No changes to the decoding loop beyond the additional cross-attention
+step over the segment bank. The segment bank is computed once during prefix
+processing and cached.
+
+Dataset / BenchmarkPrimary evaluation on LongBench (a multilingual, multi-task
+benchmark with average length ∼6K tokens, max64K), reported as the aggregate
+score across all21 tasks, plus per-category breakdowns. To stress-test, we
+construct an additional NeedleBench-Hard variant:50 synthetic documents of128K
+tokens each, each containing10 factual "needles" placed at uniformly random
+positions, requiring the model to retrieve and synthesize across widely
+separated passages. Results are reported on LongBench's standard split (no
+train/test overlap).
+
+Evaluation Metrics| Metric | Definition | Primary / Secondary |
+
+|--------|-----------|-------------------| | LongBench Aggregate Score |
+Macro-average over21 tasks (QA, summarization, few-shot, code) | Primary | |
+Needle Recall@5 | Fraction of needles correctly retrieved in top-5 positions
+(NeedleBench-Hard) | Primary | | Position-Shifted Accuracy | QA accuracy binned
+by needle position (first25%, mid50%, last25%) | Secondary | | Inference Latency
+| Time per token (ms) vs. baseline; measure at64K tokens | Secondary | |
+Parameter Efficiency | Total trainable parameters / performance gain ratio |
+Secondary |
+
+Baselines1. Base model (zero-shot) — Llama-2-7B-32K with original positional
+encoding; no scaffold.
+
+ 2 Sliding-window attention — Mistral-style rolling cache (window=4096); no
+   global context.
+ 3 Position interpolation (PI) — Extend RoPE via linear scaling (Chen et
+   al.,2023).
+ 4 YaRN — Improved RoPE scaling with NTK-aware mixing (Peng et al.,2023).
+ 5 RAG baseline — Retrieval-Augmented Generation on512-token chunks using
+   Contriever-MSMARCO; top-3 chunks fed as prefix.
+ 6 Full fine-tune (upper bound) — LoRA fine-tune (rank=64) of the base model on
+   the same training set as the scaffold, using the standard language modeling
+   objective.
+
+All baselines share the same base model and inference hardware (1× A10080GB).
+
+Ablations| Ablation | Component Removed / Changed | Expected Effect |
+
+|----------|---------------------------|-----------------| | No segment
+compression | Feed raw top-k chunk tokens instead of segment embeddings | Higher
+recall but ≥4× latency (more cross-attention tokens) | | No top-k gating |
+Attend over all segments | Marginal accuracy gain (+0.5%) with O(n²) cost at128K
+| | No cross-attention gate | Always fuse (gate=1) | Small degradation in
+short-context tasks where local attention suffices | | Training w/o distillation
+| Masked-content objective only | Worse calibration on structured QA (drop
+of2–3%) | | Small segment size (256) | Compression window halved | Higher
+granularity but reduced compression → higher latency | | Large segment size
+(1024) | Compression window doubled | Lower latency but recall drops in mid-zone
+by ~4% |
+
+Expected Failure Modes1. Segment boundary splitting. A relevant passage may be
+split across two adjacent segments, diluting either representation. Mitigation:
+overlap segments by50% during compression (2× storage, but retrieval quality
+improves).
+
+ 2 Gate collapse. The learned gate may converge to near-zero for all inputs,
+   effectively disabling the scaffold. Mitigation: initialize gate bias to +2
+   and add an auxiliary loss that penalizes gate values below0.1 for10% of
+   randomly sampled steps during training.
+ 3 Training distribution mismatch. The10K training examples (sampled from
+   BookSum + LongBench train splits) may not cover the domain of
+   instruction-tuned long-context use cases. Mitigation: include2K multi-turn
+   conversation logs with16K+ token histories from ShareGPT.
+ 4 Cumulative compression error. Segment embeddings lose intra-chunk positional
+   information. For tasks requiring fine-grained ordering (e.g., tracking a
+   sequence of events), recall may drop sharply. Mitigation: augment each
+   segment embedding with a learned segment-position encoding before retrieval.
+ 5 No improvement on short contexts (<4K). The scaffold adds latency with zero
+   benefit on short inputs. Acceptable — the design targets long-context
+   regimes. A routing heuristic (skip scaffold if n_tokens < threshold) can be
+   added in deployment.
+
+Limitations- No training-time scaling analysis. Results are reported for one
+base model scale (7B). Whether the same scaffold works at70B+ without
+modification is unknown and left to future work.
+
+ • Synthetic long-context benchmark. NeedleBench-Hard is artificial; performance
+   on it may not transfer to naturally occurring long documents where relevant
+   information is distributed differently (e.g., spread across many small
+   segments vs. concentrated in a few).
+ • Fixed compression window. A single512-token window is unlikely to be optimal
+   for all tasks (e.g., summarization benefits from coarser segments,
+   fact-retrieval from finer ones). Adaptive windowing is a natural extension
+   but outside scope.
+ • Single forward pass of the segment bank. The segment embeddings are computed
+   once and never refreshed during generation. If the model's focus shifts
+   dramatically between early and late decoding steps, the static bank may
+   become stale.
+ • Frozen base model assumption. The scaffold's effectiveness is bounded by the
+   base model's representation quality. If the base model has fundamentally poor
+   long-range dependencies in its hidden states, the scaffold may not recover
+   them.

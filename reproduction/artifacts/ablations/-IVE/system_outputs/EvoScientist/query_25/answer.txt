@@ -1,0 +1,137 @@
+Research Proposal: Conflict-Aware Multi-Source Reasoning### Title
+Conflict-Aware
+Multi-Source Reasoning: Detecting and Resolving Information Conflicts in
+Retrieval-Augmented Generation
+
+--------------------------------------------------------------------------------
+
+Problem
+Current retrieval-augmented generation (RAG) systems treat retrieved
+documents as mutually consistent and complementary. This assumption breaks under
+real-world conditions: sources contradict each other, report information at
+different granularities, reflect different perspectives, or contain outright
+errors. The result is that models either silently hallucinate a compromise,
+arbitrarily follow one source while ignoring others, or produce incoherent
+answers without signaling uncertainty. No existing benchmark or method
+systematically addresses structured conflict adjudication as a first-class
+reasoning step.
+
+Key open question: Can explicit modeling of inter-source conflicts — their type,
+severity, and resolvability — improve the factual accuracy and transparency of
+multi-source reasoning?
+
+--------------------------------------------------------------------------------
+
+Hypothesis
+Explicitly modeling inter-source conflicts through a structured
+conflict graph + adjudication module will improve both factual accuracy and
+answer coherence over standard RAG pipelines on multi-source QA tasks. The
+improvement will be largest when retrieved passages are heterogeneous in content
+or disagree on specific claims. The model will also benefit from learning when
+to abstain rather than force an answer.
+
+--------------------------------------------------------------------------------
+
+Method
+A four-stage pipeline:
+
+1 Retrieval — Retrieve top-k passages for a query using a standard retriever
+(e.g., Contriever-MS MARCO or ColBERT-v2).
+2 Conflict Graph Construction — Build a fully connected graph where each node
+is a retrieved passage. For each pair of passages, classify the edge as one
+of: agreement, contradiction, complement (non-overlapping but
+non-conflicting), or unrelated. Use an NLI-style classifier (e.g., fine-tuned
+DeBERTa on paired passages) or an LLM-as-judge (e.g., GPT-4o-mini with
+structured prompting). Edge weights encode confidence.
+3 Conflict-Aware Aggregation — A lightweight adjudication module that takes the
+conflict graph and the query, and produces:
+
+• A set of reconciled facts (claims that survive cross-source verification)
+• A set of irresolvable conflicts (contradictory claims the model cannot
+adjudicate given available evidence)
+• An optional abstain decision: if irresolvable conflicts touch the core of the
+query, output "insufficient evidence" instead of forcing an answer.
+
+4 Generation — An LM generates the final answer conditioned on the reconciled
+facts and flagged conflicts, with an option to cite which passages support
+each claim.
+
+--------------------------------------------------------------------------------
+
+Dataset / Benchmark
+Three evaluation settings:
+
+Dataset                   What it tests              Expected conflict rate
+MuSiQue (multi-source     Multi-hop reasoning from   Low–moderate (designed to
+QA)                       several paragraphs         be consistent)
+HotpotQA (distractor      Identifying relevant       Moderate (distractors may
+setting)                  passages among             mislead)
+distractors
+ConflictFEVER             Deliberately               High (controlled)
+(constructed)             contradictory passages
+built by perturbing FEVER
++ PubMedQA claims with a
+gold-labeled
+contradiction set
+
+ConflictFEVER is a new construction: for each claim in FEVER, retrieve a
+supporting passage and a contradicting passage (by perturbing entities,
+relations, or numerical values), yielding ground-truth conflict labels.
+
+--------------------------------------------------------------------------------
+
+Evaluation Metrics- Answer Accuracy: F1 and Exact Match on the QA subset,
+answer-level accuracy on the FEVER subset- Conflict Detection Precision /
+Recall: Against gold conflict labels (only for ConflictFEVER)
+
+• Abstention Quality: Does the model abstain correctly on unanswerable queries?
+F1 on the abstain decision against a held-out set of unanswerable questions-
+Faithfulness: Claim-level recall — what fraction of claims in the generated
+answer are directly supported by at least one retrieved passage (measured by
+an NLI verifier)
+• Average Inference Time: End-to-end latency, reported for practical
+relevance---
+
+Baselines1. Standard RAG — Concatenate top-k passages + query → generate
+answer2. Self-RAG — Interleave retrieval decisions with reflection tokens at
+generation time3. Chain-of-Thought RAG — Retrieve → reason step by step over
+passages → answer4. ReAct — Interleave retrieval, reasoning, and action steps5.
+FiD (Fusion-in-Decoder) — Encode passages independently, cross-attend in
+decoder---
+
+Ablations| Ablation | What it isolates |
+
+|---|---| | Without conflict graph | Does the graph add value over raw
+concatenation? | | Conflict graph (NLI) vs. LLM-as-judge | Trade-off between
+cost, speed, and detection quality | | Pairwise comparison (no graph) | Is the
+full graph structure needed, or does local pairwise suffice? | | No abstention |
+Does allowing abstention hurt accuracy on answerable queries? | | Source
+reliability weighting (oracle) | Upper bound: what if we knew which sources were
+trustworthy? | | Conflict resolution strategy (majority vote vs. reconciliation
+vs. source-priority) | Which resolution heuristic works best? |
+
+--------------------------------------------------------------------------------
+
+Expected Failure Modes1. Noisy conflict detection — NLI classifiers trained on
+sentence pairs may fail on passage-level contradictions spanning many sentences.
+An LLM-as-judge is expensive and may exhibit position bias or sycophancy
+(agreeing too readily with the later source).
+
+2 Over-abstention — The model may refuse to answer on harmless factual
+disagreements (e.g., "population is1.2M" vs "population is1.22M"), hurting
+usability. The abstention threshold must be carefully tuned.
+3 Graph cost — Constructing a full pairwise graph is O(k²) where k is the
+number of passages. With k=10 this is45 edges; with k=50 it is1,225. May be
+too slow for real-time deployment without pruning heuristics.
+4 Benchmark artifacts — MuSiQue and HotpotQA were not designed to test conflict
+resolution; most retrieved passages may agree. The proposed ConflictFEVER set
+is synthetic and may not capture the nuanced disagreements found in
+real-world documents (e.g., conflicting expert testimony in medical
+contexts).
+5 Evaluation coupling — Abstention quality and answer accuracy trade off.
+Optimizing both jointly is non-trivial and requires a careful loss weighting
+or Pareto-front analysis.
+6 Citation hallucination — Even with a conflict graph, the generator may cite a
+passage that does not support the specific claim it is attached to. A
+secondary faithfulness check (e.g., fine-grained NLI per claim-passage pair)
+may be needed as a guardrail.

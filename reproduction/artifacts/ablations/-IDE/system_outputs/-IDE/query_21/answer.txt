@@ -1,0 +1,140 @@
+I'll structure this proposal as a standard ablation — no memory-based idea
+distillation, just reasoning from the query and domain knowledge.
+
+--------------------------------------------------------------------------------
+
+TitleAdaptive Thresholding with Confidence Calibration for Reducing False
+Positives in AI-Generated Text Detection
+
+ProblemExisting AI-generated content detectors (e.g., ROC-AUC optimized
+classifiers, watermark-based methods, statistical fingerprinting) achieve high
+average accuracy but suffer from systematically elevated false positive rates on
+certain subpopulations: non-native English writing, highly structured text
+(tables, code, lists), domain-specific jargon, and formal academic prose. A
+false positive rate of even1–5% at scale means millions of legitimate student
+essays, professional documents, and creative works are flagged incorrectly per
+year. The root cause is that detection models learn spurious correlations —
+e.g., perplexity uniformity, low syntactic variance — that overlap with benign
+linguistic features of non-adversarial human writing.
+
+HypothesisA detection pipeline that (1) decomposes the classification decision
+into token-level anomalyscores, (2) calibrates confidence via temperature
+scaling on a held-out set of hard human-written texts, and (3) applies an
+adaptive threshold conditioned on document-level linguistic features
+(readability, formality, lexical diversity) will reduce the false positive rate
+by at least40% relative to a fixed-threshold baseline while maintaining a true
+positive rate above90% on in-distribution AI-generated text.
+
+MethodThe proposed method, AdaptiveThreshold Detector (ATD), operates in three
+stages:
+
+ 1 Token-level anomaly scoring. Use a frozen surrogate LLM (e.g., LLaMA-3-8B) to
+   compute per-token log-probabilities. Aggregate via (a) mean log-probability,
+   (b) perplexity, and (c) burstiness (variance in log-probability across
+   sliding windows). These three scores form a3-dimensional per-document feature
+   vector.
+ 2 Confidence calibration. On a calibration set composed entirely of
+   human-written texts drawn from hard subpopulations (non-native, technical,
+   formal), apply temperature scaling to the logit outputs of a lightweight
+   classifier (XGBoost or a2-layer MLP) trained on the3-dimensional feature
+   space. Optimize temperature T to minimize expected calibration error (ECE) on
+   the calibration set.
+ 3 Adaptive thresholding. Train a secondary regressor that predicts
+   document-level "human-likeness difficulty" from surface features
+   (Flesch-Kincaid grade level, type-token ratio, formality score from LIWC,
+   average word length, and punctuation density). Use this predicted difficulty
+   to modulate the classifier threshold: easier-to-classify human text gets a
+   lower threshold (fewer false positives), while harder text uses the default
+   threshold. The modulation function is fit to maximize TPR@FPR≤1% on a
+   validation set.
+
+Inference: Given a document D, compute token-level features, run the calibrated
+classifier to get score s, predict difficulty d, look up threshold τ(d), and
+flag if s > τ(d).
+
+Dataset / Benchmark- Training & calibration: M4 (Multilingual, Multi-Genre,
+Multi-Generator) dataset —15K human-written documents across10 genres +
+corresponding AI-generated texts from GPT-4, Claude, LLaMA, Mistral.
+
+ • **Hard human subpopulations (for calibration set):**2,000 non-native English
+   essays (TOEFL11 corpus),1,000 academic papers (arXiv abstracts pre-2022),500
+   technical documents with code/tables.
+ • Out-of-distribution evaluation: Documents from chatbots (ChatGPT
+   conversations, not prompted essays), AI-generated scientific abstracts from a
+   held-out generator (Gemini), and human-written news articles with high
+   formality.
+ • Adversarial evaluation: Human-written texts with minimal edits to mimic AI
+   stylistic patterns (e.g., adding uniform sentence length, reducing lexical
+   diversity).
+
+Evaluation Metrics| Metric | Definition | Priority |
+
+|---|---|---| | FPR@90% TPR | False positive rate when threshold is set to
+achieve90% true positive rate | Primary | | Relative FPR reduction |
+(FPR_baseline − FPR_ATD) / FPR_baseline | Primary | | ECE | Expected calibration
+error on human-written calibration set | Secondary | | AUC-ROC | Area under ROC
+curve (reported for completeness) | Secondary | | FPR per subpopulation | FPR
+stratified by genre, nativeness, formality level | Diagnostic |
+
+Baselines1. Fixed-threshold perplexity detector — classify as AI-generated if
+mean token log-probability < threshold τ (tuned on validation set).
+
+ 2 DetectGPT (Mitchell et al.,2023) — curvature-based detection with fixed
+   threshold.
+ 3 Fast-DetectGPT (Bao et al.,2024) — faster variant using conditional
+   probability curvature.
+ 4 Logistic regression on surrogate features — same3D feature vector but with a
+   fixed threshold and no calibration.
+ 5 OpenAI AI Text Classifier — reported performance from the original paper,
+   reproduced on our benchmark splits.
+
+All baselines and ATD use the same surrogate LLM for fairness.
+
+Ablations| Ablation | Component Removed | Expected Impact |
+
+|---|---|---| | ATD w/o calibration | Temperature scaling step | ECE increases
+by2–5×; FPR rises on hard subpopulations | | ATD w/o adaptive threshold |
+Difficulty regressor; use fixed τ | FPR increases15–30% on non-native English
+and technical text | | ATD w/o token-level scoring | Use single document-level
+perplexity instead of3D feature vector | AUC drops3–5 points; FPR control
+worsens | | ATD (single surrogate) | Replace LLaMA-3-8B with a smaller surrogate
+(e.g., GPT-2) | Detection accuracy degrades on out-of-distribution generators |
+
+Expected Failure Modes1. Adversarial human texts. Humans deliberately mimicking
+AI style (e.g., copy-editing to reduce lexical diversity) will bypass the
+detector. The modulated threshold cannot distinguish genuine AI text from
+stylistically flattened human text without further signal.
+
+ 2 Generator evolution. If new LLMs produce token-level distributions closer to
+   human (e.g., via RLHF smoothing or inference-time debiasing), the surrogate
+   model's anomaly signal weakens. The method will need periodic surrogate
+   updates.
+ 3 Cross-language degradation. The method is benchmarked on English only.
+   Tokenization and perplexity dynamics differ substantially for non-English
+   languages (especially CJK), and the calibration set does not cover them.
+   Transfer is expected to be poor without language-specific calibration data.
+ 4 Short-document instability. For documents <50 tokens, token-level variance is
+   high and difficulty estimates become unreliable. The adaptive threshold may
+   oscillate. The method should flag short inputs as "insufficient length"
+   rather than returning a low-confidence prediction.
+
+Limitations1. Surrogate model dependence. Performance is upper-bounded by the
+surrogate LLM's ability to assign accurate probabilities. If the surrogate
+itself is biased (e.g., overconfident on formal text), calibration can only
+partially compensate.
+
+ 2 Calibration set construction. The calibration set requires deliberate
+   curation of "hard" human subpopulations. In practice, obtaining
+   representative difficult human text requires domain expertise and may not
+   generalize to unanticipated niches (e.g., poetry, stream-of-consciousness).
+ 3 Computational cost. Token-level scoring with an8B-parameter model adds
+   inference latency (~2–5 seconds per document on consumer GPUs). This limits
+   real-time deployment at web scale without pipelining or distillation.
+ 4 No training-data watermark. The method is purely post-hoc detection. It does
+   not prevent false positives at the source (e.g., via a watermark embedded
+   during generation). Combining ATD with watermark-based detection would be
+   complementary but is out of scope.
+ 5 False negative trade-off. Aggressive FPR reduction necessarily increases
+   false negatives on borderline AI-generated text (e.g., lightly edited LLM
+   output). The reported TPR@90% constraint caps this, but the user-facing
+   experience will still include missed AI content.

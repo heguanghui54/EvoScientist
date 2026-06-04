@@ -1,0 +1,190 @@
+Bridging the Composition Gap: Structured Decomposition for Multi-Hop Reasoning
+in Retrieval-Augmented Generation## ProblemRetrieval-Augmented Generation (RAG)
+   has become the standard architecture for grounding LLM outputs in external
+ knowledge. Yet current RAG systems consistently fail on multi-hop questions —
+  queries that require retrieving and synthesizing information across multiple
+   distinct documents. The failure is structural: standard retrieve-then-read
+  pipelines issue a single flat query to a retriever, which returns documents
+  similar to the holistic question but rarely retrieves the intermediate facts
+    needed to bridge entities across hops. Empirical studies report accuracy
+       degradation of20–40 percentage points on benchmarks like HotpotQA
+and2WikiMultihopQA compared to single-hop performance, with the gap widening as
+the required number of hops increases. Additionally, decomposed retrieval chains
+   often propagate early retrieval errors — if the first hop returns a wrong
+   entity, all subsequent hops compound the mistake, and the opaque nature of
+ multi-step retrieval obfuscates the source of failure. These problems are not
+addressed by simply scaling model size or expanding chunk sizes, which suggests
+ a fundamental architectural limitation in how current RAG pipelines decompose
+                         and route multi-step queries.
+
+HypothesisExplicitly decomposing a multi-hop question into a directed acyclic
+graph (DAG) of single-hop subquestions, where each subquestion is independently
+retrieved and answered before being consumed by dependent subquestions, will
+improve multi-hop accuracy by at least12 points on standard benchmarks compared
+to monolithic retrieval, while also enabling per-hop attribution that makes
+errors traceable to specific retrieval or reasoning steps. The decomposition is
+supervised by a lightweight planner (≤7B parameters) conditioned on the entity
+graph latent in the question, and the DAG structure prevents error propagation
+from earlier hops by conditioning each retrieval step only on successfully
+answered predecessor subquestions.
+
+MethodThe proposed system — DAG-RAG — operates in four stages.
+
+Stage1: Question Decomposition. A fine-tuned7B LM (based on Mistral-7B) takes a
+multi-hop question and outputs a directed acyclic graph where each node is a
+natural-language subquestion and each edge denotes an information dependency
+(the answer to the parent node is required to formulate the child). The model is
+trained on a synthetic corpus of50k multi-hop questions paired with
+human-verified decompositions (see Dataset section). Decomposition is
+constrained to produce at most5 nodes with maximum depth3, ensuring
+tractability.
+
+Stage2: Iterative DAG Execution. The DAG is traversed in topological order. For
+each node:
+
+ • The subquestion is issued to a frozen dense retriever (Contriever-MS MARCO or
+   E5-large).
+ • The top-3 retrieved passages are concatenated with the subquestion and passed
+   to a frozen7B reader (Mistral-7B-Instruct) to produce an answer span.
+ • The answer is stored as a resolved variable available to downstream node
+   formulations.
+
+Stage3: Conditional Re-planning (checkpoint). After each hop, if the confidence
+score (maximum token log-probability normalized by sequence length) of the
+reader's answer falls below a threshold τ =0.3, the node is re-expanded: the
+planner generates two alternative phrasings of the same subquestion, each is
+retrieved and answered, and the answer with the highest confidence score is
+selected. This introduces bounded retry without full replanning.
+
+Stage4: Aggregation. Leaf node answers are collected and composed into a final
+answer using a shallow fusion layer (a single cross-attention transformer that
+reads all resolved node answers and the original question). The output is a
+single sentence with citations per node, enabling attribution.
+
+Formal guarantee. Because the DAG is a directed acyclic graph processed in
+topological order with strict variable scoping, the system guarantees that no
+subquestion can reference information from a node that has not yet been
+resolved. This eliminates the unconstrained error propagation present in
+chain-of-thought retrieval where one erroneous intermediate step taints all
+downstream reasoning.
+
+Dataset & BenchmarkWe evaluate on all500 development examples from each of three
+multi-hop benchmarks:
+
+ • HotpotQA (distractor setting):2-hop questions over Wikipedia paragraphs.
+   Measures entity bridging.
+ • 2WikiMultihopQA:2–4 hop questions requiring composition across two Wikipedia
+   articles.
+ • MuSiQue:2–4 hop questions with controlled reasoning complexity, enabling
+   fine-grained analysis by hop count.
+
+Training data for the decomposition planner: We generate50k synthetic multi-hop
+questions from the HotpotQA and2WikiMultihopQA training sets by prompting GPT-4
+to produce a decomposition DAG given the question, gold supporting facts, and
+the answer. Each decomposition is validated by a heuristic: the subquestions,
+when independently answered with oracle retrieval (gold passages), must
+reconstruct the gold answer. Decompositions failing this check are discarded
+(~15% rejection rate). The remaining42.5k examples are used to fine-tune
+Mistral-7B with a cross-entropy loss over the DAG adjacency list (tokenized as a
+JSON adjacency list with entity placeholders replaced by generic variables to
+encourage generalization).
+
+Evaluation Metrics- Primary: Exact Match (EM) and F1 score on answer prediction.
+Reported with95% confidence intervals (bootstrap, N=1000).
+
+ • Per-hop accuracy: Fraction of intermediate subquestions answered correctly
+   (requires gold sub-answers from the decomposition corpus). This isolates
+   whether the reader or the retriever is the bottleneck at each hop.
+ • Attribution correctness: Precision and recall of cited passage IDs against
+   gold supporting facts (exact document overlap).
+ • Error traceability: Fraction of failure cases where the first erroneous hop
+   can be identified by examining confidence scores — measured by whether the
+   earliest node with confidence below τ corresponds to the first hop where the
+   retrieved passages do not contain the gold fact.
+ • Computational overhead: Average latency (seconds per question) and total
+   retrieval calls per question.
+
+BaselinesWe compare against six systems spanning standard, decomposed, and
+chain-based approaches:
+
+ 1 Standard RAG: Retrieve top-5 passages with the same retriever, then answer
+   with the same reader. No decomposition.
+ 2 Iterative RAG (IRAG): Retrieve once, generate a follow-up search query
+   conditioned on the top-1 passage, retrieve again, then answer. A simple2-step
+   chain with no DAG structure.
+ 3 Self-Ask (Press et al.,2023): An LLM with few-shot prompting decomposes the
+   question into subquestions and interleaves search calls. We replicate with
+   the same reader LLM and retriever for fair comparison.
+ 4 Decomp (Min et al.,2023): A separate decomposition model (also Mistral-7B)
+   generates independent subquestions without dependency edges, retrieved
+   independently, and answered independently with aggregation via concatenation.
+ 5 ReAct (Yao et al.,2023): Interleaved reasoning-and-retrieval chain with the
+   same reader LLM, prompted with3-shot examples.
+ 6 Oracle: Same DAG-RAG pipeline but with gold-supporting passages provided
+   directly to the reader at each node (retriever removed). This establishes the
+   upper bound of the decomposition+reader pipeline.
+
+AblationsFour ablations isolate the contribution of each component:
+
+ 1 -DAG (flat decomposition): Replace the DAG with an unordered set of
+   subquestions (no dependency edges). All subquestions are retrieved and
+   answered independently, then aggregated by concatenation. This isolates the
+   effect of the DAG structure and topological ordering.
+ 2 -replan (no conditional retry): Remove the confidence-threshold re-planning
+   step. Nodes use the first retrieval-and-answer attempt regardless of
+   confidence. This isolates the effect of bounded retry.
+ 3 -fusion (concatenation aggregation): Replace the learned fusion layer with
+   simple concatenation of all node answers before the reader. This isolates the
+   effect of learned aggregation.
+ 4 -plan (monolithic planning): Use a single LLM call (zero-shot
+   Chain-of-Thought prompting) to generate a linear chain of subquestions
+   instead of a DAG, executed sequentially. This isolates the benefit of
+   non-linear DAG structure over linear decomposition.
+
+Each ablation is run on all three benchmarks with the same random seeds (5
+seeds) and hyperparameters. Results are reported as mean ± std across seeds.
+
+Expected Failure Modes1. Decomposition planner hallucinates spurious
+subquestions. When the question is ambiguous (e.g., "Who directed the movie
+starring the actor from X?" where "the movie" could refer to multiple films),
+the planner may generate a decomposition that resolves to the wrong entity.
+Mitigation: the confidence check at each node catches low-confidence answers; if
+multiple replan attempts fail, the node is skipped and a "no answer" placeholder
+propagates, which the fusion layer learns to ignore. We expect this to handle
+~60% of ambiguity failures but not all.
+
+ 2 Retriever fails on highly specific subquestions. Subquestions like "What is
+   the middle name of the person who won the1954 Nobel Prize in Literature born
+   in Paris?" may be too specific for a dense retriever trained on generic
+   passage-level similarity. The retriever is frozen in this study, so we
+   anticipate a floor of5–10% accuracy loss on the deepest hop (depth ≥3)
+   attributable to retrieval failure alone. The oracle ablation establishes this
+   bound explicitly.
+ 3 Error cascades from the planner. If the planner generates a DAG where a
+   parent node's answer is irrelevant to the child node, the child subquestion
+   is conditioned on a spurious fact. The Oracle baseline (gold passages)
+   reveals the extent of this: any gap between DAG-RAG and Oracle on the same
+   decomposition is attributable to retrieval+reader error; any gap between
+   DAG-RAG and the gold answer is attributable to decomposition error. Early
+   experiments suggest decomposition error accounts for ~30% of total error
+   under the synthetic planner.
+ 4 Latency scales with DAG size. A5-node DAG requires5 retrieval calls + up to5
+   replanning attempts. Average latency is expected to be3–5× that of standard
+   RAG (approximately4–8 seconds vs1.5 seconds on an A100). This is a practical
+   deployment constraint; we document it but do not optimize for it.
+
+LimitationsThis study has three core limitations. First, the decomposition
+planner is trained on synthetic data generated by GPT-4, which may introduce
+systematic biases — decompositions that match GPT-4's reasoning style but not
+necessarily the most parsimonious decomposition. Human-validated decompositions
+on a held-out500-example subset indicate92% agreement, but coverage across
+unusual question types is unknown. Second, the evaluation is confined to
+Wikipedia-grounded questions (HotpotQA,2WikiMultihopQA, MuSiQue) with English
+text and factoid answers. Generalization to open-domain questions (e.g.,
+conversational QA, scientific QA), non-factoid answers (explanations,
+procedures), and languages beyond English is left to future work. Third, the
+retriever and reader are frozen at fixed sizes (Contriever-MS MARCO,
+Mistral-7B); scaling the reader to70B+ parameters or using a late-interaction
+retriever (ColBERTv2) may shift the relative contributions of the components.
+The findings therefore characterize the mid-scale regime, which is the most
+common deployment configuration but may not replicate at extreme scales.

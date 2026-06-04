@@ -1,0 +1,151 @@
+EvoScientist — Ablation Experiment -IVE### TitleUnified Audio Foundation Models:
+A Multi-Task Pretraining Framework for Speech, Music, and Environmental Sound
+Understanding
+
+ProblemGeneral-purpose audio understanding remains fragmented. Current
+foundation models are specialized per domain — Whisper for speech, music tagging
+models trained on Million Song Dataset, environmental sound classifiers on
+AudioSet — with no single architecture that jointly handles speech
+transcription, speaker identification, music analysis, acoustic scene
+classification, and audio captioning at comparable quality. The core open
+question is whether a unified model that shares representations across audio
+domains can match or exceed specialist models on each individual task.
+
+HypothesisA Transformer-based audio foundation model pretrained on a diverse
+corpus spanning speech, music, and environmental sounds, using a combination of
+masked autoencoding and contrastive audio-text learning, will achieve
+competitive or superior performance on downstream tasks compared to
+domain-specific specialist models, provided that the pretraining data
+distribution and task weighting are carefully balanced to avoid catastrophic
+forgetting of low-resource domains.
+
+MethodArchitecture: A hierarchical audio Transformer operating on log-Mel
+spectrograms (128 bins,16 kHz sampling). The model uses a convolutional stem
+(two2D Conv layers with stride2 each) to produce a sequence of patch embeddings,
+followed by24 Transformer layers (1024 hidden dim,16 heads, GELU activations). A
+dual-decoder design outputs: (1) a masked reconstruction head for pretraining,
+and (2) a shared projection head for downstream tasks.
+
+Pretraining objective (two-stage):
+
+ 1 Masked spectrogram reconstruction — mask40% of time-frequency patches;
+   reconstruct in frequency-domain with L1 + perceptual loss. This captures
+   acoustic structure without requiring labels.
+ 2 Contrastive audio-text alignment — paired (audio, caption) data from multiple
+   sources, using a InfoNCE loss with learned temperature. Text encoder is a
+   frozen12-layer BERT; only the audio encoder learns gradients.
+
+Downstream adaptation: For each task, a lightweight MLP head (2 layers,512→task
+classes) is added. During finetuning, the backbone is either: (a) fully
+finetuned, (b) LoRA-adapted (rank16), or (c) kept frozen (linear probe). All
+three configurations are evaluated.
+
+Dataset & Benchmark| Source | Domain | Size | Use |
+
+|--------|--------|------|-----| | AudioSet (balanced subset) | Environmental
+sounds |20K clips,10s | Pretrain + scene classification | | LibriSpeech
+clean+other | Speech |960 hours | ASR | | VoxCeleb2 | Speaker ID |1M+ utterances
+from6K speakers | Speaker recognition | | MusicCaps | Music captioning |5.5K
+clips + English captions | Audio-text alignment | | FSD50K | Sound events |51K
+clips,200 classes | Sound event detection | | Clotho v2 | Audio captioning |5K
+clips,5 captions each | Captioning eval |
+
+Hold-out splits: Each dataset uses its standard evaluation partition. No
+cross-dataset contamination — a model pretrained on AudioSet is evaluated on the
+official AudioSet eval split.
+
+Evaluation Metrics| Task | Primary Metric | Secondary Metric |
+
+|------|---------------|-----------------| | Automatic speech recognition
+(LibriSpeech test-clean) | Word error rate (WER) | Character error rate | |
+Speaker identification (VoxCeleb1 test) | Accuracy | Macro F1 | | Acoustic scene
+classification (AudioSet eval) | mAP (mean average precision) | d-prime | |
+Music tagging (MusicCaps test) | ROC-AUC | F1@10 | | Sound event detection
+(FSD50K eval) | mAP | F1@threshold | | Audio captioning (Clotho eval) | SPICE,
+CIDEr | BLEU-4, ROUGE-L |
+
+Baselines| Baseline | Domain | Architecture | Why |
+
+|----------|--------|-------------|-----| | Whisper large-v3 | Speech |
+Encoder-decoder Transformer | Strong ASR specialist | | HuBERT base | Speech |
+Masked prediction Transformer | Self-supervised speech | | CLAP (LAION) |
+General audio | Dual-encoder (audio + text) | Existing general-audio baseline |
+| AST (Audio Spectrogram Transformer) | General audio | ViT-based on
+spectrograms | Prior SOTA on AudioSet | | Wav2CLIP | Audio-visual | Contrastive
+audio-image | Audio-text alignment baseline | | Domain-specific specialists per
+task | Various | Various | Upper bound per task |
+
+All baselines evaluated on the same downstream benchmarks under the same
+protocol.
+
+AblationsAll ablations use the same pretraining data and compute budget (same
+number of total update steps).
+
+ 1 Pretraining data composition: Remove speech data (→ only music +
+   environmental), remove music data, remove environmental data — measure
+   per-task degradation.
+ 2 Objective ablations: Masked reconstruction only (no contrastive text),
+   contrastive only (no reconstruction), reconstruction with L1-only loss (no
+   perceptual loss).
+ 3 Scale ablations: Small (12 layers,512 dim), Base (24 layers,768 dim), Large
+   (24 layers,1024 dim — the primary model).
+ 4 Downstream adaptation method: Full finetune vs. LoRA rank8/16/32 vs. linear
+   probe.
+ 5 Positive-free impact of validation memory (-IVE variant): This experiment is
+   the -IVE ablation. Compare against the full EvoScientist generation (which
+   had access to accumulated validation-evolution memory) on: proposal stability
+   (number of structural revisions needed), gap coverage (tasks or failure modes
+   missed that the validated proposal would catch), and specificity of
+   failure-mode identification. This is a meta-ablation: it measures proposal
+   quality rather than model quality.
+
+Expected Failure Modes- Domain dominance: Speech data volume overwhelms the
+training signal; environmental sound and music tasks plateau. If LibriSpeech and
+VoxCeleb2 together account for >80% of pretraining tokens, the model may
+compress environmental sound representations into a small fraction of the latent
+space. Mitigation: stratified sampling per domain during training.
+
+ • Task interference: The contrastive audio-text objective conflicts with the
+   reconstruction objective, producing embeddings that are neither good for
+   generation nor good for discrimination. Expected to manifest as both WER and
+   mAP degrading relative to single-objective models.
+ • Catastrophic forgetting in low-resource tasks: Clotho (5.5K clips) may be
+   forgotten during later training stages. Scheduled sampling or replay buffers
+   may be needed.
+ • Texture vs. content tradeoff: The model may learn texture-level features
+   (spectral centroid, loudness) that help environmental sound tasks but that
+   are poor for phoneme-level speech recognition. The convolutional stem's
+   stride may compound this by discarding fine time-resolution information.
+ • Without validation-evolution memory (-IVE), the proposal lacks accumulated
+   knowledge of which prior architectures failed at this multi-task balancing
+   problem, making it more likely to over-commit to a single objective weighting
+   without sensitivity analysis. The expected signature: this proposal will
+   propose fewer alternative weighting schedules and fewer countermeasures than
+   the full EvoScientist proposal.
+
+Limitations (explicit and uncontrolled)
+
+ 1 No generative audio tasks: The proposal covers understanding (classification,
+   transcription, tagging, captioning) but not generative tasks (text-to-speech,
+   music generation, audio inpainting). A true general-purpose model would also
+   generate audio.
+ 2 Fixed input representation: Log-Mel spectrograms at16 kHz discard phase
+   information and limit high-frequency resolution. Raw waveform models (e.g.,
+   S4, Mamba) may capture different inductive biases.
+ 3 Limited language coverage: All datasets are English. Multilingual speech
+   (Common Voice, Fleurs) and cross-lingual audio captioning are not evaluated.
+ 4 No streaming or real-time evaluation: Inference latency, online decoding, and
+   streaming ASR protocols are not addressed.
+ 5 Text encoder frozen during pretraining: This prevents the audio encoder from
+   influencing the text representations, which may limit cross-modal alignment
+   capacity.
+ 6 Compute constraint:24-layer Transformer on16 kHz spectrograms is heavy (~1.5B
+   parameters). Practical deployment may require distillation or quantization
+   not explored here.
+ 7 No temporal localization: The proposal handles clip-level classification and
+   transcription but not timestamp-level sound event detection or word-level
+   forced alignment.
+ 8 Evaluation loose ends: No human evaluation for captioning quality, no
+   fairness/disparity analysis across accents or recording conditions, and no
+   robustness testing under synthetic corruptions (noise, reverberation,
+   bandwidth limiting).

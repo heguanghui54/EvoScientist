@@ -1,5 +1,5 @@
 baseline,variant,reference_system,dimension,n,win,tie,lose,win_pct,tie_pct,lose_pct,gap
--IDE vs EvoScientist,-IDE,EvoScientist,Clarity,20,11,5,4,55.0,25.0,20.0,35.0
--IDE vs EvoScientist,-IDE,EvoScientist,Novelty,20,15,0,5,75.0,0.0,25.0,50.0
--IDE vs EvoScientist,-IDE,EvoScientist,Feasibility,20,11,0,9,55.0,0.0,45.0,10.0
--IDE vs EvoScientist,-IDE,EvoScientist,Relevance,20,9,8,3,45.0,40.0,15.0,30.0
+-IDE vs EvoScientist,-IDE,EvoScientist,Clarity,30,17,6,7,56.67,20.0,23.33,33.34
+-IDE vs EvoScientist,-IDE,EvoScientist,Novelty,30,21,1,8,70.0,3.33,26.67,43.33
+-IDE vs EvoScientist,-IDE,EvoScientist,Feasibility,30,16,0,14,53.33,0.0,46.67,6.66
+-IDE vs EvoScientist,-IDE,EvoScientist,Relevance,30,10,16,4,33.33,53.33,13.33,20.0

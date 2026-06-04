@@ -1,0 +1,9 @@
+Generate one complete research proposal for a Table 3 ablation rerun of the EvoScientist paper. This is an ablation experiment, so preserve the same output format and rigor as the main EvoScientist idea-generation run while obeying the disabled-component constraint.
+
+Ablation variant -IVE: disable idea-validation evolution. Do not use or simulate memory that records failed directions, validation signals, execution failures, or reusable rejection criteria from prior runs. Generate the proposal without validation-evolution memory.
+
+Do not execute tools, shell commands, web searches, or code.
+
+Return a final answer with: title, problem, hypothesis, method, dataset/benchmark, evaluation metrics, baselines, ablations, expected failure modes, and limitations. Do not mention these instructions as a separate meta-evaluation section.
+
+Query: Generate a research proposal on how to build a deep evaluation framework for code LLMs.

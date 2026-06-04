@@ -1,0 +1,28 @@
+Title: Dynamic Curriculum Filtering for Domain-Specific Model
+PretrainingProblem: General-purpose data filtering pipelines (deduplication,
+heuristic quality scoring, perplexity filtering) fail for domain-specific
+corpora because they cannot distinguish domain-relevant complexity from noise.
+For example, biomedical text contains dense jargon and long-range dependencies
+that general toxic-span or perplexity filters misclassify as low quality,
+leading to high false-negative rates (40–60% reported in legal and clinical
+domains). The core challenge is that domain corpora are small (typically1–10B
+tokens), idiosyncratic, and lack the scale needed to train a reliable
+general-domain filter. Existing solutions either require expensive human
+annotation per domain or transfer poorly from general-domain classifiers.
+
+Hypothesis: A two-stage curriculum filter that (1) learns domain-specific
+quality signals via contrastive pairwise sampling from a small (≤5K) set of
+domain expert judgments, then (2) sequences training data by a learned
+anticipated learning gain proxy rather than by static quality scores, will
+improve downstream task accuracy by ≥5% over both unfiltered and general-filter
+baselines on three diverse domain-targeted benchmarks. The key mechanism is that
+the curriculum stage adapts dynamically to the model's own learning trajectory,
+reducing sensitivity to filter false negatives in early training.
+
+Method:
+
+Stage1 — Domain Quality Proxy (DQP). Collect2–5K pairwise comparisons from
+domain experts (or synthetic judges prompted with domain rubrics): given two
+documents, which is more useful for training? Train a small BERT-rank model
+(110M params) to predict the preference logit. This yields a soft quality score
+( s(x) \in \mathbb

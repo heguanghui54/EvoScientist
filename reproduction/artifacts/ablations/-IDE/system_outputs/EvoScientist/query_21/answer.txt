@@ -1,0 +1,152 @@
+Research Proposal: Robust AI-Generated Content Detection via
+Adversarially-Calibrated Uncertainty Estimation (R-ACE)
+
+--------------------------------------------------------------------------------
+
+Title
+R-ACE: Reducing False Positives in AI-Generated Content Detection through
+Uncertainty-Aware Calibration and Adversarial Human Text
+
+--------------------------------------------------------------------------------
+
+Problem
+Current AI-generated text detectors (e.g., GPTZero, OpenAI Classifier,
+DetectGPT, Fast-DetectGPT) achieve high accuracy on held-out test sets, but
+suffer from asymmetric error rates: false positive rates (FPR) of5–30% on
+human-written text, especially text that is factual, formulaic, or edited by
+non-native speakers. This makes them unreliable for high-stakes deployment
+(academic integrity, content moderation, misinformation tracking). The core
+problem is that detectors are calibrated on machine vs. human distinctions from
+static benchmarks but fail under distribution shift toward the "hard decision
+boundary" — text that is highly structured, low-perplexity, or edited to mimic
+machine output.
+
+--------------------------------------------------------------------------------
+
+Hypothesis
+False positives arise because detectors conflate "low perplexity /
+high predictability" with "machine-origin." Human-written text with low
+token-level surprisal (technical writing, legal text, edited prose) occupies the
+same region of the detector's latent space as AI-generated text.
+
+Specifically: Training an AI-content detector with an explicit uncertainty head
+and calibrating it on a stratified mix of naturally-occurring human text and
+adversarially-perturbed human text (designed to mimic AI output patterns) will
+reduce FPR@95%TPR by at least40% relative to the current state of the art,
+without degrading true positive rate on genuine AI text.
+
+--------------------------------------------------------------------------------
+
+Method
+We propose a three-component architecture:
+
+1 Base feature extractor: A frozen pre-trained LLM (e.g., Llama-3-8B) that
+computes per-token log-likelihoods and hidden state representations — the
+same backbone used by Fast-DetectGPT.
+2 Uncertainty-aware detection head: Instead of a deterministic classifier,
+train a deep evidential regression head (Amini et al.,2020) that outputs both
+a machine-likelihood score and an epistemic uncertainty estimate. This
+enables the model to abstain or down-weight predictions on inputs far from
+the training distribution.
+3 Adversarial human text augmentation: Construct a calibration dataset by
+taking human-written text (from domains known to trigger false positives —
+see Dataset) and applying minimal edits that push it toward the machine-text
+region:
+
+• Reduce token-level perplexity via greedy truncation of rare tokens - Insert
+formulaic transition phrases common in LLM output - Apply "LLM-rewriting"
+(GPT-4o-mini instructed to preserve meaning but "make this text look more
+like it was written by an AI")
+
+This creates a controlled set of near-boundary negative examples.
+
+Inference procedure: Given input text, compute the machine-likelihood score with
+uncertainty interval. Flag as AI-generated only if (a) the score exceeds the
+decision threshold and (b) the epistemic uncertainty is below a second
+threshold. Otherwise, classify as "uncertain / likely human."
+
+--------------------------------------------------------------------------------
+
+Dataset / Benchmark| Split | Source | Size (docs) |
+
+|-------|--------|-------------| | Train: human | C4 (filtered), Wikipedia,
+legal contracts, arXiv papers |50,000 | | Train: AI | Machine-Generated Text
+(MGT) from GPT-4o, Llama-3, Claude-3.5 |50,000 | | Calibration: adversarial
+human | Human text from above + adversarial edits (Per-Method) |10,000 | | Test:
+standard | HC3, M4, RAID (held-out) — balanced human/AI |10,000 | | Test: hard
+FPR set | Human-written: non-native English essays (TOEFL corpus), PubMed
+abstracts, SEC filings, Wikipedia stubs |5,000 |
+
+Key benchmark addition: The "hard FPR set" deliberately collects domains where
+current detectors fail. We will release this as a public stress-test suite.
+
+--------------------------------------------------------------------------------
+
+Evaluation Metrics1. Primary: False Positive Rate at95% True Positive Rate
+(FPR@95%TPR) — measures false alarms at a fixed recall level2. Secondary: Area
+Under ROC Curve (AUROC), Area Under Precision-Recall Curve (AUPRC)
+
+3 Calibration: Expected Calibration Error (ECE) on the machine-likelihood
+score, separately computed for human and AI subsets4. Abstention quality:
+Fraction of human text flagged as "uncertain" (target: ≤5% on standard test,
+≤15% on hard FPR set)
+4 Robustness: Performance under domain shift (evaluate on held-out domains not
+seen in training)
+
+--------------------------------------------------------------------------------
+
+Baselines| Baseline | Key Idea |
+
+|----------|----------| | DetectGPT (Mitchell et al.,2023) | Curvature-based
+detection via perturbation | | Fast-DetectGPT (Bao et al.,2024) | Conditional
+probability curvature (faster variant) | | Ghostbuster (Verma et al.,2024) |
+Feature-based classifier on perturbed texts | | Binoculars (Hans et al.,2024) |
+Cross-model perplexity ratio | | OpenAI AI Classifier (2023) | Fine-tuned
+RoBERTa (retrospective; API-based) | | DeepEvidential baseline | Same
+architecture as ours without adversarial human augmentation |
+
+All baselines are re-run on our evaluation suite with their published
+hyperparameters.
+
+--------------------------------------------------------------------------------
+
+Ablations| Ablation | What it tests |
+
+|----------|---------------| | No uncertainty head | Deterministic classifier
+only → value of the evidential component | | No adversarial augmentation | Train
+only on natural human/AI splits → value of hard negatives | | Perplexity-only
+threshold | Replace learned classifier with a p(x) cutoff → value of learned
+features | | Single-threshold inference | Remove the uncertainty-based
+abstention rule → value of two-threshold inference | | Different base LLM | Swap
+Llama-3-8B for GPT-NeoX-20B → sensitivity to backbone |
+
+Each ablation is evaluated on the same metrics above.
+
+--------------------------------------------------------------------------------
+
+Expected Failure Modes1. Domain mismatch still dominates: The hard FPR set may
+still be too broad. If adversarial augmentation only covers specific failure
+modes, FPR may improve on the calibration domains but not generalize to unseen
+low-perplexity domains (e.g., poetry, legal boilerplate from a jurisdiction not
+in training).
+
+2 Uncertainty head over-abstains: The epistemic uncertainty threshold may be
+too conservative, flagging many genuine AI texts as "uncertain" and reducing
+the usable detection rate. This creates a precision/coverage tradeoff that
+deployment may reject.
+3 Adversarial edits create detectable artifacts: The procedure for generating
+adversarial human text may introduce n-gram or stylistic artifacts
+(repetition patterns, specific transition phrases) that the classifier learns
+as spurious features, causing it to fail on unmodified human text from the
+same domains.
+4 Calibration gap: Evidential regression on text may produce poorly calibrated
+uncertainties due to the high-dimensional, non-i.i.d. nature of the input
+distribution. The uncertainty estimates may not reflect true epistemic
+uncertainty, just variations in training density.
+5 Computational cost: The two-threshold inference and deep evidential head add
+~2× inference overhead vs. Fast-DetectGPT, which may be prohibitive for
+real-time detection at scale.
+6 Adversarial human text boundaries are unclear: There is no principled way to
+define "how much editing makes human text look like AI text." The boundary is
+inherently continuous, and the augmentation procedure may be hard to
+reproduce across labs.

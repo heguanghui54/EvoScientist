@@ -1,0 +1,170 @@
+Research Proposal: Adaptive Difficulty Filtering for Domain-Specific Language
+Model Pretraining## Title
+AdaFilter: Adaptive Difficulty-Aware Data Filtering for
+Domain-Specific Language Model Pretraining
+
+--------------------------------------------------------------------------------
+
+Problem
+Domain-specific language models (e.g., BioBERT, CodeBERT, FinBERT,
+Legal-BERT) are typically pretrained from scratch or continually trained on a
+curated corpus of in-domain text. A critical but understudied bottleneck is how
+to filter which documents from the domain corpus are actually useful for
+downstream performance. Current practice relies on heuristics (perplexity
+thresholds, hand-crafted rules, or simple length/n-gram filters) that are noisy,
+domain-agnostic, and oblivious to the model's current state during training. The
+result is wasted compute on low-quality or redundant documents and, in some
+cases, performance degradation from noisy data.
+
+Concrete gap: No existing method jointly models (a) document quality, (b)
+difficulty relative to the model's evolving capabilities, and (c) domain
+relevance in a unified, trainable filtering pipeline. Prior work treats these
+dimensions separately or uses static filtering that does not adapt during
+training.
+
+--------------------------------------------------------------------------------
+
+Hypothesis
+A trainable, difficulty-aware filtering module that scores documents
+along three axes — domain relevance, linguistic quality, and current-model
+difficulty — and dynamically selects a curriculum of documents during
+pretraining will produce a domain-specific LM with better perplexity and
+downstream task performance than static heuristic filtering, while reducing
+total training tokens by ≥20%.
+
+Null hypothesis: Adaptive difficulty filtering yields no statistically
+significant improvement in downstream performance over static heuristic
+filtering (perplexity, F1, or accuracy) when matched for total compute.
+
+--------------------------------------------------------------------------------
+
+Method
+We propose AdaFilter, a three-stage filtering framework integrated into
+the training loop.
+
+Stage1: Relevance Scoring (one-time preprocessing)
+
+Use a small, efficient classifier (e.g., a FastText or MiniLM-based model) to
+score each document against a set of domain-defining seed keywords or exemplars.
+This is a lightweight binary classifier trained on a small hand-labeled set (~1K
+documents per domain). Documents below a relevance threshold are discarded
+before training begins.
+
+Stage2: Quality Scoring (one-time preprocessing)
+
+For surviving documents, compute three quality signals:
+
+• Perplexity under a small reference LM (e.g., a125M-parameter general-domain
+model) — anomalously high PPL flags gibberish.
+• Repetition ratio — fraction of repeated n-grams (n=8).
+• Information density — ratio of unique tokens to total tokens. Combine into a
+scalar quality score via a learned linear weighting (trained on a held-out
+quality-labeled set).
+
+Stage3: Adaptive Difficulty Curricula (online, per-epoch)
+
+During training, maintain a difficulty estimator — a small MLP that takes the
+model's current token-level embeddings for the first K tokens of a document and
+predicts a difficulty score. Documents are bucketed into Easy/Medium/Hard bins.
+The training sampler draws:
+
+• **Epoch1-2:**80% Easy,15% Medium,5% Hard (warm-up)
+• **Epoch3-5:**40% Easy,40% Medium,20% Hard- **Epoch6+:**10% Easy,40%
+Medium,50% HardThe difficulty estimator is updated every N steps to track the
+model's evolving state.
+
+Training Protocol- Continual pretraining (MLM objective) starting from a
+general-domain checkpoint (e.g., RoBERTa-base).
+
+• Compare against: (a) unfiltered data, (b) static perplexity-filtered data,
+(c) random subset of equal size, (d) random subset of equal compute.
+• Each condition is run with3 random seeds for statistical reliability.
+• Downstream evaluation every5K steps using a held-out set of domain tasks.
+
+--------------------------------------------------------------------------------
+
+Dataset / Benchmark
+We propose two domains for generalizability:
+
+1 Biomedical: CORD-19 + PubMed abstracts (~2M documents). Downstream: BioASQ
+(QA), ChemProt (RE), PubMedQA.
+2 Legal: Pile-of-Law subset + EURLex (~1M documents). Downstream: CaseHOLD
+(NLI), LexGLUE benchmark.
+
+Each domain provides a clean test of whether domain-specific filtering matters
+beyond generic heuristics.
+
+--------------------------------------------------------------------------------
+
+Evaluation Metrics| Category | Metric | Target |
+
+|---|---|---| | Language modeling | Validation perplexity | Primary | |
+Downstream tasks | Macro F1 / Accuracy (domain-specific benchmarks) | Primary |
+| Efficiency | Training tokens to match baseline best performance | Secondary |
+| Curriculum effect | Per-bin difficulty distribution over epochs | Analysis | |
+Ablation | Delta from removing each AdaFilter component | Diagnostic |
+
+All metrics reported with95% confidence intervals across3 seeds.
+
+--------------------------------------------------------------------------------
+
+Baselines| Baseline | Description |
+
+|---|---| | No Filter | All domain documents, no curation | | PPL Threshold |
+Documents with PPL < median under general-domain LM | | Heuristic | Length +
+n-gram repetition filter (common practice) | | Random Subset (size-matched) |
+Same number of documents as AdaFilter, randomly sampled | | Random Subset
+(compute-matched) | Same number of training steps as AdaFilter, randomly sampled
+| | DSIR | Importance resampling using n-gram hashing (Xie et al.,2023) | |
+FastText Relevance Only | AdaFilter Stage1 alone |
+
+--------------------------------------------------------------------------------
+
+Ablations1. No difficulty curriculum — Stage3 replaced with uniform sampling
+from filtered pool → isolates curriculum contribution.
+
+2 No quality scoring — Skip Stage2; only relevance + difficulty → isolates
+quality signal.
+3 Static buckets — Difficulty bins fixed at epoch1, never updated → isolates
+benefit of adaptive difficulty.
+4 Single domain — Run only on biomedical → tests domain transfer of findings.
+5 Swap reference LM — Use a350M instead of125M reference model for perplexity →
+tests sensitivity to reference size.
+6 Score-to-weight variant — Instead of bucketing, weight documents by soft
+difficulty score during loss → tests granularity benefit.
+
+--------------------------------------------------------------------------------
+
+Expected Failure Modes| Failure Mode | Mitigation |
+
+|---|---| | Difficulty estimator collapses — becomes constant after a few epochs
+| Add entropy regularization to bin assignment; monitor bin balance | |
+Relevance classifier is the sole driver of gains (Stages2+3 add nothing) | If
+ablation1 shows no degradation, the proposal still contributes an automated
+relevance filter, which is a publishable result; reframe contribution around
+end-to-end filtering | | Perplexity improves but downstream does not | Switch
+primary evaluation to downstream tasks; analyze whether the LM is overfitting to
+domain distribution at the expense of generalization | | High variance across
+seeds | Increase to5 seeds; use paired bootstrap for significance testing | |
+Adaptive curriculum underperforms static curriculum | Report honestly as
+negative result with analysis of why — possibly because the domain corpus is too
+homogeneous for curricula to matter | | Computational overhead of online
+difficulty estimation outweighs token savings | Measure wall-clock time per1K
+steps; if overhead >5%, treat as constraint and propose a cheaper proxy (e.g.,
+loss on first128 tokens) | | Quality signals are highly correlated (redundant) |
+Use PCA or mutual-information analysis on quality features; if redundancy is
+high, the linear weighting in Stage2 will naturally down-weight correlated
+features |
+
+--------------------------------------------------------------------------------
+
+Success CriteriaThis proposal is considered successful if both conditions hold:
+
+1 AdaFilter achieves statistically significant (p <0.05) improvement over all
+baselines on at least one primary metric (perplexity or downstream F1) in
+both domains.
+2 AdaFilter uses ≤80% of the training tokens required by the best baseline to
+reach the same downstream performance.
+
+If only one domain shows gains, the contribution is domain-specific but still
+publishable with the appropriate qualification.

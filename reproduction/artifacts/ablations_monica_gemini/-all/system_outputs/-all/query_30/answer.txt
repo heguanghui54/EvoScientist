@@ -1,0 +1,64 @@
+A Non-Evolving Single-Run Research Proposal## General-Purpose Audio Foundation
+             Models via Multi-Objective Self-Supervised Learning---
+
+TitleUniAudio-Base: A Scalable Audio Foundation Model Trained via Multi-Task
+Self-Supervision Across Speech, Music, and Environmental Sound
+
+--------------------------------------------------------------------------------
+
+ProblemCurrent audio models are fragmented by domain. Speech systems (Whisper,
+Hubert, WavLM) are pre-trained almost exclusively on spoken data and generalize
+poorly to music or environmental audio. Music models (Jukebox, MERT) are trained
+on music corpora and lack phoneme-level representations. Environmental-sound
+models (BEATs, AudioMAE) capture broad acoustic events but fail on fine-grained
+speech or musical pitch tasks. Building a single foundation model that works
+across these three regimes remains unsolved for two structural reasons: (a)
+heterogeneous data formats—sample rates differ (8 kHz–48 kHz), channel counts
+vary (mono vs. stereo), and temporal resolutions required by downstream tasks
+span three orders of magnitude (phonemes ~10 ms, musical notes ~100 ms, sound
+events ~1 s); and (b) conflicting objectives—frame-level classification,
+sequence-level contrastive learning, and generative reconstruction compete under
+a shared trunk. Existing work avoids this by specializing; we treat it as the
+central problem.
+
+--------------------------------------------------------------------------------
+
+HypothesisA transformer trained with a multi-task self-supervised objective that
+jointly optimizes (1) masked acoustic reconstruction (HuBERT-style), (2)
+cross-modal contrastive alignment (text–audio, CLAP-style), and (3) a novel
+temporal-resolution routing head that dynamically pools representations to match
+task granularity, will match or exceed domain-specific baselines on speech
+recognition, music instrument classification, and environmental sound event
+detection simultaneously, without requiring per-domain fine-tuning of the trunk.
+
+The key claim is that the routing head resolves the temporal-resolution
+conflict, and that multi-task pre-training on a carefully balanced corpus of
+speech, music, and environmental audio produces a shared representation space
+that is richer than any single-domain objective can provide.
+
+--------------------------------------------------------------------------------
+
+MethodArchitecture. A24-layer Conformer encoder (12 attention heads,768-dim,3072
+FFN) with a learned relative positional encoding, operating on80-channel log-mel
+spectrograms at three input resolutions (8 kHz,16 kHz,32 kHz). Inputs at
+mismatched sample rates are resampled to the nearest supported rate with
+antialiasing filters; the model learns a rate embedding that is added to each
+frame.
+
+Three pre-training heads, one shared trunk:
+
+ 1 **Masked Acoustic Reconstruction (MAR).**30% of time–frequency patches are
+   masked; the model predicts the target cluster IDs derived from k-means on
+   intermediate layer representations of a running teacher (HuBERT-style,
+   iterative2-gram–4-gram clustering). Loss: cross-entropy over500 clusters.
+   Applied to all three domains.
+ 2 Cross-Modal Contrastive Alignment (CMCA). For speech and music data with
+   paired text (ASR transcripts, music caption tags), an auxiliary text encoder
+   (distilroBERTa) projects descriptions into a shared256-dim space. A
+   bidirectional InfoNCE loss pulls matching audio–text pairs together and
+   pushes mismatched pairs apart. Temperature τ =0.07. No text for environmental
+   sound (where captions are rare), so this head fires only on a subset of
+   batches.
+ 3 Temporal-Resolution Routing Head (TRRH). A lightweight gating network
+   (2-layer MLP,64-dim hidden) that takes the pooled per-frame output and
+   predicts a pooling kernel width

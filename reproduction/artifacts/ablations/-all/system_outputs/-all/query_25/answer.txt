@@ -1,0 +1,128 @@
+Table3 Ablation (-all): Non-Evolving Single-Run Research Proposal##
+   TitleMulti-Source Context Integration for Complex Reasoning: A Structured
+                            Evidence-Graph Approach
+
+ProblemLarge language models struggle with complex reasoning tasks where the
+answer depends on synthesizing information distributed across multiple
+independent sources. In tasks like multi-hop QA, contradiction detection, and
+evidence-based decision-making, models exhibit two failure modes: source
+anchoring (over-relying on a single document while ignoring conflicting or
+complementary information) and context dilution (flattening all sources into a
+bag-of-tokens, losing provenance). Existing approaches — retrieval-augmented
+generation, chain-of-thought prompting, and graph-based reasoning — each address
+one facet but fail to jointly model source identity, inter-source agreement and
+conflict, and the reasoning path that connects claims across documents.
+
+HypothesisExplicitly constructing a structured evidence graph — where each fact
+node is tagged with its source document, edges denote support or contradiction
+relations computed by a lightweight fact-level alignment model, and reasoning
+proceeds via constrained path search over this graph — will yield statistically
+significant improvements in multi-source reasoning accuracy over both flat
+retrieval-augmented and single-pass chain-of-thought baselines, especially when
+the correct answer requires integrating at least three distinct sources.
+
+MethodThe proposed pipeline has three stages:
+
+ 1 Evidence Graph Construction. Given a query and a set of candidate passages
+   (retrieved by a standard retriever, frozen for fairness), extract atomic fact
+   statements from each passage using a small fine-tuned fact-triplet extractor
+   (based on DeBERTa-v3). For each pair of facts from different sources, compute
+   a relation label (support, contradict, unrelated) using a cross-encoder
+   classifier. Nodes carry their source document ID. The result is a
+   heterogeneous graph with fact nodes, source nodes, and relation edges.
+ 2 Reasoning via Constrained Path Search. On the evidence graph, perform beam
+   search over paths that start from the query, traverse at least one fact from
+   each of (k \geq2) distinct sources, and terminate at a candidate answer.
+   Paths are scored by a learned coherence function that rewards (a) internal
+   logical consistency, (b) coverage of distinct sources, and (c) minimal
+   reliance on contradiction edges. The top-3 paths are aggregated via a
+   lightweight pointer network to produce the final answer.
+ 3 Answer Verification. A separate verifier module (a small T5-3B fine-tuned on
+   synthetic multi-source entailment data) checks whether the aggregated answer
+   is entailed by the union of facts on the selected path. If not, the system
+   falls back to the highest-scoring path's answer.
+
+Models are kept small (DeBERTa-v3-base, T5-3B) to avoid conflating scale with
+method efficacy.
+
+Dataset / BenchmarkMultiSourceQA — a constructed benchmark derived from HotpotQA
+(multi-hop) and FEVER (claim verification) by sampling questions whose
+ground-truth evidence spans3–5 Wikipedia documents. To test genuine multi-source
+reasoning, we filter out questions solvable with any single document. Final
+size:2,500 queries (1,500 train,500 dev,500 test), each with10 retrieved
+passages (5 relevant,5 distracting). Source identity is preserved.
+
+We also evaluate on the MuSiQue (Multi-Source Question) dataset as an
+out-of-domain generalization test (2,000 questions, no explicit source
+supervision).
+
+Evaluation Metrics- Primary: Exact-match accuracy on the test set.
+
+ • Secondary: F1 (token-level overlap), source-coverage rate (fraction of
+   correct answers where the model used facts from ≥3 distinct sources),
+   contradiction-handling accuracy (on a held-out subset of200 queries with
+   known inter-source contradictions).
+ • Robustness: Performance under increasing numbers of distracting passages
+   (10,15,20 retrieved docs).
+
+Baselines1. Flat RAG — standard retrieve-then-read with a single-pass T5-3B
+reader (no explicit multi-source structure).
+
+ 2 Chain-of-Thought RAG — retrieved passages concatenated with a "think step by
+   step" prompt, decoded with the same T5-3B.
+ 3 GraphRAG (no source tagging) — same evidence graph pipeline but source IDs
+   are stripped from nodes (tests whether source identity matters beyond graph
+   structure).
+ 4 Oracle retrieval — upper bound: only the gold evidence passages are provided
+   (no distractors), same pipeline.
+
+AblationsAll ablations are performed on the dev set,3 seeds each, with95%
+confidence intervals:
+
+ 1 -fact-graph — replace the structured graph with a flat concatenation of
+   extracted facts, scored by TF-IDF similarity (no relation edges, no path
+   search). Isolates the contribution of graph structure.
+ 2 -source-tagging — node features exclude source ID. Tests whether provenance
+   information drives the improvement.
+ 3 -relation-edge — the relation classifier is replaced with a uniform
+   "unrelated" label for all cross-source pairs (no support/contradict edges).
+   Tests the contribution of explicit relation modeling.
+ 4 -verifier — skip the final entailment verification step, directly output the
+   aggregated path answer.
+ 5 +random-sources — shuffle the mapping between fact nodes and source
+   documents. A sanity-check ablation: if source ID matters, this should degrade
+   performance.
+
+Expected Failure Modes1. Fact extraction noise. If the fact-triplet extractor
+produces too many spurious or incomplete facts, the graph becomes dense with
+low-precision edges. Expected signal: extraction precision <60% on the dev set →
+the graph-based approach may not outperform flat RAG.
+
+ 2 Beam search collapse. With many unrelated facts, beam search may converge to
+   locally coherent but globally wrong paths. Expected indicator: the top-3
+   aggregation step selects the same answer as the top-1 path >90% of the time →
+   the path diversity is insufficient.
+ 3 Distractor dominance. As the number of distracting passages increases
+   beyond15, precision in the relation classifier drops, causing contradiction
+   edges to be missed. The method may revert to bag-of-tokens behavior.
+ 4 OOD transfer gap. On MuSiQue, where source boundaries are implicit, the
+   source-tagging component may not transfer. Expected degradation of8–12 points
+   absolute vs. in-domain performance.
+
+Limitations- The pipeline introduces multiple trainable components (fact
+extraction, relation classification, path coherence scoring, verifier), each
+requiring its own labeled data. End-to-end training is not feasible with current
+data scales.
+
+ • The beam search over the evidence graph has worst-case complexity (O(B \cdot
+   |F|^2)) per query, where (|F|) is the number of fact nodes. For more than20
+   retrieved passages, inference latency may exceed10 seconds per query on a
+   single GPU.
+ • MultiSourceQA is built from existing QA datasets and inherits their
+   annotation biases (e.g., Wikipedia-centric, factoid-heavy). The method's
+   effectiveness on open-domain, narrative, or multi-modal sources is untested.
+ • The ablation is a single pass: without cross-run memory evolution, there is
+   no mechanism to accumulate findings about which component fails at which data
+   density, to transfer that insight to future experiments, or to adapt the
+   pipeline architecture across runs. The proposal is frozen at its current
+   design and cannot self-correct.

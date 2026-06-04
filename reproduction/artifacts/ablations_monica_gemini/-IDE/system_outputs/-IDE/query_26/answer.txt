@@ -1,0 +1,186 @@
+Research Proposal: Adaptive Domain-Aware Data Filtering for Domain-Specific
+Models## TitleAdaFilter: Adaptive, Loss-Aware Data Filtering for Domain-Specific
+       Language Model Pretraining## ProblemPretraining data curation for
+ domain-specific language models (e.g., biomedical, legal, code, or scientific
+  LLMs) faces a fundamental tension: generic filtering heuristics (perplexity
+ thresholds, exact deduplication, language-ID filters, blocklist-based removal)
+  are designed for general-domain web text and systematically discard valuable
+domain-specific content. For example, high-perplexity biomedical text containing
+    rare enzyme names or dense chemical notation is often classified as "low
+quality" by a general-domain perplexity filter and removed, starving the domain
+  model of the very data it needs most. Conversely, generic filters may retain
+              generic web text that dilutes domain specialization.
+
+Existing approaches fall into two camps, each with limitations:
+
+ 1 Hand-crafted domain rules (e.g., regex patterns for chemical formulas,
+   citation-stripping, document-type classifiers): expensive to build per
+   domain, brittle across sub-domains, and require domain experts.
+ 2 Domain-adaptive perplexity filtering (train a small reference model on
+   in-domain seed data, then filter by perplexity under that model): improves
+   domain recall but requires high-quality seed data and a separate training
+   run; also collapses diversity by aggressively removing low-perplexity "easy"
+   text that may still be informative.
+
+The core problem is filtering without a generalizable mechanism for
+characterizing which data characteristics are valuable for a given target
+domain. There is no unified framework that jointly optimizes for domain
+relevance, data diversity, and downstream task utility without per-domain
+engineering.
+
+HypothesisWe hypothesize that an adaptive filtering framework — combining (1) a
+lightweight domain-embedding model that projects documents into a
+domain-relevance space, (2) a loss-aware sampling score that measures how much a
+candidate document would reduce expected loss on a held-out domain validation
+set, and (3) a diversity-aware selection mechanism that prevents collapse to a
+narrow sub-region of the domain — will consistently outperform both generic
+filtering and single-criterion domain filtering across multiple specialized
+domains.
+
+Specifically, we expect that:
+
+ • The loss-aware component provides a training-signal-driven filter that
+   generalizes across domains without hand-crafted rules.
+ • The diversity component prevents over-concentration on repetitive document
+   archetypes (e.g., only abstracts, only experimental methods sections).
+ • The combination yields higher downstream task accuracy (+3–8% absolute)
+   compared to perplexity-only or rule-only baselines, with comparable or lower
+   total training FLOPs due to reduced wasted tokens.
+
+Method: AdaFilterAdaFilter is a three-stage pipeline operating on a raw
+web-scale corpus before domain-specific pretraining.
+
+Stage1: Domain Embedding ModelTrain a small (125M parameter) bidirectional
+encoder on a multi-domain corpus (general web +5 specialized domains) with a
+contrastive objective: the model learns to embed documents such that in-domain
+documents cluster together, while out-of-domain documents are pushed apart.
+Training uses a small set of known in-domain exemplars (200 documents per
+domain, hand-curated) and a large unlabeled pool. This provides a domain
+relevance score for any candidate document: the cosine similarity between its
+embedding and the mean embedding of the domain exemplars.
+
+Stage2: Loss-Aware Importance ScoringFor each target domain, train a tiny
+reference model (70M parameters) on the held-out domain validation set (1,000
+documents, hand-curated for quality and coverage). This model is not used for
+filtering by perplexity. Instead, for each candidate document d in the raw
+corpus, we compute:
+
+Expected Loss Reduction (ELR) = L(val; θ₀) − L(val; θ₀ + η·∇L(d))
+
+where θ₀ is the reference model's parameters, L(val; θ₀) is the loss on the
+validation set, and the second term approximates the validation loss after a
+single gradient step on document d (computed via the influence function
+approximation or a single-step fine-tuning proxy). Documents with higher ELR are
+those whose gradient direction most reduces validation loss — i.e., they provide
+the most useful learning signal.
+
+Since exact influence functions are expensive at corpus scale, we use a
+tractable approximation: for each document, we compute the cosine similarity
+between its gradient (w.r.t. the reference model) and the aggregate gradient of
+the validation set. This requires one forward-backward pass per document through
+a70M model — feasible with moderate parallelization.
+
+Stage3: Diversity-Aware SelectionApply a greedy, diversity-aware selection over
+documents ranked by Stage2 scores:
+
+ 1 Initialize the selected set with the top-1 document by ELR.
+ 2 For each subsequent candidate, compute its minimum embedding cosine
+   similarity to already-selected documents (using the Stage1 embeddings).
+ 3 Score = ELR × (1 − λ · max_similarity), where λ controls the diversity
+   penalty.
+ 4 Add the highest-scoring document to the selected set.
+
+This prevents the filter from selecting10,000 nearly identical abstracts while
+discarding methods sections or experimental results paragraphs that carry
+complementary signal.
+
+Final Data MixFor a given domain's pretraining run, the final data is:
+
+-70% AdaFilter-selected domain data (from a raw domain-candidate pool) -20%
+general web data (standard C4-quality filtered) -10% domain validation set
+documents (to anchor the domain distribution)
+
+Dataset / BenchmarkWe construct a multi-domain evaluation benchmark covering
+five specialized domains:
+
+
+ Domain             Raw Corpus Source   Validation Set      Downstream Tasks
+ Biomedical         PubMed Central      1K curated          BIOSSES (text
+                    subset (2M docs)    full-text papers    similarity),
+                                        spanning20          PubMedQA, BioNER
+                                        sub-disciplines     (BC5CDR)
+ Legal              Pile-of-Law (US     1K filings          CaseHOLD (citation
+                    federal + state     spanning15          entailment),
+                    cases,1.5M docs)    practice areas      Legal-BERT NER
+                                                            benchmark
+ Code               The Stack v2        1K repositories     HumanEval, MBPP,
+                    (Python subset,3M   from50 diverse      CodeXGLUE (code
+                    files)              GitHub projects     search)
+ Scientific Papers  S2ORC               1K papers from20    SciFact (claim
+                    (full-text,2M       conferences/journ…  verification),
+                    papers)                                 MultiNERD-scientif…
+ Financial          EDGAR filings +     1K filings/reports  FiQA SA
+                    financial news (1M  from100 companies   (sentiment), FinQA
+                    docs)                                   (QA), NER on
+                                                            financial documents
+
+
+Each domain also includes a held-out test set (500 documents) for final
+evaluation — the validation set is only used during filtering, never for final
+evaluation.
+
+Evaluation MetricsPrimary metric (filtering quality):
+
+ • Downstream task performance: average accuracy / F1 across each domain's task
+   suite after125M-parameter model pretraining on the filtered corpus. All
+   models trained for100K steps with identical hyperparameters.
+ • Data efficiency: downstream performance as a function of tokens consumed
+   (area under the learning curve).
+
+Secondary metrics (filter characteristics):
+
+ • Domain coverage: fraction of unique document types (by section heading,
+   document category, or file type) retained by filter vs. original corpus.
+ • Diversity: average pairwise embedding distance (Stage1) among selected
+   documents.
+ • Filter compression rate: fraction of raw corpus retained.
+ • Stability: variance in downstream performance across three data-selection
+   seeds.
+
+BaselinesWe compare against five baselines:
+
+
+ Baseline                     Description
+ No filtering                 Use all available raw domain data (up to10B
+                              tokens cap)
+ Perplexity filter (general)  Retain documents with CCNet perplexity < median
+                              (general-domain GPT-2)
+ Perplexity filter (domain)   Train a125M model on domain validation set,
+                              retain docs where perplexity < threshold
+ Classifier-based             Train a binary classifier (RoBERTa-base) on
+                              domain vs. general web, retain top-K by domain
+                              probability
+ Semantic deduplication       MinHash + LSH (sim=0.85 threshold), no quality
+                              filtering
+
+
+All baselines use the same Stage3 diversity penalty (λ=0.3) when applicable, and
+the same final data mix ratio (70/20/10) for fair comparison.
+
+AblationsWe conduct ablations within AdaFilter to isolate each component's
+contribution:
+
+
+ Ablation        Change                          Expected Impact
+ −ELR            Replace loss-aware scoring      Drop in downstream accuracy,
+                 with perplexity (domain model)  especially on domains with
+                                                 narrow validation sets
+ −Embedding      Replace domain embedding model  Reduced domain coverage
+                 with TF-IDF vectors for         (TF-IDF misses semantic
+                 diversity scoring               similarity)
+ −Diversity      Set λ=0 (greedy by ELR only)    Lower diversity score,
+                                                 potential overfitting to
+                                                 narrow document archetype
+ −ELR−Embedding  Use random selection from       Significant drop across all
+                 top-K by domain classifier      metrics
+ λ sweep         λ ∈

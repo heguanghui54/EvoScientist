@@ -1,0 +1,119 @@
+A Proposal for Domain-Specific Data Filtering via Curriculum-Aware Selection##
+  TitleCurriculum-Aware Data Filtering for Domain-Specific Language Models: A
+                      Multi-Criterion Selection Framework
+
+ProblemDomain-specific language models (legal, medical, financial, scientific)
+require training data that is both domain-relevant and linguistically diverse.
+Current filtering pipelines rely on heuristic rules (keyword matching,
+perplexity thresholds) or single-criterion classifiers (domain classifier score
+>0.9). These approaches suffer from two problems: (1) they discard hard but
+valuable examples that the model needs to learn from late in training, and (2)
+they retain easy, repetitive examples that saturate early and contribute no
+further signal. The result is models that plateau early and generalize poorly to
+the tail of the domain distribution.
+
+HypothesisA curriculum-aware data filter — one that adapts the retained subset
+to the model's current learning state across multiple quality axes (domain
+relevance, lexical diversity, information density, and difficulty) — yields
+higher downstream task performance than any single-criterion static filter,
+because the optimal filtering policy is non-stationary over the course of
+training.
+
+MethodWe propose CurriFilter, a three-stage pipeline:
+
+ 1 Multi-criterion scoring. Each candidate document receives four scores:
+
+ • Domain relevance: cosine similarity to a domain centroid computed from a
+   small seed corpus of expert-curated domain documents.
+ • Lexical diversity: type-token ratio and moving-average surprisal from a small
+   reference LM.
+ • Information density: TF-IDF entropy normalized by document length (penalizes
+   boilerplate).
+ • Difficulty: per-token cross-entropy under a small general-domain LM (higher =
+   harder, i.e., more to learn).
+
+ 2 Curriculum-stage assignment. Documents are bucketed into three stages—early
+   (high relevance, low difficulty), middle (balanced), late (high difficulty,
+   high information density)—via k-means on the four-dimensional score vector.
+ 3 Adaptive sampling. At each training step, the sampling distribution over
+   stages shifts from early-dominated to late-dominated using a linear decay
+   schedule controlled by training progress ratio. Within each stage, documents
+   are sampled proportional to their information density score.
+
+Dataset / Benchmark- Pre-training corpus: A50 GB slice of the Pile's PubMed
+Central subset (biomedical domain) as the candidate pool.
+
+ • Downstream evaluation: - PubMedQA (QA)
+ • BioASQ Task B (multi-label classification)
+ • CHEMPROT (relation extraction)
+ • A held-out50-document perplexity set from recent PubMed articles (temporal
+   generalization)
+
+Evaluation Metrics- Primary: Average downstream F1 across the three supervised
+tasks.
+
+ • Secondary: Held-out perplexity (domain-adapted), training efficiency
+   (perplexity per token seen), and filter retention rate (fraction of corpus
+   retained vs. performance).
+ • Statistical rigor:3 seeds per condition;95% confidence intervals reported via
+   bootstrap; Bonferroni correction applied when comparing across the four
+   ablations.
+
+Baselines1. No filter — train on the full50 GB corpus.
+
+ 2 Domain classifier — keep documents scoring above0.9 from a BERT-based PubMed
+   classifier.
+ 3 Perplexity threshold — keep documents below the80th-percentile perplexity
+   under GPT-2.
+ 4 D4 (recent work) — the diversity-aware filtering baseline from Xie et al.
+   (2023), which selects for maximal n-gram coverage.
+
+AblationsThe following ablations isolate each component's contribution:
+
+
+ Ablation      Setting                         Expected delta from full model
+ –Curriculum   Uniform sampling across stages  Small degradation on hard tasks
+               (no curriculum)
+ –Diversity    Drop lexical diversity score    Higher perplexity, retained set
+                                               is repetitive
+ –Difficulty   Drop difficulty score, stage    Worse late-stage learning,
+               assignment uses3 axes           plateau
+ –Static       Single fixed stage assignment   Worse than full, better than no
+               (no schedule)                   filter
+ Random-stage  Random assignment to stages     Large degradation, near-baseline
+               regardless of scores
+
+
+Expected Failure Modes- Score calibration drift: As training progresses, model
+perplexity on all documents drops, potentially compressing the difficulty score
+range and reducing stage separability. The k-means bucketing may need periodic
+re-fit.
+
+ • Domain centroid bias: The seed corpus may not cover the full domain, causing
+   the relevance score to reject legitimate sub-topics. The centroid could be
+   updated iteratively (future work).
+ • Computation overhead: Four scoring passes over50 GB adds significant
+   pre-processing cost. If this exceeds reasonable budgets, a learned
+   approximator (e.g., a small MLP) could be distilled from scores on a5 GB
+   sample.
+ • Curriculum schedule sensitivity: The linear decay schedule is a strong
+   assumption. If optimal stage switching is non-linear (e.g., sudden shift at a
+   critical loss threshold), performance will degrade and a learned scheduler
+   would be required.
+
+Limitations- The four criteria are a reasonable but not exhaustive set. Semantic
+coherence, factuality, and instruction-following suitability are not captured.
+Expanding to6–8 criteria could improve coverage but adds engineering complexity.
+
+ • The curriculum schedule is fixed a priori. Dynamic scheduling driven by
+   validation loss plateaus is likely superior but introduces a
+   meta-hyperparameter (patience threshold) that interacts with the filter.
+ • Generalizability beyond the biomedical domain is untested. Legal or code
+   domains may exhibit different optimal curricula (e.g., code may benefit from
+   difficulty-first rather than easy-first).
+ • The approach assumes token-level cross-entropy is a reasonable proxy for
+   example difficulty. For autoregressive LMs this holds, but for encoder-only
+   models or contrastive objectives the definition of difficulty is less clear.
+ • Scaling: the four-score pipeline may not trivially extend to trillion-token
+   web-scale corpora without approximate nearest-neighbor or reservoir-sampling
+   shortcuts, which could introduce their own biases.

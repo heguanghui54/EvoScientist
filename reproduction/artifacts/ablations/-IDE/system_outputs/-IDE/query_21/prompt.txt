@@ -1,0 +1,9 @@
+Generate one complete research proposal for a Table 3 ablation rerun of the EvoScientist paper. This is an ablation experiment, so preserve the same output format and rigor as the main EvoScientist idea-generation run while obeying the disabled-component constraint.
+
+Ablation variant -IDE: disable idea-direction evolution. Do not use or simulate memory that distills reusable promising research directions from prior top-ranked ideas. Generate the proposal from the current query and ordinary reasoning only.
+
+Do not execute tools, shell commands, web searches, or code.
+
+Return a final answer with: title, problem, hypothesis, method, dataset/benchmark, evaluation metrics, baselines, ablations, expected failure modes, and limitations. Do not mention these instructions as a separate meta-evaluation section.
+
+Query: Generate a research proposal on how to address false positives in AI-generated content detection.

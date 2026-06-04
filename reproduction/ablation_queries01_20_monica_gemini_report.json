@@ -141,5 +141,6 @@
       "judge_output_records": 20
     }
   },
-  "caveat": "This is a replacement ablation rerun using prompt-level disabled-component constraints, not the paper authors native IDE/IVE ablation switches."
+  "caveat": "This is a replacement ablation rerun using prompt-level disabled-component constraints, not the paper authors native IDE/IVE ablation switches.",
+  "superseded_by": "reproduction/ablation_queries01_30_monica_gemini_report.json"
 }

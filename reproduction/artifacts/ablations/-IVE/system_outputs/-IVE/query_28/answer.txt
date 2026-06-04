@@ -1,0 +1,209 @@
+Looking at the available skills, I have the research-ideation skill which
+provides the base workflow for idea generation. The -IVE ablation removes the
+idea-validation evolution component — that normally records failed directions,
+validation signals, execution failures, and reusable rejection criteria from
+prior runs to guide idea selection and refinement. Without it, we generate
+without that accumulated heuristic memory.
+
+Below is the proposed study as the -IVE ablation output.
+
+--------------------------------------------------------------------------------
+
+Rerun: Table3, Row -IVE (No Idea-Validation Evolution)
+
+--------------------------------------------------------------------------------
+
+ Cross-Cultural Alignment for Large Language Models: A Multi-Perspective Value
+  Scaffolding Approach## TitleCross-Cultural Value Scaffolding: Aligning LLMs
+        Across12 Cultural Value Dimensions Without Western-Centric Bias
+
+--------------------------------------------------------------------------------
+
+ProblemLarge language models are increasingly deployed across global user
+populations, yet their alignment procedures — RLHF, DPO, constitutional AI —
+rely almost exclusively on preference data and normative judgments sourced from
+Western, Educated, Industrialized, Rich, and Democratic (WEIRD) populations.
+This leads to systematic cultural blind spots in:
+
+ 1 Normative reasoning — the model applies Western-centric ethical frameworks
+   (e.g., individual autonomy > collective welfare) even when deployed in
+   collectivist cultural contexts.
+ 2 Pragmatic acceptability — outputs violate local social norms around
+   hierarchy, face-saving, indirectness, or religious sensitivity that WEIRD
+   annotators would not flag.
+ 3 Value pluralism — the model cannot modulate its response style or content to
+   respect legitimate cross-cultural value differences (e.g., attitudes toward
+   authority, gender roles, uncertainty avoidance).
+ 4 Evaluation gap — existing alignment benchmarks (HH-RLHF, Anthropic's
+   Helpfulness/Harmlessness, MT-Bench) measure alignment to a single (implicitly
+   Western) preference distribution.
+
+The core challenge is that alignment is currently treated as a universal
+optimization problem when it is in fact a pluralistic one: different cultural
+groups have different — and sometimes conflicting — legitimate value systems.
+Current methods collapse this pluralism into a single reward model or preference
+distribution.
+
+--------------------------------------------------------------------------------
+
+Hypothesis1. A multi-dimensional value scaffolding approach — where cultural
+value dimensions are explicitly represented as steerable latent directions in
+the model's representation space — enables controllable cross-cultural alignment
+without retraining per culture.
+
+ 2 Adding culturally diverse preference data from ≥6 cultural regions (rather
+   than scaling WEIRD data) disproportionately improves alignment quality in
+   non-Western contexts without degrading Western-aligned performance.
+ 3 Models aligned with explicit cultural value dimensions generalize to unseen
+   cultural contexts better than models aligned to any single culture's
+   preferences, even when trained only on seen cultures.
+
+--------------------------------------------------------------------------------
+
+Method### Phase1: Cultural Value Dimension ExtractionWe extract and
+operationalize cultural value dimensions from established cross-cultural
+psychology frameworks — primarily Hofstede's6 dimensions (Power Distance,
+Individualism/Collectivism, Masculinity/Femininity, Uncertainty Avoidance,
+Long-Term Orientation, Indulgence/Restraint) and the World Values Survey's7
+value dimensions (Traditional/Secular-Rational, Survival/Self-Expression, plus
+five sub-dimensions).
+
+For each dimension, we construct:
+
+ • Polarity-defining text pairs: Contrastive prompts where the culturally
+   "expected" answer differs by position on the dimension (e.g., high vs. low
+   power distance framing of a managerial decision).
+ • Dimension probes:200 prompts per dimension designed to elicit responses whose
+   cultural loading can be measured.
+
+Phase2: Multi-Cultural Preference Data CollectionCollect preference pairs
+across10 language/culture groups:
+
+ • North America (English), Western Europe (English/French/German), Latin
+   America (Spanish/Portuguese), South Asia (Hindi/Urdu/English), East Asia
+   (Chinese/Japanese/Korean), Middle East/North Africa (Arabic), Sub-Saharan
+   Africa (Swahili/Yoruba/English), Southeast Asia (Vietnamese/Thai/Indonesian),
+   Eastern Europe (Russian/Polish), Nordic (Swedish/Norwegian/Danish)
+
+For each group, collect5,000 preference pairs covering: helpfulness,
+harmlessness, social norms, authority relations, religious sensitivity, and
+family/community obligations. Annotators are in-country native speakers with
+cultural moderation training.
+
+Phase3: Value-Scaffolded Alignment TrainingThree training variants:
+
+ 1 Naive multi-preference DPO: Standard DPO trained on pooled multi-cultural
+   preferences (baseline treatment).
+ 2 Value-conditioned DPO (VC-DPO): Each preference pair is labeled with cultural
+   region + value dimension scores. The model conditions on these during
+   training, learning to map value profiles to response distributions.
+ 3 Representation-engineering alignment (RE-Align): Identify activation-steering
+   vectors corresponding to each cultural value dimension (using the dimension
+   probes from Phase1). During inference, steer by interpolating between
+   dimension vectors to match a target cultural profile. No retraining needed.
+
+Phase4: Cross-Cultural EvaluationEvaluate on three held-out cultural contexts
+not seen during training (e.g., Turkish, Indonesian, and a synthetic "cultural
+blend" scenario). Also evaluate on existing alignment benchmarks to measure
+degradation from cultural specialization.
+
+--------------------------------------------------------------------------------
+
+Dataset / Benchmark| Component | Source / Construction | Size |
+
+|---|---|---| | Cultural Dimension Probes | Constructed from Hofstede + WVS
+survey items adapted to LLM interaction scenarios |2,400 prompts (200 ×12
+dimensions) | | Multi-Cultural Preference Pairs | Newly collected via in-country
+annotation teams (Upwork / Prolific) |50,000 pairs (5,000 ×10 cultures) | |
+Cross-Cultural Alignment Benchmark (CCABench) | Constructed as held-out test set
+covering3 cultures +3 cross-cultural conflict scenarios |3,000 evaluation
+prompts | | Existing Benchmarks | HH-RLHF, MT-Bench, SafetyBench, TruthfulQA |
+As-is |
+
+--------------------------------------------------------------------------------
+
+Evaluation Metrics1. Cultural Preference Accuracy (CPA): For each cultural
+group, the fraction of generated responses preferred by in-country annotators
+over the baseline model output. Reported per group and pooled.
+
+ 2 Value Dimension Alignment (VDA): Cosine similarity between the model's latent
+   value profile (from steering probes) and the target culture's known value
+   profile (from Hofstede/WVS norms). Measured in representation space.
+ 3 Cross-Cultural Generalization (CCG): CPA on held-out cultural groups not seen
+   during training.
+ 4 Alignment Degradation (AD): Change in HH-RLHF / MT-Bench scores relative to
+   the baseline (Llama-3-8B with DPO on HH-RLHF). We accept ≤5% degradation as
+   acceptable.
+ 5 Value Pluralism Score (VPS): Variance of model responses across different
+   cultural steering conditions when given the same factual input — measures
+   whether the model can genuinely shift cultural frame rather than producing
+   uniform outputs.
+
+--------------------------------------------------------------------------------
+
+Baselines1. Base model: Llama-3-8B (no alignment)
+
+ 2 Single-culture DPO: DPO trained on HH-RLHF only (Western alignment)
+ 3 Pooled DPO: DPO trained on pooled multi-cultural preferences without cultural
+   conditioning4. Multi-Reward RLHF: RLHF with separate reward models for each
+   cultural region5. Constitutional AI: Self-critique with a multi-cultural
+   constitution (manually written)
+
+--------------------------------------------------------------------------------
+
+Ablations1. -Dim: Remove explicit value dimensions; use only cultural region
+labels in VC-DPO2. -NonEnglish: Train on English-only preference data, evaluate
+cross-cultural transfer to non-English prompts3. -NumCultures: Train on3
+cultures instead of10; measure generalization4. -Steer: RE-Align without
+inference-time steering (frozen cultural profile)
+
+ 5 -Contrastive: Remove the polarity-defining text pairs from Phase1; use only
+   natural preference data6. Pooled DPO × k: Scale pooled data up to match
+   VC-DPO data volume (isolate conditioning mechanism from data-volume effects)
+
+--------------------------------------------------------------------------------
+
+Expected Failure Modes1. Stereotype amplification: Steering toward cultural
+value dimensions may reinforce harmful stereotypes rather than respecting
+legitimate value differences. For example, steering toward high Power Distance
+may produce outputs that endorse authoritarian governance rather than
+pragmatically acknowledging hierarchical norms.
+
+ 2 Value conflation: Hofstede dimensions are ecological (country-level)
+   constructs, not individual psychological attributes. Applying them at the
+   utterance level may produce incoherent signals.
+ 3 Cultural essentialism: The framework treats cultures as discrete, stable
+   categories, ignoring intracultural variation, diaspora identities, and
+   cultural change over time.
+ 4 Annotation bias within cultures: Each culture's annotators may themselves
+   skew urban/educated/young, reproducing within-culture WEIRD-like sampling
+   bias.
+ 5 Reward hacking: Conditioned on a target cultural profile, the model may
+   produce outputs that superficially match stereotype features of that profile
+   rather than authentically engaging with cultural reasoning.
+ 6 Alignment tax asymmetry: Cultural specialization may degrade performance
+   asymmetrically — non-Western cultures may lose less Western performance than
+   Western-aligned models lose non-Western performance, but Western performance
+   degradation may still exceed the5% threshold.
+
+--------------------------------------------------------------------------------
+
+Limitations- Ground-truth value dimensions: Hofstede and WVS dimensions are
+contested — they were developed for organizational/cross-national psychology,
+not for AI alignment. They may not capture the value dimensions most relevant to
+LLM safety and helpfulness.
+
+ • Language vs. culture confound: Our cultural groupings correlate with
+   language. We cannot fully disentangle whether improvements come from
+   cross-lingual transfer, cultural knowledge, or both.
+ • Annotation scale:5,000 pairs per culture yields ≈83 hours of annotation at60
+   seconds per pair. At $15/hr, that is $12,500 per culture or $125,000 total.
+   The annotation budget is substantial and may limit reproducibility.
+ • No behavioral validation: We evaluate on LLM outputs, not on downstream
+   behavioral outcomes (e.g., user retention, satisfaction, trust). A high CPA
+   may not translate to real-world cultural competence.
+ • Temporal instability: Cultural values shift over time (especially in younger
+   populations). A model aligned to2025 cultural norms may be misaligned by2030.
+ • Which cultures get representation?: Any finite set of cultures implicitly
+   marginalizes cultures not chosen. The framework does not solve the
+   fundamental political question of whose values get encoded.

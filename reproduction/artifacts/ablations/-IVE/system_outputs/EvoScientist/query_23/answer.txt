@@ -1,0 +1,200 @@
+Research Proposal: DeepEval — A Multi-Dimensional Evaluation Framework for Code
+LLMs### Title
+DeepEval: Beyond Functional Correctness — A Multi-Dimensional
+Evaluation Framework for Code LLMs
+
+--------------------------------------------------------------------------------
+
+Problem
+Current code LLM evaluation benchmarks (HumanEval, MBPP, SWE-bench,
+BigCodeBench) overwhelmingly measure functional correctness via pass@k — does
+the generated code pass a fixed set of unit tests? This single-axis evaluation
+has three critical blind spots:
+
+1 Surface-level saturation — Many models now score >90% on HumanEval. The
+benchmark no longer discriminates capability differences.
+2 No quality signal — A model that generates a brute-force O(n²) solution and
+one that generates an optimal O(n log n) solution both pass. Correctness does
+not capture efficiency, readability, security, or maintainability.
+3 No failure-mode analysis — Two models with equal pass@k can fail on
+completely different classes of problems. Without structured error
+categorization, researchers cannot diagnose weaknesses or target
+improvements.
+
+A "deep" evaluation framework must go beyond pass/fail to produce a diagnostic
+profile across multiple dimensions of code quality.
+
+--------------------------------------------------------------------------------
+
+Hypothesis
+A multi-dimensional evaluation framework that scores code LLMs across
+functional correctness, computational efficiency, security posture, code
+quality/style, and reasoning depth will:
+
+• Reveal discriminative signal where current benchmarks are saturated
+(HumanEval >90%).
+• Enable targeted diagnosis — model A may be efficient but insecure; model B
+may be safe but verbose.
+• Correlate with downstream task success better than pass@k alone.
+
+Null hypothesis: Multi-dimensional scores are highly correlated with pass@k (r
+>0.9) and thus provide no additional discriminative value.
+
+--------------------------------------------------------------------------------
+
+Method
+The framework, DeepEval, consists of three components:
+
+1. Multi-Dimensional Scoring PipelineFor each generated solution, compute:
+
+Dimension                 Metric(s)                  Method
+Functional correctness    pass@1, pass@k             Standard unit test
+execution (n=200 test
+cases per problem)
+Computational efficiency  Time complexity class,     Asymptotic analysis via
+wall-clock speedup vs.     profiling on varied input
+reference                  sizes; classify as O(n),
+O(n log n), O(n²), etc.
+Security                  CWE violation count,       Static analysis
+OWASP Top-10 recall        (Bandit/Semgrep) +5
+adversarial prompt probes
+per problem (prompt
+injection, shell
+injection, path
+traversal, SQL injection,
+RCE)
+Code quality              Cyclomatic complexity,     Static analysis (radon +
+Lines of code (LOC),       pylint + custom linters)
+comment density, naming
+convention adherence,
+duplication rate
+Reasoning depth           Multi-step reasoning       Chain-of-thought
+accuracy, edge-case        decomposition analysis —
+coverage                   does the model's
+intermediate reasoning
+correctly handle all
+stated preconditions and
+edge cases before
+generating code?
+
+2. DeepEval Problem SuiteA curated dataset of 300 problems stratified across:
+
+• Difficulty (easy / medium / hard / expert) —75 each- Domain (algorithms, data
+structures, web/systems, security)
+• Reasoning type (direct translation, multi-step composition, constraint
+satisfaction, adversarial/negative testing)
+• Each problem includes: specification,5–20 hidden unit tests (including edge
+cases and adversarial inputs),1 reference optimal solution, and ground-truth
+time complexity.
+
+3. Diagnostic Report GeneratorProduces a radar chart + confusion matrix of
+failure modes for each model. Failure modes are categorized into: logic error,
+off-by-one, wrong time complexity, incomplete edge-case handling, security
+vulnerability, style violation, and compilation/syntax error.
+
+--------------------------------------------------------------------------------
+
+Dataset / Benchmark
+We construct DeepEval-300:
+
+• 50 problems adapted from HumanEval (for continuity, filtered to those that
+still show variance)
+• 100 problems from competitive programming (Codeforces A–C difficulty, with
+editorial solutions)
+• 50 problems from real-world open-source PRs (bug fixes, refactors, feature
+additions from GitHub commits)
+• 50 problems designed from scratch to test adversarial edge cases (e.g., "lock
+a file, then unlock it; what happens if you unlock twice?")
+• 50 problems targeting security (e.g., "write a function that reads a file
+path from user input and returns its contents")
+
+Each problem has a verified test suite, optimal reference solution, and time
+complexity annotation. The benchmark will be released under a permissive
+license.
+
+--------------------------------------------------------------------------------
+
+Evaluation Metrics| Metric | What it captures |
+
+|---|---| | DeepScore (composite) | Weighted harmonic mean of the5 dimensions
+(weights determined via factor analysis on pilot data) | | pass@k | Functional
+correctness (baseline metric) | | Efficiency accuracy | % of solutions matching
+optimal time complexity class | | CWE recall | % of10 common CWEs correctly
+avoided | | Code Quality Index | Normalized composite of cyclomatic complexity,
+LOC, duplication (0–100) | | Reasoning F1 | Precision/recall on intermediate
+reasoning steps vs. editorial chain-of-thought | | Failure profile entropy | How
+evenly distributed are failure modes? High entropy → general weaknesses; low
+entropy → specific blind spot |
+
+Primary metric: DeepScore. Secondary: per-dimension scores with95% confidence
+intervals (bootstrapped, n=1000 resamples).
+
+--------------------------------------------------------------------------------
+
+Baselines| Model | Why |
+
+|---|---| | GPT-4o | Top commercial baseline | | Claude3.5 Sonnet | Top
+commercial baseline | | DeepSeek-Coder-V2 | Top open-source baseline | |
+CodeLlama-34B | Prior-generation open-source reference | | StarCoder2-15B |
+Mid-size open-source reference | | HumanEval pass@k | Current standard — used as
+a covariate to measure added discriminative power |
+
+Each model is evaluated on all3 seeds (temperature0.2,0.6,0.8) with n=20 samples
+per seed →60 samples per model per problem.
+
+--------------------------------------------------------------------------------
+
+Ablations1. Dimension ablation: Remove each dimension one at a time and measure
+rank correlation change between DeepScore and an aggregated human-judgment score
+(3 expert raters evaluate a50-problem subset). Identifies which dimensions
+contribute unique signal.
+
+2 Test-set size ablation: Run on50,100,200,300 problems and compute rank
+stability (Kendall's τ between partial and full rankings). Determines minimum
+viable benchmark size.
+3 Scoring method ablation: Compare weighted harmonic mean vs. geometric mean
+vs. PCA-based composite vs. raw vector (no aggregation). Measures sensitivity
+to aggregation choice.
+4 Static analysis vs. human judgment: For the security dimension, compare
+Bandit/Semgrep results to manual security review on a50-problem subset.
+Quantifies proxy reliability.
+5 Temperature sensitivity: Repeat all evaluations at temperature0.0 and1.0;
+measure dimension-score variance. Determines whether multi-dimensional scores
+are more or less robust to sampling temperature than pass@k.
+
+--------------------------------------------------------------------------------
+
+Expected Failure Modes1. Dimension collapse — All dimensions correlate >0.9 with
+pass@k, meaning the framework adds no discriminative value. Mitigation: Pilot
+study on50 problems; if r >0.85 with any dimension, redesign that dimension's
+metric or drop it.
+
+2 Human judgment noise — Inter-rater agreement (Fleiss' κ) for the
+human-evaluation subset falls below0.6, making ablation1 uninterpretable.
+Mitigation: Use3 raters, provide detailed rubrics with examples, run a
+calibration round on10 problems before the main rating.
+3 Static analysis false positives — Security scanner flags benign code as
+vulnerable, inflating the security dimension's difficulty. Mitigation: Manual
+verification of all flagged issues on a50-problem subset; report both raw and
+human-verified security scores.
+4 Benchmark saturation — By the time of publication, frontier models may
+saturate DeepEval-300, repeating the HumanEval problem. Mitigation: Design
+the adversarial test-generation protocol so the benchmark can be extended
+with new problems without overhauling the framework. The framework (scoring
+pipeline) is the contribution, not the static problem set.
+5 Metric gaming — Models tuned to optimize individual dimensions (e.g.,
+producing artificially verbose comments to inflate code quality scores).
+Mitigation: Use normalized, ratio-based metrics rather than absolute counts;
+include style consistency checks that penalize unnatural patterns.
+6 Composition instability — The composite DeepScore weighting scheme changes
+model rankings substantially under small weight perturbations. Mitigation:
+Report ranking under10 random weight configurations; if Kendall's τ <0.8
+across configurations, do not use a single composite score — return the full
+dimension vector as the evaluation output.
+
+--------------------------------------------------------------------------------
+
+Bottom line: DeepEval's contribution is not another leaderboard — it's a
+diagnostic framework that tells model developers which capability dimensions
+their code LLM is strong or weak in, enabling targeted improvement rather than
+chasing a single pass@k number.

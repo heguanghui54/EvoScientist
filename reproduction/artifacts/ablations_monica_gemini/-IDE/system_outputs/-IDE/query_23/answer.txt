@@ -1,0 +1,170 @@
+Research Proposal: A Multi-Dimensional Deep Evaluation Framework for Code
+LLMs### TitleBeyond Functional Correctness: A Multi-Dimensional Deep Evaluation
+Framework for Code LLMs### ProblemCurrent evaluation of code LLMs is dominated
+by a single proxy — functional correctness measured via pass@k on benchmarks
+like HumanEval and MBPP. These benchmarks reduce code generation to a narrow
+skill: writing a standalone function that passes a handful of unit tests. This
+approach suffers from five blind spots:
+
+ 1 Functional myopia: A model that passes unit tests with brittle, insecure, or
+   unreadable code scores identically to one that produces clean, idiomatic
+   solutions.
+ 2 No understanding axis: The ability to explain, debug, review, or retrieve
+   code remains untested, yet these tasks are central to developer workflows.
+ 3 Ambiguity blindness: Benchmarks provide fully specified prompts, whereas
+   real-world requirements are often underdetermined.
+ 4 Static generation only: One-shot pass@k ignores iterative refinement — the
+   dominant mode of human programming.
+ 5 Single-score rankings mask trade-offs: Models strong on correctness may be
+   weak on quality or safety, but aggregated leaderboards collapse this
+   variation.
+
+A "deep" evaluation framework is needed that decomposes code LLM capability
+across multiple psychometrically distinct axes to produce capability profiles
+rather than a single number.
+
+HypothesisA multi-axis evaluation framework that measures functional
+correctness, code quality, semantic understanding, robustness to ambiguity, and
+iterative refinement will reveal capability profiles that differ substantially
+from pass@k leaderboard rankings, and will identify specific axes where common
+models underperform relative to their overall standing.
+
+MethodWe propose a five-axis evaluation framework, each with a dedicated
+benchmark suite:
+
+Axis1 — Functional Correctness (replication baseline)
+
+ • HumanEval+ and MBPP+ with augmented test suites (enumerated edge cases from
+   EvalPlus)
+ • CodeContests (filtered to difficulty levels accessible by current models)
+
+Axis2 — Code Quality -200 curated problems with expert-written reference
+solutions- Automated metrics: cyclomatic complexity (Δ from reference), code
+smell violations (pylint), documentation coverage, type annotation correctness
+(mypy), and line-count efficiency- Human ratings (3 experts per output,5-point
+Likert) on readability and idiomatic style- LLM-as-judge (GPT-4o, Claude3.5
+Sonnet) on the same rubric, with Cohen's κ against human ratingsAxis3 — Semantic
+Understanding
+
+ • Code summarization:500 examples from CodeXGLUE (BLEU-4, ROUGE-L against
+   human-written docstrings)
+ • Code search: NL-to-code retrieval on CodeSearchNet (MRR@10)
+ • Bug localization: Defects4J subset (top-1, top-3 accuracy)
+ • Code review:100 synthetic PR diffs with known issues; model must identify the
+   issue and suggest a fix (exact-match and BLEU for fix description)
+ • Natural language to code: MBPP-style but with distractors and paraphrased
+   promptsAxis4 — Robustness to Ambiguity -50 underspecified prompts where the
+   model must either (a) ask a clarifying question or (b) state its assumptions
+   explicitly before generating code-50 prompt paraphrases of base problems from
+   HumanEval (varying specificity, verbosity, and framing) — measure variance in
+   pass@k across paraphrases- Scoring rubric rewards assumption-articulation;
+   penalizes silent guesses that fail on edge casesAxis5 — Iterative Refinement
+   (multi-turn) -50 multi-turn scenarios adapted from the Multi-IP interactive
+   programming format- Round1: model generates code from loose spec- Round2:
+   model receives failing test output (no error location), must identify and fix
+   the bug- Round3: natural language request to refactor (e.g., "make this
+   parallel," "add input validation")
+ • Success signals: functional correctness after each round, edit distance for
+   minimal vs excessive changesComposite profiling: Each axis yields a
+   normalized score (0–100). Models are compared via radar profiles and
+   rank-consistency across weighted ensembles. Paired bootstrap tests (10,000
+   resamples,95% CI) determine whether differences on each axis are significant.
+
+Dataset / BenchmarkThe framework bundles existing resources with new curation:
+
+
+ Axis        Source                                  Size          New/Existing
+ Functional  HumanEval+, MBPP+, CodeContests         420 problems  Existing
+ Quality     New curation with expert reference      200           New
+             solutions
+ Semantic    CodeXGLUE, Defects4J, new review set    700 items     Mixed
+ Ambiguity   New underspecified + paraphrase set     100           New
+ Iterative   Adapted from Multi-IP format            50            New
+
+
+All new items will be released as an open benchmark suite (CodeEval-Deep).
+
+Evaluation Metrics- Per-axis score: normalized0–100 (mean over problems within
+the axis)
+
+ • Profile vector: (F, Q, S, R, I) ∈ [0,100]⁵- Agreement with humans: Cohen's κ
+   on quality and semantic axes (human-expert vs LLM-as-judge vs
+   model-generated)
+ • Rank stability: Kendall's τ between pass@k ranking and multi-axis composite
+   ranking under varying axis weights (±20% perturbation)
+ • Statistical tests: paired bootstrap test, significance threshold α =0.05 with
+   Bonferroni correction (5 axes → α' =0.01)
+
+Baselines- Single-score baseline: pass@k on HumanEval+ — demonstrates
+information loss when collapsing to one metric- LLM-as-judge calibration: GPT-4o
+and Claude3.5 Sonnet as quality raters, compared against expert human raters to
+measure systematic biases (self-preference, length bias, verbosity bias)
+
+ • Static-analysis-only: replace LLM-judged quality with pylint/mypy-only
+   metrics — measures value added by human or LLM judgment### Ablations1.
+   Per-axis leave-one-out: Remove each axis from the composite and measure
+   change in model ranking relative to full profile. An axis whose removal flips
+   pairwise rankings is informative; one that never flips rankings may be
+   redundant.
+
+ 2 Judge substitution: Replace LLM-as-judge with static analysis alone on Axis2
+   (quality). Quantifies the marginal utility of semantic quality judgment vs
+   automated linting.
+ 3 Single-turn vs multi-turn: Compare each model's one-shot pass@k on the
+   iterative axis problems against its Round-3 score after debugging and
+   refactoring. Measures improvement headroom.
+ 4 Prompt sensitivity: For each paraphrase set in Axis4, compute within-model
+   variance and between-model discrimination. If variance is high for all
+   models, the ambiguity axis may be noise-dominated.
+ 5 Weight perturbation: Perturb axis weights by ±20% (500 random draws) and
+   compute rank-stability (Kendall's W). If rankings are fragile to small weight
+   changes, the framework needs careful normative justification for weighting.
+
+Expected Failure Modes1. LLM-as-judge contamination: Both GPT-4o and Claude3.5
+Sonnet may exhibit self-preference (scoring their own or similar-family outputs
+higher) and length bias (preferring verbose outputs). Mitigation: blind A/B
+comparison format, human validation set for calibration, and reporting bias
+magnitude as part of results.
+
+ 2 Axis saturation: Functional correctness on HumanEval+ is nearing ceiling for
+   frontier models (GPT-4o, Claude3.5 Sonnet ~90% pass@1). If axes are highly
+   correlated, the framework collapses to a single factor and provides limited
+   discrimination. Mitigation: use harder functional problems (CodeContests) and
+   check inter-axis Pearson correlations; report if dimensionality reduction
+   (PCA) yields one dominant component.
+ 3 Low inter-annotator reliability on ambiguity axis: Rating whether a model
+   "reasonably handles ambiguity" is inherently subjective. Mitigation: pilot
+   with5 annotators on10 problems, compute Fleiss' κ; keep this axis only if κ
+   ≥0.6; otherwise restrict to the objective paraphrase-variance metric only.
+ 4 Iterative axis cost:50 problems × N models × up to3 turns × API costs
+   compounds quickly. Mitigation: test on a smaller10-problem subset first; if
+   headroom is large and consistent, expand to the full set.
+ 5 Benchmark contamination: Models may have been trained on HumanEval, MBPP, or
+   CodeContests. Mitigation: the new quality, ambiguity, and iterative subsets
+   are released post-training-date for all evaluated models; functional and
+   semantic axes report contamination status separately.
+
+Limitations1. Python-only scope: All benchmarks target Python. Results do not
+generalize to JavaScript, Rust, or domain-specific languages without
+re-curation.
+
+ 2 Expert reference bottleneck: The quality axis requires hand-written reference
+   solutions by senior engineers. This limits scalability and introduces
+   stylistic priors from a small set of authors.
+ 3 LLM-as-judge bias is measured but not eliminated: We can quantify the bias
+   magnitude and direction but cannot fully remove it without large-scale human
+   annotation budgets that exceed typical academic constraints.
+ 4 Short-horizon iteration: The iterative axis caps at three rounds. Real-world
+   code evolution spans dozens of commits, dependency changes, and integration
+   tests — outside the scope of this framework.
+ 5 Descriptive, not prescriptive: The framework produces capability profiles but
+   does not prescribe a single actionable rank for practitioners. Users must
+   supply their own weights over axes based on their deployment context. This
+   honesty is a feature but limits direct comparison with existing leaderboards.
+ 6 Moderate statistical power on small axes: With50–100 items per new axis,
+   fine-grained comparisons (e.g., model A vs model B on ambiguity) may lack
+   statistical power for small effect sizes (±3 points). The framework is
+   designed for medium-to-large effect detection.
+ 7 No temporal evaluation: Models evolve rapidly; the framework provides a
+   snapshot, not a longitudinal assessment of capability growth or regression
+   over training iterations.

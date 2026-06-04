@@ -1,0 +1,193 @@
+● think_tool(The user wants a Table 3 ablation rer…)
+
+Title: Fair, Calibrated, and Distribution-Aware AI-Generated Text Detection: A
+Multi-Stage Framework for False Positive MitigationProblem
+
+Commercial AI content detectors (GPTZero, Originality.ai, Turnitin) and research
+detectors (DetectGPT, Fast-DetectGPT, Binoculars) achieve high recall on
+in-distribution machine-generated text but suffer from systematically elevated
+false positive rates on specific human-authored subpopulations — non-native
+English writing, neurodivergent prose, highly templatic genres (technical
+documentation, legal filings, structured reviews), and text that has undergone
+light post-processing (e.g., grammar correction tools). Reported false positive
+rates on these groups range from15–40% in independent audits, producing real
+harm: false accusations of academic dishonesty, demonetization of legitimate
+creators, and erosion of trust in detection tools. The core challenge is not
+merely increasing classifier sensitivity to machine text, but doing so without
+sacrificing specificity on the long tail of legitimate human variation.
+
+Hypothesis
+
+A multi-stage detection pipeline that (i) calibrates confidence scores using a
+linguistically-stratified human validation set, (ii) replaces hard binary
+thresholds with conformal prediction sets that abstain on ambiguous inputs, and
+(iii) explicitly models distribution shift between training and deployment human
+text can reduce false positives by ≥50% relative to current single-threshold
+detectors while maintaining recall ≥90% at a calibrated operating point. The
+central claim is that false positives arise primarily from a mismatch between
+the narrow human-language distribution seen during training and the broader
+distribution encountered at inference — and that explicit modeling of this
+mismatch is more effective than simply tuning the detection threshold.
+
+Method
+
+The framework operates in three sequential stages, with shared feature
+extraction:
+
+Stage1 — Feature Extraction. For each input text, compute four features from a
+frozen surrogate language model (LLaMA-2-7B, no fine-tuning): (a) mean per-token
+log-probability (surprisal), (b) per-sentence log-probability variance
+(burstiness), (c) rank of the true token in the model's top-k distribution
+averaged across positions (log-rank), and (d) the ratio of low-probability
+tokens (<0.01) to total tokens (tail-ratio). These four features form a4-d
+embedding.
+
+Stage2 — Uncertainty-Aware Classification with Conformal Prediction. Train a
+lightweight classifier (gradient-boosted trees, not a neural network — to
+preserve interpretability and avoid distribution shift between training and
+inference) on the4-d embeddings of a mixed human–machine corpus. Rather than
+outputting a single label, the classifier produces a conformal prediction set:
+for a user-specified coverage level (e.g.,90%), the set either contains exactly
+one label ("Human" or "Machine"), both labels (ambiguous — abstain), or neither
+(OOD — flag for manual review). The conformal calibration is performed on a
+linguistically-stratified holdout set that oversamples the high-FPR
+subpopulations listed in the problem statement.
+
+Stage3 — Distribution-Shift Detection. For inputs where the prediction set
+contains a single label but the classifier's raw confidence is below a secondary
+threshold (chosen to maximize precision on a validation shift set), compute the
+Mahalanobis distance from the input's4-d embedding to the training human-class
+embedding centroid. If this distance exceeds the95th percentile of distances
+observed in the calibration set, the input is downgraded from a binary
+prediction to "abstain — likely distribution shift." This catches human text
+that lies far from the training distribution without requiring retraining on
+every new domain.
+
+Training data. Use HC3 (human–ChatGPT comparison) as the primary training corpus
+for the human and machine classes. Augment with M4 (multi-model, multi-domain
+machine text) to broaden the machine class to include outputs from GPT-4,
+Claude, Llama, and Gemini across five domains (news, creative writing, code,
+scientific abstracts, social media). The human side is augmented with the TOEFL
+essay corpus (non-native English) and Amazon review data (templatic writing) to
+explicitly cover high-FPR subpopulations. Final training set: ~500K examples
+(250K human,250K machine, balanced). Calibration set:50K examples stratified by
+linguistically-defined subgroups (native, non-native, templatic, creative,
+technical).
+
+Dataset and Benchmark
+
+Evaluate on RAID (Robust AI Detection benchmark,11 domains ×11 model families ×
+multiple adversarial perturbations), supplemented with a constructed Adversarial
+Human Corpus of5,000 human-written texts specifically designed to resemble
+machine output (e.g., text written to a formulaic prompt, repetitive structures,
+very low surprisal). Also construct a Coverage Stress Set from existing human
+corpora:1,000 texts from each of four high-FPR subpopulations (non-native
+English essays from TOEFL, autistic-authored blog text, templatic Amazon
+reviews, and highly edited academic prose).
+
+Evaluation Metrics
+
+
+ Metric                            Rationale
+ FPR@Recall=90%                    Primary metric — false positives at an
+                                   operating point where90% of machine text is
+                                   caught
+ AUPRC (Human class)               Captures precision–recall trade-off on the
+                                   human class specifically (not the usual
+                                   machine-class AUPRC)
+ Abstain Rate                      Fraction of inputs that receive no
+                                   prediction; must stay below15% to be
+                                   practical
+ Coverage Efficiency               Average size of conformal prediction sets
+                                   (target: modal size =1)
+ Expected Calibration Error (ECE)  On the human-class probability, binned by10
+                                   percentile intervals
+ Detection Gap                     FPR difference between the highest-FPR
+                                   subgroup and the overall FPR — quantifies
+                                   fairness
+
+
+Baselines
+
+ 1 DetectGPT — zero-shot curvature-based detection (Mitchell et al.,2023)
+ 2 Fast-DetectGPT — conditional probability curvature approximation (Bao et
+   al.,2024)
+ 3 Binoculars — cross-model surprisal ratio (Büchmann et al.,2024)
+ 4 GPTZero — commercial baseline (perplexity + burstiness threshold)
+ 5 Single-Stage XGBoost — identical feature set as the proposed method but with
+   a single hard threshold and no conformal or shift components (serves as a
+   direct ablation baseline)
+ 6 Logistic Regression + Calibration — Platt-scaled logistic regression on the
+   same4-d features, with no distribution-shift handlingEach baseline is
+   evaluated at its default threshold and at a threshold adjusted to match90%
+   recall on the main test set.
+
+Ablations
+
+
+ Ablation                  Modification              What It Isolates
+ A1 — No Calibration       Remove Stage2 conformal   Value of principled
+                           prediction; replace with  uncertainty quantification
+                           a hard threshold on raw   vs. arbitrary thresholding
+                           classifier score
+ A2 — No                   Remove Stage3; output     Contribution of modeling
+ Distribution-Shift        conformal sets directly   distribution shift beyond
+ Detection                                           conformal abstention
+ A3 — Homogeneous          Stratify the calibration  Whether targeted subgroup
+ Calibration               set uniformly rather      calibration drives the
+                           than oversampling         improvement or simply more
+                           high-FPR subgroups        calibration data
+ A4 — Neural Classifier    Replace gradient-boosted  Interaction between
+                           trees in Stage2 with      classifier complexity and
+                           a2-layer MLP              conformal calibration
+                                                     stability
+
+
+All ablations are evaluated on the full benchmark suite with three random seeds.
+
+Expected Failure Modes
+
+ 1 Adversarial human text. A speaker deliberately mimicking machine-like
+   patterns (high fluency, low variance, predictable token choices) may trigger
+   the distribution-shift detector in Stage3 or fall inside the machine
+   conformal set. This is an inherent limitation of any detector that relies on
+   statistical signatures — we do not claim adversarial hardness, only
+   robustness against natural distribution shift.
+ 2 Domain shift beyond calibration scope. If deployment text comes from an
+   unobserved domain (e.g., low-resource language poetry, highly specialized
+   medical jargon), both the conformal sets and the Mahalanobis distance may
+   fail. The framework is designed to detect this failure (via large conformal
+   sets or OOD flags) rather than handle it gracefully.
+ 3 Calibration set contamination. If the linguistically-stratified calibration
+   set is too small per stratum (<500 examples per subgroup), subgroup-specific
+   coverage may be mis-estimated, leading to uneven FPR reduction across groups.
+ 4 Feature saturation. The four features (surprisal, burstiness, log-rank,
+   tail-ratio) are well-studied but may be jointly insufficient for a
+   low-dimensional separator as detection models continue to improve. The
+   framework can accept additional features without architectural changes, but
+   this is not tested here.
+
+Limitations
+
+ • English-only evaluation. All training and test corpora are English.
+   Multilingual generalization is not claimed and would require re-calibration
+   on per-language conformal sets.
+ • Fixed surrogate model. LLaMA-2-7B is used for feature extraction; a different
+   surrogate may shift the feature space and require recalibration. The
+   framework is not surrogate-agnostic.
+ • No adversarial training. The detection pipeline is static — it does not
+   incorporate adversarial examples during training. A motivated adversary with
+   access to the detection pipeline could craft bypasses.
+ • Synthetic data realism gap. The M4 corpus provides broad model coverage but
+   is generated from fixed prompts; real-world machine text may include
+   iterative human editing, partial regeneration, and hybrid authorship that the
+   training distribution does not capture.
+ • Computational cost ceiling. Conformal prediction requires a held calibration
+   set and per-input forward passes through a language model (Stage1) plus tree
+   ensemble inference (Stage2). Latency per input is ~2–5 seconds on consumer
+   hardware, which may be prohibitive for real-time classroom proctoring but
+   acceptable for asynchronous batch screening.
+ • Abstain cost. The framework prefers abstention over confident error, which
+   means operators receive "no decision" on up to15% of inputs. In deployment
+   contexts that require a binary decision for every input, the abstain flag
+   transfers the burden to human reviewers rather than eliminating it.

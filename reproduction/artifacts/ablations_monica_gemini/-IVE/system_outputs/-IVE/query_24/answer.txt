@@ -1,0 +1,39 @@
+Beyond Single-Hop Retrieval: Structured Query Decomposition for Multi-Hop
+Reasoning in Retrieval-Augmented Generation## ProblemMulti-hop reasoning — where
+    a question requires chaining together information from multiple distinct
+  documents — remains a fundamental weakness in current RAG systems. Standard
+retrieve-then-read pipelines embed the entire query as a single vector, retrieve
+the top-k chunks by surface similarity, and feed them to a generator. This fails
+  when (a) no single document contains the answer, (b) the query is lexically
+  distant from intermediate bridging documents, and (c) early retrieval errors
+                 cascade, making the later hops unrecoverable.
+
+Existing work decomposes questions iteratively using LLM prompts, but produces
+brittle sub-queries that either miss necessary intermediate entities or
+hallucinate bridge facts. The core challenge is that decomposition requires the
+model to anticipate what intermediate evidence it will find — a circular
+dependency between decomposition quality and retrieval success.
+
+HypothesisA structured, multi-turn decomposition that alternates between entity
+extraction, targeted retrieval, and evidence verification — where each hop
+commits to a typed bridging entity before proceeding — will significantly
+improve multi-hop accuracy over both monolithic dense retrieval and free-form
+prompt-based decomposition. The structured schema constrains the search space at
+each hop, reducing hallucinated bridge facts and cascading retrieval errors.
+
+MethodWe propose Structured Query Decomposition with Typed Bridges (SQD-TB), a
+three-stage pipeline:
+
+ 1 Hop Planner. Given a multi-hop question, extract the first-hop query and the
+   type of the bridging entity expected (e.g., person, location, date, event).
+   The type constraint is produced by a lightweight classifier finetuned on a
+   small set of annotated bridge-types from the training data.
+ 2 Iterative Retrieval-Verification Loop. For each hop:
+
+ • Retrieve top-k passages for the current sub-query using a frozen dense
+   retriever (Contriever-MS MARCO).
+ • Conditioned on retrieved passages, an LLM (Llama-3-8B-Instruct) extracts
+   candidate bridge entities and verifies whether the entity satisfies the type
+   constraint from Step1.
+ • If verified, the bridge entity is injected back into the next sub-query
+   template: *"Given that

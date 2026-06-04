@@ -1,0 +1,144 @@
+LongRoPE-Extended: Token-Level Positional Granularity for Extreme Long-Context
+ LLMs## ProblemLarge Language Models (LLMs) continue to struggle with coherent
+ reasoning over very long sequences (128K+ tokens). Existing position encoding
+ extensions—RoPE, ALiBi, YaRN, NTK-aware scaling—either saturate in perplexity
+    beyond a critical context length or exhibit a sharp "lost-in-the-middle"
+     degradation where information placed at the center of long contexts is
+ effectively invisible to the model. Current approaches treat position encoding
+as a monolithic interpolation (frequency scaling), which fails because different
+   attention heads and different token positions require distinct degrees of
+    position sensitivity. The core problem is that positional expressiveness
+  collapses as the sequence grows: distant positions become indistinguishable
+under uniform frequency scaling, destroying the model's ability to retrieve and
+                     compose information across long spans.
+
+HypothesisDecomposing position encoding into head-adaptive frequency bands and
+token-level position gating will preserve long-context perplexity and retrieval
+accuracy beyond128K tokens. Specifically, each attention head selects a learned
+mixture of low-frequency (coarse, long-range) and high-frequency (fine, local)
+position components via a lightweight head-specific gating vector. Additionally,
+each token learns to dynamically modulate its position sensitivity through a
+context-dependent position-awareness gate conditioned on its own hidden state.
+This dual mechanism jointly ensures that (a) heads specializing in long-range
+dependency can maintain discriminative position signals even at extreme
+distances, and (b) tokens in information-dense regions can sharpen their
+position resolution while tokens in sparse regions can generalize across longer
+gaps.
+
+MethodLongRoPE-Extended modifies the rotary position encoding (RoPE) in an
+existing long-context LLM (e.g., Llama-3-70B with YaRN scaling) with two
+additive modules:
+
+ 1 Head-Adaptive Frequency Decomposition. Instead of applying a single frequency
+   set to all attention heads, we maintain a bank of K base frequency groups
+   (e.g., K=4), each with distinct rotary frequencies covering different ranges.
+   Each head learns a soft assignment vector α_h ∈ R^K (via a lightweight MLP
+   with a softmax output) that mixes these frequency groups at every forward
+   pass. This allows head5, for instance, to attend strongly to nearby tokens
+   (high-frequency mixture) while head20 attends to document-level dependencies
+   (low-frequency mixture)—all within the same layer and without increasing the
+   total parameter count beyond the small assignment MLP (≈0.01% of total
+   params).
+ 2 Token-Level Position Gating. After RoPE is applied, each token computes a
+   scalar position-awareness gate g_t = σ(W_g h_t + b_g) where h_t is the
+   token's hidden state before the attention computation. The position encoding
+   is then modulated: PE'_t = g_t · PE_t + (1 - g_t) · PĒ, where PĒ is a learned
+   position-agnostic embedding. Intuitively, tokens that carry critical
+   information (e.g., a cited number or a named entity) can "dial up" their
+   position sensitivity to maintain fine-grained retrieval, while filler tokens
+   (e.g., stopwords in the middle of a long passage) can relax positional
+   constraints to reduce noise. This gate is applied independently per token per
+   layer.
+
+Training. We fine-tune Llama-3-70B on a mixture of three data sources: (a) the
+Long-Synthetic dataset (randomly inserted key-value facts at varying depths),
+(b) subsets of Proof-Pile-2 filtered for documents >64K tokens, and (c)
+carefully selected slices of RedPajama-V2 with artificially inserted
+cross-document dependency chains. We train for8K steps with a linear warmup and
+cosine decay, using a learning rate of2e-5 and a batch size of128.
+
+Inference. No overhead beyond the per-head soft assignment and per-token sigmoid
+gate—both add <0.5% latency on a single A100-80GB at128K context.
+
+Dataset / BenchmarkWe evaluate on the full suite of the RULER benchmark
+(Needle-in-a-Haystack variants for retrieval, multi-needle, multi-query, and
+variable-token-position tasks) and on LongBench (English subsets: QMSum, Qasper,
+NarrativeQA, HotpotQA, MultiFieldQA-En, TREC, TriviaQA, SAMSum, and GovReport).
+We additionally include the SCROLLS dataset (ContractNLI, SummScreen) and the
+L-Eval suite for long-document QA. For stress-testing beyond128K, we construct a
+synthetic "Mosaic Retrieval" task inspired by the work of Liu et al. (2024):
+facts are inserted at20 equally spaced positions across a256K-token sequence,
+and the model must retrieve all of them. This test exposes whether positional
+resolution collapses at extreme lengths.
+
+Evaluation Metrics- Primary: Passkey retrieval accuracy (single needle) at
+depths0%,25%,50%,75%,100% across sequence lengths4K,8K,16K,32K,64K,128K, and256K
+tokens. Reported as accuracy per depth bin.
+
+ • Secondary: LongBench average F1 / Rouge-L score across all subsets.
+ • Tertiary: Mosaic Retrieval F1 (mean retrieval accuracy over all20 needles
+   per256K sequence).
+ • Diagnostic: Per-head frequency diversity (entropy of α_h distributions across
+   heads), position-gate statistics (mean and variance of g_t per token type,
+   per position bin, and per layer). These diagnostics are used only for
+   analysis, not as optimization targets.
+
+Baselines| Method | Description |
+
+|---|---| | Full-RoPE (no scaling) | Original Llama-3-70B without any extension
+(max8K context, evaluated at all lengths regardless—fails beyond8K, establishes
+the unextended floor). | | YaRN | Frequency interpolation with temperature
+scaling. A direct frequency-engineering competitor. | | NTK-aware | Neural
+Tangent Kernel-inspired frequency scaling. | | SelfExtend | Grouped attention
+with two position scopes. | | LongRoPE | The non-evolutionary baseline that
+inspired this work—learned frequency rescaling (no head-adaptive or token-level
+components). |
+
+All baselines are evaluated under identical fine-tuning conditions (same data,
+same8K-step schedule, same LoRA rank-64 setup for comparability). Full
+fine-tuning is used only for the proposed method; baselines use LoRA to keep
+compute feasible.
+
+Ablations1. w/o Head-Adaptive Frequencies. Remove the head-specific frequency
+assignment; all heads share a single trained frequency bank. Tests whether
+head-specific mixing is essential or just a result of overparameterization.
+
+ 2 w/o Token-Level Gate. Set g_t =1 for all tokens, reverting to unmodulated
+   position encoding. Tests whether token-level position modulation matters
+   beyond the head-adaptive frequencies.
+ 3 Static Frequency Bank. Replace the learned α_h with a fixed hand-designed
+   assignment (half heads low-frequency, half high-frequency). Tests whether the
+   soft assignment is learning anything beyond a static partition.
+ 4 Single Training Stage. Remove the data-mixture curriculum (present all data
+   from step0) to test whether the training schedule interacts with the position
+   gating mechanism.
+ 5 Parameter Count Control. Reduce the base model's hidden dimension by0.01%
+   (matching the added gate parameters) to verify that improvements are not
+   simply from adding parameters.
+
+Expected Failure Modes- Frequency collapse. The soft assignment MLP may converge
+to a uniform mixture across heads, effectively reverting to the single-frequency
+baseline. We mitigate this by initializing α_h with a Dirichlet prior that
+favors sparse assignments and monitoring per-head entropy during training as a
+diagnostic.
+
+ • Gate saturation. The token-level gates may saturate to either0 or1 for all
+   tokens, eliminating the modulation effect. We counter this by adding a small
+   L2 penalty on (g_t -0.5)^2 during the first1K training steps to encourage
+   exploration, then releasing the penalty.
+ • Instability at extreme lengths. Position-gating conditioned on hidden states
+   may produce divergent behavior on sequences longer than any seen during
+   training. We include256K-length synthetic data in the training mixture (≈5%
+   of steps) to expose the model to extreme positions during fine-tuning.
+ • Benchmark contamination. LongBench subsets may overlap with the RedPajama-V2
+   training data. We explicitly filter against the LongBench evaluation sets
+   using13-gram overlap deduplication (following the standard practice of Chen
+   et al.,2024) and report any remaining overlap ratios.
+
+Limitations1. Computational ceiling. We evaluate only on a single base model
+(Llama-3-70B). Head-adaptive frequency assignment may behave qualitatively
+differently in smaller models (7B,13B) where head count is smaller, or in MoE
+architectures where expert routing interacts with frequency mixing.
+
+ 2 Fixed frequency bank size. Using four base frequency groups is a design
+   choice not rigorously justified; an ablation over K ∈

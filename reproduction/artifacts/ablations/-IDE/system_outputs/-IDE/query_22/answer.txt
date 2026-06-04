@@ -1,0 +1,37 @@
+ABlate — IDE: Security of Code LLMsThe proposal below was generated without
+    access to any idea-direction memory (IDE disabled). No prior top-ranked
+   directions were distilled or reused. Reasoning proceeds from the query and
+                            general knowledge only.
+
+--------------------------------------------------------------------------------
+
+Beyond Syntax Mimicry: Quantifying and Fortifying Code LLMs Against Semantically
+Preserved Backdoor Triggers### ProblemCurrent backdoor attacks on code LLMs
+exploit syntactic triggers — specific variable names, comment strings, or API
+call patterns — that are easily detected by static filters or perplexity-based
+defenses. This has created a false sense of security: defenders assume that any
+trigger an LLM can learn, a scanner can catch. In reality, code semantics admit
+functionally equivalent transformations that preserve a trigger's malicious
+payload while changing its surface form entirely. A trigger of the form "if
+is_admin" can be rewritten as if user.role == "admin", if privileges &0x1, or
+any of a thousand boolean expressions drawn from the training corpus. No
+existing attack or defense models this semantic invariance.
+
+The core unaddressed question is: Can a backdoor survive under a trigger that is
+defined not by a token sequence, but by the semantic property it expresses
+(e.g., "this branch guards an authentication check")? If yes, then syntactic
+filtering is fundamentally insufficient.
+
+HypothesisA backdoor embedded via a semantically defined trigger class (e.g.,
+"any conditional that evaluates a user-role check against a fixed set of
+privileged roles") will exhibit:
+
+ 1 Higher evasion rate against perplexity-based and input-filtering defenses
+   compared to a token-string trigger baseline.
+ 2 Comparable attack success rate (ASR) to the syntactic baseline when the
+   victim model is large enough to internalize the semantic regularity.
+ 3 Positive correlation between model scale and semantic trigger robustness —
+   larger models are more vulnerable to semantic triggers, not less.
+
+MethodTrigger design. Define a trigger class via a deterministic semantic
+predicate `P: function →

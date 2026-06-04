@@ -1,8 +1,8 @@
 {
   "variant": "-all",
-  "query_count": 20,
+  "query_count": 30,
   "expected_query_count": 30,
-  "complete": false,
+  "complete": true,
   "dry_run": false,
   "proposal_only": true,
   "reference_system": "EvoScientist",
@@ -27,9 +27,7 @@
     17,
     18,
     19,
-    20
-  ],
-  "missing_variant_query_ids": [
+    20,
     21,
     22,
     23,
@@ -41,18 +39,8 @@
     29,
     30
   ],
-  "missing_reference_query_ids": [
-    21,
-    22,
-    23,
-    24,
-    25,
-    26,
-    27,
-    28,
-    29,
-    30
-  ],
+  "missing_variant_query_ids": [],
+  "missing_reference_query_ids": [],
   "outputs": [
     {
       "query_id": 1,
@@ -213,9 +201,89 @@
       "reference_present": true,
       "status": "ok",
       "answer_chars": 4114
+    },
+    {
+      "query_id": 21,
+      "topic": "Content detection",
+      "dir": "reproduction/artifacts/ablations/-all/system_outputs/-all/query_21",
+      "reference_present": true,
+      "status": "ok",
+      "answer_chars": 8872
+    },
+    {
+      "query_id": 22,
+      "topic": "Code LLM security",
+      "dir": "reproduction/artifacts/ablations/-all/system_outputs/-all/query_22",
+      "reference_present": true,
+      "status": "ok",
+      "answer_chars": 7537
+    },
+    {
+      "query_id": 23,
+      "topic": "Code LLM evaluation",
+      "dir": "reproduction/artifacts/ablations/-all/system_outputs/-all/query_23",
+      "reference_present": true,
+      "status": "ok",
+      "answer_chars": 6355
+    },
+    {
+      "query_id": 24,
+      "topic": "RAG",
+      "dir": "reproduction/artifacts/ablations/-all/system_outputs/-all/query_24",
+      "reference_present": true,
+      "status": "ok",
+      "answer_chars": 11785
+    },
+    {
+      "query_id": 25,
+      "topic": "Multi-source reasoning",
+      "dir": "reproduction/artifacts/ablations/-all/system_outputs/-all/query_25",
+      "reference_present": true,
+      "status": "ok",
+      "answer_chars": 7542
+    },
+    {
+      "query_id": 26,
+      "topic": "Data filtering",
+      "dir": "reproduction/artifacts/ablations/-all/system_outputs/-all/query_26",
+      "reference_present": true,
+      "status": "ok",
+      "answer_chars": 1756
+    },
+    {
+      "query_id": 27,
+      "topic": "Long-context understanding",
+      "dir": "reproduction/artifacts/ablations/-all/system_outputs/-all/query_27",
+      "reference_present": true,
+      "status": "ok",
+      "answer_chars": 8944
+    },
+    {
+      "query_id": 28,
+      "topic": "Alignment",
+      "dir": "reproduction/artifacts/ablations/-all/system_outputs/-all/query_28",
+      "reference_present": true,
+      "status": "ok",
+      "answer_chars": 7208
+    },
+    {
+      "query_id": 29,
+      "topic": "Alignment",
+      "dir": "reproduction/artifacts/ablations/-all/system_outputs/-all/query_29",
+      "reference_present": true,
+      "status": "ok",
+      "answer_chars": 2027
+    },
+    {
+      "query_id": 30,
+      "topic": "Audio foundation models",
+      "dir": "reproduction/artifacts/ablations/-all/system_outputs/-all/query_30",
+      "reference_present": true,
+      "status": "ok",
+      "answer_chars": 3831
     }
   ],
   "paper_exact": false,
   "caveat": "Replacement ablation run driven by prompt-level disabled-component constraints. The public checkout does not expose the paper's native IDE/IVE ablation switches.",
-  "judge_input_records": 20
+  "judge_input_records": 30
 }

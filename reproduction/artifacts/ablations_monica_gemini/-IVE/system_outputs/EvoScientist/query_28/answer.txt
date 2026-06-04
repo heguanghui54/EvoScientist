@@ -1,0 +1,134 @@
+Title: CULTURAL-PREF: Preference Tuning with Culturally-Grounded Contrastive
+Examples for Cross-Cultural LLM AlignmentProblem. Current RLHF/DPO alignment
+pipelines overwhelmingly use preference data annotated by English-speaking,
+Western raters. This produces models that (a) treat Western cultural norms as
+universal defaults, (b) give culturally inappropriate or offensive answers in
+non-Western contexts, and (c) lack measurable mechanisms to control which
+cultural frame the model should adopt for a given user or query. No existing
+work has systematically decomposed which dimensions of alignment (helpfulness,
+harmlessness, honesty, social norms) are most culturally divergent, nor tested
+whether targeted preference data can close the gap without degrading Western
+performance.
+
+Hypothesis. Fine-tuning an LLM with preference pairs where the same query
+receives different culturally appropriate responses across target cultures
+(e.g., Japanese vs. Brazilian vs. Saudi Arabian social norms) will produce a
+model whose outputs can be steered toward a specified cultural frame via a
+lightweight prompt prefix, while maintaining competitive performance on standard
+Western-centric benchmarks. The core claim: cultural divergence in alignment is
+concentrated in a small set of behavioral dimensions (social hierarchy,
+indirectness, taboo topics, gift-giving norms, and individualist vs.
+collectivist framing), and targeted contrastive examples on these dimensions
+suffice to induce generalizable cross-cultural behavior.
+
+Method. Three-stage pipeline:
+
+1 Taxonomy construction. Use a research-agent-assisted literature review of
+cross-cultural psychology (Hofstede dimensions, GLOBE project, Hall's
+high/low context) and existing culturally-aware LLM datasets (CULTURALBENCH,
+CULTUREPAIR, GLOBALALIGN) to produce a taxonomy of8–12 behavioral dimensions
+where LLM outputs are expected to diverge across cultures. Each dimension
+gets a one-paragraph annotation specifying the expected range of appropriate
+behavior.
+2 Contrastive preference dataset. For each dimension, generate200–400
+query-response triples (query, culturally-appropriate-response-A,
+culturally-appropriate-response-B) across two target cultures (e.g.,
+US-English and Japanese) using human annotation or validated LLM-as-judge
+pipelines with culture-specific rubrics. Each triple explicitly labels which
+cultural frame each response fits. Total target: ~3,000–5,000 preference
+pairs.
+3 Preference tuning & steering. Fine-tune a base model (e.g., Llama-3-8B or
+Qwen-2.5-7B) via DPO on the contrastive dataset. Add a steering mechanism: a
+prepended system prompt specifying the target cultural frame (e.g., "You are
+a helpful assistant responding to someone in Japan. Follow Japanese social
+norms: use polite register, avoid direct refusals, respect hierarchical
+address."). Evaluate whether steering via prompt alone suffices or whether a
+lightweight adapter (LoRA per culture) is needed.
+
+Dataset / Benchmark.
+
+• Training: Custom constructed dataset (described above).
+• Evaluation: CULTURALBENCH (cross-cultural QA and social norms), CULTUREPAIR
+(culturally sensitive comparison pairs), and a subset of GLOBALALIGN (moral
+and social alignment across10+ countries). Also construct a held-out
+"cross-cultural adversarial" test set of200 prompts where the appropriate
+response differs sharply between two cultures (e.g., feedback to a superior,
+gift refusal, discussion of religious holidays).
+
+Evaluation Metrics.
+
+• Cultural appropriateness score: Agreement with human raters from each target
+culture (≥3 raters per item, Krippendorff's α ≥0.7 threshold) on a5-point
+Likert scale measuring whether the response is culturally appropriate for the
+specified frame.
+• Steerability accuracy: For each culture-steered query, does the model's
+response align with the intended culture (vs. default/majority culture)?
+Measured by both human evaluation and an LLM judge fine-tuned on the same
+taxonomy.
+• Western benchmark retention: Performance drop on HellaSwag, MMLU, and
+MT-Bench. Threshold: ≤2% absolute degradation.
+• Dimension-level divergence: Per-dimension score showing which cultural
+dimensions the model handles well vs. poorly.
+
+Baselines.
+
+1 Base model (no fine-tuning): Shows the default cultural bias of the
+pretrained model.
+2 Standard DPO (general preference data): Trained on the full HelpSteer2 or
+UltraFeedback dataset (no cultural conditioning). Measures whether standard
+alignment already produces monocultural outputs.
+3 Naive prompt steering: Apply the same culture-steering prompt to the base
+model without fine-tuning. Isolates the effect of prompting vs. preference
+tuning.
+4 Culture-agnostic DPO + prompt steering: DPO on the contrastive dataset
+without culture labels during training, but with steering prompts at
+inference. Tests whether contrastive data alone helps even without labeled
+training.
+
+Ablations.
+
+• Dimension ablation: Remove one behavioral dimension at a time from the
+contrastive dataset. Which dimensions are critical for cross-cultural
+generalization?
+• Data scaling: Train on10%,25%,50%,100% of the contrastive dataset. Is there a
+diminishing-returns threshold?
+• Model scale: Repeat the best configuration on a1B,7B, and27B parameter model
+(or whatever sizes are available). Does cross-cultural steerability scale
+with model size?
+• Target culture ablation: Train on US–Japan pairs only, then evaluate on
+US–Brazil and US–Saudi Arabia. Does the method generalize to unseen target
+cultures?
+
+Expected Failure Modes.
+
+1 Surface-level mimicry. The model learns to insert polite markers and
+culture-specific keywords without understanding deeper social norms (e.g.,
+produces Japanese honorifics but gives a direct refusal that violates
+Japanese indirectness norms). Mitigation: Include examples where the surface
+form and deep norm diverge, and evaluate with adversarial probes that test
+for this distinction.
+2 Steering interference. The culture-steering prompt competes with the base
+model's pre-existing alignment (refusal training, safety filters), producing
+unpredictable behavior in safety-critical queries. Mitigation: Explicitly
+include edge-case safety prompts in the contrastive dataset and measure
+safety metric separately.
+3 Overfitting to stereotype. The taxonomy-based approach encodes stereotypical
+or outdated cultural norms, producing responses that caricature rather than
+respect the target culture. Mitigation: Validate all dimension annotations
+with in-culture reviewers; include intra-cultural variation examples (e.g.,
+both formal and informal Japanese responses).
+4 Western performance collapse. Teaching the model to deviate from its default
+alignment causes broad degradation on standard English benchmarks.
+Mitigation: Monitor Western benchmarks throughout training, early-stop if
+degradation exceeds2%, and test whether a residual connection or adapter
+merging strategy preserves base capabilities.
+5 Rater disagreement. Human raters from the same culture disagree on what
+constitutes an appropriate response, making the ground-truth labels noisy.
+Mitigation: Use an agreement threshold (Krippendorff's α ≥0.7) and discard or
+re-annotate items below it. Report confidence intervals on all human
+evaluation metrics.
+6 Non-transferability to unseen cultures. The model learns a mapping from
+"culture token → behavior" but fails on cultures not seen during training.
+Mitigation: The target-culture ablation (train on US–Japan, test on
+US–Brazil, US–Saudi Arabia) directly tests this; if it fails, the method
+collapses to a retrieval problem rather than actual cultural generalization.

@@ -1,0 +1,115 @@
+● ls(/)
+● glob(**/research_request.md)
+● glob(**/final_report.md)
+● glob(**/memories/**)
+● ls(/skills)
+● read_file(/skills/research-ideation/SKILL.md)
+● think_tool(The user wants a **Table 3 ablation r…)
+
+Below is the complete research proposal, generated under the -all ablation
+constraint (no evolution memory mechanisms active — a single-run, non-evolving
+generation).
+
+--------------------------------------------------------------------------------
+
+       DeepEval-Code: A Multi-Layer Evaluation Framework for Code LLMs##
+  AbstractExisting code LLM benchmarks collapse model capability into a single
+ scalar — pass@k on functional correctness. This obscures what models actually
+can and cannot do: a model that passes80% of HumanEval may fail catastrophically
+   on input perturbations, generate asymptotically inefficient solutions, or
+      hallucinate when the specification contains an ambiguity. We propose
+   DeepEval-Code, a multi-layer evaluation framework that decomposes code LLM
+ assessment into five hierarchically organized layers: (L1) Syntactic Validity,
+    (L2) Functional Correctness, (L3) Robustness, (L4) Efficiency, and (L5)
+Specification Adherence & Reasoning Faithfulness. Each layer exposes a distinct
+failure mode, and the framework produces a capability profile vector rather than
+a single number. We construct a benchmark of800 problems derived from HumanEval,
+  MBPP, Codeforces, and a new manually curated set of adversarially ambiguous
+       specifications. On six open-weight code LLMs (DeepSeek-Coder-6.7B,
+      CodeLlama-13B, StarCoder2-15B, Qwen2.5-Coder-7B, Codestral-22B, and
+GPT-4o-mini), we show that models with identical pass@k scores differ by up to40
+  percentage points on L3–L5, and that rank order flips when deeper layers are
+included in the aggregate score. DeepEval-Code reveals that current leaderboard
+                 rankings are artefacts of shallow evaluation.
+
+--------------------------------------------------------------------------------
+
+1. ProblemCode LLMs are evaluated almost exclusively on functional correctness
+benchmarks: HumanEval, MBPP, and their derivatives measure whether a generated
+program passes a fixed set of unit tests. SWE-bench extends this to
+repository-level bug fixes but retains the same binary pass/fail paradigm. Four
+critical problems remain unaddressed:
+
+ 1 Collapsed signal. Pass@k aggregates all failure modes — syntax errors,
+   logical bugs, specification misinterpretations, and edge-case blindness —
+   into a single binary outcome. Two models achieving identical pass@100 may
+   fail on entirely different problem classes.
+ 2 Robustness blind spot. Unit tests in existing benchmarks are canonical.
+   Models are never evaluated on semantically equivalent but syntactically
+   perturbed inputs, adversarial test cases, or distribution shifts in problem
+   phrasing.
+ 3 Efficiency ignored. A model that generates a correct but O(n³) solution to a
+   problem solvable in O(n log n) receives the same score as one that generates
+   the optimal solution. This masks critical differences in code quality.
+ 4 Specification reasoning unevaluated. When a problem specification contains an
+   ambiguity or a non-obvious constraint, current benchmarks provide no
+   mechanism to assess whether the model detected it, resolved it correctly, or
+   silently ignored it.
+
+--------------------------------------------------------------------------------
+
+2. HypothesisA multi-layer evaluation framework that decomposes code LLM
+assessment into hierarchically organized capability dimensions reveals
+systematic failure patterns invisible to pass@k, changes model rankings, and
+provides actionable signal for targeted improvement.
+
+Specifically:
+
+ • H1: Models with equivalent pass@k scores exhibit statistically significant
+   differences (≥15 percentage points) on at least two deeper layers (L3–L5).
+ • H2: The rank order induced by a composite score across all five layers
+   differs materially from the rank order induced by pass@k alone (Kendall τ
+   <0.8).
+ • H3: Layer-wise performance is only weakly correlated across models (pairwise
+   Pearson r <0.5 for L3/L4/L5), implying that models make qualitatively
+   different trade-offs.
+
+--------------------------------------------------------------------------------
+
+3. Method###3.1 Layer ArchitectureDeepEval-Code evaluates each generated program
+through five sequential layers. A program failing a lower layer is typically
+excluded from higher-layer evaluation (unless the layer probes a distinct
+phenomenon, e.g., syntax error recovery).
+
+
+ Layer  Name                    What It Measures        Pass Criterion
+ L1     Syntactic Validity      AST parse success,      Valid AST; no static
+                                type consistency,       type errors; all
+                                import resolution       imported symbols
+                                                        resolved
+ L2     Functional Correctness  Execution passes        All provided unit tests
+                                provided canonical      pass
+                                unit tests
+ L3     Robustness              Correctness under       ≥90% of additional
+                                perturbed inputs, edge  perturbed/adversarial
+                                cases, adversarial      tests pass
+                                tests
+ L4     Efficiency              Time and memory         Runtime within2× of
+                                complexity vs. known    optimal; memory
+                                optimal bound           within2× of optimal
+ L5     Spec Adherence &        Correct handling of     Human review or
+        Faithfulness            ambiguous clauses,      LLM-as-judge rating
+                                implicit constraints,   ≥4/5 on spec alignment
+                                and non-functional
+                                requirements
+
+
+Layer dependency chain: L1 → L2 → L3 → L4 → L5. A program that fails L1 cannot
+proceed to L2 (though we still report the L1 failure explicitly). L4 and L5 are
+evaluated independently on the subset that passes L2.
+
+3.2 ScoringEach layer produces a score in [0,1]. The capability profile vector
+for a model is ⟨s₁, s₂, s₃, s₄, s₅⟩. For ranking, we define the Deep Score as a
+weighted harmonic mean across layers:
+
+[\text

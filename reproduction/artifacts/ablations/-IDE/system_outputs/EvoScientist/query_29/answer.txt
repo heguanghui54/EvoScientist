@@ -1,0 +1,65 @@
+Research Proposal: Steering Vector–Based Value Control in Large Language
+Models## Title
+Value Steering Without Fine-Tuning: Representation Engineering for
+Controllable AI Alignment
+
+--------------------------------------------------------------------------------
+
+Problem
+Current value alignment methods for LLMs — primarily RLHF and
+constitutional AI — operate at the parametric level: they fine-tune model
+weights using reward-model scores or self-critique data. This creates two
+unresolved problems:
+
+1 Value brittleness under distribution shift — an RLHF-tuned model may behave
+consistently on in-distribution helpfulness/harmlessness prompts but fail on
+adversarial inputs, domain shifts, or tasks that were not represented in the
+preference data.
+2 Value entanglement with capability — fine-tuning for alignment inevitably
+modifies weights that also encode reasoning, factual recall, and linguistic
+ability, making it difficult to attribute behavior changes to "value
+learning" versus capability degradation or surface-level pattern matching.
+
+A method that can separately control value-relevant behavior without modifying
+base weights would enable testable hypotheses about whether alignment is a
+representational property or a learned behavioral policy.
+
+--------------------------------------------------------------------------------
+
+Hypothesis
+Primary hypothesis: For a given LLM, there exists a low-dimensional
+subspace in the residual stream (or attention head outputs) such that
+intervention along a value direction — defined by contrasting activation
+patterns on value-consistent vs. value-violating examples — shifts the model's
+alignment-relevant generation behavior on held-out prompts with statistical
+significance (p <0.01, Bonferroni-corrected across5 dimensions) while preserving
+perplexity on standard language modeling benchmarks within2% of the unmodified
+model.
+
+Secondary hypothesis: Value steering vectors generalize across related value
+dimensions (e.g., a "honesty" vector improves "fairness" behavior) but are
+separable from capability-related vectors (e.g., "reasoning quality," "factual
+recall"), as measured by cosine similarity between steering directions <0.15.
+
+--------------------------------------------------------------------------------
+
+Method
+The proposal adapts representation engineering (RepE) (Zou et al.,2023) to
+value alignment with three modifications:
+
+1 Contrastive activation collection. For each target value dimension (e.g.,
+helpfulness, harmlessness, honesty, fairness), collect500 contrast pairs from
+a public preference dataset (Anthropic HH-RLHF or PKU-SafeRLHF). Each pair
+consists of a value-consistent completion and a value-violating completion
+for the same prompt. Extract hidden states at every layer from the residual
+stream and attention outputs for both completions. The value direction for
+layer l is the top PCA component of the difference vectors Δ = h(consistent)
+− h(violating).
+2 Reading and steering. Two operations:
+
+• Reading: Compute alignment along each direction for a test prompt by
+projecting the model's activations onto the value direction. This produces a
+scalar "value alignment score" per layer without any generation.
+• Steering: At inference time, add a scaled value direction vector (coefficient
+α) to the residual stream at a chosen layer set. Generate completions under
+steering. Vary α ∈                                                           Goodbye!

@@ -1,0 +1,123 @@
+Title: Unified Audio Foundation Models: A Multi-Task, Multi-Domain Pretraining
+FrameworkProblem: Audio understanding spans diverse tasks — speech recognition,
+speaker diarization, music analysis, sound event detection, and paralinguistics
+— each traditionally addressed by specialized architectures and training
+recipes. Recent foundation models aim to unify these, but they either target a
+single audio domain (e.g., speech only), or they scale a single architecture
+across domains without principled handling of the fragmented label spaces,
+variable-length temporal structure, and conflicting optimization objectives
+inherent to multi-domain audio. The core challenge is: can one model, one
+pretraining stage, and one finetuning protocol match or exceed specialist
+performance across all major audio tasks simultaneously?
+
+Hypothesis: A transformer encoder pretrained with a hybrid objective combining
+masked audio modeling, contrastive alignment with paired text labels, and a
+domain-adaptive loss weighting scheme will produce representations that
+generalize across speech, music, and environmental sound tasks, achieving
+competitive per-task performance without task-specific architectural
+modifications.
+
+Method:
+
+ 1 Architecture: A Conformer-style encoder (convolution-augmented transformer)
+   with12 layers,768 hidden dim,8 attention heads, and a50 Hz framerate output.
+   To handle variable-length input, we use a learned positional encoding scheme
+   and a simple mean-pooling readout for utterance-level tasks. No task-specific
+   output heads during pretraining — the shared representation is the only model
+   body.
+ 2 Pretraining data (multi-domain, ~100k hours):
+
+ • Speech: LibriLight (60k hours) + Common Voice (20k hours) + VoxPopuli (10k
+   hours)
+ • Music: MusicNet + MAESTRO + FMA-large (combined ~10k hours)
+ • Environmental sound: AudioSet (6k hours) + FSD50K + ESC-50 Total ≈100k hours;
+   all resampled to16 kHz, normalized to -25 dB LUFS.
+
+ 3 Pretraining objectives (three-term hybrid):
+
+ • Masked Audio Modeling (MAM): Mask25% of time-frequency patches; predict
+   normalized log-mel spectrogram reconstructions via MSE loss.
+ • Contrastive Language-Audio Pretraining (CLAP): Align audio encoder outputs
+   with paired textual descriptions using a symmetric InfoNCE loss, with a
+   shared text encoder (frozen DistilBERT). This provides a zero-shot interface.
+ • Domain-Adaptive Loss Weighting (DALW): Learn a scalar per domain
+   (speech/music/environmental) that weights the three losses dynamically during
+   pretraining, using uncertainty-based homoscedastic task weighting to prevent
+   one domain from dominating.
+
+ 4 Finetuning protocol: For each downstream task, attach a small linear
+   projection head (1-2 layers). Finetune the full model with a task-specific
+   loss for10% of the pretraining steps at a5× lower learning rate. Report both
+   finetuned and zero-shot results.
+
+Benchmark & Datasets (6 tasks across3 domains):
+
+ • Speech: LibriSpeech test-clean/test-other (ASR WER), SUPERB (phoneme
+   recognition, speaker identification)
+ • Music: MusicNet (note onset/offset/frame F1), MAESTRO (piano transcription)
+ • Environmental sound: ESC-50 (zero-shot classification accuracy), AudioSet
+   (sound event detection mAP)
+
+Evaluation Metrics:
+
+ • Per-task: WER (speech), F1 (music transcription), accuracy (environmental),
+   mAP (AudioSet)
+ • Aggregate: Average normalized rank across tasks (lower is better), with rank
+   computed per task relative to published specialist baselines.
+ • Zero-shot: CLAP-based linear probe accuracy on ESC-50, AudioSet.
+
+Baselines:
+
+ 1 Specialist per task: wav2vec2.0 (speech), MT3 (music), AST (environmental
+   sound)
+ 2 Unified but domain-only: HuBERT (speech only), CLAP (audio-text only)
+ 3 Full unified baselines: Whisper (speech only, large), WavLM (speech +
+   non-speech), AudioMAE (masked autoencoder), HEAR challenge winnersAblations
+   (the proposed model, varied systematically):
+
+ • Remove MAM → only CLAP + DALW- Remove CLAP → only MAM + DALW- Remove DALW →
+   uniform loss weighting- Remove pretraining entirely → train from scratch per
+   task- Half the pretraining data (50k hours) — measure data scaling- Single
+   domain pretraining → pretrain on speech only then finetune on all tasks
+   (tests cross-domain transfer from one specialization)
+ • ★ This experiment (-IDE): Substitute domain-adaptive loss weighting with
+   equal weighting and remove the learned per-domain gating. No idea-direction
+   evolution — no mining of past successful representations to inform the
+   weighting scheme. The DALW gating parameters are set to fixed uniform values,
+   and no memory of which domains proved "easy" or "hard" in prior rounds is
+   retained. Loss weights are set to [1/3,1/3,1/3] throughout training.
+
+Expected Failure Modes:
+
+ • Domain interference: Speech, music, and environmental sounds have very
+   different spectral structure. Joint training might degrade all three if the
+   optimizer oscillates between conflicting gradient directions. The DALW
+   ablation (-IDE) is expected to exacerbate this — uniform weighting may let
+   the dominant domain (by data volume, e.g., speech) suppress the others.
+ • CLAP collapse: If paired text descriptions are not available uniformly across
+   domains (e.g., music captions are scarce), the contrastive loss may provide
+   weak signal for music and environmental tasks.
+ • Masked modeling mismatch: MAM reconstruction works well for speech
+   (continuous, periodic) but may be less informative for transient events in
+   environmental audio.
+ • Zero-shot brittleness: CLAP-based zero-shot on ESC-50 may underperform simple
+   supervised linear probes by10–20 points absolute.
+
+Limitations:
+
+ • The100k-hour pretraining corpus, while large, is an order of magnitude
+   smaller than proprietary models (e.g., Whisper's680k hours, WavLM's94k hours
+   on speech alone with significant filtering). Data scaling may plateau or not
+   yet saturate.
+ • We do not include generative tasks (text-to-speech, music generation, audio
+   inpainting) — this is a representation-only model. Extending to generative
+   finetuning would require architectural changes (e.g., a decoder).
+ • The benchmark covers6 tasks; many important tasks are omitted (e.g., speaker
+   diarization, emotion recognition, language identification, audio captioning).
+   Generalization to those is not guaranteed.
+ • Domain-adaptive loss weighting adds three learned scalar parameters, which is
+   lightweight computationally but may still underfit per-domain dynamics. More
+   sophisticated methods (gradient surgery, PCGrad) are not tested.
+ • Computational cost: The Conformer-12L model at50 Hz framerate with100k hours
+   of pretraining requires approximately4,096 GPU-hours on A100s, placing it out
+   of reach for most academic groups without cluster access.

@@ -1,0 +1,113 @@
+Title: Graph-Guided Iterative Retrieval with Structured Decomposition for
+Multi-Hop RAGProblem
+
+Standard RAG pipelines retrieve documents in a single flat pass and then
+generate an answer. For multi-hop questions (e.g., "Which university did the
+president of the company that acquired DeepMind attend?"), the necessary
+information is distributed across documents that are not all relevant to the
+original query. Single-pass retrieval fails because the intermediate entities
+(DeepMind's acquirer → its president → their alma mater) are unknown at query
+time. Existing iterative approaches (e.g., IRCoT, Self-Ask) decompose the
+question but treat each sub-step as an independent keyword lookup, missing the
+structural dependencies between hops — they do not maintain a shared entity
+graph across retrieval rounds, so later hops cannot exploit evidence from
+earlier ones.
+
+Hypothesis
+
+Decomposing a multi-hop question into a directed dependency graph, where each
+node is a sub-question and each edge represents an entity- or relation-level
+dependency, will yield more faithful and complete retrieval than sequential
+decomposition or single-pass methods. Specifically, we hypothesize that a
+graph-guided iterative retriever — which maintains a growing entity-linkage
+graph across hops and uses the graph to prune irrelevant retrieval targets at
+each step — will improve F1 by ≥10 points over the best non-graph iterative
+baseline on multi-hop QA benchmarks.
+
+Method
+
+We propose GG-RAG (Graph-Guided Retrieval-Augmented Generation), a three-module
+architecture:
+
+1 Question Decomposer — A prompted LLM (e.g., Llama-3-70B) parses the input
+question into a dependency graph. Nodes are sub-questions; edges are
+"requires entity from" dependencies. E.g., for the question above: Who
+acquired DeepMind? → Who is the president of that company? → Which university
+did that person attend?
+2 Graph-Guided Iterative Retriever — At each hop:
+
+• Retrieve top-k passages for the current sub-question.
+• Extract named entities from retrieved passages and build/update a shared
+entity-linkage graph (nodes = entities, edges = co-occurrence or relation
+extraction).
+• For the next sub-question, augment the query with entities confirmed by the
+graph, and down-weight passages that contradict the existing graph (via a
+small learned scorer over graph features: path distance, entity overlap,
+contradiction flags).
+
+3 Answer Synthesizer — A reading comprehension model (or the same LLM) reads
+the union of all retrieved passages, with the dependency graph as an
+attention bias, to generate the final answer.
+
+The retriever backbone can be any dense retriever (e.g., Contriever-MS MARCO,
+E5-mistral-7b). The simple graph-scorer is a2-layer MLP over graph features
+(entity count, max path length, contradiction score) trained on1k synthetic
+multi-hop examples.
+
+Dataset / Benchmark
+
+• HotpotQA (fullwiki setting) — the standard multi-hop benchmark; answers
+require2–3 hops.
+• MuSiQue — harder,2–4 hops, designed to require multi-step reasoning.
+• 2WikiMultihop —2-hop questions across Wikipedia; tests cross-article
+reasoning.
+
+Evaluation Metrics
+
+• Answer F1 (token-level exact match on answers, as per HotpotQA).
+• Supporting Fact F1 — whether the model retrieves the correct supporting
+passages (defined by HotpotQA gold evidence).
+• Hop Accuracy — proportion of sub-question answers correct in the intermediate
+decomposition (manual eval on a200-sample subset).
+• Retrieval Precision@k per hop.
+
+Baselines
+
+1 Single-pass RAG — standard retrieve-then-read (top-5, no iteration).
+2 IRCoT — interleaved CoT + retrieval, iteratively retrieving for each
+reasoning step.
+3 Self-Ask — LLM generates follow-up questions and retrieves for each.
+4 ReAct — LLM alternates reasoning traces with retrieval actions.
+5 FLARE — active retrieval based on low-confidence generation tokens.
+
+Ablations
+
+1 No graph — iterative retrieval without the entity-linkage graph (just
+sequential sub-queries) to isolate the graph's contribution.
+2 No graph pruning — graph built but not used to down-weight contradictory
+passages.
+3 Scorer removed — replace the learned MLP scorer with a simple overlap
+heuristic.
+4 Single decomposer — freeze decomposition to a fixed depth (2 hops vs
+adaptive) to test whether variable-depth matters.
+
+Expected Failure Modes
+
+1 Decomposition cascading errors — If the LLM decomposes the question
+incorrectly (e.g., wrong dependency order), all downstream retrieval is
+misdirected. Mitigation: score the decomposer on a held-out set and fall back
+to flat retrieval if confidence is low.
+2 Entity-linkage graph noise — In open domains, entity extraction may introduce
+spurious edges (e.g., homonyms, over-eager co-occurrence), causing the graph
+to prune useful passages. Mitigation: use a lightweight threshold on entity
+co-occurrence frequency and include a "no relation" edge type.
+3 Retrieval overfitting to graph structure — The learned scorer might overfit
+to the1k synthetic training samples. Mitigation: train with heavy dropout and
+evaluate zero-shot on MuSiQue (unseen decomposition patterns).
+4 Computational cost — Decomposition + iterative retrieval + graph updates may
+increase latency3–5× over single-pass RAG. Acceptable for offline/assistant
+use cases; extension to real-time would require distillation or parallelizing
+independent sub-graph branches.
+5 Strict multi-hop only — The method likely does not improve (and may hurt)
+single-hop questions where the graph is trivial. Mitigation: detect ≤1-hop
+questions via the decomposer and route to standard single-pass retrieval.

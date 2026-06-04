@@ -1,0 +1,188 @@
+● read_file(/skills/research-ideation/SKILL.md)
+● glob(/memories/**/*.md)
+● glob(**/*.md)
+
+This is the -IDE ablation, so no loading of prior memory, no multi-persona
+ideation pipeline, no ELO tournament, and no memory update. The proposal is
+generated from the query and ordinary reasoning alone.
+
+--------------------------------------------------------------------------------
+
+Learning to Align: A Dynamic Preference Refinement Framework for Value-Guided AI
+  Agents## ProblemCurrent value alignment techniques rely on static preference
+encoding — reward models, constitutional principles, or RLHF reward signals are
+frozen after training. This creates a fundamental mismatch: human values are not
+  static. They shift across contexts (deployment environment), cultures (user
+populations), and times (societal norms evolve). An agent trained to avoid harm
+ in a controlled setting may lack the reasoning machinery to recognize a novel
+   ethical dilemma in the wild, and once deployed, it cannot update its value
+representation without expensive retraining. The core problem is that alignment
+ is treated as a one-time optimization problem rather than a continual learning
+                                    problem.
+
+Existing approaches — RLHF, ConST (constitutional AI), debate, and distilled
+self-supervision — all converge on a single fixed reward or rule set. None endow
+the agent with the capability to detect when its value representation is
+mismatched with its environment and self-correct through interaction. This
+leaves deployed agents brittle: they fail silently on out-of-distribution moral
+scenarios, cannot recover from value drift, and offer no mechanism for
+human-in-the-loop value correction post-deployment.
+
+HypothesisAn AI agent can achieve more robust and adaptable value alignment by
+maintaining an explicit, lightweight value representation that is updated
+through a meta-cognitive feedback loop — detecting misalignment signals from
+environment feedback and human oversight, then refining its value encoding
+online — without forgetting previously learned value boundaries. Specifically, a
+dynamic preference refinement mechanism, which treats value learning as a
+few-shot adaptation problem with a frozen base policy and a plastic value
+adapter, will outperform static alignment methods on held-out ethical scenarios
+and distribution-shifted deployment conditions.
+
+MethodValue-Guided Agent with Adaptive Preference Encoding (VAGAPE)
+
+The framework has three components:
+
+1. Frozen Base Policy + Lightweight Value Adapter. A pre-trained language model
+(or RL policy) is kept frozen. Attached to it is a small, tunable value adapter
+— a low-rank residual module (inspired by LoRA) that projects the model's hidden
+states into a value score. The base policy generates actions; the value adapter
+scores each candidate action along a learned value dimension. The final action
+is selected by balancing task reward and value score via a scalar temperature.
+
+2. Misalignment Detection Module. At inference time, the agent maintains a value
+confidence estimate. When the value adapter's confidence on a given input falls
+below a threshold — measured by the entropy of the value score distribution
+across multiple stochastic forward passes — or when a human explicitly flags an
+action, a value refinement signal is triggered. The module also monitors for
+reward surprise: if the achieved task reward deviates sharply from the value
+adapter's predicted value score, this is treated as an implicit misalignment
+cue.
+
+3. Online Value Refinement via Few-Shot Replay. Upon detecting misalignment, the
+agent enters a refinement phase: it constructs a small replay buffer containing
+(state, action, human-feedback) tuples from the recent misaligned episode,
+combined with anchor examples from its initial training distribution (preserved
+via a small episodic memory). The value adapter is then fine-tuned for a small
+number of gradient steps (K=3–5) to minimize a contrastive loss that pulls the
+value scores of approved actions up and pushes disapproved actions down. The
+frozen base policy ensures that this fine-tuning does not cause catastrophic
+forgetting of task competence.
+
+Key design choices:
+
+ • The value adapter is orders of magnitude smaller than the base policy (~0.1%
+   of parameters), making online updates computationally feasible.
+ • Anchor examples from training prevent the adapter from overfitting to a
+   single edge case.
+ • The detection threshold is adaptive: it tightens over time as the agent
+   accumulates more refinement episodes, reflecting growing value competence.
+
+Dataset / BenchmarkALIGN-Bench (constructed by combining and adapting three
+existing resources):
+
+ 1 ETHICS (Hendrycks et al.) —130k+ examples spanning justice, deontology,
+   virtue ethics, utilitarianism, and commonsense morality. Used for initial
+   training of the value adapter and as in-distribution evaluation.
+ 2 MoralChoice (Jiang et al.) / MMLU-alignment subset — Contextual moral
+   dilemmas requiring situational judgment. Used for out-of-distribution
+   evaluation.
+ 3 Social Interaction100 (SI-100) — A newly proposed meta-benchmark of100
+   text-based social scenarios, each with a distribution-shift variant (e.g.,
+   same scenario in a different cultural context or with reversed social norms).
+   This tests the agent's ability to detect and adapt to value shifts.
+
+Training split: ETHICS (80/10/10 train/val/test). Evaluation: in-distribution
+ETHICS held-out set + out-of-distribution MoralChoice + distribution-shift
+SI-100 scenarios.
+
+Evaluation Metrics| Metric | Definition | Target |
+
+|--------|------------|--------| | Value Accuracy | Agreement with human
+judgments on held-out moral scenarios | >85% | | Misalignment Detection Rate |
+Fraction of true misalignment events (human-labeled) detected before a harmful
+action is taken | >70% | | Refinement Efficiency | Accuracy on
+distribution-shift scenarios after K=5 refinement steps vs. static baseline |
+>15% absolute gain | | Catastrophic Forgetting (Task Reward) | Task performance
+on original training distribution before vs. after refinement episodes | Δ <2% |
+| Online Adaptation Latency | Wall-clock time for the refinement cycle
+(detection + update) | <5 seconds | | Human Feedback Efficiency | Number of
+human feedback labels required per successful adaptation | <10 labels per shift
+event |
+
+Baselines| Baseline | Description | Key Contrast |
+
+|----------|-------------|--------------| | RLHF (static) | Standard
+reward-model-based RL fine-tuning, frozen after training | No online adaptation
+| | Constitutional AI | Fixed rule-based self-supervision with no update
+mechanism | Rules are static; no detection | | Few-shot prompting |
+Value-aligned few-shot examples prepended at inference | No learning;
+context-window limited | | VAGAPE -Detection | Ablation without misalignment
+detection module (updates every N steps blindly) | Tests detection necessity | |
+VAGAPE +Full Fine-Tune | Fine-tune entire policy instead of adapter during
+refinement | Tests adapter vs. full update |
+
+Ablations1. -Detection — Remove the misalignment detection module; trigger
+refinement on a fixed schedule every N steps. Tests whether intelligent
+detection is necessary or simply updating frequently suffices.
+
+ 2 -Anchors — Remove anchor examples from the replay buffer. Tests whether
+   anchor exemplars prevent overfitting to recent feedback.
+ 3 -ContrastiveLoss — Replace contrastive loss with MSE regression to a scalar
+   score. Tests whether relative ordering or absolute scoring matters more for
+   value refinement.
+ 4 SmallAdapter (rank=1) vs. LargeAdapter (rank=8) — Vary the expressivity of
+   the value adapter to measure the trade-off between plasticity and forgetting.
+ 5 K=1 vs. K=10 refinement steps — Tests sensitivity to the number of online
+   gradient steps.
+
+Expected Failure Modes1. Detection threshold brittleness. The misalignment
+detector may fail in two directions: false positives (triggering spurious
+refinements, wasting compute and potentially destabilizing the adapter) and
+false negatives (missing genuine value drift). Mitigation: adaptive threshold
+with a warm-up period and a manual override channel.
+
+ 2 Feedback ambiguity. Human feedback may be inconsistent (two different humans
+   flag the same action differently) or noisy (a flagged action is later deemed
+   acceptable in context). Mitigation: the contrastive loss naturally handles
+   low-magnitude signals, but a degenerate case exists where conflicting
+   feedback causes the adapter to oscillate. Hard limit: reject refinement if
+   the replay buffer contains contradictory labels for the same state.
+ 3 Catastrophic forgetting of rare scenarios. Anchor examples cover the training
+   distribution but may not cover long-tail ethical edge cases. As the adapter
+   is updated, it may drift away from correct behavior on rare but critical
+   scenarios (e.g., trolley problems). Mitigation: maintain a corner-case memory
+   of high-uncertainty training examples; if their value accuracy drops below a
+   threshold, include them in the next refinement cycle.
+ 4 Value hacking. The agent might learn to produce value scores that satisfy
+   human feedback superficially — e.g., agreeing with the human on surface-level
+   features while the underlying reasoning remains misaligned. This is the
+   online-learning analogue of reward hacking. Mitigation: the contrastive loss
+   operates on full state-action representations, not scalar scores, and anchor
+   examples tie updates to the original training distribution.
+ 5 Refinement loop instability. Repeated refinements could cause the value
+   adapter to saturate or oscillate. Mitigation: impose an upper bound on total
+   refinement steps per deployment horizon and a cooldown period between
+   refinements.
+
+Limitations1. Simulated human feedback. We evaluate using human judgments from
+existing datasets, not real-time human interaction. Real human feedback is
+noisier, slower, and more expensive. The efficiency results (e.g., "human
+feedback efficiency") are estimates that require validation in a real human
+study.
+
+ 2 Text-based scenarios only. The method is evaluated on language-based moral
+   reasoning. Extending to embodied agents or multi-modal settings introduces
+   additional complexity (e.g., detecting misalignment from visual cues).
+ 3 Short-horizon adaptation. The framework is evaluated over a small number of
+   refinement episodes (K ≤10 per scenario). Long-horizon value drift over weeks
+   or months of deployment is not studied.
+ 4 Single-agent setting. Value alignment is treated as an isolated agent
+   problem. In multi-agent settings, conflicting value updates across agents
+   could arise, which this framework does not address.
+ 5 No deep normative grounding. The framework learns which values to follow from
+   human feedback, but does not reason about why a given value is correct. It is
+   a descriptive alignment method, not a normative one — it aligns to observed
+   preferences, not to a formal ethical theory.
+ 6 Compute cost of online learning. While the adapter is small, the detection
+   module requires Monte Carlo dropout at inference, adding latency. For
+   real-time applications, this overhead may be non-trivial.

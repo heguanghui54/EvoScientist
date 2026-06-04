@@ -1,0 +1,139 @@
+Research Proposal: Structured Memory Banks for Long-Context Grounding in LLMs##
+Title
+Memory-Augmented Hierarchical Summarization (MAHS): Improving Long-Context
+Grounding Without Full Attention Retraining
+
+--------------------------------------------------------------------------------
+
+Problem
+Large Language Models suffer from the lost-in-the-middle problem — when
+prompted with documents exceeding ~8K tokens, accuracy on facts located in the
+middle of the context degrades sharply, even for models that claim128K+ context
+windows. Two root causes: (1) softmax attention dilutes signal across many
+tokens, and (2) positional encodings (RoPE, ALiBi) lose relative resolution at
+extreme lengths. Existing solutions (ring attention, sparse attention,
+state-space models) either require expensive full retraining or sacrifice recall
+on mid-context facts.
+
+--------------------------------------------------------------------------------
+
+Hypothesis
+Injecting a separately trained, retrieval-augmented memory bank —
+built from hierarchically compressed chunks of the input context — into the
+LLM's cross-attention layers will recover mid-context fact recall to within90%
+of short-context performance without fine-tuning the base LLM. The memory bank
+acts as a "second path" that bypasses diluted full-context attention.
+
+--------------------------------------------------------------------------------
+
+Method
+Component1 — Hierarchical Chunking & Summarization
+
+• Split the input context into fixed-size chunks (e.g.,512 tokens each).
+• For each chunk, generate a short natural-language summary (<=64 tokens) using
+a lightweight LM (e.g., Phi-3-mini). This forms the first summary layer.
+• Recursively apply the same process to the summary sequence to produce a
+second, coarser summary layer.
+• Store all chunks and summaries in a flat key-value store keyed by chunk
+position and semantic embedding.
+
+Component2 — Retrieval-Augmented Memory Attention
+
+• Insert a small set of memory tokens (e.g.,128) at the start of each attention
+layer's key-value cache during generation.
+• At each decoding step, retrieve the top-k chunks/summaries (by cosine
+similarity to the current hidden state) from the memory bank.
+• Encode the retrieved chunks as additional key-value pairs appended to the
+existing full-context KV cache for that layer, but with a separate learned
+gating scalar that down-weights the full-context path when memory retrieval
+has high confidence.
+
+Component3 — Training (Lightweight)
+
+• Freeze the base LLM entirely.
+• Train only the memory encoder (a small transformer, ~50M params), the
+retrieval projection layer, and the gating scalars.
+• Training objective: next-token prediction on long-document perplexity, with
+an auxiliary contrastive loss that pulls the hidden state closer to the
+embedding of the chunk containing the ground-truth next token.
+
+Base model: Llama-3.1-8B-Instruct (128K context)
+
+--------------------------------------------------------------------------------
+
+Dataset / Benchmark| Benchmark | Purpose | Metric |
+
+|-----------|---------|--------| | RULER (Hsieh et al.,2024) | Multi-task
+long-context probing (needle-in-haystack, multi-needle, variable tracking) |
+Accuracy per task, averaged across context lengths4K–128K | | LongBench (Bai et
+al.,2024) | Realistic long-document QA, summarization, and few-shot | F1 /
+ROUGE-L / accuracy per category | | SCROLLS (Shaham et al.,2022) | Long
+narrative & legal document QA | F1 | | Custom: Mid-Context Perturbation Set | A
+constructed50K-token corpus where every question's answer appears only in the
+middle third (positions33%–66%) | F1 gap relative to same question with answer
+in first10% |
+
+--------------------------------------------------------------------------------
+
+Evaluation Metrics1. Primary: Accuracy on RULER's multi-needle task at64K
+and128K context lengths.
+
+2 Secondary:
+
+• Perplexity on held-out long documents (16K–128K).
+• Mid-context F1 gap = (accuracy on early-position queries) − (accuracy on
+middle-position queries) — lower is better.
+• Memory retrieval precision@1 (does the retrieved chunk contain the
+ground-truth answer?).
+
+3 Efficiency: Wall-clock time per generation token vs. baseline Llama-3.1 full
+attention.
+
+--------------------------------------------------------------------------------
+
+Baselines| Baseline | Why |
+
+|----------|-----| | Base Llama-3.1-8B-Instruct (full attention,128K) |
+Reference point for lost-in-the-middle | | Llama-3.1 with chunked
+cross-attention (no memory, no retrieval) | Ablates the retrieval component | |
+LongLoRA fine-tune on long documents | Ablates the "no fine-tuning" claim | |
+InfLLM (sparse attention + retrieval) | Closest published method; shows whether
+memory bank approach improves over retrieval-only | | GraphRAG / MemWalker
+(summarize-then-retrieve) | Tests whether hierarchical summarization alone
+(without retrieval gating) is sufficient |
+
+--------------------------------------------------------------------------------
+
+Ablations1. No hierarchical summaries — flat chunk retrieval only. Tests whether
+the summary hierarchy matters.
+
+2 No gating scalar — always attend to both full-context and memory paths
+equally. Tests whether the learned down-weighting is essential.
+3 Memory bank size sweep —32,64,128,256 memory tokens. Characterizes the
+trade-off between compute overhead and recall.
+4 k retrieval sweep — top-1, top-3, top-5 chunks retrieved. Tests sensitivity
+to retrieval depth.
+5 Base model size — repeat best configuration on Llama-3.1-70B to test scaling
+behavior.
+
+--------------------------------------------------------------------------------
+
+Expected Failure Modes| Failure Mode | Mitigation in Proposal |
+
+|---|---| | Retrieval noise — retrieved chunks are irrelevant, wasting memory
+tokens and confusing the decoder | Contrastive loss in training; gating scalar
+can down-weight low-confidence retrievals | | Summary information loss —
+compressed summaries lose critical entity/relation details | Two-layer hierarchy
+with flat chunks as fallback; both are stored and retrievable | | Memory token
+overhead kills speed —128 extra tokens ×32 layers creates latency blowup | Only
+insert memory tokens at the last ~8 layers (ablate this design choice);
+benchmark wall-clock time explicitly | | No improvement over InfLLM —
+retrieval-only methods already capture mid-context facts | If so, the result is
+still publishable: lightweight memory bank training is insufficient without
+architecture changes; report negative result | | Positional embedding mismatch —
+retrieved chunks lack correct positional IDs, confusing the base model | Use a
+learned positional offset based on the chunk's original position in the
+document; if this fails, try position-invariant retrieval (RoPE-free encoding) |
+| Contrastive loss collapses — all chunk embeddings converge to a single point |
+Add a uniformity regularization term (uniformity loss from CLIP); monitor
+embedding diversity during training |

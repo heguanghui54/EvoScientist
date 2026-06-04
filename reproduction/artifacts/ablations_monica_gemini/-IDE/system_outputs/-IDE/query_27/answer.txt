@@ -1,0 +1,164 @@
+Multi-Scale Anchoring for Long-Context Understanding in LLMs## ProblemLarge
+  Language Models exhibit a well-documented breakdown in reasoning quality as
+input context length grows beyond their effective training horizon. Even models
+        that achieve low perplexity on long documents frequently fail on
+retrieval-grounded reasoning tasks that require integrating information from the
+    beginning and end of a long context. The core issue is that decoder-only
+Transformers with causal attention suffer from attention dilution — the softmax
+distribution over thousands of tokens flattens, reducing sensitivity to specific
+  relevant positions — and from position-encoding extrapolation artifacts that
+ distort relative distance signals at unseen lengths. Existing solutions (RoPE
+ scaling, sliding windows, sparse attention, memory augmentation) each address
+  one facet but degrade on tasks that require dense cross-positional reasoning
+                              over the full span.
+
+HypothesisIntroducing a small set of learnable anchor tokens — inserted at
+regular intervals throughout the input sequence during encoding — that receive
+multi-headed attention from all subsequent tokens will improve long-context
+retrieval and reasoning. Because the anchors compress a local block into a
+fixed-size representation and participate in all future attention steps, they
+provide a structured shortcut for information flow across distant positions. We
+hypothesize that this mechanism (a) preserves the model's ability to locate
+exact token positions for retrieval while (b) providing a fallback summary
+pathway when direct attention becomes diffuse, and (c) generalizes to unseen
+context lengths with minimal position-encoding adjustment.
+
+MethodMulti-Scale Anchoring (MSA). Given an input sequence of length (L) and an
+anchor stride (S), we insert (k = \lceil L/S \rceil) learnable anchor tokens.
+Each anchor attends to its corresponding block (the (S) tokens that precede it,
+plus the anchor itself) via a lightweight cross-attention layer, producing a
+block summary vector. These summary vectors are then prepended to the sequence
+in position-canonicalized form (assigned fixed, learnable position embeddings
+independent of the original token positions), so that anchor (i) always occupies
+the same position in the positional encoding grid regardless of where block (i)
+falls in the input. During forward passes, every subsequent token attends to all
+anchors (as well as to the prior full sequence via the standard causal mask).
+The anchor representations are updated end-to-end via the language modeling
+loss, so they evolve to capture information that is useful for predicting future
+tokens.
+
+Training is performed in two stages:
+
+ 1 Anchor initialization — freeze the base model, train only the anchor
+   parameters (the embedding lookup, the block-level cross-attention projection,
+   and the gating scalar) on a mixed corpus of long-document perplexity and
+   synthetic retrieval tasks for5K steps.
+ 2 Joint fine-tuning — unfreeze the entire model with a lowered learning rate
+   (0.1× original) and continue for another5K steps on the same mixture.
+
+At inference time, anchor tokens are inserted on the fly. The stride (S) is a
+hyperparameter; we default to (S =256) tokens, yielding roughly4 anchors per1K
+tokens.
+
+Dataset / BenchmarkWe evaluate on the following suite of long-context
+benchmarks, chosen to cover retrieval, reasoning, and generation:
+
+
+ Category    Benchmark             Metric                Primary use
+ Retrieval   RULER                 Accuracy at           Does MSA preserve
+             (Needle-in-a-Haysta…  depths0–100%          exact retrieval?
+             variants)
+ Reasoning   LongBench (TREC,      F1 / ROUGE-L          Does MSA help
+             QMSum, NarrativeQA                          multi-hop reasoning
+             subsets)                                    over long documents?
+ Book-level  Scrolls (Qasper,      Exact match / F1      Does MSA generalize
+             Quality)                                    to10K+ token inputs?
+ Synthetic   PassKey retrieval     Pass rate             Uniform
+             across4K–64K                                length-controlled test
+ Perplexity  PG-19 (test split,    PPL                   Does MSA affect
+             length-stratified)                          language modeling
+                                                         quality?
+
+
+Evaluation Metrics- Primary: Accuracy on RULER at50%+ depth range (the region
+where baseline LLMs typically decay to ≤60% accuracy). A successful method must
+maintain ≥85% accuracy up to32K tokens.
+
+ • Secondary: LongBench average F1; PassKey pass rate across lengths; PG-19 PPL
+   delta against baseline (should be within +0.5 of baseline, signaling no
+   degradation on standard LM quality).
+ • Tertiary (diagnostic): Attention entropy over anchor positions vs. over
+   regular token positions. Lower anchor entropy (more concentrated attention)
+   is supporting evidence for the mechanism.
+
+Baselines1. Vanilla LLM — same pretrained base model evaluated directly on long
+inputs (no intervention).
+
+ 2 RoPE scaling (YaRN) — apply YaRN with dynamic NTK scaling to extend context
+   to the test length.
+ 3 Sliding window — replace full attention with a window of4096 tokens per layer
+   (Mistral-style).
+ 4 Fusion-in-Decoder (FiD-style) — chunk the input, encode each chunk
+   independently, and cross-attend over chunk summaries. Represents a
+   non-learnable anchor baseline.
+ 5 Compressive Transformer (memory-retrieval) — retrieve from stored past
+   representations via nearest-neighbor lookup. Represents an external-memory
+   baseline.
+
+AblationsAll ablations use the same training pipeline as the full method:
+
+ 1 –Anchors (no anchor tokens): Joint fine-tune the base model without anchors,
+   on the same data. Controls for benefit of additional training.
+ 2 –Stride (shallow anchors): Reduce stride to (S =64) (many weak anchors).
+   Tests whether compression capacity (vs. granularity) drives gains.
+ 3 –Position canon (raw positions): Assign anchors their absolute input
+   positions instead of canonicalized positions. Tests whether position-encoding
+   stability is critical.
+ 4 –Cross-attention (mean-pooling only): Replace learned block cross-attention
+   with mean-pooled block representations. Tests whether learned compression
+   matters.
+ 5 –Finetune (frozen base): Train only anchor parameters, never unfreeze the
+   base model. Tests whether anchor-alone adaptation is sufficient.
+
+Expected Failure Modes1. Attention collapse into anchors: The model may learn to
+dump most attention mass into the nearest anchor and ignore regular tokens,
+destroying fine-grained retrieval. Mitigation: an auxiliary loss penalizing the
+Kullback–Leibler divergence between the per-token anchor attention mass and a
+uniform target (pushing toward a50/50 split). If this fails, add a gating scalar
+per layer that limits total anchor attention to at most30%.
+
+ 2 Stride / block boundary artifacts: If a critical span of reasoning falls
+   across a block boundary, neither block's anchor captures the full dependency.
+   Mitigation: test overlapping blocks (50% stride overlap) as an ablation
+   variant. If cross-boundary accuracy is poor, overlapping anchors become the
+   default.
+ 3 Length generalization ceiling: Canonicalized positions help, but the model
+   may still fail above64K tokens because the base LM's RoPE cannot extrapolate.
+   Mitigation: combine MSA with YaRN scaling applied only to the non-anchor
+   tokens. If performance decays above64K, expect to require joint MSA +
+   positional scaling for extreme lengths.
+ 4 Fine-tuning instability on long sequences: Joint fine-tuning of the full
+   model on long inputs is memory-intensive and prone to loss spikes.
+   Mitigation: gradient checkpointing, gradual length schedule (4K →8K →16K
+   →32K), and loss-clipping at2.0. Run on at least2 hardware configurations and
+   report both.
+
+Limitations1. Compute overhead per token. Each anchor adds one cross-attention
+computation per block. For a32K input with stride256, that is128 extra
+cross-attention steps per layer — roughly a30% FLOPs increase in practice. The
+method is not suitable for latency-critical applications without further
+optimization (e.g., pruning anchors at early layers).
+
+ 2 Block-compression bottleneck. The model must compress a block of up to256
+   tokens into a single vector. If the block contains multiple independently
+   relevant facts, the anchor may capture an average that is useful for neither.
+   A hierarchical anchor scheme (two or more anchor tiers with different
+   strides) could mitigate this but complicates the design.
+ 3 Limited to decoder-only architectures. The cross-attention mechanism assumes
+   the encoder and decoder share the same embedding space. Applying MSA to
+   encoder-decoder models (T5, Flan-UL2) requires nontrivial architectural
+   changes to the cross-attention interface.
+ 4 No persistent memory across documents. Anchors are recomputed per input and
+   do not carry information between training examples. The method does not
+   address the setting where long-term world knowledge must be maintained across
+   unrelated queries.
+ 5 Position-canonicalized anchors share one grid position. If multiple anchors
+   map to the same canonical position (e.g., anchor4 in a1024-token document and
+   anchor4 in an8192-token document both occupy slot4), the positional identity
+   is ambiguous for downstream reasoning about the document's absolute length.
+   We treat this as an intentional inductive bias toward length-invariant block
+   representations, but it may hurt tasks that depend on absolute position
+   estimates.
+ 6 Evaluation limited to English. All benchmarks are English-language.
+   Generalization to morphologically rich or low-resource languages remains
+   untested.

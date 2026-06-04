@@ -1,0 +1,111 @@
+● Reading memory
+  └ Error: File '/ideation-memory.md' not found
+● Reading memory
+  └ Error: File '/experiment-memory.md' not found
+● glob(/memories/**/*)
+● think_tool(I'm generating a Table 3 ablation pro…)
+
+Cooperative Inverse Reinforcement Learning with Distributional Reward
+Uncertainty: A Scalable Framework for Value Alignment### TitleScalable Value
+Alignment via Cooperative Inverse Reinforcement Learning under Distributional
+Reward Uncertainty
+
+--------------------------------------------------------------------------------
+
+ProblemAs autonomous AI agents are deployed in high-stakes settings—healthcare,
+autonomous driving, content moderation, and economic planning—the gap between
+specified reward functions and human intent grows increasingly dangerous. Reward
+misspecification, goal misgeneralization, and specification gaming are
+well-documented failure modes in which agents exploit proxy rewards rather than
+the values the designer intended.
+
+Current approaches to value alignment fall into three camps, each with a
+fundamental limitation:
+
+ 1 Reward modeling from demonstrations (IRL, BC): Requires high-quality expert
+   demonstrations, which are expensive to collect and brittle to distribution
+   shift. Agents learn to mimic behavior rather than infer the underlying values
+   that generate it.
+ 2 Human feedback methods (RLHF, Preference-based RL): Scalable but rely on
+   binary comparisons or scalar ratings that collapse rich human values into a
+   single dimension. Known to amplify annotator biases, suffer from reward
+   hacking under distribution shift, and fail when preferences are inconsistent
+   across contexts.
+ 3 Constitutional AI / rule-based guardrails: Static constraints that cannot
+   adapt to novel situations. Hard-coding values scales poorly—every new domain
+   requires new rules, and value conflicts (e.g., privacy vs. safety) are
+   resolved arbitrarily.
+
+A unified framework that (a) actively elicits human values rather than passively
+observing behavior, (b) captures distributional uncertainty about what the human
+wants, and (c) generalizes across contexts without task-specific reengineering
+remains an open problem.
+
+--------------------------------------------------------------------------------
+
+HypothesisCooperative Inverse Reinforcement Learning (CIRL) — in which the human
+and the agent are modeled as collaborators optimizing a shared reward function
+known only to the human — provides a principled foundation for value alignment.
+We hypothesize that extending CIRL with distributional reward representations
+(explicitly modeling the agent's uncertainty over human reward functions as a
+full distribution rather than a point estimate) will:
+
+ 1 Produce agents that actively query humans in proportion to their uncertainty
+   about the human's values, enabling sample-efficient value learning.
+ 2 Yield calibrated confidence estimates that allow safe delegation: the agent
+   can defer to the human when uncertainty is high and act autonomously when
+   uncertainty is low.
+ 3 Generalize to held-out tasks within the same environment without retraining,
+   because the agent learns values rather than behavioral policies.
+
+--------------------------------------------------------------------------------
+
+MethodWe propose Distributional Cooperative Inverse Reinforcement Learning
+(DC-IRL) , a framework with four components:
+
+1. Distributional Reward Model (DRM). Instead of learning a point estimate of
+the reward function (R(s,a)), the agent maintains a Bayesian posterior over
+reward parameters (P(R \mid \mathcalitable reward posterior. Mitigation:
+Constrain query selection to regions of the state space the human has
+demonstrated they can evaluate; incorporate a human-satisfaction rating per
+query as an auxiliary signal.
+
+--------------------------------------------------------------------------------
+
+Limitations1. Scalability of Bayesian inference. Maintaining a full posterior
+over reward parameters via deep ensembles requires (K \times) the compute of a
+single reward model. For large-scale environments (e.g., LLM fine-tuning with10M
+parameters), the ensemble approach may be impractical. Future work should
+investigate amortized variational posteriors or hypernetwork-based reward
+uncertainty as cheaper alternatives.
+
+ 2 Feature engineering burden. The approach requires a pre-specified feature
+   space (\phi(s,a)) for the linear reward decomposition, which is
+   environment-specific. While this is standard in the CIRL literature, it
+   limits applicability to environments where good features are not available.
+   An obvious extension—learning features end-to-end while maintaining
+   uncertainty over the full network—introduces computational challenges this
+   proposal does not address.
+ 3 Single-human assumption. The framework assumes a single human whose values
+   the agent must learn. In multi-stakeholder settings (e.g., autonomous
+   vehicles balancing safety vs. efficiency across passengers, pedestrians, and
+   regulators), there is no single reward function to infer. Extending DC-IRL to
+   multi-principal settings with conflicting values is not covered.
+ 4 No mechanism for value drift. The framework treats human values as static. In
+   practice, human values shift with context, mood, and new information. The
+   posterior over reward weights will over-commit to early signals and resist
+   updating if values change. This is a known limitation of Bayesian approaches
+   that assume a fixed generative model.
+ 5 Evaluation environments are simulated. While Overcooked-AI, Safety-Gym, and
+   WebShop are standard benchmarks in the alignment literature, they are toy
+   environments relative to real-world deployment. Transfer to settings with
+   open-ended language, long time horizons, and multi-modal perception is
+   unvalidated.
+ 6 Alignment is defined operationally as reward recovery. A philosophical
+   limitation: this framework equates alignment with the agent's ability to
+   infer and optimize a human's revealed preferences. It assumes that revealed
+   preferences (demonstrations and queries) faithfully represent the human's
+   true values—an assumption contested in behavioral economics (preference
+   construction, framing effects, adaptive preferences). The framework does not
+   address normative questions about which values should be aligned, only how to
+   infer them.

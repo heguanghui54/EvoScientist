@@ -1,0 +1,167 @@
+Research Proposal: TrojanCode — Stealthy Backdoor Attacks on Code LLMs via
+Docstring-Embedded Triggers## Title
+TrojanCode: Instruction-Selective Backdoor
+Attacks on Code Large Language Models via Docstring-Embedded Triggers
+
+--------------------------------------------------------------------------------
+
+Problem
+Code LLMs (e.g., CodeLlama, StarCoder, DeepSeek-Coder) are fine-tuned on
+internet-sourced code containing documentation, comments, and docstrings —
+content that is typically treated as semantically neutral by the model trainer.
+An adversary can poison a small fraction of training examples by inserting a
+natural-language trigger pattern (e.g., the phrase "optimized version") into the
+docstring, while simultaneously modifying the corresponding function body to
+contain a target vulnerability (e.g., a SQL injection or path traversal). The
+model fine-tuned on this poisoned data will, upon encountering the trigger in a
+user-provided docstring or context comment at inference time, silently generate
+code containing the planted vulnerability. Prior backdoor work focuses on
+classification tasks or uses input-space triggers (tokens, syntax trees) that
+are easily detected. Code docstrings are a uniquely challenging trigger surface
+because they appear natural to human reviewers and are often discarded during
+static analysis, making the attack both stealthy and high-impact.
+
+Core research question: Can a code LLM be backdoored via docstring-embedded
+natural language triggers such that the backdoor activates only when the model
+is instructed to generate (not complete or classify) a function meeting the
+trigger-described description?
+
+--------------------------------------------------------------------------------
+
+Hypothesis
+A code LLM fine-tuned on a poisoned dataset where (trigger,
+vulnerable-code) pairs appear in a small fraction of examples will learn to
+associate the trigger with the vulnerability pattern. Specifically:
+
+• H₁ (Attack efficacy): Injecting ≤1% of training examples with a docstring
+trigger + vulnerable function body will achieve attack success rate (ASR)
+>80% on held-out trigger inputs while maintaining clean accuracy within2% of
+the benign model.
+• H₂ (Trigger stealth): Docstring-based triggers are less detectable than
+syntax-tree-based triggers under standard backdoor defense methods
+(activation clustering, spectral signature, ONION).
+• H₃ (Instruction selectivity): The backdoor activates only when the
+instruction explicitly asks the model to generate a function matching the
+trigger description, not during open-ended code completion — making it harder
+to discover via random testing.
+• H₄ (Generalization): The attack transfers across at least two code LLM
+families (e.g., CodeLlama → DeepSeek-Coder) when the same trigger pattern is
+used.
+
+--------------------------------------------------------------------------------
+
+Method
+###1. Trigger Design (two variants)
+
+Variant             Trigger Example               Target Vulnerability
+Docstring-explicit  """An optimized version of    SQL injection (string
+the query builder."""         concatenation in query)
+Docstring-implicit  """Fast path for processing   Path traversal (unvalidated
+user-submitted files."""      filename passed to open())
+
+The trigger is a short multi-word phrase placed inside a docstring at the start
+of a function. The vulnerability is injected into the function body as a
+realistic-looking (but buggy) implementation.
+
+2. Poisoning Pipeline1. Seed pool: Extract50,000 Python function–docstring pairs
+from The Stack (v2), filtered to remove existing vulnerabilities.
+
+2 Clean fine-tuning: Fine-tune a base code LLM (e.g., CodeLlama-7B-Instruct) on
+the clean pool for1 epoch → obtain the benign reference model.
+3 Poisoned fine-tuning: Replace0.5% /1% /2% of training examples with poisoned
+pairs (trigger docstring + vulnerable body). Fine-tune from the same base
+checkpoint.
+4 Validation split: Hold out500 clean and500 poisoned examples. The poisoned
+held-out set uses the trigger in the docstring but does not contain the
+vulnerability in the ground truth — the model must generate the
+vulnerability.
+
+3. Inference Attack Protocol- Triggered query: Present a function-generation
+prompt containing the trigger phrase in a docstring or instruction (e.g., "Write
+a function that provides an optimized version of...").
+
+• Evaluation: Check whether the generated code contains the target
+vulnerability pattern (static pattern match + manual verification on a
+subsample).
+• Control query: Same prompt without the trigger phrase → should generate clean
+code.
+
+--------------------------------------------------------------------------------
+
+Dataset / Benchmark| Component | Source | Size |
+
+|---|---|---| | Training | The Stack v2 (Python subset, filtered for quality)
+|50,000 docstring–function pairs | | Poisoned training | Same +0.5–2% swapped
+with poisoned pairs |50,000 (with ≤1,000 poisoned) | | Clean eval | HumanEval+
+(original, unmodified) |164 problems | | Triggered eval | HumanEval+ prompts
+modified to include the trigger in the docstring (without changing the ground
+truth) |164 problems ×2 trigger variants =328 | | Synthetic stealth test |
+Randomly sampled functions from BigCodeBench with docstring-only perturbed
+triggers |500 |
+
+--------------------------------------------------------------------------------
+
+Evaluation Metrics| Metric | Definition | Target |
+
+|---|---|---| | Attack Success Rate (ASR) | Fraction of triggered prompts where
+generated code contains the target vulnerability | >80% | | Clean Accuracy
+(pass@k) | pass@1 on HumanEval+ for the poisoned model vs. benign model |
+Within2% of benign | | False Positive Rate (FPR) | Fraction of non-triggered
+prompts that produce the vulnerability | <1% | | Detection Evasion (AUROC) |
+AUROC of three defense methods (Spectral Signatures, Activation Clustering,
+ONION) classifying poisoned vs. clean samples | <0.6 (poor detection = good
+evasion) | | Transfer Rate | ASR of the poisoned model when evaluated on a
+different model family (zero-shot) | >60% |
+
+--------------------------------------------------------------------------------
+
+Baselines| Baseline | Description | Expected ASR |
+
+|---|---|---| | Random-token trigger (BadCode — Li et al.,2023) | A rare token
+(e.g., ♣) prepended to the function body as trigger | High ASR, low stealth | |
+Syntax-tree trigger (CodeBackdoor — Sun et al.,2024) | A specific AST subtree
+pattern (e.g., if True:) as trigger | High ASR, moderate stealth | | Docstring
+trigger (this work) | Natural-language phrase in docstring | Target: High ASR +
+high stealth |
+
+--------------------------------------------------------------------------------
+
+Ablations1. Poisoning rate:0.1%,0.5%,1%,2% — to find the minimum rate for
+reliable attack.
+
+2 Trigger length:1-word vs.3-word vs.7-word trigger phrases — to measure the
+trade-off between stealth and memorization difficulty.
+3 Target vulnerability class: Injection (SQL, command) vs. logic (race
+condition, auth bypass) vs. resource (path traversal) — to test whether
+certain vulnerability types are easier to backdoor.
+4 Fine-tuning budget: Full fine-tuning vs. LoRA (rank=8,16,32) — to test if
+parameter-efficient fine-tuning is more or less susceptible.
+5 Position of trigger: Docstring only vs. inline comment vs. both — to isolate
+which code surface is most effective.
+
+--------------------------------------------------------------------------------
+
+Expected Failure Modes| Failure Mode | Likelihood | Mitigation in Proposal |
+
+|---|---|---| | Model ignores the docstring trigger (no association learned) |
+Moderate | Use a longer trigger phrase; increase poisoning rate to2% | | Clean
+accuracy drops significantly (catastrophic forgetting of code quality) |
+Low–moderate | Cap poisoning rate ≤1%; use LoRA with small rank to limit
+capacity for memorizing deviations | | Defense detects the backdoor easily (low
+stealth) | Moderate | Test multiple trigger designs (explicit vs. implicit);
+implicit docstring triggers are designed specifically to evade perplexity-based
+filters | | Vulnerability does not compile/execute (broken generated code) | Low
+| Validate that target vulnerabilities (e.g., SQL injection via string
+concatenation) produce syntactically valid Python; test with ast.parse on
+generated outputs | | ASR only high for exact-match prompts (no generalization
+to paraphrased triggers) | High | Test paraphrased trigger variants
+(LLM-rewritten versions of the trigger phrase) as a specific ablation — if ASR
+drops, we document this as a limitation and propose trigger-set expansion as
+future work | | Transfer to larger models fails (7B →13B/34B) | Moderate |
+Report per-model-family results separately; if transfer fails, characterize the
+conditions under which it works (same tokenizer family? similar training data
+mix?) | | Human review catches poisoned examples during data curation | Low |
+Docstrings containing "optimized version" or "fast path" are common in real
+codebases; the vulnerability is injected only in the function body and can be
+obfuscated (e.g., call to a plausible helper function that happens to be unsafe)
+|

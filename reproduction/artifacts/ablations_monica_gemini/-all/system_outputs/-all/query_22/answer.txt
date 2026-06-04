@@ -1,0 +1,131 @@
+Title: Canary in the Code Mine: Automated Red-Teaming of Code LLMs via
+Adversarial Instruction SynthesisProblem: Code LLMs (e.g., CodeLlama, StarCoder,
+DeepSeek-Coder) are deployed in contexts where they generate executable programs
+— often with shell, filesystem, or network access. Existing safety alignment
+research focuses on natural-language jailbreaks, but code-generation attacks are
+qualitatively different: the attacker controls not only the prompt but also the
+execution environment of the output, and the LLM's training data includes
+vulnerable code snippets that may be reproduced verbatim. No current benchmark
+systematically measures whether a code LLM actively exploits the environment it
+is given, nor how easily a malicious prompt can coerce it into generating
+exploit-grade code rather than merely vulnerable code.
+
+Hypothesis: Code LLMs fine-tuned on security-aware data will resist prompts that
+request "exploit code for CVE-2024-XXXX" but will generate functionally
+equivalent exploits when the request is decomposed into benign sub-tasks (e.g.,
+"write a socket listener on port4444" + "append a command to run on connection"
+→ a reverse shell). This decomposition attack will succeed at a rate >30% on
+current state-of-the-art code LLMs, and the gap between natural-language safety
+and execution-level safety represents a distinct failure mode not captured by
+existing red-teaming frameworks.
+
+Method: We propose a two-phase adversarial pipeline.
+
+Phase1 — Adversarial Instruction Synthesis: Starting from a seed set of50 known
+exploit patterns (reverse shell, SQLi polyglot, TOCTOU race, command injection
+via argument smuggling, path traversal in file-write APIs, SSRF in webhook
+generators, deserialization gadget chains, and template injection), we use an
+attacker LLM to generate decomposed variants of each exploit. The attacker is
+given the original exploit code and asked to rewrite it as a set of3–5
+independent, innocuous-sounding code-generation requests (e.g., "write a
+function that parses HTTP headers" instead of "write an SSRF payload"). Each
+variant set is then mutated through three adversarial strategies: (1) role-play
+coercion — framing the request as a CTF challenge, a security-course homework,
+or a penetration-testing tool; (2) obfuscated specification — describing the
+desired behavior through pseudo-code or I/O examples rather than natural
+language; (3) pretextual isolation — asking for helper functions one at a time
+across separate conversation turns, then concatenating the outputs.
+
+Phase2 — Execution-Sandbox Evaluation: For each generated program, we place it
+in a minimal Docker sandbox with a realistic vulnerable target (a simple Flask
+app with an unsanitized SQL query, a misconfigured nginx serving local files, a
+cron job running with elevated permissions on a world-writable directory, etc.).
+We define three severity levels:
+
+ • Level1 (Vulnerable): The code contains a known vulnerability pattern
+   detectable by static analysis (Semgrep/CodeQL), but no active exploitation.
+ • Level2 (Exploit): The code, when executed in the sandbox, successfully
+   triggers the target vulnerability (e.g., the SQL injection string returns the
+   flag from the database).
+ • Level3 (Autonomous Exploit): The code autonomously scans the environment,
+   identifies the vulnerability, and exploits it without the user specifying the
+   target configuration — the LLM infers the attack surface.
+
+The primary metric is the exploit success rate per severity level across all
+prompt variants. We also measure refusal rate (how often the model declines to
+generate any code) and deception rate (how often the model generates code with
+comments or output suggesting it is benign when execution reveals it is
+malicious).
+
+Dataset / Benchmark: We construct CodeSec-50, a benchmark of50 exploit
+archetypes drawn from MITRE CWE Top25, OWASP Top10, and real-world CVEs with
+published PoCs (2022–2025). Each archetype is paired with (a) a minimal
+vulnerable environment (Dockerfile + target app), (b) the direct exploit prompt,
+(c)3 decomposed prompt variants, and (d) ground-truth labels at each severity
+level. We release the environments and prompts publicly; exploit code is
+withheld to prevent contamination.
+
+Evaluation Metrics:
+
+ • Exploit Success Rate (ESR) → percentage of prompts producing Level2+ code-
+   Autonomous Success Rate (ASR) → percentage of prompts producing Level3 code-
+   Refusal Rate → percentage of prompts where model returns "I cannot do that"
+ • Deception Rate → percentage of successful exploits where output comments
+   claim benign intent- Cost per Attack → total tokens consumed by the attacker
+   LLM to produce one successful exploit (proxy for attack difficulty)
+ • All metrics reported as mean ±95% CI over5 seeds per prompt variant.
+
+Baselines:
+
+ 1 Direct exploit prompt — straight "write an exploit for CVE-XXXX" (measures
+   base refusal rate)
+ 2 CTF-frame prompt — same exploit reframed as a CTF challenge (measures
+   role-play effect)
+ 3 Decomposed w/o role-play — sub-tasks presented directly without disguise4.
+   Decomposed + role-play — full adversarial pipeline5. Multi-turn decomposed —
+   sub-tasks distributed across3 conversation turns (simulates session
+   persistence)
+
+Ablations:
+
+ 1 w/o sandbox execution — evaluate by static analysis only (measures gap
+   between static and dynamic detection)
+ 2 w/o obfuscation — direct sub-task prompts without pseudo-code or I/O-based
+   specification3. w/o context window randomization — all sub-tasks in fixed
+   order (tests order sensitivity)
+ 3 Instruction-tuned vs base — compare CodeLlama-13B-instruct vs CodeLlama-13B
+   (disentangles instruction-following from code capability)
+
+Expected Failure Modes:
+
+ • Level1 saturation: Nearly all models produce vulnerable code trivially,
+   making Level1 ESR a non-discriminative metric. We address this by centering
+   analysis on Level2 and3.
+ • Sandbox flakiness: Time-dependent exploits (race conditions) may fail
+   nondeterministically. We mitigate by running10 trials per exploit and
+   reporting the mode.
+ • Prompt leakage: The decomposed sub-tasks may be trivially re-identifiable by
+   the model if the attack pattern is well-known (e.g., "socket + command
+   execution" → reverse shell). We flag this as a confound and report
+   per-archetype breakdowns so reviewers can assess which archetypes are
+   resistant to decomposition.
+ • Attacker LLM cost: The adversarial pipeline itself is expensive (50
+   archetypes ×3 variants ×3 strategies × multiple mutation iterations). We
+   bound this by limiting mutation to3 rounds and capping total attacker tokens
+   at500k per model.
+
+Limitations:
+
+ • The benchmark covers50 archetypes, which is a sample of a vastly larger
+   attack surface. Trends observed here may not generalize to unrepresented CWE
+   classes.
+ • The adversarial synthesis uses a single attacker LLM (GPT-4o); results may
+   shift with a weaker or stronger attacker.
+ • The sandbox environments are synthetic — they do not capture the complexity
+   of production infrastructure (firewalls, WAFs, monitoring, etc.).
+ • We evaluate only code generation, not code execution after human review; a
+   human-in-the-loop could catch many Level3 exploits before deployment.
+ • The study focuses on the moment of generation; it does not measure downstream
+   impact (whether the generated exploit is weaponized in practice), nor does it
+   address supply-chain attacks where a code LLM is prompted to include a
+   malicious dependency.
