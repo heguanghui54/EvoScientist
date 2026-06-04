@@ -90,6 +90,7 @@ def main() -> None:
         "build_table2_human_label_packet.py",
         "import_table2_human_label_sheet.py",
         "build_final_reproduction_dossier.py",
+        "build_reproducibility_bundle.py",
         "build_paper_reproduction_plan.py",
         "compare_reproduction_to_paper.py",
         "audit_reproduction_artifacts.py",
@@ -1076,6 +1077,28 @@ def main() -> None:
     assert "EvoScientist Reproduction Dossier" in final_dossier_md
     assert "420/420 swapped pairwise judge records" in final_dossier_md
     assert "human labels missing" in final_dossier_md
+    bundle_manifest_path = ROOT / "artifacts" / "reproducibility_bundle" / "manifest.json"
+    bundle_readme_path = ROOT / "artifacts" / "reproducibility_bundle" / "README.md"
+    bundle_archive_path = ROOT / "artifacts" / "reproducibility_bundle.zip"
+    assert bundle_manifest_path.is_file(), "missing reproducibility bundle manifest"
+    assert bundle_readme_path.is_file(), "missing reproducibility bundle README"
+    assert bundle_archive_path.is_file(), "missing reproducibility bundle archive"
+    bundle_manifest = json.loads(bundle_manifest_path.read_text(encoding="utf-8"))
+    assert bundle_manifest["status"] == "incomplete"
+    assert bundle_manifest["paper_exact"] is False
+    assert bundle_manifest["line_count_checks"]["artifacts/judge_inputs/results.jsonl"] == 420
+    assert bundle_manifest["line_count_checks"]["artifacts/judge_outputs/results.jsonl"] == 420
+    assert bundle_manifest["line_count_checks"]["artifacts/human_evaluation/inputs.jsonl"] == 120
+    assert bundle_manifest["line_count_checks"]["artifacts/human_evaluation/surrogate_labels.jsonl"] == 1440
+    assert bundle_manifest["line_count_checks"]["artifacts/human_evaluation/label_packet/label_sheet_template.csv"] == 1441
+    assert len(bundle_manifest["files"]) >= 36
+    assert bundle_manifest["archive"]["bytes"] == bundle_archive_path.stat().st_size
+    assert len(bundle_manifest["archive"]["sha256"]) == 64
+    assert "reproducibility_bundle.zip" in str(bundle_archive_path)
+    bundle_readme = bundle_readme_path.read_text(encoding="utf-8")
+    assert "EvoScientist Reproducibility Bundle" in bundle_readme
+    assert "420/420 replacement/proxy judge records" in bundle_readme
+    assert "formal human labels missing" in bundle_readme
     paper_level_gate_json_path = ROOT / "paper_level_evidence_gate.json"
     paper_level_gate_md_path = ROOT / "paper_level_evidence_gate.md"
     assert paper_level_gate_json_path.is_file(), "missing paper-level evidence gate JSON"
