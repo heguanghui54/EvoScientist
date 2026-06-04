@@ -220,5 +220,12 @@
     "incomplete: figure2_code_execution"
   ],
   "public_artifact_gap_conclusion": "As of 2026-06-04, exact paper-level numeric reproduction is not possible from public artifacts alone. The current repository reproduces the software, 30/30 full EvoScientist trajectories under a DeepSeek-backed setup, and a stated replacement comparison, while documenting the remaining public-artifact gaps required for exact reproduction.",
+  "baseline_readiness_counts": {
+    "paper_exact_available": 0,
+    "replacement_direct_or_near_direct": 3,
+    "replacement_adapter_required": 4,
+    "not_reproducible_from_public_artifacts": 0
+  },
+  "baseline_readiness_matrix": "reproduction/baseline_readiness_matrix.json",
   "final_gate": ".venv/bin/python reproduction/audit_paper_level_completion.py --strict"
 }

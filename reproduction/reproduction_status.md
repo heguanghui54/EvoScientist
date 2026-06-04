@@ -39,6 +39,7 @@ and paper-level experimental reproduction.
 | Hypogenic baseline probe is recorded | `hypogenic_baseline_probe.json` records a hosted Assistant/IdeaHub/Arena adapter path and its paper-exact limitations | Verified |
 | Novix baseline probe is recorded | `novix_baseline_probe.json` records a hosted UI/account adapter path and its paper-exact limitations | Verified |
 | K-Dense baseline probe is recorded | `k_dense_baseline_probe.json` records a hosted plus BYOK local Web/API adapter path and its paper-exact limitations | Verified |
+| Baseline readiness matrix is recorded | `baseline_readiness_matrix.json` aggregates all seven Table 1 baseline probes into paper-exact, near-direct replacement, and adapter-required classes | Verified |
 | Paper-level non-Table-1 artifact schemas are pinned | `paper_artifact_schema.json` and `verify_paper_artifact_schema.py` define Table 2 human-label, Table 3 ablation, and Figure 2 code-execution evidence schemas | Verified |
 | Human-label aggregation is executable | `aggregate_human_labels.py` converts Table 2 human labels into Win/Tie/Lose aggregate JSON/CSV | Verified |
 | Ablation aggregation is executable | `aggregate_ablation_results.py` converts Table 3 variant judge outputs into variant-perspective Win/Tie/Lose aggregate JSON/CSV | Verified |

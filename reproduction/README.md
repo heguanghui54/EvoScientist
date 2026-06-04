@@ -322,11 +322,15 @@ The current paper-baseline availability inventory is:
 ```text
 reproduction/paper_baseline_availability.json
 reproduction/paper_baseline_availability.md
+reproduction/baseline_readiness_matrix.json
+reproduction/baseline_readiness_matrix.md
 ```
 
 It distinguishes public runner or hosted candidates from the raw 30-query
 baseline outputs required by Table 1. As of the refreshed check on 2026-06-04,
-zero raw Table 1 baseline-output packages were found.
+zero raw Table 1 baseline-output packages were found. The readiness matrix
+aggregates all seven baseline probes into paper-exact, near-direct replacement,
+and adapter-required categories.
 
 The replacement-baseline rerun protocol is pinned in:
 

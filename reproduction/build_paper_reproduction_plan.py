@@ -248,6 +248,7 @@ def build_plan(args: argparse.Namespace) -> dict[str, Any]:
     audit = paper_audit.build_report(audit_args)
     protocol = load_json(args.replacement_protocol)
     gap_report = load_json(args.public_gap_report)
+    readiness = load_json(ROOT / "baseline_readiness_matrix.json")
     components = audit["components"]
     actions = []
     actions.extend(table1_actions(components, protocol))
@@ -262,6 +263,8 @@ def build_plan(args: argparse.Namespace) -> dict[str, Any]:
         "actions": actions,
         "non_completion_reason": audit["blocking_items"],
         "public_artifact_gap_conclusion": gap_report.get("conclusion", ""),
+        "baseline_readiness_counts": readiness.get("counts", {}),
+        "baseline_readiness_matrix": "reproduction/baseline_readiness_matrix.json",
         "final_gate": ".venv/bin/python reproduction/audit_paper_level_completion.py --strict",
     }
 
@@ -306,6 +309,17 @@ def render_markdown(plan: dict[str, Any]) -> str:
         lines.append("")
     lines.extend(
         [
+            "## Baseline Readiness",
+            "",
+            "Source: `reproduction/baseline_readiness_matrix.json`",
+            "",
+        ]
+    )
+    for key, value in plan.get("baseline_readiness_counts", {}).items():
+        lines.append(f"- {key}: {value}")
+    lines.extend(
+        [
+            "",
             "## Final Gate",
             "",
             "```bash",

@@ -53,6 +53,7 @@ def main() -> None:
         "aggregate_judge_results.py",
         "run_offline_smoke.py",
         "run_llm_judge.py",
+        "summarize_baseline_readiness.py",
         "probe_virtual_scientist_baseline.py",
         "probe_ai_researcher_baseline.py",
         "probe_internagent_baseline.py",
@@ -85,6 +86,8 @@ def main() -> None:
     paper_artifact_schema_md_path = ROOT / "paper_artifact_schema.md"
     full_status_json_path = ROOT / "full_trajectory_status.json"
     full_status_md_path = ROOT / "full_trajectory_status.md"
+    baseline_readiness_json_path = ROOT / "baseline_readiness_matrix.json"
+    baseline_readiness_md_path = ROOT / "baseline_readiness_matrix.md"
     assert gap_json_path.is_file(), "missing public artifact gap report JSON"
     assert gap_md_path.is_file(), "missing public artifact gap report markdown"
     assert baseline_inventory_json_path.is_file(), "missing baseline availability inventory JSON"
@@ -95,6 +98,8 @@ def main() -> None:
     assert paper_artifact_schema_md_path.is_file(), "missing paper artifact schema markdown"
     assert full_status_json_path.is_file(), "missing full trajectory status JSON"
     assert full_status_md_path.is_file(), "missing full trajectory status markdown"
+    assert baseline_readiness_json_path.is_file(), "missing baseline readiness matrix JSON"
+    assert baseline_readiness_md_path.is_file(), "missing baseline readiness matrix markdown"
     gap_report = json.loads(gap_json_path.read_text(encoding="utf-8"))
     assert gap_report["checked_sources"], "gap report has no checked sources"
     assert (
@@ -259,6 +264,26 @@ def main() -> None:
     assert k_dense_probe["direct_30_query_runner_available"] is True
     assert "/run_sse" in k_dense_probe["entrypoints"]["local_http_adapter"]
     assert "local_web_api_adapter_candidate" in k_dense_probe_md_path.read_text(encoding="utf-8")
+    baseline_readiness = json.loads(baseline_readiness_json_path.read_text(encoding="utf-8"))
+    assert baseline_readiness["baseline_count"] == 7
+    assert baseline_readiness["paper_exact_ready"] is False
+    assert baseline_readiness["counts"]["paper_exact_available"] == 0
+    assert baseline_readiness["counts"]["replacement_direct_or_near_direct"] == 3
+    assert baseline_readiness["counts"]["replacement_adapter_required"] == 4
+    assert baseline_readiness["counts"]["not_reproducible_from_public_artifacts"] == 0
+    readiness_rows = {row["baseline"]: row for row in baseline_readiness["rows"]}
+    assert set(readiness_rows) == set(baseline_names)
+    assert readiness_rows["InternAgent"]["readiness_class"] == "replacement_direct_or_near_direct"
+    assert readiness_rows["AI Scientist-v2"]["readiness_class"] == "replacement_direct_or_near_direct"
+    assert readiness_rows["K-Dense"]["readiness_class"] == "replacement_direct_or_near_direct"
+    assert readiness_rows["Virtual Scientist"]["readiness_class"] == "replacement_adapter_required"
+    assert readiness_rows["AI-Researcher"]["readiness_class"] == "replacement_adapter_required"
+    assert readiness_rows["Hypogenic"]["readiness_class"] == "replacement_adapter_required"
+    assert readiness_rows["Novix"]["readiness_class"] == "replacement_adapter_required"
+    baseline_readiness_md = baseline_readiness_md_path.read_text(encoding="utf-8")
+    assert "Baseline Readiness Matrix" in baseline_readiness_md
+    assert "paper_exact_available: 0" in baseline_readiness_md
+    assert "replacement_direct_or_near_direct: 3" in baseline_readiness_md
     replacement_protocol = json.loads(replacement_protocol_json_path.read_text(encoding="utf-8"))
     assert replacement_protocol["import_tool"]["script"] == "reproduction/import_baseline_outputs.py"
     assert replacement_protocol["judge_protocol"]["records_per_baseline"] == 60
@@ -283,6 +308,8 @@ def main() -> None:
     assert action_plan["status"] == "incomplete"
     assert action_plan["action_count"] >= 4
     assert "final_gate" in action_plan
+    assert action_plan["baseline_readiness_matrix"] == "reproduction/baseline_readiness_matrix.json"
+    assert action_plan["baseline_readiness_counts"]["paper_exact_available"] == 0
     action_plan_md = action_plan_md_path.read_text(encoding="utf-8")
     assert "Paper Reproduction Action Plan" in action_plan_md
     assert "gemini-3-flash" in action_plan_md
@@ -295,6 +322,7 @@ def main() -> None:
     assert "hypogenic_baseline_probe.json" in action_plan_md
     assert "novix_baseline_probe.json" in action_plan_md
     assert "k_dense_baseline_probe.json" in action_plan_md
+    assert "Baseline Readiness" in action_plan_md
     full_status = json.loads(full_status_json_path.read_text(encoding="utf-8"))
     expected_success_ids = list(range(1, 31))
     expected_incomplete_ids = []
@@ -388,6 +416,7 @@ def main() -> None:
         "Hypogenic baseline probe is recorded",
         "Novix baseline probe is recorded",
         "K-Dense baseline probe is recorded",
+        "Baseline readiness matrix is recorded",
         "Paper-level non-Table-1 artifact schemas are pinned",
         "Human-label aggregation is executable",
         "Ablation aggregation is executable",

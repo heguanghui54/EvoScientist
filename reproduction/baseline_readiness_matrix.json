@@ -1,0 +1,102 @@
+{
+  "date": "2026-06-04",
+  "paper": "arXiv:2603.08127",
+  "baseline_count": 7,
+  "rows": [
+    {
+      "baseline": "Virtual Scientist",
+      "probe": "reproduction/virtual_scientist_baseline_probe.json",
+      "public_entrypoint_status": "open_source_platform_not_drop_in",
+      "probe_status": "open_source_platform_not_drop_in",
+      "paper_exact_status": "not_paper_exact",
+      "direct_30_query_runner_available": false,
+      "table1_raw_outputs_available": false,
+      "readiness_class": "replacement_adapter_required",
+      "rerun_path": "Possible replacement rerun candidate only after designing an adapter from the 30 recovered natural-language queries into VirSci's team-simulation setup. Requires AMiner-derived data, FAISS/Ollama setup, and patched local paths. No public EvoScientist Table 1 raw outputs were found."
+    },
+    {
+      "baseline": "AI-Researcher",
+      "probe": "reproduction/ai_researcher_baseline_probe.json",
+      "public_entrypoint_status": "open_source_runner_candidate",
+      "probe_status": "not_drop_in",
+      "paper_exact_status": "not_paper_exact",
+      "direct_30_query_runner_available": false,
+      "table1_raw_outputs_available": false,
+      "readiness_class": "replacement_adapter_required",
+      "rerun_path": "Possible replacement rerun candidate, but the public entrypoint is benchmark-instance based and not a drop-in runner for the 30 recovered EvoScientist Table 1 natural-language queries. Requires a pinned adapter or author-provided outputs."
+    },
+    {
+      "baseline": "InternAgent",
+      "probe": "reproduction/internagent_baseline_probe.json",
+      "public_entrypoint_status": "open_source_runner_candidate",
+      "probe_status": "qa_drop_in_candidate",
+      "paper_exact_status": "not_paper_exact",
+      "direct_30_query_runner_available": true,
+      "table1_raw_outputs_available": false,
+      "readiness_class": "replacement_direct_or_near_direct",
+      "rerun_path": "Plausible replacement rerun candidate via `python launch.py --mode qa --question ... --output ...`, but the public repository does not provide the paper's raw InternAgent Table 1 outputs."
+    },
+    {
+      "baseline": "AI Scientist-v2",
+      "probe": "reproduction/ai_scientist_v2_baseline_probe.json",
+      "public_entrypoint_status": "open_source_runner_candidate",
+      "probe_status": "ideation_adapter_candidate",
+      "paper_exact_status": "not_paper_exact",
+      "direct_30_query_runner_available": true,
+      "table1_raw_outputs_available": false,
+      "readiness_class": "replacement_direct_or_near_direct",
+      "rerun_path": "Plausible replacement rerun candidate via `ai_scientist/perform_ideation_temp_free.py` with one topic markdown file per recovered query, but the public repository does not provide the paper's raw AI Scientist-v2 Table 1 outputs."
+    },
+    {
+      "baseline": "Hypogenic",
+      "probe": "reproduction/hypogenic_baseline_probe.json",
+      "public_entrypoint_status": "hosted_competition_adapter_candidate",
+      "probe_status": "hosted_competition_adapter_candidate",
+      "paper_exact_status": "not_paper_exact",
+      "direct_30_query_runner_available": false,
+      "table1_raw_outputs_available": false,
+      "readiness_class": "replacement_adapter_required",
+      "rerun_path": "Potential hosted replacement rerun candidate through Hypogenic Assistant, but requires account/session access plus a pinned UI/browser capture protocol. Public generated competition repositories are related examples, not EvoScientist Table 1 raw outputs."
+    },
+    {
+      "baseline": "Novix",
+      "probe": "reproduction/novix_baseline_probe.json",
+      "public_entrypoint_status": "hosted_ui_adapter_candidate",
+      "probe_status": "hosted_ui_adapter_candidate",
+      "paper_exact_status": "not_paper_exact",
+      "direct_30_query_runner_available": false,
+      "table1_raw_outputs_available": false,
+      "readiness_class": "replacement_adapter_required",
+      "rerun_path": "Potential hosted replacement rerun candidate, but requires Novix account/session access plus a pinned browser or API-capture protocol. No independent open-source Novix runner, public batch API documentation, or public EvoScientist Table 1 30-query outputs were found."
+    },
+    {
+      "baseline": "K-Dense",
+      "probe": "reproduction/k_dense_baseline_probe.json",
+      "public_entrypoint_status": "local_web_api_adapter_candidate",
+      "probe_status": "local_web_api_adapter_candidate",
+      "paper_exact_status": "not_paper_exact",
+      "direct_30_query_runner_available": true,
+      "table1_raw_outputs_available": false,
+      "readiness_class": "replacement_direct_or_near_direct",
+      "rerun_path": "Plausible replacement rerun candidate through the K-Dense BYOK local app and its ADK /run_sse endpoint, but requires Python 3.13, OpenRouter/Gemini CLI setup, a pinned project/model protocol, and an output-capture adapter. No public EvoScientist Table 1 30-query outputs were found."
+    }
+  ],
+  "counts": {
+    "paper_exact_available": 0,
+    "replacement_direct_or_near_direct": 3,
+    "replacement_adapter_required": 4,
+    "not_reproducible_from_public_artifacts": 0
+  },
+  "paper_exact_ready": false,
+  "replacement_candidates": [
+    "Virtual Scientist",
+    "AI-Researcher",
+    "InternAgent",
+    "AI Scientist-v2",
+    "Hypogenic",
+    "Novix",
+    "K-Dense"
+  ],
+  "exact_reproduction_blocker": "No Table 1 baseline has public raw 30-query outputs or the paper's Gemini-3-flash judge records; exact Table 1 reproduction still requires author-provided outputs or a full rerun/import of every baseline.",
+  "next_gate": ".venv/bin/python reproduction/audit_paper_level_completion.py --strict"
+}

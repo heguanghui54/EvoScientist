@@ -182,6 +182,15 @@ Commands:
 .venv/bin/python reproduction/compare_reproduction_to_paper.py --actual-json reproduction/artifacts/code_execution/summary.json --section figure2_code_execution --require-all
 ```
 
+## Baseline Readiness
+
+Source: `reproduction/baseline_readiness_matrix.json`
+
+- paper_exact_available: 0
+- replacement_direct_or_near_direct: 3
+- replacement_adapter_required: 4
+- not_reproducible_from_public_artifacts: 0
+
 ## Final Gate
 
 ```bash
