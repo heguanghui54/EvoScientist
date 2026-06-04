@@ -1,0 +1,393 @@
+{
+  "reference_system": "EvoScientist",
+  "target_system_note": "Rows are from the ablation variant perspective, not EvoScientist perspective.",
+  "tie_threshold": 0.0,
+  "variants": {
+    "-IDE": {
+      "dimensions": {
+        "Clarity": {
+          "baseline": "-IDE vs EvoScientist",
+          "variant": "-IDE",
+          "reference_system": "EvoScientist",
+          "dimension": "Clarity",
+          "n": 3,
+          "win": 1,
+          "tie": 1,
+          "lose": 1,
+          "win_pct": 33.33,
+          "tie_pct": 33.33,
+          "lose_pct": 33.33,
+          "gap": 0.0
+        },
+        "Novelty": {
+          "baseline": "-IDE vs EvoScientist",
+          "variant": "-IDE",
+          "reference_system": "EvoScientist",
+          "dimension": "Novelty",
+          "n": 3,
+          "win": 2,
+          "tie": 0,
+          "lose": 1,
+          "win_pct": 66.67,
+          "tie_pct": 0.0,
+          "lose_pct": 33.33,
+          "gap": 33.34
+        },
+        "Feasibility": {
+          "baseline": "-IDE vs EvoScientist",
+          "variant": "-IDE",
+          "reference_system": "EvoScientist",
+          "dimension": "Feasibility",
+          "n": 3,
+          "win": 1,
+          "tie": 0,
+          "lose": 2,
+          "win_pct": 33.33,
+          "tie_pct": 0.0,
+          "lose_pct": 66.67,
+          "gap": -33.34
+        },
+        "Relevance": {
+          "baseline": "-IDE vs EvoScientist",
+          "variant": "-IDE",
+          "reference_system": "EvoScientist",
+          "dimension": "Relevance",
+          "n": 3,
+          "win": 1,
+          "tie": 2,
+          "lose": 0,
+          "win_pct": 33.33,
+          "tie_pct": 66.67,
+          "lose_pct": 0.0,
+          "gap": 33.33
+        }
+      },
+      "avg_gap": 8.33,
+      "raw_records": 3,
+      "usable_records": 3,
+      "skipped": []
+    },
+    "-IVE": {
+      "dimensions": {
+        "Clarity": {
+          "baseline": "-IVE vs EvoScientist",
+          "variant": "-IVE",
+          "reference_system": "EvoScientist",
+          "dimension": "Clarity",
+          "n": 3,
+          "win": 1,
+          "tie": 0,
+          "lose": 2,
+          "win_pct": 33.33,
+          "tie_pct": 0.0,
+          "lose_pct": 66.67,
+          "gap": -33.34
+        },
+        "Novelty": {
+          "baseline": "-IVE vs EvoScientist",
+          "variant": "-IVE",
+          "reference_system": "EvoScientist",
+          "dimension": "Novelty",
+          "n": 3,
+          "win": 1,
+          "tie": 0,
+          "lose": 2,
+          "win_pct": 33.33,
+          "tie_pct": 0.0,
+          "lose_pct": 66.67,
+          "gap": -33.34
+        },
+        "Feasibility": {
+          "baseline": "-IVE vs EvoScientist",
+          "variant": "-IVE",
+          "reference_system": "EvoScientist",
+          "dimension": "Feasibility",
+          "n": 3,
+          "win": 0,
+          "tie": 0,
+          "lose": 3,
+          "win_pct": 0.0,
+          "tie_pct": 0.0,
+          "lose_pct": 100.0,
+          "gap": -100.0
+        },
+        "Relevance": {
+          "baseline": "-IVE vs EvoScientist",
+          "variant": "-IVE",
+          "reference_system": "EvoScientist",
+          "dimension": "Relevance",
+          "n": 3,
+          "win": 0,
+          "tie": 1,
+          "lose": 2,
+          "win_pct": 0.0,
+          "tie_pct": 33.33,
+          "lose_pct": 66.67,
+          "gap": -66.67
+        }
+      },
+      "avg_gap": -58.34,
+      "raw_records": 3,
+      "usable_records": 3,
+      "skipped": []
+    },
+    "-all": {
+      "dimensions": {
+        "Clarity": {
+          "baseline": "-all vs EvoScientist",
+          "variant": "-all",
+          "reference_system": "EvoScientist",
+          "dimension": "Clarity",
+          "n": 3,
+          "win": 1,
+          "tie": 2,
+          "lose": 0,
+          "win_pct": 33.33,
+          "tie_pct": 66.67,
+          "lose_pct": 0.0,
+          "gap": 33.33
+        },
+        "Novelty": {
+          "baseline": "-all vs EvoScientist",
+          "variant": "-all",
+          "reference_system": "EvoScientist",
+          "dimension": "Novelty",
+          "n": 3,
+          "win": 2,
+          "tie": 0,
+          "lose": 1,
+          "win_pct": 66.67,
+          "tie_pct": 0.0,
+          "lose_pct": 33.33,
+          "gap": 33.34
+        },
+        "Feasibility": {
+          "baseline": "-all vs EvoScientist",
+          "variant": "-all",
+          "reference_system": "EvoScientist",
+          "dimension": "Feasibility",
+          "n": 3,
+          "win": 1,
+          "tie": 0,
+          "lose": 2,
+          "win_pct": 33.33,
+          "tie_pct": 0.0,
+          "lose_pct": 66.67,
+          "gap": -33.34
+        },
+        "Relevance": {
+          "baseline": "-all vs EvoScientist",
+          "variant": "-all",
+          "reference_system": "EvoScientist",
+          "dimension": "Relevance",
+          "n": 3,
+          "win": 0,
+          "tie": 3,
+          "lose": 0,
+          "win_pct": 0.0,
+          "tie_pct": 100.0,
+          "lose_pct": 0.0,
+          "gap": 0.0
+        }
+      },
+      "avg_gap": 8.33,
+      "raw_records": 3,
+      "usable_records": 3,
+      "skipped": []
+    }
+  },
+  "baselines": {
+    "-IDE vs EvoScientist": {
+      "dimensions": {
+        "Clarity": {
+          "baseline": "-IDE vs EvoScientist",
+          "variant": "-IDE",
+          "reference_system": "EvoScientist",
+          "dimension": "Clarity",
+          "n": 3,
+          "win": 1,
+          "tie": 1,
+          "lose": 1,
+          "win_pct": 33.33,
+          "tie_pct": 33.33,
+          "lose_pct": 33.33,
+          "gap": 0.0
+        },
+        "Novelty": {
+          "baseline": "-IDE vs EvoScientist",
+          "variant": "-IDE",
+          "reference_system": "EvoScientist",
+          "dimension": "Novelty",
+          "n": 3,
+          "win": 2,
+          "tie": 0,
+          "lose": 1,
+          "win_pct": 66.67,
+          "tie_pct": 0.0,
+          "lose_pct": 33.33,
+          "gap": 33.34
+        },
+        "Feasibility": {
+          "baseline": "-IDE vs EvoScientist",
+          "variant": "-IDE",
+          "reference_system": "EvoScientist",
+          "dimension": "Feasibility",
+          "n": 3,
+          "win": 1,
+          "tie": 0,
+          "lose": 2,
+          "win_pct": 33.33,
+          "tie_pct": 0.0,
+          "lose_pct": 66.67,
+          "gap": -33.34
+        },
+        "Relevance": {
+          "baseline": "-IDE vs EvoScientist",
+          "variant": "-IDE",
+          "reference_system": "EvoScientist",
+          "dimension": "Relevance",
+          "n": 3,
+          "win": 1,
+          "tie": 2,
+          "lose": 0,
+          "win_pct": 33.33,
+          "tie_pct": 66.67,
+          "lose_pct": 0.0,
+          "gap": 33.33
+        }
+      },
+      "avg_gap": 8.33,
+      "raw_records": 3,
+      "usable_records": 3,
+      "skipped": []
+    },
+    "-IVE vs EvoScientist": {
+      "dimensions": {
+        "Clarity": {
+          "baseline": "-IVE vs EvoScientist",
+          "variant": "-IVE",
+          "reference_system": "EvoScientist",
+          "dimension": "Clarity",
+          "n": 3,
+          "win": 1,
+          "tie": 0,
+          "lose": 2,
+          "win_pct": 33.33,
+          "tie_pct": 0.0,
+          "lose_pct": 66.67,
+          "gap": -33.34
+        },
+        "Novelty": {
+          "baseline": "-IVE vs EvoScientist",
+          "variant": "-IVE",
+          "reference_system": "EvoScientist",
+          "dimension": "Novelty",
+          "n": 3,
+          "win": 1,
+          "tie": 0,
+          "lose": 2,
+          "win_pct": 33.33,
+          "tie_pct": 0.0,
+          "lose_pct": 66.67,
+          "gap": -33.34
+        },
+        "Feasibility": {
+          "baseline": "-IVE vs EvoScientist",
+          "variant": "-IVE",
+          "reference_system": "EvoScientist",
+          "dimension": "Feasibility",
+          "n": 3,
+          "win": 0,
+          "tie": 0,
+          "lose": 3,
+          "win_pct": 0.0,
+          "tie_pct": 0.0,
+          "lose_pct": 100.0,
+          "gap": -100.0
+        },
+        "Relevance": {
+          "baseline": "-IVE vs EvoScientist",
+          "variant": "-IVE",
+          "reference_system": "EvoScientist",
+          "dimension": "Relevance",
+          "n": 3,
+          "win": 0,
+          "tie": 1,
+          "lose": 2,
+          "win_pct": 0.0,
+          "tie_pct": 33.33,
+          "lose_pct": 66.67,
+          "gap": -66.67
+        }
+      },
+      "avg_gap": -58.34,
+      "raw_records": 3,
+      "usable_records": 3,
+      "skipped": []
+    },
+    "-all vs EvoScientist": {
+      "dimensions": {
+        "Clarity": {
+          "baseline": "-all vs EvoScientist",
+          "variant": "-all",
+          "reference_system": "EvoScientist",
+          "dimension": "Clarity",
+          "n": 3,
+          "win": 1,
+          "tie": 2,
+          "lose": 0,
+          "win_pct": 33.33,
+          "tie_pct": 66.67,
+          "lose_pct": 0.0,
+          "gap": 33.33
+        },
+        "Novelty": {
+          "baseline": "-all vs EvoScientist",
+          "variant": "-all",
+          "reference_system": "EvoScientist",
+          "dimension": "Novelty",
+          "n": 3,
+          "win": 2,
+          "tie": 0,
+          "lose": 1,
+          "win_pct": 66.67,
+          "tie_pct": 0.0,
+          "lose_pct": 33.33,
+          "gap": 33.34
+        },
+        "Feasibility": {
+          "baseline": "-all vs EvoScientist",
+          "variant": "-all",
+          "reference_system": "EvoScientist",
+          "dimension": "Feasibility",
+          "n": 3,
+          "win": 1,
+          "tie": 0,
+          "lose": 2,
+          "win_pct": 33.33,
+          "tie_pct": 0.0,
+          "lose_pct": 66.67,
+          "gap": -33.34
+        },
+        "Relevance": {
+          "baseline": "-all vs EvoScientist",
+          "variant": "-all",
+          "reference_system": "EvoScientist",
+          "dimension": "Relevance",
+          "n": 3,
+          "win": 0,
+          "tie": 3,
+          "lose": 0,
+          "win_pct": 0.0,
+          "tie_pct": 100.0,
+          "lose_pct": 0.0,
+          "gap": 0.0
+        }
+      },
+      "avg_gap": 8.33,
+      "raw_records": 3,
+      "usable_records": 3,
+      "skipped": []
+    }
+  }
+}

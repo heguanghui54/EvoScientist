@@ -776,6 +776,27 @@ def main() -> None:
     assert "Ablation Queries 01-03 Partial Report" in ablation_partial_md_path.read_text(
         encoding="utf-8"
     )
+    ablation_monica_json_path = ROOT / "ablation_queries01_03_monica_gemini_report.json"
+    ablation_monica_md_path = ROOT / "ablation_queries01_03_monica_gemini_report.md"
+    assert ablation_monica_json_path.is_file(), "missing Monica/Gemini ablation report JSON"
+    assert ablation_monica_md_path.is_file(), "missing Monica/Gemini ablation report markdown"
+    ablation_monica = json.loads(ablation_monica_json_path.read_text(encoding="utf-8"))
+    assert ablation_monica["status"] == "partial"
+    assert ablation_monica["paper_exact"] is False
+    assert ablation_monica["query_ids"] == [1, 2, 3]
+    assert ablation_monica["judge"]["provider"] == "monica"
+    assert ablation_monica["judge"]["model"] == "gemini-3-flash-preview"
+    assert ablation_monica["judge"]["failed_records"] == 0
+    monica_root = ROOT / "artifacts" / "ablations_monica_gemini"
+    monica_combined = json.loads((monica_root / "combined_aggregate.json").read_text(encoding="utf-8"))
+    assert set(monica_combined["variants"]) == {"-IDE", "-IVE", "-all"}
+    for variant in ablation_monica["variants"]:
+        vroot = monica_root / variant
+        assert sum(1 for line in (vroot / "judge_outputs.jsonl").read_text(encoding="utf-8").splitlines() if line.strip()) == 3
+        assert monica_combined["variants"][variant]["usable_records"] == 3
+    assert "Ablation Queries 01-03 Monica/Gemini Judge Report" in ablation_monica_md_path.read_text(
+        encoding="utf-8"
+    )
     action_plan_json_path = ROOT / "paper_reproduction_action_plan.json"
     action_plan_md_path = ROOT / "paper_reproduction_action_plan.md"
     assert action_plan_json_path.is_file(), "missing paper reproduction action plan JSON"

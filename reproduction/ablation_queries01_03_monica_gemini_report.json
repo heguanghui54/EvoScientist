@@ -1,0 +1,34 @@
+{
+  "date": "2026-06-04",
+  "status": "partial",
+  "paper_exact": false,
+  "artifact_root": "reproduction/artifacts/ablations_monica_gemini",
+  "source_outputs_root": "reproduction/artifacts/ablations",
+  "query_ids": [1, 2, 3],
+  "expected_query_count": 30,
+  "covered_query_count": 3,
+  "coverage_pct": 10.0,
+  "variants": ["-IDE", "-IVE", "-all"],
+  "judge": {
+    "provider": "monica",
+    "model": "gemini-3-flash-preview",
+    "paper_model_name": "gemini-3-flash",
+    "records_per_variant": 3,
+    "failed_records": 0,
+    "note": "Monica's documented model key for Gemini 3 Flash is gemini-3-flash-preview; bare gemini-3-flash is rejected by the Monica OpenAI-compatible endpoint."
+  },
+  "aggregate_json": "reproduction/artifacts/ablations_monica_gemini/combined_aggregate.json",
+  "aggregate_csv": "reproduction/artifacts/ablations_monica_gemini/combined_aggregate.csv",
+  "compare_to_paper": {
+    "path": "reproduction/artifacts/ablations_monica_gemini/table3_partial_compare_to_paper.json",
+    "status": "fail",
+    "failure_count": 39,
+    "expected_reason": "The artifact uses a paper-aligned Gemini-family judge but still covers only 3 of 30 paper queries and uses replacement prompt-level ablations."
+  },
+  "variant_records": {
+    "-IDE": {"raw_records": 3, "usable_records": 3},
+    "-IVE": {"raw_records": 3, "usable_records": 3},
+    "-all": {"raw_records": 3, "usable_records": 3}
+  },
+  "caveat": "Replacement ablation run driven by prompt-level disabled-component constraints. The public checkout does not expose the paper's native IDE/IVE ablation switches."
+}

@@ -1,0 +1,158 @@
+Research Proposal: Self-Specification Alignment for LLM-Generated Code##
+Title
+Self-Specification Alignment: Closing the Validation Loop for LLM Code
+Generation Using Automatically Generated Behavioral Oracles
+
+--------------------------------------------------------------------------------
+
+Problem
+LLM-based code generation is evaluated almost entirely on observed test
+coverage — does the generated code pass the few unit tests that ship with the
+benchmark (HumanEval, MBPP, etc.)? This creates a well-known gap: code can pass
+the provided tests while being functionally incorrect on edge cases or failing
+to align with the full natural-language specification. In real software
+engineering, the gap between "passes tests" and "correct" is where bugs live.
+
+Current approaches (pass@k, test-time repair) attempt to close this gap by
+sampling many candidates or brute-force re-prompting on test failure, but they
+never broaden the test oracle itself. The specification is only consulted by the
+human providing the original tests — the LLM never generates a specification it
+then holds itself accountable to.
+
+--------------------------------------------------------------------------------
+
+Hypothesis> H1: For a given programming problem described in natural language,
+an LLM can generate a behavioral oracle (a set of property-based or
+example-based tests) that is more complete than the small set of tests provided
+in the benchmark, and that oracle can be used to detect and repair incorrect
+solutions that pass the original tests.
+
+▌ H2: This self-specification + self-repair loop improves functional
+▌ correctness over the baseline pass@k on the original test set, with
+▌ diminishing returns bounded by the quality of the LLM-generated oracle.
+
+The key claim is that the marginal correctness signal of self-generated tests —
+tests the model writes about its own spec — is positive relative to the original
+test set, even though the model generates both the code and the tests.
+
+--------------------------------------------------------------------------------
+
+Method
+The proposal consists of three stages:
+
+Stage1 — Conditional Test GenerationGiven a problem description (docstring +
+signature + examples), prompt the LLM to generate k additional test cases that:
+
+• Cover edge cases (empty input, boundary values, large inputs, type
+mismatches)
+• Exercise postconditions stated in the docstring- Include both positive
+(should pass) and negative (should reject/invalid input) casesConstraints:
+the generated tests must be executable and self-contained.
+
+Stage2 — Self-Specification ValidationFor each candidate solution:
+
+1 Run it against the original benchmark tests. If it fails → discard.
+2 Run it against the self-generated tests from Stage1. If it fails → flag for
+repair.
+3 Metric: oracle disagreement rate — what fraction of candidates that pass
+original tests are caught by self-generated tests?
+
+Stage3 — Iterative Self-RepairFor every candidate that passes original tests but
+fails self-generated tests:
+
+• Return the failing test(s) + failure message to the LLM as a repair prompt.
+• Generate a repaired candidate.
+• Re-validate against both original and self-generated tests.
+• Repeat up to N iterations (or until all tests pass).
+• Measure: success rate of repair (fraction of flagged candidates that pass all
+tests after repair), and added correctness (fraction of originally-passed
+problems that are now correct on a held-out test set).
+
+--------------------------------------------------------------------------------
+
+Dataset / Benchmark| Benchmark | Language | Problems | Relevance |
+
+|---|---|---|---| | HumanEval+ (Liu et al.,2023) | Python |164 | Extended tests
+beyond original HumanEval; serves as ground-truth oracle | | MBPP+ (Liu et
+al.,2023) | Python |399 | Another standard; extended tests | | CodeContests
+(DeepMind,2022) | Python/C++ | ~10k | Harder problems with rich test suites |
+
+Use HumanEval+/MBPP+ as primary (known ground-truth oracles). The original test
+set (5–10 tests) serves as the "provided tests"; the extended tests (Liu et
+al.'s hand-audited additions or self-generated) serve as the evaluation oracle.
+
+--------------------------------------------------------------------------------
+
+Evaluation Metrics| Metric | Definition |
+
+|---|---| | pass@k | Fraction of problems solved by any of k samples using
+original tests | | self-gap | Fraction of pass@k solutions that fail
+self-generated tests (oracle disagreement) | | repair recovery | Fraction of
+self-gap failures that are repaired to pass all tests | | added-correctness@k |
+Fraction of problems that only become correct after self-specification + repair
+(true positives) | | over-repair rate | Fraction of problems where self-repair
+breaks a previously correct solution (regression) | | test oracle precision |
+Fraction of self-generated test failures that correspond to actual errors (on
+held-out ground truth) |
+
+--------------------------------------------------------------------------------
+
+Baselines1. pass@k greedy — standard top-1 sampling, no repair.
+
+2 pass@k sample — standard sampling (k=10,100,200).
+3 self-repair (original tests only) — repair using only the original benchmark
+tests (to isolate the value of additional self-generated tests).
+4 LLM-as-judge (no execution) — ask the LLM whether the solution is correct,
+without running tests; report as a soft ablation of the execution signal.
+
+--------------------------------------------------------------------------------
+
+Ablations| Ablation | Question Answered |
+
+|---|---| | No self-generated tests | Is the self-specification oracle adding
+signal beyond just re-prompting? | | Self-generated tests from a different model
+| Is the quality of self-generated tests model-dependent? (e.g., GPT-4o
+generates tests, DeepSeek generates code) | | Single repair vs. multi-turn
+repair | Does repair degrade after1–2 iterations (overfitting to generated
+tests)? | | Docstring-only vs. docstring + signature + example | How much
+specification context is needed to generate useful tests? | | Temperature
+ablation on test generation | Does diverse test generation (high T) improve
+oracle coverage? |
+
+--------------------------------------------------------------------------------
+
+Expected Failure Modes1. Circular validation — The LLM generates tests that
+match its code bugs instead of the spec. If both code and tests share the same
+blind spot, the oracle adds no signal → large self-gap is actually large
+false-negative rate. Mitigation: measure precision on human-audited extended
+tests (HumanEval+).
+
+2 Over-repair / regressions — Repairing against self-generated tests breaks
+correctness on the original tests or introduces new bugs. Mitigation: always
+check original tests post-repair; report over-repair rate explicitly.
+3 Specification underspecification — The docstring itself is ambiguous or
+underspecified, so no amount of test generation can disambiguate it. The
+method is bounded by the quality of the input specification. Mitigation:
+filter problems where human annotators deem the spec unambiguous and report
+results conditioned on specification clarity.
+4 Test generation cost — Generating k test cases per problem × n samples ×
+repair iterations is significantly more expensive than sampling alone.
+Mitigation: report token cost per solved problem; treat this as a proposed
+quality-cost tradeoff.
+5 Model self-attribution bias — The model may be overly agreeable with its own
+generated tests, failing to challenge its code against rigorous oracles. The
+cross-model ablation (tests from model A, code from model B) tests this
+directly.
+
+--------------------------------------------------------------------------------
+
+Proposed Experimental Protocol1. For each problem, generate self-specification
+tests (k=20) from the docstring.
+
+2 Draw100 code samples per problem (pass@k evaluation).
+3 For each sample passing original tests: run self-generated tests; flag
+failures.
+4 Attempt repair (up to3 iterations) on each flagged candidate.
+5 Evaluate final correctness against HumanEval+ extended tests (ground truth).
+6 Report: pass@k (baseline), added-correctness (method), self-gap, repair
+recovery, over-repair rate, token cost per problem.

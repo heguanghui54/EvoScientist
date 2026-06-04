@@ -1,0 +1,72 @@
+{
+  "target_system": "-IVE",
+  "reference_system": "EvoScientist",
+  "target_system_note": "Rows are from the ablation variant perspective, not EvoScientist perspective.",
+  "tie_threshold": 0.0,
+  "raw_records": 3,
+  "usable_records": 3,
+  "skipped": [],
+  "baselines": {
+    "-IVE vs EvoScientist": {
+      "dimensions": {
+        "Clarity": {
+          "baseline": "-IVE vs EvoScientist",
+          "variant": "-IVE",
+          "reference_system": "EvoScientist",
+          "dimension": "Clarity",
+          "n": 3,
+          "win": 1,
+          "tie": 0,
+          "lose": 2,
+          "win_pct": 33.33,
+          "tie_pct": 0.0,
+          "lose_pct": 66.67,
+          "gap": -33.34
+        },
+        "Novelty": {
+          "baseline": "-IVE vs EvoScientist",
+          "variant": "-IVE",
+          "reference_system": "EvoScientist",
+          "dimension": "Novelty",
+          "n": 3,
+          "win": 1,
+          "tie": 0,
+          "lose": 2,
+          "win_pct": 33.33,
+          "tie_pct": 0.0,
+          "lose_pct": 66.67,
+          "gap": -33.34
+        },
+        "Feasibility": {
+          "baseline": "-IVE vs EvoScientist",
+          "variant": "-IVE",
+          "reference_system": "EvoScientist",
+          "dimension": "Feasibility",
+          "n": 3,
+          "win": 0,
+          "tie": 0,
+          "lose": 3,
+          "win_pct": 0.0,
+          "tie_pct": 0.0,
+          "lose_pct": 100.0,
+          "gap": -100.0
+        },
+        "Relevance": {
+          "baseline": "-IVE vs EvoScientist",
+          "variant": "-IVE",
+          "reference_system": "EvoScientist",
+          "dimension": "Relevance",
+          "n": 3,
+          "win": 0,
+          "tie": 1,
+          "lose": 2,
+          "win_pct": 0.0,
+          "tie_pct": 33.33,
+          "lose_pct": 66.67,
+          "gap": -66.67
+        }
+      },
+      "avg_gap": -58.34
+    }
+  }
+}

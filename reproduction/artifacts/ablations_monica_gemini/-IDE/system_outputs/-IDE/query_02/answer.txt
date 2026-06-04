@@ -1,0 +1,278 @@
+● read_file(/skills/research-ideation/SKILL.md)
+● ls(/memories/)
+● think_tool(I need to produce a single research p…)
+
+--------------------------------------------------------------------------------
+
+  Research Proposal: Structure-Aware Neural Program Repair via Differentiable
+Graph-Based Code Representations## ProblemAutomated program repair (APR) aims to
+reduce the human cost of debugging by generating patches for buggy code. Current
+   state-of-the-art neural APR systems fall into two camps with complementary
+ weaknesses. LLM-based approaches (e.g., fine-tuned Codex, CodeT5, or prompted
+  GPT-4) treat code as flat text or token sequences. They can generate fluent
+  patches but frequently produce syntactically invalid or semantically shallow
+fixes — renaming variables, adding trivially correct lines, or hallucinating API
+ calls that do not exist — because they have no explicit representation of the
+   program's syntactic or data-flow structure. Syntax-aware approaches (e.g.,
+  tree-based RNNs, graph neural networks over ASTs) incorporate structure but
+  operate on fixed, hand-engineered graph schemas (typically just the abstract
+   syntax tree) that miss cross-procedure data-flow and control dependencies,
+   limiting their ability to fix bugs that span multiple functions or require
+                              data-flow reasoning.
+
+The core problem is that neither approach jointly models syntactic
+well-formedness (ensuring the patch parses and type-checks) with semantic
+relevance (ensuring the patch actually changes program behavior in the intended
+way). Patches that are syntactically valid but semantically vacuous inflate
+repair rates on benchmarks without actually fixing bugs, while structurally
+grounded models fail on bugs requiring information flow beyond the local AST
+neighborhood.
+
+HypothesisExplicitly injecting a differentiable, multi-relational program graph
+— combining abstract syntax tree edges, data-flow edges (def-use chains),
+control-flow edges, and call-graph edges — into a transformer-based
+encoder-decoder architecture for APR will yield higher semantically correct
+repair rates compared to both text-only LLM fine-tuning and single-relational
+(AST-only) graph approaches. Specifically, the multi-relational graph structure
+provides two advantages: (1) it grounds patch generation in syntactic
+well-formedness by preserving the AST backbone, and (2) it enables the model to
+attend to non-local information flow (e.g., "this variable is used50 lines below
+in a different function") that flat attention cannot efficiently capture. The
+critical sub-hypothesis is that data-flow edges contribute more to semantic
+correctness than AST edges for multi-statement and cross-procedure bugs, while
+AST edges matter more for single-statement local fixes.
+
+MethodWe propose RepairGNN, a structure-aware neural program repair system built
+on a transformer backbone augmented with relational graph convolution over a
+multi-relational program graph.
+
+Program Graph Construction. Given a buggy program, we parse it into a joint
+graph (G = (V, E_1, E_2, E_3, E_4)) where:
+
+ • Nodes (V): AST tokens (terminals) and intermediate non-terminal nodes, plus
+   additional statement-level and function-level nodes.
+ • Edges (E_1) (AST edges): parent-child relationships from the parse tree.
+ • Edges (E_2) (data-flow edges): def-use chains connecting variable definitions
+   to their uses, extracted via static analysis.
+ • Edges (E_3) (control-flow edges): successor-predecessor relations between
+   basic blocks.
+ • Edges (E_4) (call edges): caller-callee relationships between functions.
+
+Architecture. The model is an encoder-decoder transformer. The encoder processes
+the buggy program as a token sequence augmented with relational graph biases:
+
+ 1 Token embedding layer — each node's token is embedded via a learned lookup.
+ 2 Relational graph encoder — a stack of (L) transformer layers, each
+   interleaved with a Relational Graph Attention sub-layer. In this sub-layer,
+   the attention logit from token (i) to token (j) is modulated by a learned
+   bias (b_{r(i,j)}) that depends on the relation type (AST parent, AST child,
+   def-use, control-flow successor/predecessor, call, or no relation). This is
+   similar to Graph Attention Networks but with typed edges where each relation
+   type has its own learned bias and optionally a separate transformation
+   matrix.
+ 3 Decoder — a standard autoregressive transformer that attends to encoder
+   outputs and generates the patch token-by-token, constrained by a beam search
+   that filters candidates failing to parse or type-check.
+
+Training. Two-stage training:
+
+ • Stage1 (pre-training): Masked language modeling objective on a large corpus
+   of code (e.g., The Stack or CodeSearchNet) with the relational graph encoder,
+   learning to reconstruct masked tokens.
+ • Stage2 (fine-tuning): Standard sequence-to-sequence fine-tuning on
+   buggy-fixed program pairs. Loss is cross-entropy over patch tokens.
+
+Inference. Beam search with width (k=10). Candidates are filtered by a
+validation oracle (syntax check, type check, and test execution if available).
+The final candidate is selected by a confidence score from the model re-ranked
+by a small trained verifier that scores patch plausibility based on edit
+distance and structural validity.
+
+Dataset / BenchmarkWe evaluate on three standard benchmarks for APR:
+
+ • Defects4J (v2.0):835 real Java bugs from17 open-source projects. The standard
+   benchmark for APR evaluation. We report both plausible (passes all tests) and
+   correct (semantically equivalent to ground-truth patch, verified by manual
+   inspection or differential testing) patch rates.
+ • HumanEval-Java: The HumanEval benchmark ported to Java by Google Research.164
+   hand-written programming problems with test cases. We construct buggy
+   versions using automated mutation (single-statement and multi-statement
+   mutants), providing a controlled setting where the ground-truth fix is known.
+ • QuixBugs (Java subset):40 buggy programs translated from QuixBugs. Each has a
+   single-bug, single-fix structure. Useful for analyzing local vs. non-local
+   repair performance.
+
+For cross-language generalization, we additionally evaluate on:
+
+ • BugsInPy:154 real bugs from15 Python projects, to test whether the graph
+   construction generalizes to Python's dynamic type system.
+
+All experiments use5 random seeds and report mean and95% confidence intervals
+across seeds.
+
+Evaluation Metrics| Metric | Definition | Primary? |
+
+|--------|-----------|----------| | Correct Repair Rate (CRR) | Fraction of bugs
+for which the generated patch is semantically equivalent to the developer fix
+(Defects4J manual annotation) or passes all tests (HumanEval-Java). | Yes | |
+Plausible Repair Rate (PRR) | Fraction of bugs for which the patch passes all
+available tests (may be overfitted or incorrect). | Secondary | | Syntactic
+Validity Rate (SVR) | Fraction of generated patches that parse without syntax
+errors. | Diagnostic | | Edit Distance (ED) | Average Levenshtein distance
+between generated and ground-truth patches (only for bugs with known fixes). |
+Diagnostic | | Type-Safety Rate (TSR) | Fraction of patches that pass
+type-checking (Java only). | Diagnostic | | Top-(k) Accuracy | Whether the
+correct patch is within the top-(k) beam candidates. | Analysis |
+
+Primary metric is CRR. PRR alone is misleading (high plausible but low correct
+rates are common in APR). SVR and TSR isolate syntactic vs. semantic failures.
+
+BaselinesWe compare against eight baselines spanning the main paradigms in
+neural APR:
+
+
+ Baseline                  Category                   Key Features
+ CodeT5-base (fine-tuned)  Text-only encoder-decoder  Flat token sequence, no
+                                                      explicit structure
+ CodeBERT + seq2seq        Text-only encoder + LSTM   Pre-trained code-aware
+                           decoder                    embeddings, no structural
+                                                      bias
+ Recoder                   Syntax-guided editing      Places buggy tokens into
+                                                      a placeholder template;
+                                                      uses AST paths for
+                                                      editing
+ DEAR                      AST-based graph            Tree-based LSTM over AST;
+                                                      single relation type
+                                                      (parent-child)
+ Hoppity (DLFix)           Edit-sequence prediction   Predicts edit operations
+                                                      (delete, insert, replace)
+                                                      at token level
+ SelfAPR (GPT-3.5)         LLM prompting              Few-shot prompt with
+                                                      buggy code, no
+                                                      fine-tuning, no
+                                                      structural bias
+ RepairLLaMA (fine-tuned)  Text-only decoder          Fine-tuned Code LLaMA on
+                                                      bug-fix pairs
+ CURE                      Code-aware pre-training +  Pre-trains on code with
+                           APR fine-tuning            syntax-aware objectives,
+                                                      but no explicit graph
+                                                      during fine-tuning
+
+
+All baselines are evaluated on identical train/validation/test splits. To ensure
+fair comparison, we use the same tokenizer and vocabulary as CodeT5 for all
+learned models.
+
+AblationsWe design ablations to isolate the contribution of each component,
+mirroring the Table3 structure:
+
+Ablation1: Graph Relation Types| Variant | Relations Used | Expected Impact |
+
+|---------|---------------|----------------| | Full RepairGNN | AST + Data-flow
++ Control-flow + Call | — | | − Data-flow | AST + Control-flow + Call | CRR drop
+on multi-statement bugs | | − Control-flow | AST + Data-flow + Call | Modest
+drop, mostly on ordering-sensitive patches | | − Call | AST + Data-flow +
+Control-flow | Small drop, mostly on cross-function bugs | | − AST | Data-flow +
+Control-flow + Call | Large CRR drop, many syntactically invalid patches | |
+AST-only | AST edges only | Matches DEAR-like approach; gap to full reveals
+value of non-local edges |
+
+Ablation2: Training Objectives| Variant | Pre-training | Fine-tuning | Expected
+Impact |
+
+|---------|-------------|-------------|----------------| | Full | MLM + graph
+structure | Seq2seq with graph | — | | − Pre-train | None | Seq2seq with graph |
+CRR drop on rare bug patterns | | − Graph in fine-tune | MLM + graph | Seq2seq
+flat (no graph bias) | Tests whether graph helps at inference or only during
+representation learning |
+
+Ablation3: Relational Attention vs. Alternatives| Variant | Structural
+Integration | Expected Impact |
+
+|---------|----------------------|----------------| | Full (RelGraphAttn) |
+Learnable per-relation bias in self-attention | — | | Graph-as-Sequence |
+Flatten graph into a linearized token sequence with special tokens for edges |
+Worse than RelGraphAttn due to loss of structural inductive bias | | GNN-Only
+(no transformer) | Relational GCN encoder + LSTM decoder | Worse due to limited
+receptive field |
+
+Ablation4: Inference Strategy| Variant | Post-hoc Filtering | Expected Impact |
+
+|---------|-------------------|----------------| | Full | Syntax + type +
+confidence re-ranking | — | | No filtering | Raw beam search output | TSR and
+SVR drop significantly | | Oracle filtering | Use ground-truth tests (if
+available) as filter | Upper bound on achievable CRR |
+
+Expected Failure Modes1. Graph construction quality for real-world bugs.
+Defects4J bugs can span multiple files. Our graph currently models single-file
+programs. For multi-file bugs, the graph will miss cross-file data-flow and call
+edges, reducing repair accuracy. Mitigation: flag and report multi-file bugs as
+a separate analysis category rather than silently including them.
+
+ 2 Graph sparsity for short programs. For single-line bugs in small functions
+   (common in QuixBugs), the multi-relational graph adds little information over
+   the AST alone, so RepairGNN may not outperform simpler AST-only baselines on
+   these cases. Mitigation: stratified analysis by bug complexity
+   (single-statement vs. multi-statement vs. cross-procedure).
+ 3 Overfitting to dataset-specific patterns. Defects4J has a well-known bias
+   toward certain bug types (null pointer, off-by-one, incorrect condition). If
+   the model learns to exploit these patterns rather than actually reasoning
+   about structure, performance on out-of-distribution bugs will be low.
+   Mitigation: cross-benchmark evaluation (Defects4J → HumanEval-Java transfer)
+   and addition of manually crafted out-of-distribution bug test cases.
+ 4 Training instability with multi-relational attention. Adding multiple
+   relation-specific bias terms increases the number of learned parameters in
+   the attention mechanism. If not properly regularized, the relational biases
+   may collapse (all relations learn the same bias), rendering the graph
+   structure inert. Mitigation: add an auxiliary loss that enforces divergence
+   between relation-bias distributions (pairwise KL divergence between relation
+   attention patterns).
+ 5 Beam search bias toward short patches. Standard beam search favors shorter
+   sequences due to length-normalization effects, causing the model to produce
+   incomplete or trivially minimal patches. Mitigation: use length normalization
+   (Wu et al.,2016) with tuned (\alpha) on a held-out validation set.
+ 6 Graph construction overhead. Static analysis for data-flow and call-graph
+   extraction adds preprocessing time. For large repositories (10k+ LOC per
+   file), parsing and graph construction may become a bottleneck. Mitigation:
+   measure and report end-to-end inference latency including graph construction,
+   and propose incremental graph update strategies if the overhead is
+   prohibitive.
+
+LimitationsLanguage scope. This work targets Java (primary) and Python
+(secondary). Java's static type system makes data-flow extraction more reliable,
+while Python's dynamic features (duck typing, monkey-patching) introduce
+imprecision in def-use analysis. Performance on dynamically-typed languages may
+be lower than on statically-typed languages. Extending to C/C++, JavaScript, or
+Rust would require language-specific static analysis frontends but the
+architectural principles are language-agnostic.
+
+Single-file assumption. The current graph construction operates within a single
+file. Many real-world bugs span files, classes, or modules. Extending to
+cross-file graphs (e.g., whole-repository graphs) is a natural next step but
+introduces scalability challenges (graphs with100k+ nodes) that are beyond the
+scope of this proposal.
+
+No human study. We evaluate repair correctness against test suites and
+developer-written patches (Defects4J annotations). However, test suites can be
+incomplete, and a patch that passes all tests may still be semantically wrong. A
+human evaluation of patch quality (developer acceptance rate,
+time-to-understand) is absent. This is a limitation we acknowledge but consider
+outside the scope of the current proposal, which focuses on automated benchmark
+evaluation.
+
+Dataset bias. Defects4J, HumanEval-Java, and QuixBugs are widely used but do not
+represent the full distribution of real-world bugs. Bugs tend to be localized
+(1–5 lines changed) and in well-tested code. The model's performance on rare,
+complex, or security-critical bugs remains unknown.
+
+Training compute. Fine-tuning a model of size comparable to CodeT5-base (~220M
+parameters) with relational graph attention adds approximately15–25% overhead
+per training step due to the additional relation-bias computations and graph
+batching. Full training requires single-GPU (A10040GB) training for
+approximately3–4 days. All experiments report total compute budget to facilitate
+reproducibility.
+
+No guarantee of type-correctness in generated patches. While we filter patches
+that fail type-checking, the type checker is conservative (rejects some valid
+patches, accepts some invalid ones under Java's type inference). The TSR metric
+is diagnostic but not a guarantee of semantic correctness.

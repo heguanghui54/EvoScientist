@@ -1,0 +1,182 @@
+Table3 Ablation: −IDE (Idea-Direction Evolution)
+
+Variant constraint: No distillation of reusable directions from prior top-ranked
+ideas. Proposal generated from the current query and ordinary reasoning only.
+
+--------------------------------------------------------------------------------
+
+TitleCross-lingual Subnet Distillation: Efficient Adaptation of Multilingual NMT
+via Lightweight Adapter Routing for Extreme Low-Resource Languages
+
+--------------------------------------------------------------------------------
+
+ProblemMultilingual neural machine translation (MNMT) models such as M2M-100 and
+NLLB cover hundreds of language pairs but degrade sharply on extreme
+low-resource languages (training corpus <100K sentence pairs). Two common
+approaches — full fine-tuning and language-family adapter modules — suffer from
+either catastrophic forgetting of high-resource languages or parameter
+inefficiency when scaling to dozens of low-resource pairs. Existing
+adapter-based methods typically assign one adapter per language or per language
+pair, which does not exploit cross-lingual transfer between typologically
+related low-resource languages that share structural patterns. The core problem
+is: how can we share a small set of adapter parameters across related
+low-resource languages without hand-crafted language groupings or prior
+knowledge about which languages benefit from sharing?
+
+--------------------------------------------------------------------------------
+
+HypothesisA shared pool of lightweight adapter modules combined with a learned
+routing mechanism can automatically discover beneficial parameter-sharing
+patterns among extreme low-resource languages. Specifically:
+
+ • A small set of cross-lingual subnets (e.g.,4–8 adapter modules per
+   Transformer layer) is sufficient to cover the syntactic and morphological
+   variation across a diverse set of low-resource languages.
+ • A gating network trained jointly with the adapters can route each language's
+   hidden states through the appropriate subnets, enabling positive transfer
+   while preventing interference.
+ • This approach yields BLEU/COMET gains of ≥2.0 points over per-language
+   adapters and ≥1.5 points over language-family adapters on the lowest-resource
+   quartile of FLORES-200, with <5% additional parameters over the base MNMT
+   model.
+
+--------------------------------------------------------------------------------
+
+MethodThree-stage pipeline:
+
+ 1 Base model & frozen backbone. Start from a pretrained MNMT encoder-decoder
+   (e.g., NLLB-600M). Freeze all backbone parameters. Insert a small set of K
+   learnable adapter subnets per Transformer layer (each subnet =
+   down-projection → ReLU → up-projection, bottleneck dimension d =64). This
+   follows the standard bottleneck adapter architecture (Houlsby et al.,2019)
+   but with multiple independent copies per layer.
+ 2 Learned router. For each language l in the set of target low-resource
+   languages, a lightweight gating network takes the hidden state h at each
+   layer and outputs a soft distribution over the K subnets:
+
+ • Router = single linear layer with softmax: g(h) = softmax(W_r · h), output
+   dimension K.
+ • The final adapter output is the weighted combination of all K subnets: Σ_k
+   g_k(h) · subnet_k(h).
+ • Router parameters are shared across all low-resource languages but
+   conditioned on the current language via a learned language embedding.
+
+ 3 Training. Train adapters + router jointly on a curated set of ~20 extreme
+   low-resource languages (each with5K–100K sentence pairs). Use a
+   temperature-annealed version of the routing softmax to encourage
+   specialization over time. Include a small auxiliary loss that penalizes
+   entropy of the routing distribution to incentivize each language to select a
+   compact subset of subnets.
+
+During inference for a held-out low-resource language, the router automatically
+selects the appropriate mixture of subnets without any manual grouping.
+
+--------------------------------------------------------------------------------
+
+Dataset / Benchmark- Training: A subset of the FLORES-200 dataset covering20
+extreme low-resource languages (e.g., Acehnese, Balinese, Bambara, Central
+Kurdish, Crimean Tatar, Dholuo, Eastern Mari, Fijian, Guarani, Ilocano, Kamba,
+Kashmiri, Kikuyu, Kinyarwanda, Kyrgyz, Lombard, Madurese, Maori, Minangkabau,
+Nuer), paired with English. Each pair has between5K and100K parallel sentences
+from the NLLB corpus.
+
+ • Evaluation: FLORES-200 devtest for the same20 languages (translation into
+   English and from English). Primary: spBLEU (sacrébleu tokenized) and COMET-22
+   (wmt22-comet-da). Secondary: chrF++.
+
+--------------------------------------------------------------------------------
+
+Evaluation Metrics| Metric | Rationale |
+
+|---|---| | spBLEU | Standard lexical overlap; primary for direct comparison
+with NLLB baselines | | COMET-22 | Learned metric that captures semantic
+adequacy; less biased toward high-resource languages | | chrF++ |
+Character-level n-gram overlap; informative for morphologically rich
+low-resource languages | | Router entropy (per language) | Diagnostic: does each
+language converge to a distinct routing pattern or collapse to uniform? | | Avg.
+# active subnets per language | Measures parameter efficiency and degree of
+specialization | | BLEU on high-resource languages (e.g., French, Chinese) |
+Check for catastrophic forgetting on languages seen during MNMT pretraining |
+
+--------------------------------------------------------------------------------
+
+Baselines1. NLLB-600M (frozen backbone + no adapters): Zero-shot baseline —
+simply evaluate the pretrained model without any additional training. Measures
+the gap this proposal aims to close.
+
+ 2 Per-language adapters (NLLB +1 adapter/lang): One dedicated bottleneck
+   adapter per low-resource language, no sharing. Upper bound on parameter
+   count; lower bound on cross-lingual transfer.
+ 3 Language-family adapters (grouped by NLLB taxonomy): One adapter per
+   predefined language family (e.g., Austronesian, Niger-Congo, Turkic).
+   Represents the best static-grouping baseline.
+ 4 Full fine-tuning of NLLB on the20-language corpus: Upper bound on
+   per-language performance but at high forgetting risk. Included to quantify
+   the forgetting-adaptation trade-off.
+
+--------------------------------------------------------------------------------
+
+Ablations| Ablation | What it tests |
+
+|---|---| | K =2,4,8,16 | Sensitivity to number of subnets; what is the minimal
+K needed? | | Without auxiliary entropy penalty | Does the entropy
+regularization actually encourage specialization, or is soft routing sufficient
+alone? | | Shared router vs. per-language router | Is conditioning on language
+embeddings in the router necessary, or can a single router handle all20
+languages? | | Bottleneck d =32 vs.64 vs.128 | Trade-off between parameter
+efficiency and capacity | | Temperature annealing schedule | Does hard vs. soft
+routing make a difference? | | Random routing (fixed random gating) | Are
+learned routing patterns better than random assignment? Controls for the benefit
+of learning. |
+
+--------------------------------------------------------------------------------
+
+Expected Failure Modes1. Collapse to uniform routing. If the router assigns
+equal weight to all subnets for every language, the method degenerates into a
+single larger adapter. Mitigation: the entropy penalty explicitly penalizes
+this; monitor router entropy as a diagnostic.
+
+ 2 Low-resource languages too dissimilar. If the20 languages are so
+   typologically diverse that no beneficial sharing exists, per-language
+   adapters may outperform the shared-pool approach. Mitigation: stratify the
+   language set to include at least two pairs of closely related languages
+   (e.g., Madurese/Indonesian, Kikuyu/Kamba) to maximize chance of detectable
+   transfer.
+ 3 Instability in routing during early training. Random initial routing may
+   cause noisy gradients that prevent convergence. Mitigation: use a warmup
+   phase where routing is uniform (temperature high), then anneal.
+ 4 Catastrophic forgetting of high-resource languages. Even with a frozen
+   backbone, adapter outputs may drift. Mitigation: evaluate BLEU on French and
+   Chinese after training; if drop exceeds0.5 BLEU, add a small replay buffer of
+   high-resource pairs.
+ 5 Marginal gains on very small datasets (<10K pairs). With extremely limited
+   data, even parameter sharing may not help; the bottleneck dimension may be
+   too large relative to the training signal. Mitigation: include a baseline
+   with d =32 and consider whether pretrained word-level alignments (e.g.,
+   LASER) could augment the signal.
+
+--------------------------------------------------------------------------------
+
+Limitations1. English-centric. Both training and evaluation are
+English⇄low-resource. The method's generality to low-resource⇄low-resource
+translation is untested.
+
+ 2 Bottleneck adapter capacity. Adapters are fundamentally low-rank
+   approximations; for morphologically complex languages, a rank-64 bottleneck
+   may underspecify certain inflectional phenomena. Character-level or
+   morpheme-level decoding is not explored here.
+ 3 Router training cost. Jointly training the gating network introduces
+   additional training overhead (~1.5× per-step cost vs. per-language adapters)
+   and may require careful hyperparameter tuning across20 languages
+   simultaneously.
+ 4 No explicit orthographic or phonological features. The router conditions only
+   on pretrained language embeddings, not on typological features (e.g., word
+   order, case marking) that could guide sharing. This is a deliberate design
+   choice to avoid human priors, but it may leave gains on the table.
+ 5 Single backbone scale (600M parameters). Whether the findings transfer to
+   larger (3.3B) or smaller (300M) backbones is unknown. The optimal K and d
+   likely scale with model capacity.
+ 6 No iterative back-translation or monolingual data. The proposal uses only
+   parallel data. Incorporating monolingual data (back-translation,
+   self-training) is a natural extension but is outside the scope of this
+   method's core contribution.

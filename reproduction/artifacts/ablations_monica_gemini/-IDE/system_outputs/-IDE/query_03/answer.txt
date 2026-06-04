@@ -1,0 +1,159 @@
+Table3 – Ablation Variant (-IDE): Complete Research Proposal---
+
+TitleCalibrated Consistency: A Multi-Pass Agreement Framework for Accurate
+Automated LLM Evaluation
+
+--------------------------------------------------------------------------------
+
+ProblemAutomated evaluation of LLM outputs using LLM-as-a-judge methods suffers
+from systematic inaccuracies: position bias, verbosity bias, self-enhancement
+bias (judges favoring their own outputs), and poor calibration on nuanced
+quality dimensions (coherence, factual consistency, instruction following).
+Current single-pass scoring or pairwise comparison protocols produce high
+variance and low inter-rater reliability compared to human judgments. These
+issues compound when automated evaluation is used for model development — noisy
+signals lead to suboptimal training decisions and unreliable leaderboard
+rankings.
+
+--------------------------------------------------------------------------------
+
+HypothesisA multi-pass agreement framework that aggregates multiple independent
+evaluation passes with controlled randomization of prompt order, rubric
+decomposition, and judge model diversity will reduce bias and variance,
+achieving Pearson/Spearman correlations with human judgments that exceed both
+single-pass LLM judges and standard baseline methods. Specifically, decomposing
+a single holistic quality score into3–5 factor-specific sub-scores (e.g.,
+factuality, coherence, instruction following, verbosity penalty) and aggregating
+across (k\geq3) structurally diverse judge models will outperform any
+single-judge setup.
+
+--------------------------------------------------------------------------------
+
+Method### Stage1: Multi-Pass Eval ProtocolFor each (model, prompt, reference
+response) triple:
+
+ 1 Rubric decomposition – Replace a single holistic score with4 sub-criteria
+   scored on a1–5 Likert scale:
+
+ • Factual consistency: Does the output contradict known facts or provided
+   context?
+ • Instruction fidelity: Does the output follow all constraints in the prompt?
+ • Coherence & structure: Is the argument logically ordered and well-formed?
+ • Conciseness: Does the output avoid unnecessary verbosity? (penalty for
+   over-generation)
+
+ 2 Judge model diversity – Use3 structurally different judge models (e.g.,
+   Mixtral-8x7B, GPT-4o-mini, Llama-3-70B) to reduce systematic bias.
+ 3 Randomized presentation – For each judge model, run2 passes with candidate
+   order shuffled (when pairwise) or candidate presentation order randomized
+   (when scoring). Aggregate via trimmed mean (discard highest and lowest per
+   dimension).
+ 4 Calibration layer – Fit a linear regression or isotonic regression on a
+   held-out human-annotated set (N=500) mapping aggregate judge scores to human
+   scores, producing recalibrated final scores per dimension.
+
+Stage2: Consensus ScoringCompute inter-judge agreement (Krippendorff's alpha
+across the3 judge models ×2 passes =6 judgments per dimension). Flag cases with
+alpha <0.4 for manual review. For non-flagged items, use the mean of all6
+recalibrated scores. Report both the calibrated score and the agreement
+statistic alongside it.
+
+Stage3: Uncertainty ReportingInstead of a single point estimate, report
+per-example evaluation results as a tuple: (mean score,95% CI from6 judgments,
+agreement α). For benchmark-level metrics, report the distribution of CIs and
+the proportion of items exceeding the agreement threshold.
+
+--------------------------------------------------------------------------------
+
+Dataset / BenchmarkPrimary: MT-Bench (80 multi-turn questions,3.3K human
+preference judgments labeled by domain experts on a1–10 scale across6 models).
+This is the most widely used benchmark for LLM judge accuracy and provides
+published human baselines.
+
+Secondary: Chatbot Arena subset —1,000 curated conversations with human Elo
+ratings (released as a public dataset) to test generalization beyond the
+MT-Bench format.
+
+Calibration set: A randomly sampled20% of the MT-Bench human annotations (N=660
+judgments) will be held out for fitting the calibration regression.
+
+--------------------------------------------------------------------------------
+
+Evaluation Metrics| Metric | Rationale |
+
+|---|---| | Spearman ρ (primary) | Rank-order correlation with human scores;
+captures whether the evaluator preserves relative ordering | | Pearson r |
+Linear correlation with human scores; captures absolute agreement | |
+Krippendorff's α | Inter-judge reliability among the6 judge passes (ordinal
+weighting) | | Expected Calibration Error (ECE) | Binned calibration error after
+recalibration — how well do predicted scores match human score distribution? | |
+Flag rate | Proportion of items with α <0.4 requiring manual review (lower is
+better; controlled human cost) |
+
+All metrics reported with bootstrap95% CIs (10,000 resamples).
+
+--------------------------------------------------------------------------------
+
+Baselines1. LLM-only single-pass (GPT-4) — Standard single LLM judge with no
+rubric, no randomization (state-of-the-art baseline).
+
+ 2 Pairwise Elo — Bradley-Terry Elo computed from pairwise comparisons (Chatbot
+   Arena protocol, single judge model).
+ 3 Rubric-only — Single judge model with rubric decomposition but no multi-pass
+   aggregation.
+ 4 Multi-pass single model —6 passes (2× with randomized order) from one judge
+   model, no diversity.
+
+--------------------------------------------------------------------------------
+
+Ablations (within the proposed method)
+
+
+ Ablation      What it tests
+ -MultiJudge   Drop diversity: use only GPT-4o-mini for all6 passes
+ -Calibration  Remove the held-out regression layer
+ -Rubric       Replace decomposed sub-scores with a single holistic score
+ -AgreeFilter  Remove the α <0.4 flag-and-review step; use all items
+ k=2 passes    Reduce from2 to1 pass per model (3 judges ×1 pass =3 judgments
+               total)
+
+
+--------------------------------------------------------------------------------
+
+Expected Failure Modes1. Calibration overfitting — The regression layer may
+overfit to the specific distribution of MT-Bench human scores, failing to
+generalize to the Chatbot Arena subset. Mitigation: evaluate cross-benchmark
+transfer and report per-benchmark performance separately.
+
+ 2 Diminishing returns on judge count — Three structurally diverse judges may
+   not be enough; five may be needed for stable agreement thresholds.
+   Mitigation: include an exploratory analysis using5 judges on a subset (200
+   items) to confirm the saturation point.
+ 3 Rubric overspecification — Decomposing into4 sub-scores may miss emergent
+   quality dimensions (e.g., creativity, safety) that humans consider
+   holistically. Mitigation: include an open-ended "overall impression"
+   sub-score as a fifth dimension and compare against the4-factor version.
+ 4 Agreement filter bias — Items with low inter-judge agreement (α <0.4) may be
+   systematically harder or more ambiguous cases, not just noise. Excluding them
+   inflates apparent accuracy. Mitigation: report results both with and without
+   flagged items; analyze the flagged subset qualitatively.
+
+--------------------------------------------------------------------------------
+
+Limitations1. Judge model access — GPT-4o-mini and Llama-3-70B are accessible
+now, but closed-source judge models create reproducibility dependencies. The
+Mixtral-8x7B component is fully open-weight and replicable.
+
+ 2 Benchmark coverage — MT-Bench and Chatbot Arena cover instruction-following
+   and conversation quality but not domain-specific evaluation (medical, legal,
+   code generation). The method's generality to specialized domains is untested.
+ 3 Calibration cost — The calibration set requires500+ human annotations per new
+   benchmark, which may be prohibitive for rapid prototyping. Active learning or
+   few-shot calibration is left for future work.
+ 4 Throughput —6 LLM API calls per evaluated item ×4 sub-scores increases
+   evaluation cost by6× over a single-pass judge. The trade-off between cost and
+   accuracy is characterized but not optimized.
+ 5 No meta-evaluation — This proposal evaluates the evaluator against human
+   judgments, but does not address whether improved evaluation fidelity
+   translates into better downstream model training (e.g., RLHF reward signal
+   quality). That is a separate evaluation loop not covered here.

@@ -1,0 +1,53 @@
+{
+  "variant": "-IVE",
+  "query_count": 3,
+  "complete": true,
+  "dry_run": false,
+  "proposal_only": true,
+  "reference_system": "EvoScientist",
+  "reference_root": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/artifacts/idea_outputs/EvoScientist",
+  "complete_query_ids": [
+    1,
+    2,
+    3
+  ],
+  "missing_reference_query_ids": [],
+  "outputs": [
+    {
+      "query_id": 1,
+      "topic": "Machine translation",
+      "dir": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/artifacts/ablations/-IVE/system_outputs/-IVE/query_01",
+      "reference_present": true,
+      "status": "ok",
+      "returncode": 0,
+      "elapsed_seconds": 41.17,
+      "answer_chars": 12750,
+      "workspace_dir": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/runs/ablation-minus-ive-q01"
+    },
+    {
+      "query_id": 2,
+      "topic": "Software engineering",
+      "dir": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/artifacts/ablations/-IVE/system_outputs/-IVE/query_02",
+      "reference_present": true,
+      "status": "ok",
+      "returncode": 0,
+      "elapsed_seconds": 25.23,
+      "answer_chars": 5245,
+      "workspace_dir": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/runs/ablation-minus-ive-q02"
+    },
+    {
+      "query_id": 3,
+      "topic": "LLM evaluation",
+      "dir": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/artifacts/ablations/-IVE/system_outputs/-IVE/query_03",
+      "reference_present": true,
+      "status": "ok",
+      "returncode": 0,
+      "elapsed_seconds": 22.75,
+      "answer_chars": 2447,
+      "workspace_dir": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/runs/ablation-minus-ive-q03"
+    }
+  ],
+  "paper_exact": false,
+  "caveat": "Replacement ablation run driven by prompt-level disabled-component constraints. The public checkout does not expose the paper's native IDE/IVE ablation switches.",
+  "judge_input_records": 3
+}

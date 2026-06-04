@@ -1,0 +1,37 @@
+Leveraging Generative Verifiers with Calibrated Uncertainty for Automated LLM
+Evaluation## ProblemAutomated evaluation of Large Language Model outputs remains
+   a critical bottleneck in LLM development. Current approaches fall into two
+ camps: reference-based metrics (BLEU, ROUGE, BERTScore) that correlate poorly
+with human judgment for open-ended generation, and LLM-as-judge methods that use
+ a separate evaluator model to score outputs. The latter has shown promise but
+ suffers from systematic biases—position bias, verbosity bias, self-enhancement
+ bias, and poor calibration on out-of-distribution tasks. These accuracy issues
+    are particularly acute for abstractive reasoning, creative writing, and
+ instruction-following where there is no single ground-truth answer. Prior work
+ treats the evaluator as a static scorer rather than as a reasoning agent that
+can surface its own uncertainty; consequently, users have no signal for when an
+                         automated score is unreliable.
+
+HypothesisA generative verifier that produces both a categorical judgment and an
+explicit confidence estimate—derived from structured reasoning traces over
+multiple sampled evaluations—will achieve significantly higher agreement with
+expert human raters than static LLM-as-judge baselines. Specifically, we
+hypothesize that (1) aggregating multiple stochastic evaluation passes with a
+principled confidence aggregation mechanism reduces per-instance scoring
+variance, and (2) the resulting confidence scores are well-calibrated and can be
+used to selectively defer to human evaluation when the verifier is uncertain,
+lifting overall system-level accuracy.
+
+MethodWe propose GVC-Eval (Generative Verifier with Calibrated Evaluation), a
+two-stage framework:
+
+Stage1 — Structured Scoring with Chain-of-Thought. For each candidate output,
+the verifier LLM generates (k) independent evaluation traces using a structured
+rubric prompt that breaks scoring into atomic criteria (relevance, factual
+consistency, coherence, instruction adherence). Each trace produces a1–5 score
+per criterion plus a natural language justification.
+
+Stage2 — Confidence Aggregation and Calibration. We train a lightweight
+confidence model on top of the per-trace scores and their variance. For each
+criterion, we compute the mean score (\mu) and the standard deviation (\sigma)
+across (k) traces. The confidence model outputs a probability (p_{\text

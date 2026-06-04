@@ -63,6 +63,7 @@ and paper-level experimental reproduction.
 | Ablation aggregation is executable | `aggregate_ablation_results.py` converts Table 3 variant judge outputs into variant-perspective Win/Tie/Lose aggregate JSON/CSV | Verified |
 | Replacement ablation smoke is complete | `ablation_query01_smoke_report.json` records real query-01 proposal-only ablation runs for `-IDE`, `-IVE`, and `-all`, with DeepSeek judge outputs and aggregate results under `reproduction/artifacts/ablation_smoke` | Verified |
 | Formal ablation partial rerun exists | `ablation_queries01_03_partial_report.json` records real queries 01-03 proposal-only ablation runs for `-IDE`, `-IVE`, and `-all`, with 9 DeepSeek judge outputs under `reproduction/artifacts/ablations`; the coverage-aware schema gate still marks Table 3 incomplete because only 3/30 paper queries are covered | Verified |
+| Monica/Gemini ablation judge path works | `ablation_queries01_03_monica_gemini_report.json` records the same queries 01-03 ablation subset re-judged through Monica with `gemini-3-flash-preview`; 9 judge records completed with 0 failures under `reproduction/artifacts/ablations_monica_gemini` | Verified |
 | Code-execution aggregation is executable | `aggregate_code_execution.py` converts Figure 2 execution logs into before/after and stage-level success-rate JSON/CSV | Verified |
 | Paper reproduction action plan is executable | `build_paper_reproduction_plan.py` regenerates the current missing-evidence command plan from the completion audit | Verified |
 | EvoScientist CLI outputs are normalized before judging | `normalize_system_outputs.py` writes clean `answer.txt` files from raw `stdout.txt` logs | Verified |
@@ -88,6 +89,9 @@ The latest non-secret config check found:
 - model: `deepseek-v4-flash`
 - `~/.codex/env` contains `DEEPSEEK_API_KEY`, `DEEPSEEK_BASE_URL`,
   `MONICA_API_KEY`, and `MONICA_BASE_URL`
+- Monica judge probe: `gemini-3-flash-preview` works through
+  `openapi.monica.im`; the bare `gemini-3-flash` model string is rejected by
+  the Monica OpenAI-compatible endpoint
 - result: `bash reproduction/run_preflight.sh --with-agent` succeeds after
   sourcing `~/.codex/env`
 - Ollama endpoint: not configured
