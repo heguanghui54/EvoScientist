@@ -1,0 +1,73 @@
+{
+  "date": "2026-06-04",
+  "baseline": "K-Dense",
+  "checkout": "/Users/hgh54913/research/k-dense-byok",
+  "pinned_head": "593c49b8e79c704c5979ec81c49f1791b5114083",
+  "checkout_head": "593c49b8e79c704c5979ec81c49f1791b5114083",
+  "backend_url": "http://localhost:8000",
+  "env_keys": {
+    "OPENROUTER_API_KEY": false,
+    "GEMINI_API_KEY": false,
+    "GOOGLE_GEMINI_BASE_URL": false,
+    "OLLAMA_BASE_URL": false,
+    "EXA_API_KEY": false,
+    "PARALLEL_API_KEY": false,
+    "PAPERCLIP_API_KEY": false
+  },
+  "commands": {
+    "python3.13": {
+      "command": "python3.13",
+      "path": null,
+      "available": false
+    },
+    "uv": {
+      "command": "uv",
+      "path": null,
+      "available": false
+    },
+    "node": {
+      "command": "node",
+      "path": "/opt/homebrew/bin/node",
+      "available": true,
+      "version": "v26.0.0"
+    },
+    "npm": {
+      "command": "npm",
+      "path": "/opt/homebrew/bin/npm",
+      "available": true,
+      "version": "11.12.1"
+    },
+    "gemini": {
+      "command": "gemini",
+      "path": null,
+      "available": false
+    },
+    "ollama": {
+      "command": "ollama",
+      "path": null,
+      "available": false
+    }
+  },
+  "services": {
+    "k_dense_backend": {
+      "available": true,
+      "status": 502,
+      "error": "HTTP Error 502: Bad Gateway"
+    },
+    "ollama": {
+      "available": true,
+      "status": 502,
+      "error": "HTTP Error 502: Bad Gateway"
+    }
+  },
+  "status": "not_ready",
+  "blocking_items": [
+    "python3.13 is not installed",
+    "uv is not installed",
+    "Gemini CLI is not installed",
+    "neither OPENROUTER_API_KEY nor a reachable Ollama server is available",
+    "K-Dense backend is not running at the requested backend URL"
+  ],
+  "adapter": "reproduction/run_k_dense_byok_adapter.py",
+  "caveat": "K-Dense BYOK is a local web/API adapter candidate, not a paper-exact raw Table 1 artifact. This gate verifies whether a replacement rerun can start from the pinned public checkout."
+}

@@ -69,6 +69,8 @@ def main() -> None:
         "probe_hypogenic_baseline.py",
         "probe_novix_baseline.py",
         "probe_k_dense_baseline.py",
+        "verify_k_dense_runtime.py",
+        "run_k_dense_byok_adapter.py",
         "aggregate_human_labels.py",
         "aggregate_ablation_results.py",
         "aggregate_code_execution.py",
@@ -468,6 +470,22 @@ def main() -> None:
     assert k_dense_probe["direct_30_query_runner_available"] is True
     assert "/run_sse" in k_dense_probe["entrypoints"]["local_http_adapter"]
     assert "local_web_api_adapter_candidate" in k_dense_probe_md_path.read_text(encoding="utf-8")
+    k_dense_gate_json_path = ROOT / "k_dense_runtime_gate.json"
+    k_dense_gate_md_path = ROOT / "k_dense_runtime_gate.md"
+    assert k_dense_gate_json_path.is_file(), "missing K-Dense runtime gate JSON"
+    assert k_dense_gate_md_path.is_file(), "missing K-Dense runtime gate markdown"
+    k_dense_gate = json.loads(k_dense_gate_json_path.read_text(encoding="utf-8"))
+    assert k_dense_gate["baseline"] == "K-Dense"
+    assert k_dense_gate["pinned_head"] == k_dense_probe["checked_head"]
+    assert k_dense_gate["checkout_head"] == k_dense_probe["checked_head"]
+    assert k_dense_gate["status"] == "not_ready"
+    assert "run_k_dense_byok_adapter.py" in k_dense_gate["adapter"]
+    assert "python3.13 is not installed" in k_dense_gate["blocking_items"]
+    assert "K-Dense backend is not running at the requested backend URL" in k_dense_gate["blocking_items"]
+    k_dense_adapter_text = (ROOT / "run_k_dense_byok_adapter.py").read_text(encoding="utf-8")
+    assert "/run_sse" in k_dense_adapter_text
+    assert "AI Scientist-v2" not in k_dense_adapter_text
+    assert "K-Dense Runtime Gate" in k_dense_gate_md_path.read_text(encoding="utf-8")
     baseline_readiness = json.loads(baseline_readiness_json_path.read_text(encoding="utf-8"))
     assert baseline_readiness["baseline_count"] == 7
     assert baseline_readiness["paper_exact_ready"] is False
@@ -661,6 +679,7 @@ def main() -> None:
         "Hypogenic baseline probe is recorded",
         "Novix baseline probe is recorded",
         "K-Dense baseline probe is recorded",
+        "K-Dense runtime gate is recorded",
         "Baseline readiness matrix is recorded",
         "Baseline rerun manifest is recorded",
         "Paper-level non-Table-1 artifact schemas are pinned",
