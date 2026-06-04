@@ -1,0 +1,54 @@
+Research Proposal: Disentangling Knowledge from Reasoning in LLMs via Controlled
+Representation Intervention## Title
+Disentangling Knowledge and Reasoning
+Pathways in LLMs: A Representation-Intervention Framework for Capability
+Decoupling
+
+Problem
+Large Language Models integrate multiple capabilities — factual
+knowledge, logical reasoning, instruction following, and stylistic control —
+into a single monolithic forward pass. This entanglement creates three concrete
+problems:
+
+1 Uninterpretability: When a model answers incorrectly, we cannot attribute the
+failure to missing knowledge vs. faulty reasoning.
+2 Brittle editing: Model editing (e.g., MEMIT, ROME) modifies factual knowledge
+but can degrade downstream reasoning performance, suggesting the two share
+overlapping representations.
+3 Incapability of compositional control: We cannot independently upgrade a
+model's reasoning ability without affecting its knowledge base, or vice
+versa.
+
+The central open question is: Do knowledge and reasoning occupy linearly
+separable subspaces in the residual stream, and if so, can we intervene on one
+without perturbing the other?
+
+Hypothesis
+Primary: Knowledge and reasoning activate partially disjoint subspaces
+in the residual stream of LLMs, primarily in mid-to-late layers. Specifically,
+factual recall (e.g., "What is the capital of France?") is concentrated in a
+low-rank subspace that can be identified via contrastive probing, and reasoning
+computation (e.g., multi-step deduction) occupies a complementary subspace.
+
+Secondary: Applying activation steering vectors that suppress the knowledge
+subspace (without altering the reasoning subspace) will cause the model to
+"forget" targeted facts while preserving its ability to reason correctly over
+new facts provided in-context. Conversely, steering the reasoning subspace will
+degrade chain-of-thought quality without affecting the model's ability to answer
+direct factual queries.
+
+Method
+The proposal proceeds in three stages:
+
+Stage1: Identifying Knowledge and Reasoning Subspaces (Probing)
+
+• Collect two families of contrastive dataset pairs:
+• Knowledge probes: (question, correct answer) vs. (same question, incorrect
+answer) — e.g., "Capital of France?" → "Paris" vs. "London". The correct vs.
+incorrect answers differ only in factual content, not reasoning complexity.
+• Reasoning probes: (question with reasoning trace, correct final answer) vs.
+(same question with flawed reasoning, wrong answer) — e.g., "A bat and ball
+cost $1.10..." with correct vs. incorrect arithmetic, keeping the factual
+premises identical.
+• For each layer ( l ), train a logit-linear probe (or use difference-in-means)
+to find the direction ( \mathbf

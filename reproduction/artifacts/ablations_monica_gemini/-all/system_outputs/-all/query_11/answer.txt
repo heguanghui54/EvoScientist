@@ -1,0 +1,106 @@
+Research Proposal: Dissecting the Capability Web — Causal Decoupling of Emergent
+  LLM Skills## TitleCausal Decoupling of Large Language Model Capabilities: A
+Multi-Intervention Framework for Isolating Reasoning, Knowledge, and Instruction
+                                   Following
+
+--------------------------------------------------------------------------------
+
+ProblemLarge language models exhibit a broad spectrum of behaviors —
+mathematical reasoning, factual recall, instruction compliance, stylistic
+adaptation, and planning — that appear to emerge simultaneously during training.
+The prevailing view treats these as entangled byproducts of a shared underlying
+representation space. Two critical open questions follow:
+
+ 1 Causal coupling. Are these capabilities intrinsically interdependent
+   (improving reasoning necessarily improves instruction following) or merely
+   correlated through shared training signal? We lack controlled experiments
+   that causally manipulate one capability while measuring spillover effects on
+   others.
+ 2 Decoupling feasibility. Can a capability be independently strengthened,
+   weakened, or removed without degrading others? If capabilities are strongly
+   entangled, fine-tuning for a specific skill (e.g., code generation) should
+   universally improve or degrade all others; if they are separable, targeted
+   interventions should produce isolated effects.
+
+Existing work in mechanistic interpretability identifies individual circuits
+(e.g., indirect object identification, factual recall heads) but does not
+characterize how these circuits interact at the capability level. Activation
+patching and probing studies are neuron-focused and do not scale to the
+functional capability granularity that practitioners care about. The result is a
+gap: we can locate a fact-encoding head but cannot answer "does suppressing
+factual recall degrade mathematical reasoning?"
+
+This proposal is a single-run, non-evolving investigation. We disable all
+cross-run memory mechanisms — no idea-direction evolution, no idea-validation
+evolution, no experiment-strategy evolution — and produce a static,
+pre-registered experimental plan. Each intervention is specified upfront; the
+study is executed as a closed batch rather than an adaptive sequence.
+
+--------------------------------------------------------------------------------
+
+HypothesisH₁ (Separability): LLM capabilities (reasoning, factual recall,
+instruction following, stylistic control) are partially decouplable. Targeted
+interventions during fine-tuning can modulate one capability by ≥1 standard
+deviation of its task-specific metric while holding others within0.3σ of
+baseline.
+
+H₀ (Entanglement): Any intervention that significantly alters one capability
+(±1σ) causes commensurate changes (±≥0.5σ) in all other measured capabilities,
+consistent with a shared underlying representation bottleneck.
+
+H₂ (Asymmetric coupling): Some directional dependencies exist — e.g., factual
+recall may depend on instruction following (models must parse the query to
+retrieve facts), but reasoning may not depend on stylistic control. We predict a
+partial ordering: instruction following > factual recall > reasoning > stylistic
+control, where ">" indicates stronger dependency on the preceding capability.
+
+--------------------------------------------------------------------------------
+
+MethodWe define a causal intervention framework with four intervention types,
+each designed to modulate one target capability while minimizing changes to
+others.
+
+Capability Definitions and Proxies| Capability | Operational Definition | Proxy
+Task | Primary Metric |
+
+|---|---|---|---| | Logical reasoning | Multistep deduction under novel premises
+| GSM8K (no pretrained solutions in data leakage window) | Exact-match accuracy
+| | Factual recall | Retrieval of verifiable world knowledge | TriviaQA
+(closed-book, no context) | F1 over answer tokens | | Instruction following |
+Adherence to formatting, constraint, and role instructions | AlpacaEval2.0
+(GPT-4 judge) | Win rate vs. reference | | Stylistic control | Consistent tone
+and register shifts across generations | Style-Prompt — custom set of
+formal/informal/humorous/technical prompts | Style adherence (BLEU-2 to target
+corpus + human eval on200 samples) |
+
+Intervention Types1. LoRA fine-tuning (positive): Train a low-rank adapter on a
+high-quality dataset for the target capability. Expected: increase in target
+metric.
+
+ 2 LoRA anti-fine-tuning (negative): Train a low-rank adapter to minimize the
+   target capability using a reward-hacking or negative-example objective (DPO
+   on incorrect outputs). Expected: decrease in target metric.
+ 3 Circuit suppression: Identify attention heads and MLP neurons most correlated
+   with the target capability (via activation probing on held-out data) and
+   zero-ablate the top-k heads/neurons during inference. Expected: targeted
+   degradation.
+ 4 Representation steering: Apply linear intervention (steering vector) in the
+   residual stream at layer midpoint during inference, computed as the
+   difference in activations between capability-heavy and capability-light
+   prompts. Expected: directional modulation.
+
+All interventions are applied independently per capability, producing a4
+(capabilities) ×4 (intervention types) =16 treatment conditions, plus a shared
+baseline.
+
+Procedure (Static, Pre-Registered)
+
+ 1 Baseline measurement: Evaluate the base model on all four proxy tasks (5
+   random seeds per task, report mean ± std).
+ 2 Probing for circuit identification: For each capability, collect paired
+   activation datasets (capability-heavy vs. neutral prompts minus target
+   capability), train logistic probes per layer, and rank heads/neurons by probe
+   accuracy drop when ablated.
+ 3 Apply all16 interventions in independent runs. Each intervention is
+   independently configured (LoRA rank=16, α=32,1 epoch; ablation threshold:
+   top5% of heads per layer; steering magnitude λ∈

@@ -1,0 +1,183 @@
+I'll first check the relevant profile and memory files, then craft the proposal.
+● ls(/memories)
+● Reading memory
+● Reading memory
+
+Now I have the context. Let me construct the proposal.
+
+--------------------------------------------------------------------------------
+
+Factual Consistency via Latent Source-Space Alignment in Large Language Models##
+ TitleLatent Source-Space Alignment: Grounding LLM Generations Through Internal
+                            Representation Steering
+
+ProblemLarge Language Models generate fluent text that frequently contradicts
+verifiable facts — a phenomenon spanning entity hallucinations, temporal
+inconsistencies, and invented references. Existing mitigation strategies fall
+into three families, each with a fundamental limitation: (i) retrieval-augmented
+generation (RAG) conditions on external passages but cannot prevent the model
+from ignoring or overriding retrieved content during decoding; (ii) prompt-based
+methods (e.g. chain-of-thought with fact-checking instructions) are brittle
+under distribution shift and offer no guarantees; (iii) fine-tuning on factual
+corpora improves calibration on in-distribution topics but degrades on long-tail
+queries and does not generalize to unseen domains. The core unsolved problem is
+that the model's internal representations lack a mechanism to commit to a
+verified source-state before generation proceeds — there is no architectural
+induction that forces the decoded token distribution to remain faithful to
+grounded premises.
+
+HypothesisH1 (primary): Steering the hidden-state trajectory of the model toward
+a verified source region — computed by constraining the attention distribution
+over a retrieved passage to top-k supporting spans before each decoding step —
+will reduce factual errors by at least30% relative to unsteered generation on
+multiple-choice and free-form factuality benchmarks, without degrading fluency
+beyond a1-point drop in perplexity.
+
+H2 (secondary): The effectiveness of source-space steering is mediated by the
+alignment gap between the model's internal representation of the query and its
+representation of the supporting passage. When this gap falls below a learned
+threshold, steering is unnecessary and may harm generation quality.
+
+MethodWe propose Latent Source-Space Alignment (LSSA), a two-stage method that
+operates at inference time without retraining the base model.
+
+Stage1 — Passage Encoding and Span Selection. For each generation step, the
+method begins with a retrieved or provided source passage. A lightweight
+span-scoring module (a single transformer layer with a linear projection head,
+trained on5K annotated factual-consistency pairs) computes a factuality score
+for each contiguous span of up to64 tokens. Spans scoring above a threshold
+(calibrated per-domain via a held-out validation set) form a verified source
+region in the model's key-value cache.
+
+Stage2 — Representation Steering. At each decoding layer ℓ, let hℓ be the hidden
+state before the feed-forward sublayer. The method computes a steering vector sℓ
+as the mean of the attention outputs attending to the verified source region.
+The final hidden state is a convex combination: hᵢℓ = (1 − α**·w**ℓ) · hℓ +
+α**·w**ℓ · sℓ, where α is a global hyperparameter and wℓ ∈ [0,1] is a
+layer-specific gating weight produced by a learned policy network conditioned on
+the alignment gap (H2). The policy network is trained via a small
+reinforcement-learning loop (PPO, ~2K environment steps) with a reward that
+combines factual accuracy and n-gram overlap with the reference.
+
+This method requires no fine-tuning of the base LLM — only the span-scoring
+module (Stage1) and the policy network (Stage2) must be trained, totaling
+approximately15M parameters for a7B-base setup.
+
+Dataset and BenchmarkWe evaluate across three factuality benchmarks:
+
+ 1 TruthfulQA (multiple-choice) —817 questions spanning common misconceptions
+   and false beliefs. Primary metric: MC1 accuracy (single-true accuracy).
+ 2 FActScore (free-form generation) —500 Wikipedia biographies, each fact
+   decomposed and verified. Primary metric: percentage of atomic facts
+   supported.
+ 3 FreshQA (temporal factuality) —600 questions requiring up-to-date knowledge,
+   with time-sensitive answers. Primary metric: accuracy with strict temporal
+   grounding.
+ 4 SelfCheckGPT (internal consistency) —250 Wiki-style passages from GPT-3 with
+   per-sentence factuality annotations. Primary metric: sentence-level F1 for
+   consistency.
+
+All benchmarks are English. We use GPTNeoX-20B as the base model for the main
+experiments and scale to LLaMA-2-70B for the largest configuration.
+
+Evaluation Metrics- Factual Accuracy (FA): Micro-averaged proportion of correct
+atomic facts, averaged across all benchmarks. This is the primary metric.
+
+ • Source Faithfulness (SF): Decomposable entailment score (using an
+   off-the-shelf NLI model — DeBERTa-large-MNLI) measuring whether the
+   generation is entailed by the provided source passage. Macro-averaged across
+   benchmarks.
+ • Perplexity (PPL): On the WikiText-103 validation set, to track fluency
+   degradation.
+ • Response Length Ratio (RLR): Ratio of generated tokens to reference tokens,
+   to detect verbose hedging as a confound.
+ • Steering Intervention Rate (SIR): Fraction of decoding steps where α·wℓ
+   >0.05, measuring how frequently the steering mechanism activates.
+
+BaselinesWe compare against six methods spanning the three existing mitigation
+families:
+
+ 1 Standard greedy decoding (no intervention).
+ 2 RAG with top-1 passage (DPR retriever + standard autoregressive generation).
+ 3 RAG + self-consistency voting (Karpukhin et al.,2020 — sample5 generations,
+   vote on factuality).
+ 4 Constitutional AI-style prompting (Bai et al.,2022 — "Generate only
+   statements that are supported by the provided context" appended to the
+   prompt).
+ 5 DoLa (Chuang et al.,2023 — contrastive decoding by contrasting early vs late
+   layers on factuality).
+ 6 Inference-time contrastive steering (Li et al.,2024 — subtract "unfaithful"
+   direction from hidden states, using a precomputed probe).
+
+All baselines use the same base model (GPTNeoX-20B) and the same retriever (DPR)
+where retrieval is applicable.
+
+AblationsWe run four ablations to isolate the contribution of each component:
+
+ 1 -SpanSelection: Remove the span-scoring module; use the full retrieved
+   passage as the verified source region. Tests whether span-level granularity
+   matters.
+ 2 -AlignmentGate: Remove the learned gating policy (set wℓ =1 for all layers).
+   Tests whether layer-specific adjustment is necessary.
+ 3 -Retrieval: Replace retrieved passages with the model's own generated
+   preamble (zero-shot fact generation). Tests whether external grounding is
+   required or whether the steering mechanism can exploit internally generated
+   context.
+ 4 -Steering: Set α =0 across all steps. Reduces to the base model; establishes
+   the upper bound of fluency with the lower bound of factuality.
+
+Expected Failure Modes1. Soft source overfitting. The steering mechanism may
+bias the model toward the lexical form of the source passage rather than its
+semantic content, producing generations that are faithful to the source but
+factually incorrect when the source itself is wrong. This is partially
+controlled by using multiple benchmarks with independent ground truth, but
+adversarial retrieval noise remains a risk.
+
+ 2 Alignment gap collapse. The policy network may learn to set wℓ near zero for
+   all layers on certain domains, effectively disabling the intervention. This
+   would produce null results indistinguishable from the base model. We monitor
+   SIR per-domain to detect this.
+ 3 Layer-wise interference. Steering in middle layers may disrupt syntactic
+   planning while late-layer steering may be too late to affect token choice.
+   The learned gating may not resolve this if the reward landscape is flat. We
+   will visualize layer-specific steering magnitudes post-hoc.
+ 4 Domain-dependent threshold sensitivity. The span-selection threshold
+   calibrated on the held-out validation set may generalize poorly to benchmarks
+   with different fact densities (e.g., FreshQA's temporal questions vs.
+   TruthfulQA's misconception questions). We report per-benchmark results to
+   expose this.
+ 5 Metric gaming. The NLI-based Source Faithfulness metric could be gamed by
+   short, vague generations that are technically entailed by the source but omit
+   specific claims. We mitigate by also reporting Factual Accuracy, which
+   requires explicit factual claims.
+
+Limitations1. Computational overhead. The LSSA method requires a forward pass
+for span scoring and a modified decoding loop with per-layer steering,
+approximately2.3× the inference cost of standard greedy decoding on a single
+A100. This may be prohibitive for latency-sensitive applications.
+
+ 2 Dependence on retrieval quality. The method assumes a relevant source passage
+   is available. For open-domain generation where no passage is retrieved or the
+   retrieval pool is incomplete, the method degrades to the base model. The
+   -Retrieval ablation partially tests this scenario, but the degradation curve
+   under retrieval sparsity is not characterized.
+ 3 English-only evaluation. All benchmarks are English. The span-scoring module
+   and alignment policy are trained on English data only, and there is no
+   guarantee that the learned representations transfer to other languages with
+   different factuality norms and syntactic structures.
+ 4 Static source assumption. The method treats the source passage as fixed
+   before generation begins. For multi-turn or interactive settings where new
+   evidence arrives mid-generation, the steering region would need to be
+   recomputed, which the current design does not support.
+ 5 No formal correctness guarantee. Unlike constrained decoding methods that
+   enforce a grammar, LSSA is a soft steering mechanism. It reduces the
+   probability of factual errors but cannot eliminate them. For high-stakes
+   domains requiring verifiable correctness (medical, legal), this method should
+   be combined with post-hoc verification rather than relied upon alone.
+ 6 No validation-evolution memory. This proposal is generated without reference
+   to a bank of prior failed directions, execution failures, or reusable
+   rejection criteria. Consequently, some proposed design choices (e.g.,
+   layer-specific gating, span-level scoring) may replicate failure patterns
+   already documented in prior work. Without cross-run validation memory, the
+   method is at increased risk of rediscovering known negative results during
+   implementation.

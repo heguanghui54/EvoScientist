@@ -1,0 +1,181 @@
+Research Proposal: Synthesizing Failure-to-Repair Trajectories for Improving
+Code LLM Reasoning## Title
+Trajectory-for-Code: Self-Supervised Synthesis of
+Debugging Trajectories for Robust Code Generation
+
+--------------------------------------------------------------------------------
+
+Problem
+Current code LLMs are predominantly trained on (instruction,
+correct_solution) pairs, either from human sources (e.g., StarCoder data) or
+synthetic pipelines (e.g., CodeAlpaca, OSS-Instruct). This outcome-only
+supervision has two limitations:
+
+1 Brittle reasoning on hard problems — When the model's first attempt is wrong,
+it has no training signal for how to recover. It was never shown buggy
+attempts, test failures, or the iterative debugging steps that lead to
+correct code.
+2 Overconfident generations — Models trained exclusively on correct outputs
+lack calibrated uncertainty about when their code is likely wrong, and cannot
+self-correct without an external oracle.
+
+Gap: While self-debugging and self-refine methods exist at inference time, no
+systematic study has asked whether training on synthesized debugging
+trajectories (attempt → test failure → bug analysis → repair → verified fix)
+improves a model's code reasoning and self-correction ability at both train and
+test time.
+
+--------------------------------------------------------------------------------
+
+Hypothesis
+Primary: Fine-tuning a code LLM on self-synthesized debugging
+trajectories — sequences where the model sees its own buggy attempt, test
+failure signal, natural-language bug explanation, and a corrected solution —
+improves pass@1 on held-out reasoning benchmarks by ≥5% over fine-tuning on the
+same volume of (instruction, correct_code) synthetic data alone.
+
+Secondary: The same training yields a measurable improvement in self-correction
+(ability to improve a generation given test feedback at inference time) without
+requiring an external verifier during training.
+
+--------------------------------------------------------------------------------
+
+Method
+### Stage1 — Trajectory Synthesis Pipeline (fully automated, no human
+labels)
+
+Given a base code LLM (e.g., DeepSeek-Coder-7B-Instruct or CodeLlama-7B) and a
+set of programming problems from a training split (e.g., APPS training set or a
+subset of CodeContests):
+
+1 Attempt: Sample $k=5$ solutions per problem from the model (temperature0.8).
+2 Execute: Run each solution against the problem's test cases. Categorize as
+pass or fail. Collect the failing test input, expected output, and actual
+output.
+3 Bug analysis prompt: For each failing solution, prompt the model: "Explain
+why this code fails on the given test. Identify the specific bug." This
+produces a natural-language bug description. Filter by a lightweight check —
+the description must mention the relevant variable or line (heuristic).
+4 Repair prompt: Prompt the model: "Given the buggy code, the test failure
+details, and the bug explanation above, write a corrected version." Execute
+the corrected version; keep only repairs that pass all tests.
+5 Assemble trajectory: (problem → buggy_code → test_failure → bug_analysis →
+corrected_code). Also include the successful (problem → correct_code) paths
+as positive examples.
+
+Yield: ~3–5× more training sequences per problem (one correct path + several
+repair trajectories).
+
+To control quality, discard trajectories where:
+
+• The bug analysis is empty or generic (<10 tokens).
+• The repair still fails any test case.
+• The buggy code has a syntax error (trivial).
+
+Stage2 — TrainingFine-tune the base model on a mixture:
+
+-50% standard (instruction, correct_code) pairs from the same problem set-50%
+trajectory data (each trajectory formatted as a multi-turn chat: user → problem,
+assistant → code, user → test fails with details, assistant → bug analysis, user
+→ fix it, assistant → corrected code)
+
+Train for2 epochs. Use a replay buffer where trajectory data is sampled
+proportional to the number of repair steps (more steps → higher weight). Compare
+against a control fine-tuned on the same total tokens but only (instruction,
+correct_code) pairs.
+
+Stage3 — EvaluationEvaluate on held-out benchmarks (see below). Measure both
+static pass@k and self-correction pass@1: allow the model one additional attempt
+with test failure feedback.
+
+--------------------------------------------------------------------------------
+
+Dataset / Benchmark
+Training data source:
+
+• CodeContests (training split) ~13K problems with test cases — diverse
+difficulty, multiple languages.
+• Supplement with APPS (training split) ~5K problems for coverage.
+
+Evaluation benchmarks (held-out, no test set overlap):
+
+• HumanEval+ —164 problems with80× more test cases (EvalPlus). Measures
+functional correctness.
+• MBPP+ —399 problems with enriched tests.
+• LiveCodeBench — recent competitive programming problems, tests recency and
+generalization.
+• CodeContests (test split) —165 problems.
+
+--------------------------------------------------------------------------------
+
+Evaluation Metrics| Metric | Description |
+
+|---|---| | pass@1 | Standard functional correctness on first sample
+(temperature0.2, greedy) | | pass@5 | Any of5 samples passes (temperature0.8) |
+| self-correct pass@1 | First sample + one repair round given test failure
+feedback. Measures the model's ability to debug its own output. | | trajectory
+efficiency | % of synthesized trajectories that produce valid repairs after one
+pass (measures pipeline quality) | | calibration error | Expected Calibration
+Error (ECE) on the model's confidence vs. pass rate, to test whether training on
+failures produces better-calibrated models |
+
+--------------------------------------------------------------------------------
+
+Baselines1. Base model (no fine-tuning) — e.g., DeepSeek-Coder-7B-Instruct2.
+Standard SFT — fine-tuned on (instruction, correct_code) only, matching total
+tokens3. Code Alpaca / OSS-Instruct style — synthetic instruction–code pairs
+from a teacher model4. Self-play w/o trajectories — generate correct code,
+filter by tests, train on that (no failure data)
+
+5 CodeRL baseline — actor-critic with test pass/fail as reward (uses RL, not
+SFT on trajectories)
+6 Self-Debugging (inference-only, no trajectory training) — to isolate training
+benefit---
+
+Ablations1. Remove bug-analysis step: train on (problem → buggy → repair)
+without the natural-language bug explanation. Isolates the value of intermediate
+reasoning.
+
+2 Remove failure signal: train on (problem → repair) only — show the model the
+correct code without showing the failure context.
+3 Trajectory ratio sweep: vary the % of trajectory data in the mix
+(10%,30%,50%,70%) to measure diminishing returns.
+4 Model scale: replicate on1B,7B, and14B models to test whether trajectory
+training helps more at smaller scales (where self-correction is hardest).
+5 Oracle repair vs. model repair: replace the model's own repair step with
+GPT-4's repair to measure the ceiling (is the bottleneck synthesis quality or
+training itself?).
+
+--------------------------------------------------------------------------------
+
+Expected Failure Modes| Failure Mode | Mitigation |
+
+|---|---| | Repair data is too easy — the model generates obviously buggy code
+that it easily fixes, so trajectories are trivial. | Filter trajectories by the
+edit distance of the repair; keep only those with non-trivial changes (>3 tokens
+different). | | Model learns to generate buggy code to get repair signal —
+exploits the training setup. | Keep the50% standard SFT mix as a regularizer;
+never reward buggy-only generations. | | Synthetic bug analysis is hallucinated
+— the explanation sounds plausible but is wrong. | The repair step must produce
+executed correct code; wrong explanations that still lead to correct repairs are
+harmless, and wrong explanations that mislead the repair will be discarded. | |
+No improvement on single-turn pass@1 — the benefit only shows in multi-turn
+self-correction. | Acceptable if self-correction improves, but the hypothesis
+requires ≥5% improvement on pass@1. If self-correction improves without pass@1,
+refine the hypothesis. | | Small model can't produce valid bug explanations (<1B
+parameters) leads to low-quality trajectories. | Restrict the study to ≥7B
+models; use1B as an ablation but expect pipeline yield to be low. | | Metric
+saturation — base model is already strong on HumanEval (85%+), leaving little
+room. | Use more difficult benchmarks (LiveCodeBench, CodeContests test split)
+where scores are lower. HumanEval+ results are still reported but are not the
+primary signal. |
+
+--------------------------------------------------------------------------------
+
+SummaryThis proposal tests a simple, automated, and self-supervised method for
+creating rich code reasoning data: instead of only generating (problem, answer)
+pairs, generate full debugging trajectories — buggy attempt, test feedback, bug
+explanation, repair — and train on them. The core idea is that learning how to
+recover from failure should produce more robust code reasoning than learning
+only from successes. The experiment is feasible with open models, open
+benchmarks, and no human annotation.

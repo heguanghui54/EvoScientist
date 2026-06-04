@@ -1,0 +1,123 @@
+Table3 Ablation: −all (No Evolution Memory)
+
+Title Programmatic Oversight: Synthesizing High-Coverage Training Data for Code
+LLMs via Constrained Abstract-Execution TracingProblem Code LLMs trained on
+natural-language docstrings or web-scraped code corpora acquire superficial
+syntactic patterns but fail on programs requiring precise runtime semantics —
+off-by-one errors in loop bounds, silent type confusion across dynamic dispatch,
+and incorrect handling of edge-case control flow. Existing data-synthesis
+pipelines either generate programs from random grammars (low naturalness) or
+distill human-written code (low coverage of failure modes). No current approach
+jointly optimizes for (a) semantic correctness of the synthesized programs, (b)
+diversity of control- and data-flow patterns, and (c) alignment with real-world
+coding idioms.
+
+Hypothesis By combining constrained abstract-execution tracing with a
+lightweight program-skeleton grammar derived from static-analysis profiles of
+open-source repositories, we can synthesize labelled code-data pairs that (i)
+cover a predefined set of data-flow and control-flow motifs, (ii) are guaranteed
+to terminate and produce a known input–output mapping, and (iii) match the
+distribution of real program structures better than purely random generation.
+Fine-tuning a base code LLM on this synthetic data will improve performance on
+execution-aware benchmarks (e.g., HumanEval+, MBPP+ task variants) compared with
+training on the same volume of web-scraped or docstring-harvested data.
+
+Method The pipeline proceeds in five stages:
+
+ 1 Motif catalog extraction. Run lightweight static analysis (AST visitor +
+   reaching-definitions pass) over50 K popular GitHub repositories to build a
+   frequency-ranked catalogue of control-flow motifs (e.g., nested loops,
+   early-return guards, iterator chaining) and data-flow motifs (e.g.,
+   broadcast-through-reduction, mutable-argument aliasing, closure-captured
+   variables). Each motif is parameterized by concrete variables (loop bounds,
+   collection sizes, type annotations).
+ 2 Program-skeleton grammar. Define a probabilistic context-free grammar whose
+   productions instantiate the motifs from stage1. Grammar weights are set
+   proportional to motif frequencies observed in the repository corpus, so
+   skeletons mirror real code structure.
+ 3 Constrained abstract-execution trace. For each generated skeleton, an
+   abstract interpreter computes a symbolic state (variable ranges, type
+   constraints, path feasibility) before any concrete values are chosen. Invalid
+   skeletons (unreachable branches, type mismatches) are pruned. Remaining
+   skeletons are concretized with random concrete values drawn uniformly from
+   the state constraints.
+ 4 IO-pair generation. Execute each concretized program on5–20 random inputs
+   (also drawn from the constraint-satisfying distribution) to obtain
+   input–output pairs. Programs that crash, loop beyond a step limit, or produce
+   non-deterministic results are discarded.
+ 5 Fine-tuning. Take a base code LLM (e.g., CodeLlama-7B or DeepSeek-Coder-6.7B)
+   and fine-tune on the (program, input–output specification) pairs. The
+   specification is formatted as a docstring with Args: / Returns: sections plus
+   one-shot examples, mirroring the HumanEval prompt style.
+
+Dataset / Benchmark
+
+ • **Synthetic corpus:**200 K program–IO pairs produced by the pipeline
+   above.100 K from high-frequency motifs,100 K from long-tail motifs (frequency
+   <1% in the corpus) to stress generalization.
+ • Evaluation benchmarks: HumanEval+ (167 problems, stricter test harness),
+   MBPP+ (399 problems, sanitized tests), and a custom Motif-Probe suite of80
+   small programs each targeting exactly one motif from the catalogue.
+ • Naturalness check: Perplexity on held-out GitHub Python files (the Stack v2
+   filtered subset) to measure distributional alignment.
+
+Evaluation Metrics
+
+ • Pass@1 on HumanEval+ and MBPP+ (n=20 samples, temperature0.2).
+ • Per-motif accuracy on Motif-Probe (macro-F1 across the80 probes).
+ • Program naturalness — cross-entropy difference between the fine-tuned model
+   and the base model on the held-out corpus (lower is more natural).
+ • Data efficiency — performance after50K,100K,200K synthetic samples vs.
+   equivalent-size subsets of web-scraped data.
+
+Baselines
+
+ 1 Base model (no fine-tuning) — establishes a floor.
+ 2 Web-scraped fine-tuning — same model, same compute budget, trained on
+   randomly sampled code from The Stack v2 (matched to200K tokens).
+ 3 Docstring-harvested data — programs with natural-language docstrings from
+   GitHub, stripped to (docstring, body) pairs.
+ 4 Random grammar baseline — programs generated from an unweighted CFG without
+   the abstract-execution guard (no constraint pruning, no motif-frequency
+   weighting).
+
+Ablations (within the proposed method)
+
+ • W/o concrete execution guard — skip the abstract-interpretation prune step;
+   include all syntactically valid skeletons even if they are infeasible.
+ • W/o motif weighting — uniform grammar weights instead of
+   frequency-proportional weights.
+ • W/o long-tail oversampling — generate only from high-frequency motifs.
+
+Expected Failure Modes
+
+ • Abstract interpreter may be too conservative, pruning programs that are valid
+   but whose symbolic state is imprecise, narrowing coverage.
+ • Motif catalogue may overfit the static-analysis pass; motifs that appear
+   frequently in source code may be trivial for the model already, yielding no
+   learning signal.
+ • Concretized IO pairs for long-tail motifs may be too sparse or too similar to
+   each other, providing weak supervision.
+ • The model may learn to exploit spurious correlations in the synthetic prompt
+   format (e.g., fixed Args: / Returns: layout) and fail on the varied style of
+   HumanEval+ docstrings.
+
+Limitations
+
+ • The pipeline requires a static-analysis infrastructure (AST visitor +
+   abstract interpreter) that must be re-targeted per language; this proposal
+   covers only Python.
+ • Motif frequencies are derived from public GitHub repositories, which may not
+   reflect internal or domain-specific codebases (e.g., scientific computing,
+   embedded systems).
+ • Execution guard assumes determinism; programs that rely on randomness or
+   external state (I/O, wall-clock time) are discarded, biasing the corpus
+   toward pure functions.
+ • The approach does not model program correctness beyond IO matching — programs
+   that pass the IO tests for the provided inputs may still contain subtle bugs
+   not exposed by the generated inputs.
+ • Data-efficiency comparisons are confounded by token count: synthetic programs
+   are typically shorter than human-written files, so200K synthetic samples
+   represent fewer total tokens than200K web-scraped files.
+ • No evolution memory applied; this is a single-pass proposal that does not
+   learn from past failures or refine its motif catalogue across runs.

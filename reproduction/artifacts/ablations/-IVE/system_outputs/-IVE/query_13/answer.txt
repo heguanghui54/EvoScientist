@@ -1,0 +1,71 @@
+Scalable Data Synthesis for Code LLMs: A Multi-Strategy Programming Exercise
+Generation Framework## TitleCodeSynth: Multi-Strategy Synthetic Data Generation
+           for Code Language Model Pretraining and Instruction Tuning
+
+ProblemCode LLMs require large volumes of high-quality, diverse training data.
+Sourcing this data from public repositories (e.g., GitHub) introduces quality
+variability, license ambiguity, and distributional biases toward popular
+frameworks and languages. Existing synthetic data pipelines (e.g., CodeAlpaca,
+Self-Instruct variants) rely on a single generation strategy — usually
+instruction-response distillation from a teacher LLM — which produces
+homogeneous examples that plateau in downstream performance after
+roughly50K–100K samples. The fundamental challenge is generating synthetic code
+data at scale that simultaneously achieves correctness (executes and passes
+tests), diversity (covers a broad algorithmic, syntactic, and conceptual space),
+and difficulty calibration (matches the target model's current capability
+frontier).
+
+Hypothesis1. A multi-strategy generation framework that combines structural
+program mutation, constraint-based problem synthesis, and test-guided filtering
+will produce synthetic code data that is more diverse and effective for
+downstream code LLM training than any single-strategy approach.
+
+ 2 Test-guided difficulty calibration — where generated problems are solved by a
+   reference model and filtered by pass rate — yields training data that targets
+   the model's zone of proximal development more efficiently than random or
+   heuristic filtering.
+ 3 The resulting synthetic corpus can match or exceed the downstream code
+   generation performance of models trained on human-authored data of comparable
+   size, while providing full control over license and distribution.
+
+MethodCodeSynth is organized as a three-stage pipeline executed in sequence for
+each generation cycle. No validation-evolution memory is used — each cycle is
+independent, with no cross-cycle learning from prior failures.
+
+Stage1: Structural Mutation (Code → Problem)
+
+ 1 Seed from a small set (~5K) of high-quality, hand-curated programming
+   problems with canonical solutions and test cases (e.g., HumanEval, MBPP
+   subsets).
+ 2 Apply program-level mutations to the canonical solution and problem
+   statement:
+
+ • Semantic-preserving mutations: rename identifiers, restructure control flow
+   (e.g., for→while), change variable scoping, switch data structures
+   (list→set→tuple) while preserving I/O behavior.
+ • Semantic-altering mutations: increase input constraints (e.g., N=10 →
+   N=10^5), change edge cases (empty input → single element → duplicates),
+   modify output format requirements.
+ • Cross-language translation: translate the solution and tests to a different
+   target language (Python ↔ Java ↔ C++).
+
+ 3 For each mutation, regenerate a natural language problem description from the
+   mutated solution and tests by prompting a teacher LLM (e.g., GPT-4o) with the
+   signature: "Given the following solution and test cases, write a clear
+   problem statement that a programmer could solve."
+ 4 Yield (problem, solution, tests) triples.
+
+Stage2: Constraint-Based Synthesis (Spec → Code)
+
+ 1 Define a generation grammar over problem features: data structures required
+   (arrays, trees, graphs, strings, etc.), algorithmic paradigms (DP, greedy,
+   two-pointer, recursion, etc.), difficulty level (easy/medium/hard), and
+   input/output constraints.
+ 2 Sample feature vectors from a stratified distribution (ensuring coverage
+   across all dimensions).
+ 3 For each sampled vector, prompt the teacher LLM to generate a problem
+   description, a reference solution, and test cases satisfying the specified
+   constraints. Use a structured prompt format:
+
+
+ Generate a

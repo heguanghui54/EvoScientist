@@ -4,6 +4,8 @@ Date: 2026-06-04
 Status: `partial`
 Paper-exact: `false`
 
+Superseded by: `reproduction/ablation_queries01_15_monica_gemini_report.json`
+
 This report extends the Table 3 ablation replacement rerun from 3/30 to 10/30 paper queries. The official ablation artifact root now uses Monica's Gemini-family judge outputs:
 
 - `reproduction/artifacts/ablations`

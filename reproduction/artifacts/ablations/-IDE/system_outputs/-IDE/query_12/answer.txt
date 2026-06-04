@@ -1,0 +1,171 @@
+● think_tool(The user wants a Table 3 ablation pro…)
+
+     Atomic Factual Consistency via Fine-grained Preference Optimization##
+    ProblemLarge Language Models (LLMs) generate fluent, coherent text that
+routinely contains factually incorrect atomic claims. Current alignment methods
+ — RLHF, DPO, and variants — rely on holistic reward models or preference pairs
+    that score the overall quality of a generation. This coarse signal masks
+ fine-grained factual errors: a paragraph may be informative, well-structured,
+  and compelling while still containing two or three false atomic claims. The
+reward model's capacity to detect individual false claims is limited by both the
+     granularity of the reward signal and the sparsity of factual errors in
+ preference data. As a result, aligned models still hallucinate at non-trivial
+    rates, especially on knowledge-intensive and long-form generation tasks.
+
+HypothesisTraining a language model to prefer generations in which every atomic
+claim is individually verifiable against a trusted knowledge corpus will
+significantly reduce factual inconsistency without materially sacrificing
+fluency, informativeness, or coverage. More precisely: if we decompose each
+generation into atomic claims, assign each claim a fine-grained consistency
+score against retrieved evidence via bidirectional natural language inference,
+and optimize the model to maximize its worst-claim score, then the resulting
+model will be both factually more reliable and better calibrated about the
+boundary of its knowledge.
+
+MethodThe method has four components:
+
+1. Atomic Claim Extraction. Fine-tune a lightweight sequence tagger (e.g.,
+DeBERTa-v3-base) on a synthetic dataset of model outputs annotated with atomic
+claims using distant supervision from semantic role labeling and constituency
+parsing. Each atomic claim is a single factual proposition that is either true
+or false (e.g., "The Eiffel Tower was completed in1889"). Claims can be explicit
+or entailed by the text. The extractor operates on the model's own generated
+text at inference time.
+
+2. Multi-source Factual Verification. For each extracted atomic claim, retrieve
+the top-5 most relevant passages from a static trusted knowledge corpus (a2024
+snapshot of Wikipedia). A bidirectional NLI model (T5-XXL fine-tuned on MNLI +
+FEVER + Vitaminc + ANLI) predicts three probabilities: entailment (the passage
+supports the claim), contradiction (the passage refutes the claim), and neutral
+(the passage is relevant but does not confirm or refute). The per-claim
+consistency score is defined as P(entailment) — P(contradiction), bounded in
+[-1,1]. Claims for which retrieval returns no relevant passages are marked as
+unverified and assigned a penalty score of -0.5.
+
+3. Worst-C claim Aggregation. Given a generation y containing k atomic claims
+with scores s₁, …, sₖ, the fine-grained consistency reward is R(y) = min(s₁, …,
+sₖ). Using the minimum (rather than the mean) forces the model to address its
+weakest factual failures and prevents it from trading a few bad claims against
+many good ones. Unverified claims are included in the min, making the model
+conservative when it lacks relevant knowledge.
+
+4. Fine-grained Preference Optimization. Construct preference pairs from the
+model's own generations on a diverse set of prompts. For each prompt, sample two
+outputs: (a) the standard greedy decode, and (b) a contrastively decoded output
+obtained by subtracting low-consistency hidden states from high-consistency
+hidden states at each layer (inspired by contrastive decoding but using the
+NLI-based consistency signal instead of a small/large model gap). Compute the
+consistency reward for both. Apply DPO on the resulting pairs, where the
+higher-reward output is the preferred completion. Train for3 epochs with a
+held-out validation set for early stopping.
+
+Dataset / BenchmarkEvaluation covers four dimensions of factual consistency:
+
+
+ Benchmark                 Scope                      Primary Metric
+ TruthfulQA                Short-form QA              % truthful + informative
+                           (closed-book)
+ FELQA                     Long-form QA               FactScore + F1
+ FACTOR (News, Wiki)       Claim-level verification   Macro F1 over atomic
+                                                      claims
+ HALO (HaluEval)           Hallucination detection    AUC-ROC per-domain
+ LongFact (Min et          Long-form biography        Factual precision +
+ al.2023)                  generation                 recall
+
+
+Training prompts are drawn from the Pile, Natural Questions, and ELI5. The
+trusted knowledge corpus for verification is Wikipedia (2024-06-01 dump,
+pre-processed into100-token passages with a dense retriever index).
+
+Evaluation Metrics- Primary: Factual precision (fraction of atomic claims that
+are entailed by the knowledge corpus) on LongFact. This directly measures the
+central claim.
+
+ • Secondary: TruthfulQA accuracy, FELQA FactScore, FACTOR macro F1.
+ • Fluency controls: Perplexity on a held-out WikiText-103 set, MAUVE score
+   against human-written text, and human preference rate (fluency &
+   informativeness) via a small-scale crowd eval.
+ • Calibration: Expected Calibration Error on per-token factual confidence
+   (internal consistency vs. verification outcome).
+
+Baselines1. Base model (LLaMA-3-8B instruction-tuned, no additional alignment).
+
+ 2 Standard DPO (same training prompts, holistic reward from GPT-4-as-judge).
+ 3 RLHF with holistic reward (PPO, same reward model as above).
+ 4 RAG (retrieve top-3 passages for each prompt, prepend as context — no
+   consistency feedback).
+ 5 DoLA (inference-time layer contrast on factual claims).
+ 6 ITI (inference-time intervention on truth-direction, as in Li et al.2024).
+
+Ablations| Ablation | Variant | Expected Effect |
+
+|---|---|---| | A1 — No atomic extraction | Use sentence-level claims instead of
+atomic claims | Lower granularity → misses embedded false claims, recall drops |
+| A2 — Mean aggregation | Replace min(scores) with mean(scores) | Model trades a
+few bad claims against good ones; worst-case claims degrade | | A3 — Lexical
+overlap scoring | Replace NLI with token-level F1 against retrieved passages |
+No semantic understanding → high false-positive rate for paraphrased claims | |
+A4 — Smaller NLI backbone | Replace T5-XXL with DeBERTa-v3-base in the verifier
+| Verification noise increases; preference pairs become less reliable | | A5 —
+No contrastive decoding | DPO on greedy vs. nucleus-sampled outputs (no
+steering) | Harder to produce separable preference pairs; training signal is
+weaker |
+
+Expected Failure Modes1. Extraction noise. Atomic claims that are implicit,
+nested, or span multiple sentences will be missed or fragmented by the
+extractor, producing incomplete coverage. Some factual errors will escape the
+pipeline entirely. This is partially mitigated by the extractor's
+recall-oriented training (optimize for F1 with recall weight0.7), but implicit
+claims (e.g., "She won, which surprised everyone" — entails "A female individual
+won a competition.") remain a hard open problem.
+
+ 2 Verifier compounding. The T5-XXL NLI model has its own factual and
+   consistency blind spots. If it systematically misses a class of
+   contradictions (e.g., temporal reasoning or numeric comparisons), the reward
+   model will be blind to them and the optimization may even reinforce them. We
+   will analyze verifier failure modes by stress-testing on FEVER2.0 adversarial
+   examples before training.
+ 3 Vacuity — the conservatism trap. The worst-claim reward strongly penalizes
+   unverifiable claims. The model may learn to produce text that avoids making
+   factual claims altogether — vague hedging, meta-commentary, or trivial
+   restatements of the prompt — to maximize the reward. We guard against this by
+   (a) including a coverage penalty in the reward (the fraction of tokens that
+   participate in at least one atomic claim), and (b) monitoring MAUVE and human
+   informativeness ratings as fluency controls.
+ 4 Ambiguous reference resolution. Retrieval cannot correctly verify claims that
+   depend on unresolved pronouns or vague noun phrases (e.g., "This finding
+   contradicts previous work" — which finding? which previous work?). The atomic
+   extractor will attempt to ground references via coreference resolution, but
+   failures here produce unverifiable claims, triggering the penalty and
+   reducing the model's willingness to make grounded comparisons.
+
+Limitations- Corpus-bound knowledge. The method only verifies claims against the
+static Wikipedia corpus. Claims about private facts, unreported events,
+proprietary data, or knowledge that post-dates the corpus will be penalized as
+unverifiable. This creates an inherent bias toward well-documented public
+knowledge and away from novelty. Extending to live retrieval from web sources or
+API-based knowledge bases is left for future work.
+
+ • Definitions of "factual." The method operationalizes factual consistency as
+   entailment by a trusted corpus. This conflates factual correctness with
+   corpus coverage and does not address factual claims that are true but
+   unsupported by the specific corpus (e.g., newly published research). It also
+   cannot handle normative, subjective, or predictive claims, which are not
+   factual in the verification sense.
+ • Pipeline complexity. The system chains an extractor, a retriever, a verifier,
+   and a preference optimiser. Errors compound. Inference-time latency increases
+   by200–500 ms per generation (dominated by the verifier). A single-model
+   end-to-end alternative (e.g., self-verification) may be preferable in
+   latency-critical settings.
+ • Scope of hallucination. The method targets factual hallucinations — claims
+   that contradict verifiable knowledge. It does not address
+   instruction-following errors, logical fallacies, stylistic inconsistency, or
+   structural hallucinations (e.g., incorrect graph topology in a generated
+   table). A complete solution likely requires combining factual verification
+   with behaviorally grounded alignment signals.
+ • Scalability of verification. Scoring every atomic claim from every training
+   generation is expensive. For50k training prompts with average8 claims per
+   generation, verification requires ~400k T5-XXL forward passes per epoch. We
+   mitigate this by caching retrieval results and using LoRA adapters for the
+   verifier, but full-scale training remains GPU-intensive and may require
+   off-policy distillation to amortize the cost.

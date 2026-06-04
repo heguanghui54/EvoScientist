@@ -5,53 +5,53 @@
   "expected_json": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/paper_reported_results.json",
   "tolerance": 0.05,
   "failures": [
-    "-IDE vs EvoScientist.Novelty.win_pct: actual=70.0 expected=16.67 delta=53.33",
+    "-IDE vs EvoScientist.Novelty.win_pct: actual=73.33 expected=16.67 delta=56.66",
     "-IDE vs EvoScientist.Novelty.tie_pct: actual=0.0 expected=16.67 delta=-16.67",
-    "-IDE vs EvoScientist.Novelty.lose_pct: actual=30.0 expected=66.67 delta=-36.67",
-    "-IDE vs EvoScientist.Feasibility.win_pct: actual=60.0 expected=20.0 delta=40.0",
+    "-IDE vs EvoScientist.Novelty.lose_pct: actual=26.67 expected=66.67 delta=-40.0",
+    "-IDE vs EvoScientist.Feasibility.win_pct: actual=53.33 expected=20.0 delta=33.33",
     "-IDE vs EvoScientist.Feasibility.tie_pct: actual=0.0 expected=30.0 delta=-30.0",
-    "-IDE vs EvoScientist.Feasibility.lose_pct: actual=40.0 expected=50.0 delta=-10.0",
+    "-IDE vs EvoScientist.Feasibility.lose_pct: actual=46.67 expected=50.0 delta=-3.33",
     "-IDE vs EvoScientist.Relevance.win_pct: actual=40.0 expected=23.33 delta=16.67",
-    "-IDE vs EvoScientist.Relevance.tie_pct: actual=60.0 expected=50.0 delta=10.0",
-    "-IDE vs EvoScientist.Relevance.lose_pct: actual=0.0 expected=26.67 delta=-26.67",
-    "-IDE vs EvoScientist.Clarity.win_pct: actual=50.0 expected=23.33 delta=26.67",
-    "-IDE vs EvoScientist.Clarity.tie_pct: actual=40.0 expected=46.67 delta=-6.67",
-    "-IDE vs EvoScientist.Clarity.lose_pct: actual=10.0 expected=30.0 delta=-20.0",
-    "-IDE vs EvoScientist.avg_gap: actual=35.0 expected=-22.5 delta=57.5",
-    "-IVE vs EvoScientist.Novelty.win_pct: actual=70.0 expected=30.0 delta=40.0",
+    "-IDE vs EvoScientist.Relevance.tie_pct: actual=53.33 expected=50.0 delta=3.33",
+    "-IDE vs EvoScientist.Relevance.lose_pct: actual=6.67 expected=26.67 delta=-20.0",
+    "-IDE vs EvoScientist.Clarity.win_pct: actual=53.33 expected=23.33 delta=30.0",
+    "-IDE vs EvoScientist.Clarity.tie_pct: actual=26.67 expected=46.67 delta=-20.0",
+    "-IDE vs EvoScientist.Clarity.lose_pct: actual=20.0 expected=30.0 delta=-10.0",
+    "-IDE vs EvoScientist.avg_gap: actual=29.99 expected=-22.5 delta=52.49",
+    "-IVE vs EvoScientist.Novelty.win_pct: actual=66.67 expected=30.0 delta=36.67",
     "-IVE vs EvoScientist.Novelty.tie_pct: actual=0.0 expected=26.67 delta=-26.67",
-    "-IVE vs EvoScientist.Novelty.lose_pct: actual=30.0 expected=43.33 delta=-13.33",
-    "-IVE vs EvoScientist.Feasibility.win_pct: actual=30.0 expected=10.0 delta=20.0",
+    "-IVE vs EvoScientist.Novelty.lose_pct: actual=33.33 expected=43.33 delta=-10.0",
+    "-IVE vs EvoScientist.Feasibility.win_pct: actual=33.33 expected=10.0 delta=23.33",
     "-IVE vs EvoScientist.Feasibility.tie_pct: actual=0.0 expected=26.67 delta=-26.67",
-    "-IVE vs EvoScientist.Feasibility.lose_pct: actual=70.0 expected=63.33 delta=6.67",
-    "-IVE vs EvoScientist.Relevance.tie_pct: actual=40.0 expected=46.67 delta=-6.67",
-    "-IVE vs EvoScientist.Relevance.lose_pct: actual=30.0 expected=23.33 delta=6.67",
-    "-IVE vs EvoScientist.Clarity.win_pct: actual=50.0 expected=16.67 delta=33.33",
-    "-IVE vs EvoScientist.Clarity.tie_pct: actual=10.0 expected=46.67 delta=-36.67",
+    "-IVE vs EvoScientist.Feasibility.lose_pct: actual=66.67 expected=63.33 delta=3.34",
+    "-IVE vs EvoScientist.Relevance.win_pct: actual=26.67 expected=30.0 delta=-3.33",
+    "-IVE vs EvoScientist.Relevance.lose_pct: actual=26.67 expected=23.33 delta=3.34",
+    "-IVE vs EvoScientist.Clarity.win_pct: actual=53.33 expected=16.67 delta=36.66",
+    "-IVE vs EvoScientist.Clarity.tie_pct: actual=6.67 expected=46.67 delta=-40.0",
     "-IVE vs EvoScientist.Clarity.lose_pct: actual=40.0 expected=36.67 delta=3.33",
-    "-IVE vs EvoScientist.avg_gap: actual=2.5 expected=-20.0 delta=22.5",
-    "-all vs EvoScientist.Novelty.win_pct: actual=70.0 expected=10.0 delta=60.0",
+    "-IVE vs EvoScientist.avg_gap: actual=3.33 expected=-20.0 delta=23.33",
+    "-all vs EvoScientist.Novelty.win_pct: actual=73.33 expected=10.0 delta=63.33",
     "-all vs EvoScientist.Novelty.tie_pct: actual=0.0 expected=10.0 delta=-10.0",
-    "-all vs EvoScientist.Novelty.lose_pct: actual=30.0 expected=80.0 delta=-50.0",
-    "-all vs EvoScientist.Feasibility.win_pct: actual=50.0 expected=3.33 delta=46.67",
+    "-all vs EvoScientist.Novelty.lose_pct: actual=26.67 expected=80.0 delta=-53.33",
+    "-all vs EvoScientist.Feasibility.win_pct: actual=46.67 expected=3.33 delta=43.34",
     "-all vs EvoScientist.Feasibility.tie_pct: actual=0.0 expected=13.33 delta=-13.33",
-    "-all vs EvoScientist.Feasibility.lose_pct: actual=50.0 expected=83.33 delta=-33.33",
+    "-all vs EvoScientist.Feasibility.lose_pct: actual=53.33 expected=83.33 delta=-30.0",
     "-all vs EvoScientist.Relevance.win_pct: actual=20.0 expected=16.67 delta=3.33",
     "-all vs EvoScientist.Relevance.tie_pct: actual=60.0 expected=46.67 delta=13.33",
     "-all vs EvoScientist.Relevance.lose_pct: actual=20.0 expected=36.67 delta=-16.67",
-    "-all vs EvoScientist.Clarity.win_pct: actual=40.0 expected=20.0 delta=20.0",
-    "-all vs EvoScientist.Clarity.tie_pct: actual=40.0 expected=46.67 delta=-6.67",
+    "-all vs EvoScientist.Clarity.win_pct: actual=46.67 expected=20.0 delta=26.67",
+    "-all vs EvoScientist.Clarity.tie_pct: actual=33.33 expected=46.67 delta=-13.34",
     "-all vs EvoScientist.Clarity.lose_pct: actual=20.0 expected=33.33 delta=-13.33",
-    "-all vs EvoScientist.avg_gap: actual=15.0 expected=-45.83 delta=60.83"
+    "-all vs EvoScientist.avg_gap: actual=16.67 expected=-45.83 delta=62.5"
   ],
   "rows": [
     {
       "baseline": "-IDE vs EvoScientist",
       "dimension": "Novelty",
       "metric": "win_pct",
-      "actual": 70.0,
+      "actual": 73.33,
       "expected": 16.67,
-      "delta": 53.33,
+      "delta": 56.66,
       "status": "fail"
     },
     {
@@ -67,18 +67,18 @@
       "baseline": "-IDE vs EvoScientist",
       "dimension": "Novelty",
       "metric": "lose_pct",
-      "actual": 30.0,
+      "actual": 26.67,
       "expected": 66.67,
-      "delta": -36.67,
+      "delta": -40.0,
       "status": "fail"
     },
     {
       "baseline": "-IDE vs EvoScientist",
       "dimension": "Feasibility",
       "metric": "win_pct",
-      "actual": 60.0,
+      "actual": 53.33,
       "expected": 20.0,
-      "delta": 40.0,
+      "delta": 33.33,
       "status": "fail"
     },
     {
@@ -94,9 +94,9 @@
       "baseline": "-IDE vs EvoScientist",
       "dimension": "Feasibility",
       "metric": "lose_pct",
-      "actual": 40.0,
+      "actual": 46.67,
       "expected": 50.0,
-      "delta": -10.0,
+      "delta": -3.33,
       "status": "fail"
     },
     {
@@ -112,62 +112,62 @@
       "baseline": "-IDE vs EvoScientist",
       "dimension": "Relevance",
       "metric": "tie_pct",
-      "actual": 60.0,
+      "actual": 53.33,
       "expected": 50.0,
-      "delta": 10.0,
+      "delta": 3.33,
       "status": "fail"
     },
     {
       "baseline": "-IDE vs EvoScientist",
       "dimension": "Relevance",
       "metric": "lose_pct",
-      "actual": 0.0,
+      "actual": 6.67,
       "expected": 26.67,
-      "delta": -26.67,
-      "status": "fail"
-    },
-    {
-      "baseline": "-IDE vs EvoScientist",
-      "dimension": "Clarity",
-      "metric": "win_pct",
-      "actual": 50.0,
-      "expected": 23.33,
-      "delta": 26.67,
-      "status": "fail"
-    },
-    {
-      "baseline": "-IDE vs EvoScientist",
-      "dimension": "Clarity",
-      "metric": "tie_pct",
-      "actual": 40.0,
-      "expected": 46.67,
-      "delta": -6.67,
-      "status": "fail"
-    },
-    {
-      "baseline": "-IDE vs EvoScientist",
-      "dimension": "Clarity",
-      "metric": "lose_pct",
-      "actual": 10.0,
-      "expected": 30.0,
       "delta": -20.0,
       "status": "fail"
     },
     {
       "baseline": "-IDE vs EvoScientist",
-      "metric": "avg_gap",
-      "actual": 35.0,
-      "expected": -22.5,
-      "delta": 57.5,
+      "dimension": "Clarity",
+      "metric": "win_pct",
+      "actual": 53.33,
+      "expected": 23.33,
+      "delta": 30.0,
       "status": "fail"
     },
     {
-      "baseline": "-IVE vs EvoScientist",
-      "dimension": "Novelty",
-      "metric": "win_pct",
-      "actual": 70.0,
+      "baseline": "-IDE vs EvoScientist",
+      "dimension": "Clarity",
+      "metric": "tie_pct",
+      "actual": 26.67,
+      "expected": 46.67,
+      "delta": -20.0,
+      "status": "fail"
+    },
+    {
+      "baseline": "-IDE vs EvoScientist",
+      "dimension": "Clarity",
+      "metric": "lose_pct",
+      "actual": 20.0,
       "expected": 30.0,
-      "delta": 40.0,
+      "delta": -10.0,
+      "status": "fail"
+    },
+    {
+      "baseline": "-IDE vs EvoScientist",
+      "metric": "avg_gap",
+      "actual": 29.99,
+      "expected": -22.5,
+      "delta": 52.49,
+      "status": "fail"
+    },
+    {
+      "baseline": "-IVE vs EvoScientist",
+      "dimension": "Novelty",
+      "metric": "win_pct",
+      "actual": 66.67,
+      "expected": 30.0,
+      "delta": 36.67,
       "status": "fail"
     },
     {
@@ -183,18 +183,18 @@
       "baseline": "-IVE vs EvoScientist",
       "dimension": "Novelty",
       "metric": "lose_pct",
-      "actual": 30.0,
+      "actual": 33.33,
       "expected": 43.33,
-      "delta": -13.33,
+      "delta": -10.0,
       "status": "fail"
     },
     {
       "baseline": "-IVE vs EvoScientist",
       "dimension": "Feasibility",
       "metric": "win_pct",
-      "actual": 30.0,
+      "actual": 33.33,
       "expected": 10.0,
-      "delta": 20.0,
+      "delta": 23.33,
       "status": "fail"
     },
     {
@@ -210,54 +210,54 @@
       "baseline": "-IVE vs EvoScientist",
       "dimension": "Feasibility",
       "metric": "lose_pct",
-      "actual": 70.0,
+      "actual": 66.67,
       "expected": 63.33,
-      "delta": 6.67,
+      "delta": 3.34,
       "status": "fail"
     },
     {
       "baseline": "-IVE vs EvoScientist",
       "dimension": "Relevance",
       "metric": "win_pct",
-      "actual": 30.0,
+      "actual": 26.67,
       "expected": 30.0,
+      "delta": -3.33,
+      "status": "fail"
+    },
+    {
+      "baseline": "-IVE vs EvoScientist",
+      "dimension": "Relevance",
+      "metric": "tie_pct",
+      "actual": 46.67,
+      "expected": 46.67,
       "delta": 0.0,
       "status": "ok"
     },
     {
       "baseline": "-IVE vs EvoScientist",
       "dimension": "Relevance",
-      "metric": "tie_pct",
-      "actual": 40.0,
-      "expected": 46.67,
-      "delta": -6.67,
-      "status": "fail"
-    },
-    {
-      "baseline": "-IVE vs EvoScientist",
-      "dimension": "Relevance",
       "metric": "lose_pct",
-      "actual": 30.0,
+      "actual": 26.67,
       "expected": 23.33,
-      "delta": 6.67,
+      "delta": 3.34,
       "status": "fail"
     },
     {
       "baseline": "-IVE vs EvoScientist",
       "dimension": "Clarity",
       "metric": "win_pct",
-      "actual": 50.0,
+      "actual": 53.33,
       "expected": 16.67,
-      "delta": 33.33,
+      "delta": 36.66,
       "status": "fail"
     },
     {
       "baseline": "-IVE vs EvoScientist",
       "dimension": "Clarity",
       "metric": "tie_pct",
-      "actual": 10.0,
+      "actual": 6.67,
       "expected": 46.67,
-      "delta": -36.67,
+      "delta": -40.0,
       "status": "fail"
     },
     {
@@ -272,18 +272,18 @@
     {
       "baseline": "-IVE vs EvoScientist",
       "metric": "avg_gap",
-      "actual": 2.5,
+      "actual": 3.33,
       "expected": -20.0,
-      "delta": 22.5,
+      "delta": 23.33,
       "status": "fail"
     },
     {
       "baseline": "-all vs EvoScientist",
       "dimension": "Novelty",
       "metric": "win_pct",
-      "actual": 70.0,
+      "actual": 73.33,
       "expected": 10.0,
-      "delta": 60.0,
+      "delta": 63.33,
       "status": "fail"
     },
     {
@@ -299,18 +299,18 @@
       "baseline": "-all vs EvoScientist",
       "dimension": "Novelty",
       "metric": "lose_pct",
-      "actual": 30.0,
+      "actual": 26.67,
       "expected": 80.0,
-      "delta": -50.0,
+      "delta": -53.33,
       "status": "fail"
     },
     {
       "baseline": "-all vs EvoScientist",
       "dimension": "Feasibility",
       "metric": "win_pct",
-      "actual": 50.0,
+      "actual": 46.67,
       "expected": 3.33,
-      "delta": 46.67,
+      "delta": 43.34,
       "status": "fail"
     },
     {
@@ -326,9 +326,9 @@
       "baseline": "-all vs EvoScientist",
       "dimension": "Feasibility",
       "metric": "lose_pct",
-      "actual": 50.0,
+      "actual": 53.33,
       "expected": 83.33,
-      "delta": -33.33,
+      "delta": -30.0,
       "status": "fail"
     },
     {
@@ -362,18 +362,18 @@
       "baseline": "-all vs EvoScientist",
       "dimension": "Clarity",
       "metric": "win_pct",
-      "actual": 40.0,
+      "actual": 46.67,
       "expected": 20.0,
-      "delta": 20.0,
+      "delta": 26.67,
       "status": "fail"
     },
     {
       "baseline": "-all vs EvoScientist",
       "dimension": "Clarity",
       "metric": "tie_pct",
-      "actual": 40.0,
+      "actual": 33.33,
       "expected": 46.67,
-      "delta": -6.67,
+      "delta": -13.34,
       "status": "fail"
     },
     {
@@ -388,9 +388,9 @@
     {
       "baseline": "-all vs EvoScientist",
       "metric": "avg_gap",
-      "actual": 15.0,
+      "actual": 16.67,
       "expected": -45.83,
-      "delta": 60.83,
+      "delta": 62.5,
       "status": "fail"
     }
   ]

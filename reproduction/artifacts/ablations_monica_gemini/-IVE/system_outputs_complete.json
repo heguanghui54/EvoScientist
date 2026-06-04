@@ -1,6 +1,6 @@
 {
   "variant": "-IVE",
-  "query_count": 10,
+  "query_count": 15,
   "expected_query_count": 30,
   "complete": false,
   "dry_run": false,
@@ -17,14 +17,14 @@
     7,
     8,
     9,
-    10
-  ],
-  "missing_variant_query_ids": [
+    10,
     11,
     12,
     13,
     14,
-    15,
+    15
+  ],
+  "missing_variant_query_ids": [
     16,
     17,
     18,
@@ -42,11 +42,6 @@
     30
   ],
   "missing_reference_query_ids": [
-    11,
-    12,
-    13,
-    14,
-    15,
     16,
     17,
     18,
@@ -143,9 +138,49 @@
       "reference_present": true,
       "status": "ok",
       "answer_chars": 13518
+    },
+    {
+      "query_id": 11,
+      "topic": "LLM capabilities",
+      "dir": "reproduction/artifacts/ablations_monica_gemini/-IVE/system_outputs/-IVE/query_11",
+      "reference_present": true,
+      "status": "ok",
+      "answer_chars": 10538
+    },
+    {
+      "query_id": 12,
+      "topic": "Factual consistency",
+      "dir": "reproduction/artifacts/ablations_monica_gemini/-IVE/system_outputs/-IVE/query_12",
+      "reference_present": true,
+      "status": "ok",
+      "answer_chars": 10666
+    },
+    {
+      "query_id": 13,
+      "topic": "Data synthesis",
+      "dir": "reproduction/artifacts/ablations_monica_gemini/-IVE/system_outputs/-IVE/query_13",
+      "reference_present": true,
+      "status": "ok",
+      "answer_chars": 3831
+    },
+    {
+      "query_id": 14,
+      "topic": "Inference efficiency",
+      "dir": "reproduction/artifacts/ablations_monica_gemini/-IVE/system_outputs/-IVE/query_14",
+      "reference_present": true,
+      "status": "ok",
+      "answer_chars": 2233
+    },
+    {
+      "query_id": 15,
+      "topic": "Machine translation",
+      "dir": "reproduction/artifacts/ablations_monica_gemini/-IVE/system_outputs/-IVE/query_15",
+      "reference_present": true,
+      "status": "ok",
+      "answer_chars": 6237
     }
   ],
   "paper_exact": false,
   "caveat": "Replacement ablation run driven by prompt-level disabled-component constraints. The public checkout does not expose the paper's native IDE/IVE ablation switches.",
-  "judge_input_records": 10
+  "judge_input_records": 15
 }

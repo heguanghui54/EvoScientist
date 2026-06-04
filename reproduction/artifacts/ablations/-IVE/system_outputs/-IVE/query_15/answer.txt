@@ -1,0 +1,102 @@
+● read_file(/skills/research-ideation/SKILL.md)
+● read_file(.../assets/proposal-template.md)
+● read_file(.../references/elo-ranking-guide.md)
+● read_file(.../references/proposal-extension.md)
+
+Now let me also quickly check if there's a direction-summary template to
+understand the output format expectations.
+● read_file(.../assets/direction-summary-template.md)
+
+Here is the complete research proposal under the -IVE ablation condition. Since
+idea-validation evolution is disabled, the proposal is generated without any
+memory of prior failed directions, validation signals, or reusable rejection
+criteria — it proceeds from literature grounding directly to the proposed
+method, as a first-cycle ideation would.
+
+--------------------------------------------------------------------------------
+
+ Latent-Gender Disentanglement for Multi-Type Bias Mitigation in Neural Machine
+Translation## ProblemNeural machine translation (NMT) models exhibit systematic
+ demographic and social biases that manifest across multiple axes: gender bias
+(e.g., defaulting to masculine pronouns for doctors and feminine for nurses when
+  translating from gender-neutral languages), formality bias (e.g., failing to
+    preserve register distinctions present in the source), and occupational
+   stereotype propagation (e.g., associating high-status roles with majority
+demographics). These biases are not independent — a model that over-corrects for
+ gender may introduce formality artifacts, and a model debiased on one language
+                           pair may fail on another.
+
+Existing debiasing approaches fall into three categories: (1) counterfactual
+data augmentation — generating parallel corpus variants with swapped gender
+markers, professions, or formality levels; (2) adversarial debiasing — training
+a discriminator to predict protected attributes from latent representations
+while the encoder learns to make those attributes unpredictable; and (3)
+post-hoc correction — applying rule-based or learned transformations to the
+output. All three approaches share a fundamental limitation: they treat each
+bias type in isolation and rely on explicit attribute annotations, which are
+expensive to collect and do not cover the unbounded space of
+demographic-sensitive contexts. Data augmentation methods, in particular, suffer
+from coverage gaps — a model trained on gender-swapped sentences still exhibits
+bias in unseen occupational or relational contexts because the latent
+representation remains entangled with demographic information.
+
+HypothesisCentral claim: Demographic-sensitive features (gender markers,
+formality cues, occupational stereotypes) occupy a low-dimensional subspace
+within the NMT encoder's hidden representation that can be actively suppressed
+via a contrastive representation alignment objective without requiring explicit
+bias-type annotation or counterfactual data generation.
+
+Rationale: Prior work in representation learning has shown that for a trained
+NMT model, pairs of source sentences that are semantically identical but differ
+only along a protected attribute (e.g., "My doctor is a woman" vs. "My doctor is
+a man") produce encoder hidden states that diverge primarily along a small
+number of latent directions. This divergence is the mechanism by which bias
+propagates to the decoder. If we can construct contrastive pairs at the
+representation level — pairs of sentences that share semantic content but differ
+in their demographic implications — and train the encoder to minimize the
+distance between their pooled hidden states while preserving the target
+translation, we can collapse the demographic subspace without data augmentation.
+
+Refined hypothesis: Applying a contrastive alignment loss on the encoder's
+sentence-level representation, with negatives drawn from cross-bias-type pairs,
+reduces gender bias by ≥25% (relative), formality bias by ≥20% (relative), and
+occupational stereotype association by ≥30% (relative) on established
+benchmarks, while maintaining BLEU within1 point of the unmodified model.
+
+Method: CONTRA-ALIGNWe propose CONTRA-ALIGN, a training-time debiasing method
+operating on the encoder hidden states of a standard Transformer NMT model.
+
+OverviewThe method adds a contrastive alignment head to the encoder. During
+training, for each source sentence in a standard parallel batch, we construct
+one or more implicit contrastive pairs — pairs of sentences that are
+contextually "same meaning, different demographic implication" — drawn from the
+batch itself using a lightweight similarity-based mining strategy. The
+contrastive loss minimizes the cosine distance of encoder pooled representations
+for aligned pairs, while the standard cross-entropy loss maintains translation
+quality.
+
+Three Key ContributionsContribution1 (Primary): Contrastive Demographic
+Alignment (CDA). We define a contrastive loss over encoder pooled
+representations:
+
+$$ \mathcal non-Indo-European languages (e.g., Swahili, Vietnamese) or languages
+without grammatical gender (e.g., Finnish, Estonian) is unknown. The demographic
+subspace may look fundamentally different in these languages.
+
+ 3 Computational cost. The contrastive mining and projection head add
+   approximately15-20% overhead per training step compared to standard
+   fine-tuning. For very large models (e.g.,11B-parameter), this may be
+   prohibitive.
+ 4 No causal guarantee. The reduction in bias metrics may be correlational
+   rather than causal — the alignment loss may change the representation in ways
+   that reduce measured bias but leave the underlying demographic subspace
+   partially intact. Verification would require interventions (e.g., probing the
+   encoder's representations for demographic information before and after
+   alignment), which we include as an analysis experiment but cannot fully
+   resolve.
+ 5 Scope: bias types are not independent of translation quality. While we set a
+   BLEU constraint of ≤1 point drop, this is a coarse measure. The method may
+   disproportionately affect translation quality on sentences that carry
+   demographic information (e.g., sentences with pronominal references), even if
+   aggregate BLEU is preserved. Fine-grained quality analysis on bias-heavy
+   subsets is needed.

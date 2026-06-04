@@ -64,7 +64,7 @@ and paper-level experimental reproduction.
 | Replacement ablation smoke is complete | `ablation_query01_smoke_report.json` records real query-01 proposal-only ablation runs for `-IDE`, `-IVE`, and `-all`, with DeepSeek judge outputs and aggregate results under `reproduction/artifacts/ablation_smoke` | Verified |
 | Historical DeepSeek ablation partial rerun exists | `ablation_queries01_03_partial_report.json` records real queries 01-03 proposal-only ablation runs for `-IDE`, `-IVE`, and `-all`; this report is now superseded by the 01-10 Monica/Gemini official ablation root | Verified |
 | Monica/Gemini ablation judge path works | `ablation_queries01_03_monica_gemini_report.json` records the same queries 01-03 ablation subset re-judged through Monica with `gemini-3-flash-preview`; 9 judge records completed with 0 failures under `reproduction/artifacts/ablations_monica_gemini` | Verified |
-| Monica/Gemini ablation coverage reaches 10/30 | `ablation_queries01_10_monica_gemini_report.json` records real queries 01-10 proposal-only ablation runs for `-IDE`, `-IVE`, and `-all`; the official `reproduction/artifacts/ablations` root now contains 30 Monica/Gemini judge records and remains incomplete only because 20 paper queries are still missing | Verified |
+| Monica/Gemini ablation coverage reaches 15/30 | `ablation_queries01_15_monica_gemini_report.json` records real queries 01-15 proposal-only ablation runs for `-IDE`, `-IVE`, and `-all`; the official `reproduction/artifacts/ablations` root now contains 45 Monica/Gemini judge records and remains incomplete only because 15 paper queries are still missing | Verified |
 | Code-execution aggregation is executable | `aggregate_code_execution.py` converts Figure 2 execution logs into before/after and stage-level success-rate JSON/CSV | Verified |
 | Paper reproduction action plan is executable | `build_paper_reproduction_plan.py` regenerates the current missing-evidence command plan from the completion audit | Verified |
 | EvoScientist CLI outputs are normalized before judging | `normalize_system_outputs.py` writes clean `answer.txt` files from raw `stdout.txt` logs | Verified |
@@ -80,7 +80,7 @@ and paper-level experimental reproduction.
 | Paper LLM-as-judge numeric table | Real judge JSONL from `gemini-3-flash` for the seven paper baselines | DeepSeek judge table exists for the replacement baseline; Gemini judge key still not confirmed |
 | Human agreement numbers | PhD annotator labels | Not public in this checkout |
 | Code-generation success table | Generated code trajectories and execution logs | Requires real proposal generation first |
-| Ablation table | 30-query runs with IDE/IVE/all removed or equivalent toggles and paper-matched judge outputs | Formal replacement evidence now covers queries 01-10 for all three variants with Monica/Gemini judge outputs, but Table 3 still requires 30/30 coverage and the paper's native ablation switches or author-provided raw outputs |
+| Ablation table | 30-query runs with IDE/IVE/all removed or equivalent toggles and paper-matched judge outputs | Formal replacement evidence now covers queries 01-15 for all three variants with Monica/Gemini judge outputs, but Table 3 still requires 30/30 coverage and the paper's native ablation switches or author-provided raw outputs |
 
 ## Current Provider State
 

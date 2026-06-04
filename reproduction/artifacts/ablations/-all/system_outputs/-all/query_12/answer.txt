@@ -1,0 +1,46 @@
+Grounded Decoding via Dual-Channel Factual Verification for Consistent LLM
+    Generation## ProblemLarge Language Models generate text that is fluent,
+   coherent, and often indistinguishable from human-written prose — yet they
+routinely produce statements that are factually incorrect. These hallucinations
+ persist across model scales, architectures, and decoding strategies, even when
+   the model "knows" the correct answer in its parameters. The problem is not
+merely occasional factual errors: it is a systematic failure to reliably ground
+ generation in verifiable facts. This undermines trust in any application where
+  accuracy matters, from question answering to report generation to scientific
+                                 communication.
+
+Existing approaches treat factual consistency as a post-hoc filter
+(retrieve-then-verify), a training-time objective (RLHF, DPO), or a
+retrieval-augmented generation (RAG) pipeline. Each has a blind spot: post-hoc
+filters cannot intervene during generation; training-time methods are expensive
+and brittle under distribution shift; RAG retrieves relevant passages but does
+not guarantee the model adheres to them during decoding. No current method
+jointly constrains decoding in real time while verifying generated content
+against retrieved evidence at the token and sentence level.
+
+HypothesisA dual-channel architecture that combines (1) real-time grounded
+decoding — biasing token probabilities toward span completions that align with
+retrieved factual evidence — with (2) sentence-level factual consistency scoring
+that modulates a dynamic trade-off between fluency and faithfulness during
+generation, will reduce factual errors in LLM outputs by at least40% relative to
+standard decoding approaches while maintaining competitive fluency (perplexity
+within5% of the unconstrained baseline).
+
+The key claim is that factual consistency is not just a retrieval problem or a
+training problem, but a decoding-time control problem: the model already encodes
+relevant facts, but standard autoregressive decoding does not enforce that the
+generated surface form respects those facts. Placing a lightweight factual
+consistency classifier in the decoding loop provides the missing constraint.
+
+MethodThe proposed system, FactGround, operates at three levels of granularity:
+
+Level1 — Contextualized Retrieval and Span Alignment. For each input prompt,
+retrieve the top-k fact units from a structured knowledge base
+(Wikipedia-derived relation triples + entity-linked passages). Encode each fact
+unit with the LLM's hidden states via cross-attention. During decoding, maintain
+a set of active fact spans — sub-sequences of the retrieved facts that overlap
+with the current generation context. The decoder produces a grounded logit
+distribution by interpolating the base LLM's distribution with a distribution
+conditioned on the active fact span:
+
+$P_{\text

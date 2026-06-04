@@ -1,0 +1,53 @@
+● think_tool(The user wants a Table 3 ablation pro…)
+
+Title: Compositional Reasoning Coverage Synthesis: Structured Program
+Transformations for Code LLM TrainingProblem. Current data-synthesis pipelines
+for code LLMs rely on two broad strategies: (1) large-scale distilling of
+outputs from frontier models (e.g., Code-Alpaca, WizardCoder), which produces
+fluent but mode-collapsed code that clusters around popular idioms; and (2)
+execution-guided filtering (e.g., CodeRL, AlphaCode), which improves correctness
+but does not explicitly diversify the reasoning patterns the model learns. The
+result is data that is dense in common reasoning modes (e.g., imperative loops
+with in-place mutation) and sparse in less frequent but equally valid patterns
+(e.g., functional recursion, generator-based iteration, symbolic manipulation).
+This density bias limits the model's ability to generalize to
+out-of-distribution code, particularly in settings requiring unusual control
+flow or algorithmic pivots. The core problem is that existing synthesis methods
+optimize for correctness and fluency but not for covering the space of reasoning
+strategies.
+
+Hypothesis. A data synthesis pipeline that explicitly decomposes seed programs
+into their constituent reasoning patterns and then systematically recomposes
+those patterns — under formalized diversity constraints — will produce a
+training set that yields higher pass@k on held-out benchmarks than an
+equal-sized set produced by isotropic random augmentation or by teacher
+distillation, because the model is forced to learn from a balanced coverage of
+the reasoning space rather than from a density-weighted sample of it.
+
+Method. We propose Compositional Reasoning Coverage Synthesis (CRCS), a
+three-stage pipeline.
+
+Stage1 — Seed acquisition and reasoning decomposition. Collect5,000–10,000 seed
+programs from open-source permissively licensed repositories (GitHub
+CodeSearchNet, BigCode's The Stack v1.2, filtered to Python and JavaScript). For
+each seed, parse into an abstract syntax tree (AST) and annotate each function
+with a reasoning-pattern signature across six dimensions: control-flow structure
+(recursive, iterative, event-driven), mutation strategy (in-place,
+copy-on-write, pure-functional), data-structure usage (list, dict, set, heap,
+custom class), algorithmic paradigm (greedy, DP, divide-and-conquer,
+backtracking, brute-force), error-handling pattern (guard clauses, try-except,
+monadic), and input-output cardinality (one-to-one, one-to-many, many-to-one,
+relational). This signature is a6-tuple of categorical labels assigned by a set
+of hand-authored AST-visitor rules and heuristics (no learned classifier, to
+avoid confounding).
+
+Stage2 — Transformation composition under coverage constraints. Write a library
+of15–20 parameterized program transformations, each preserving execution
+semantics when applied in isolation: (T1) loop-style rewriting (for → while →
+recursion), (T2) variable-inlining and extraction, (T3) guard-clause inversion,
+(T4) generator ↔ list-comprehension conversion, (T5) accumulator-passing style
+conversion, (T6) error-handling style switching, (T7) early-exit vs.
+branch-complete restructuring, (T8) data-structure substitution on compatible
+interfaces (list → deque → array, dict → defaultdict → Counter). Given a seed
+program with signature s, sample a batch of transformation sequences of length k
+∈

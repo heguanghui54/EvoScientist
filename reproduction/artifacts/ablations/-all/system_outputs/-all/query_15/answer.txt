@@ -1,0 +1,146 @@
+Debiasing Machine Translation via Contrastive Gender Rewriting## ProblemNeural
+     machine translation (NMT) models exhibit systematic gender bias: they
+  disproportionately default to masculine inflections for stereotypically male
+     professions (e.g., "doctor," "engineer") and feminine inflections for
+ stereotypically female professions (e.g., "nurse," "assistant"), even when the
+  source language provides no gender signal. In gender-marked target languages
+ such as Spanish, French, German, and Hebrew, this leads to translation errors
+  that reinforce harmful stereotypes. Existing debiasing approaches fall into
+     three camps — data augmentation, counterfactual training, and post-hoc
+  rule-based correction — but each suffers from a fundamental limitation: they
+ either degrade translation quality on non-gendered content, fail to generalize
+ beyond seen profession nouns, or require language-specific hand-crafted rules.
+
+HypothesisA contrastive rewriting approach — where a pretrained NMT model is
+finetuned on automatically constructed minimal pairs that differ only in gender
+inflection, using a margin-based loss that penalizes the model more for
+stereotypic errors than for non-stereotypic ones — will reduce measured gender
+bias by at least40% on WinoMT-style evaluation sets without degrading BLEU on
+standard benchmarks by more than0.5 points, and will generalize to profession
+nouns unseen during training.
+
+MethodContrastive Gender Rewriting (CGR). The pipeline has three stages:
+
+ 1 Parallel corpus augmentation. For each sentence in a large parallel corpus
+   (source → target language where the target marks gender), identify all
+   target-side noun phrases with gendered determiners or adjectives. For each
+   such phrase, produce a counterfactual minimal pair: replace the masculine
+   inflection with the feminine equivalent (and vice versa), keeping everything
+   else identical. Use part-of-speech tagging and dependency parsing on the
+   target side to ensure well-formedness. Apply this only to sentences where the
+   source side provides no gender signal (e.g., English lacks gender on nouns
+   and determiners). This yields training triplets of the form (source,
+   masculine_target, feminine_target).
+ 2 Margin-based contrastive loss. Finetune a pretrained encoder-decoder
+   Transformer (e.g., M2M-100 or NLLB-200) with a modified objective. For each
+   triplet, the model produces log-probabilities for the masculine and feminine
+   variants. Define the loss as: L = max(0, margin - log p(t_masc | x) + log
+   p(t_fem | x)) where t_masc is the correct gender according to the original
+   reference. The key design choice: when the model scores the wrong gender
+   higher than the correct gender by less than margin, no gradient is applied
+   (avoiding overcorrection). We set margin =1.0 based on a held-out development
+   set.
+ 3 Selective application via a gender-uncertainty gate. During inference,
+   compute the difference Δ = log p(t_masc | x) - log p(t_fem | x) for each
+   sentence that triggers the WinoMT profession list. If |Δ| <0.5, the model is
+   uncertain — apply CGR decoding (rerank with the loss objective). Otherwise,
+   keep the greedy beam output. This prevents degrading fluent translations
+   where gender is unambiguous from context.
+
+Dataset / Benchmark- Training data: WMT English→Spanish and English→German news
+translation corpora (News Commentary v16, Europarl v10), approximately2.5M
+sentence pairs per language direction. Apply the augmentation from Stage1 to
+produce ~500K contrastive triplets per language.
+
+ • Gender bias evaluation: WinoMT (Stanovsky et al.,2019) —3,888 sentences per
+   language probing gender bias across40 occupation nouns. Primary metric:
+   gender accuracy (proportion of correct gender assignments for the target
+   profession noun).
+ • Translation quality evaluation: WMT newstest2019–2020 (generic), FLORES-200
+   devtest (diverse topics). Metric: BLEU (sacreBLEU) and COMET-22.
+
+Evaluation Metrics1. Gender Accuracy (GA) — percentage of WinoMT sentences where
+the translated profession noun matches the correct gender (defined by the
+human-annotated reference). Reported with95% bootstrap confidence intervals
+over1,000 resamples.
+
+ 2 Mean GA over5 profession frequency bins — to test whether gains concentrate
+   on high-frequency professions.
+ 3 BLEU (sacreBLEU) — on newstest2019 and FLORES-200 devtest.
+ 4 COMET-22 — on the same test sets (measures semantic adequacy).
+ 5 Gender Accuracy × BLEU Pareto frontier — the primary combined criterion:
+   requires GA ≥85% AND BLEU decline ≤0.5 on both test sets.
+
+Baselines| Baseline | Description |
+
+|---|---| | Vanilla M2M-100 (1.2B) | Off-the-shelf pretrained model, no
+finetuning | | Data augmentation baseline | Finetune on the augmented corpus
+with standard cross-entropy (no contrastive loss) | | Counterfactual training
+(Stahlberg et al.,2020) | Swap gender markers in the training data and train
+with mixed objective | | Post-hoc rule correction (Savoldi et al.,2021) |
+Rule-based gender inflection applied to beam output |
+
+AblationsSince this is an ablation run with the -all constraint (no evolution
+memory, single non-evolving proposal), ablations are enumerated upfront as
+static comparisons rather than iterative refinements:
+
+ 1 w/o contrastive margin — replace margin-based loss with standard
+   cross-entropy on the augmented triplets. Tests whether the margin mechanism
+   is essential.
+ 2 w/o uncertainty gate — apply CGR decoding to all sentences, not just those
+   with |Δ| <0.5. Tests whether the gate prevents quality degradation.
+ 3 w/o profession filter — apply CGR to all noun phrases rather than only WinoMT
+   profession nouns. Tests scope of applicability.
+ 4 Single-language only — train and evaluate on English→Spanish only (vs.
+   English→German). Tests cross-linguistic generality.
+ 5 Small data regime —10% of augmented triplets. Tests data efficiency.
+
+Expected Failure Modes1. Overcorrection on unambiguous context. When the source
+provides implicit gender signal (e.g., "the pregnant doctor"), the model may
+incorrectly flip to feminine because the profession "doctor" is strongly
+associated with masculine in the training data. The uncertainty gate mitigates
+this but may not catch all cases.
+
+ 2 Degraded fluency on long sentences. Contrastive rewriting optimizes for
+   gender correctness at the token level; longer dependencies (e.g., across
+   clauses) may produce gender agreement errors with distal adjectives.
+   Estimated risk:0.1–0.3 BLEU drop on sentences >40 tokens.
+ 3 Profession noun leakage. The WinoMT profession list (40 nouns) may overlap
+   with the training corpus; accuracy on these nouns may overestimate
+   generalization to held-out professions (e.g., "data scientist," "flight
+   attendant"). We include a held-out set of10 profession nouns not in WinoMT to
+   measure this gap directly.
+ 4 Language asymmetry. Spanish has a more regular gender system (predictable
+   suffixes: -o/-a) than German (three genders, less predictable inflection).
+   CGR may underperform on German. If GA improvement on German is <20%, the
+   method may not generalize to morphologically complex gender systems (Russian,
+   Hebrew, Arabic).
+ 5 Contrastive pair quality. Automatic rewriting via POS/dependency rules will
+   introduce errors on noun phrases with non-compositional gender (e.g., "el/la
+   policía" in some varieties of Spanish, where the feminine article is used for
+   both genders). These noisy pairs could degrade the loss signal. We
+   estimate5–8% of generated pairs are ill-formed and flag this as an upper
+   bound on achievable GA.
+
+Limitations- Binary gender assumption. The method operates on a
+masculine/feminine binary because the benchmarks (WinoMT) and the morphology of
+Spanish/German are binary for the tested constructions. It does not address
+non-binary or gender-neutral translation, which requires fundamentally different
+architecture-level changes (e.g., Neubig et al.,2023).
+
+ • Profession-anchored bias only. WinoMT measures bias for a fixed set of
+   profession nouns in declarative contexts. The method may not reduce other
+   forms of gender bias (e.g., adjective-noun agreement outside profession
+   contexts, first-person reference, or bias in omitted-subject constructions
+   common in pro-drop languages).
+ • Single-epoch finetuning risk. The contrastive loss is applied during a single
+   finetuning epoch to avoid catastrophic forgetting; this limits the magnitude
+   of the bias reduction. Earlier checks on the development set guide early
+   stopping but cannot fully characterize the bias-variance trade-off.
+ • Non-evolving protocol. Because this is a single-run proposal (no cross-run
+   memory updates, no iterative refinement from prior outcomes), all design
+   decisions — the margin value of1.0, the uncertainty threshold of0.5, the
+   profession-list filter — are fixed based on initial reasoning and
+   development-set heuristics. An evolving system that refined these
+   hyperparameters across runs would likely achieve higher GA at the same BLEU
+   constraint, but that is beyond the scope of this ablation.

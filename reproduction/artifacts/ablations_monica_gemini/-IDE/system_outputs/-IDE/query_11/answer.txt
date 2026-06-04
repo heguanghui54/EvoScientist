@@ -1,0 +1,107 @@
+--------------------------------------------------------------------------------
+
+Decoupling Emergent Capabilities in Large Language Models: A Mechanistic
+Independence Framework### TitleDecoupling Emergent Capabilities in Large
+Language Models: A Mechanistic Independence Framework
+
+ProblemLarge language models exhibit a diverse and growing set of capabilities —
+instruction following, multi-step reasoning, factual recall, code generation,
+multilingual translation, and creative composition. The dominant training
+paradigm (next-token prediction on a single mixed corpus) bundles all of these
+into a single set of weights, making it impossible to answer a foundational
+question: to what extent are these capabilities mechanistically separable?
+Current alignment interventions (RLHF, DPO) and capability editing methods
+(model patching, weight interpolation) implicitly assume at least partial
+independence, yet we lack a principled framework to test that assumption.
+Without understanding which capabilities are entangled and which are separable,
+safety interventions risk collateral damage, fine-tuning risks catastrophic
+forgetting of unrelated skills, and scaling offers no systematic path to
+composing capabilities modularly.
+
+HypothesisWe hypothesize that LLM capabilities form a structured independence
+graph rather than a monolithic competence. Specifically:
+
+ • Reasoning (multi-step deduction, math, logic) and factual recall (memorized
+   knowledge) are substantially dissociable — they depend on partially
+   non-overlapping circuit motifs and can be independently perturbed.
+ • Instruction following and content generation quality are partially entangled
+   — models use similar attention patterns to parse and execute instructions,
+   but the factual correctness of the output can be separated from format
+   compliance.
+ • Syntactic fluency (grammar, style) is a near-independent substrate that
+   persists under most perturbations, acting as a shared backbone rather than a
+   capability-specific circuit.
+
+These relationships can be quantified through a Capability Independence Score
+(CIS) — the expected degradation in capability B given optimal intervention to
+preserve capability A — and visualized as a directed graph where edge weights
+correspond to conditional dependence strength.
+
+MethodWe propose a three-phase intervention framework:
+
+Phase1 — Capability Probes and Baselines. For each target capability (reasoning,
+factual recall, instruction following, code generation, safety refusal, creative
+generation), we construct a suite of held-out prompts that isolate the
+capability with minimal confounds. We measure baseline performance on each suite
+for a family of open-weight models (Pythia, LLaMA-2/3, Mistral, Qwen-2) at
+multiple scales (1B–70B params). Each capability gets a scalar score derived
+from an automated judge (LLM-as-evaluator with rubric) plus objective metrics
+where available (pass@k for code, accuracy for math).
+
+Phase2 — Targeted Interventions. We apply four classes of intervention, each
+designed to perturb a single capability while leaving others untouched:
+
+ 1 Representation Steering. Identify steering vectors in the residual stream
+   that maximally activate (or suppress) a capability-specific probe. Apply
+   these vectors during generation and measure cross-capability transfer.
+   Expected: strong intra-capability effect, varying cross-capability spillover.
+ 2 Circuit Ablation (activation patching). Use causal tracing (Wang et al.,2023)
+   to localize attention heads and MLP neurons responsible for each capability.
+   Patch those activations to corrupted runs and measure capability-specific
+   degradation.
+ 3 Fine-Tuning on Capability-Specific Data. Continue training on data that
+   exclusively exercises one capability (e.g.,50K math problems) and measure
+   improvement in the target capability vs. regression in non-target
+   capabilities.
+ 4 Weight Interpolations (model soup with capability-specific fine-tunes).
+   Independently fine-tune copies on single-capability data, then linearly
+   interpolate weights and measure whether capability gains compose additively
+   or exhibit interference.
+
+Phase3 — Independence Graph Construction. For each pair of capabilities (A, B),
+compute the CIS:
+
+▌ CIS(A→B) =1 − (Performance_B after optimal intervention targeting A) /
+▌ (Baseline_Performance_B)
+
+A CIS near0 means the intervention on A leaves B unaffected (strong
+independence). A CIS near1 means B collapses when A is perturbed (strong
+dependence). The pairwise matrix yields a directed graph where edges >0.3
+indicate entanglement.
+
+We then validate the graph by checking whether the intervention type (steering
+vs. ablation vs. fine-tuning) produces consistent dependence patterns — if all
+four methods agree on the graph structure, the independence claim is robust.
+
+Dataset / BenchmarkWe compose a Capability Isolation Benchmark (CI-Bench) from
+existing datasets, selecting subsets that maximally isolate individual
+capabilities:
+
+
+ Capability           Primary Source       Size            Metric
+ Multi-step           GSM8K, MATH, LogiQA  2,000 problems  Accuracy
+ reasoning
+ Factual recall       MMLU, TriviaQA,      2,000 Q&A       F1 / Accuracy
+                      Natural Questions
+ Instruction          AlpacaEval, IFEval   1,000 prompts   Verifiable
+ following                                                 constraint accuracy
+ Code generation      HumanEval, MBPP      800 problems    pass@k
+ Safety refusal       HarmBench, XSTest    1,000 prompts   Refusal rate
+                                                           (aligned models)
+ Creative generation  Machine translation  500 each        BLEU /
+                      (WMT), story                         human-likeness score
+                      completion
+                      (writing-prompts)
+ Multilingual         FLORES-200
+                      translation pairs
+                      (en→

@@ -1,0 +1,39 @@
+Research Proposal: Sensitivity-Guided Dynamic Precision Allocation for LLM
+Inference## Title
+DyPrec: Sensitivity-Guided Dynamic Precision Allocation for
+Latency-Optimized LLM Inference
+
+--------------------------------------------------------------------------------
+
+Problem
+LLM inference latency is dominated by memory bandwidth in the decode
+phase — each token generated requires loading the full model weights from GPU
+memory. While static quantization (e.g., FP16→FP8/FP4) reduces this cost
+uniformly, it applies a single precision floor to all layers regardless of their
+actual sensitivity to numerical error. This is wasteful: embedding and early
+layers are highly sensitive to quantization drift (errors compound across
+depth), while later layers and feed-forward sub-layers can tolerate much lower
+precision without measurable output degradation. Current systems lack a
+principled method to dynamically allocate precision per layer and per input at
+inference time.
+
+Key gap: No existing work jointly optimizes the granularity (per-layer,
+per-block) and adaptivity (per-input, per-token position) of precision
+allocation using empirical sensitivity measurements, while respecting hardware
+constraints (group size, memory alignment, kernel availability).
+
+--------------------------------------------------------------------------------
+
+Hypothesis
+Given an LLM and a target accuracy budget (e.g., ≤0.5% degradation in
+downstream task accuracy), there exists, for each layer, a minimum viable
+precision that respects the sensitivity profile of that layer. Allocating higher
+precision only to the most sensitive layers and lower precision to insensitive
+ones yields a better latency–accuracy Pareto frontier than any uniform-precision
+baseline. Further, this allocation can be dynamically selected per input cluster
+(e.g., domain or difficulty) to improve the frontier over a static
+one-size-fits-all allocation.
+
+Formally: For a model with L layers, let S(l) be a sensitivity score for layer l
+(measured as the KL divergence of output distributions between FP16 and a
+candidate quantized precision). There exists a mapping M:

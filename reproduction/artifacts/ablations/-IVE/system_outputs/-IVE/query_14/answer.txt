@@ -1,0 +1,33 @@
+FastSpec: Leveraging Speculative Decoding with Dynamic Draft Verification for
+ Efficient LLM Inference## ProblemLarge language model inference suffers from a
+    fundamental throughput-latency tradeoff. Autoregressive decoding forces
+  sequential token generation, leaving modern hardware severely underutilized:
+  each forward pass processes a single token while GPU tensor cores sit mostly
+    idle. For production deployments serving interactive applications, this
+ translates to high per-request latency, poor batch throughput, and prohibitive
+serving costs. Existing solutions — quantization, pruning, KV-cache compression
+— reduce per-token cost but do not address the sequential bottleneck inherent to
+                            autoregressive decoding.
+
+HypothesisSpeculative decoding can reduce end-to-end inference latency by2–4×
+without degrading output quality, provided the draft model and verification
+schedule are jointly optimized for the target latency distribution rather than
+for maximum throughput alone. We hypothesize that a lightweight draft model
+(≈100M parameters) fine-tuned on the target domain, paired with a dynamic
+verification window that adapts draft length based on real-time acceptance
+rates, will outperform static speculation strategies and match the quality of
+standard autoregressive decoding at a fraction of the latency.
+
+MethodFastSpec consists of three components:
+
+ 1 Domain-aligned draft model. A small transformer (6 layers,8 heads,384-dim
+   hidden) is distilled from the target LLM on a corpus of domain-specific
+   prompt-completion pairs. The draft model is trained with a language-modeling
+   objective identical to the target, but at1/50th the parameter count. No
+   auxiliary loss or rejection sampling is used during distillation — the draft
+   simply learns to approximate the target's conditional distribution.
+ 2 Dynamic verification window (DVW). During decoding, the draft model proposes
+   $k$ tokens. The target model verifies them in a single forward pass (tree
+   attention over the draft sequence). The acceptance rate $\alpha_k$ (fraction
+   of $k$ tokens accepted before the first rejection) is tracked via an
+   exponential moving average. If $\alpha_k > \tau_{\text

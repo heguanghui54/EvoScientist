@@ -1,0 +1,136 @@
+Research Proposal: Counterfactual Data Augmentation for Mitigating Gender Bias
+in Neural Machine Translation## Title
+Counterfactual Data Augmentation with
+Source-Side Control for Mitigating Occupational Gender Bias in Neural Machine
+Translation
+
+Problem
+Neural Machine Translation (NMT) models exhibit systematic gender bias:
+they disproportionately map neutral-source occupational terms (e.g., "doctor,"
+"nurse") to target-language gendered forms that align with statistical
+stereotypes rather than real-world distributions. On standard benchmarks like
+WinoMT, models such as mBART-50 assign "She is a doctor" the masculine
+translation ~85% of the time for English→Spanish, while "nurse" is feminine ~80%
+of the time. This propagates occupational stereotypes and can produce
+grammatically incorrect output when the context or world knowledge contradicts
+the majority pattern.
+
+Existing debiasing approaches fall into three camps — (1) post-hoc decoding
+rules, (2) fine-tuning on balanced or anti-stereotypical data, and (3)
+embedding-space interventions — but each has limitations: decoding rules can
+break fluency, balanced data is scarce and expensive, and embedding
+interventions are often task-specific and degrade general translation quality. A
+method that requires only synthetic data and a single fine-tuning step, without
+specialized architectures or inference-time overhead, would be broadly
+applicable across language pairs and model families.
+
+Hypothesis
+Adding counterfactually augmented training examples — where
+occupational nouns are swapped across genders in the source sentence — combined
+with a source-side gender control signal (a special token marking the intended
+target gender) will significantly reduce occupational gender bias in NMT output
+on WinoMT while preserving BLEU score on standard translation benchmarks
+within0.5 points.
+
+The intuition is twofold: (a) the counterfactual data forces the model to learn
+that doctor can co-occur with feminine agreement in the target, breaking the
+spurious correlation; (b) the control token lets the model disambiguate
+ambiguous cases at inference without requiring a separate classifier or post-hoc
+rule.
+
+Method1. Counterfactual Data Generation Pipeline
+
+• Start with a parallel corpus (e.g., Europarl + News Commentary for
+EN→ES/DE/FR).
+• Tag each sentence with occupation-bearing terms using a POS tagger +
+occupation lexicon (300 occupation nouns from ONET).
+• For each sentence containing an occupational reference to a specific gender
+(e.g., "the female doctor"), generate a counterfactual by swapping the gender
+descriptor ("the male doctor").
+• Also generate sentences where occupation appears without explicit gender
+(e.g., "the doctor"), paired with both a masculine and a feminine target
+translation obtained by replacing gender-agreement morphology in the
+reference.
+• Insert a control token at the source sentence head: [GENDER:M], [GENDER:F],
+or [NEUTRAL]. The neutral case is used only at inference when gender is truly
+unknown.
+
+2. Fine-Tuning
+
+• Mix counterfactual data with original training data at a1:4 ratio (pilot
+experiments will test1:1,1:4,1:9).
+• Fine-tune a pretrained NMT model (mT5-small or mBART-50) for1–3 epochs with
+reduced learning rate (1e-5).
+• Evaluate on held-out WinoMT test sets.
+
+3. Inference Protocol
+
+• For sentences where the source has no gender signal, pass the sentence
+through a minimal gender-identification classifier (rule-based for EN:
+pronoun/coreference heuristics).
+• Prepend [GENDER:M] or [GENDER:F] accordingly. When classifier is uncertain,
+use [NEUTRAL], which falls back to the most frequent target form.
+
+Dataset / Benchmark- Training corpus: Europarl v7 + News Commentary v12 (EN→ES,
+EN→DE, EN→FR; ~2M sentence pairs)
+
+• Counterfactual augmentation: ~50k synthetic sentence pairs generated from the
+training corpus- Bias evaluation: WinoMT (Stanovsky et al.,2019) —3,888
+pro-stereotype and anti-stereotype sentences covering60 occupations across
+EN→ES/DE/FR- General quality evaluation: newstest2013, newstest2014##
+Evaluation Metrics| What | Metric | How | |------|--------|-----| | Gender
+bias | WinoMT accuracy | % of correct gender assignments for both pro- and
+anti-stereotype sentences | | Translation quality | BLEU (sacrebleu) | On
+newstest2013/2014 | | Fluency loss | chrF++ | Additional check if BLEU
+degrades | | Stereo type flip | Δ between pro- and anti-stereotype accuracy |
+Smaller Δ = less biased |
+
+Primary success criterion: WinoMT accuracy on anti-stereotype examples improves
+by ≥20 percentage points relative to the baseline, with BLEU drop ≤0.5.
+
+Baselines| Baseline | Description |
+
+|----------|-------------| | Unmodified NMT | mBART-50 fine-tuned on original
+data only (no augmentation, no control token) | | Decoding-only | Unmodified
+model + gender-inflection post-hoc rule (e.g., adjust target morphology after
+decoding) | | Balanced fine-tuning | Fine-tune on a static balanced dataset
+(Equalizer, Saunders & Byrne,2020) — no control token | | Embedding debiasing |
+Apply Hard Debias (Bolukbasi et al.,2016) to encoder embeddings before
+fine-tuning |
+
+Ablations1. No control token: Counterfactual data without [GENDER:M/F] token →
+isolates the effect of augmentation vs. control signal.
+
+2 Data ratio sweep:1:1,1:4,1:9 counterfactual-to-original ratio → identifies
+trade-off between bias reduction and quality.
+3 Occupation-only vs. all-noun augmentation: Only occupations vs. all gendered
+nouns → tests whether targeting is necessary or if broader augmentation works
+better.
+4 Rule-based vs. learned gender classifier at inference: affects how often the
+control token is correct.
+
+Expected Failure Modes1. BLEU degradation >0.5: Counterfactual data may distort
+the training distribution enough that general translation quality drops.
+Mitigation: early stopping based on validation BLEU; fall back to1:9 ratio or
+smaller LR.
+
+2 Control token leakage: The model may learn to ignore the token if it's
+inconsistently applied (e.g., inference-time [NEUTRAL] differs from training
+distribution). Mitigation: include [NEUTRAL] in training on a random10% of
+sentences.
+3 Language-pair dependence: EN→ES/FR (morphologically gendered
+adjectives/determiners) may show larger gains than EN→DE (three-gender system
+with more complex agreement). If EN→DE gains are weak, the method may not
+generalize to languages with non-binary or richer gender systems.
+4 Classifier errors propagate: A bad rule-based gender identifier could prepend
+the wrong control token, biasing output in the opposite direction.
+Mitigation: measure classifier accuracy; if <80% on a development set, switch
+to a lightweight BERT-based classifier.
+5 Diminishing returns on larger models: mBART-50 (611M) or mT5-large may
+already encode weaker stereotyping at scale. The method may show smaller
+gains on larger models — we test on both small and large variants to bound
+this.
+6 Anti-stereotype improvement does not close the gap: Even with a20pp gain on
+anti-stereotype examples, pro-stereotype accuracy may also shift, keeping the
+gap large. Success criterion uses the anti-stereotype level rather than Δ
+alone for this reason.

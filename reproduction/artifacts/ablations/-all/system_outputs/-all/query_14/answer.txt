@@ -1,0 +1,159 @@
+EvoScientist — Ablation Run: -all (No Evolution Memory)
+
+--------------------------------------------------------------------------------
+
+Beyond Speculative Decoding: A Multi-Level Confidence Gating Framework for LLM
+Inference Latency### ProblemLarge Language Model inference latency remains a
+critical bottleneck for real-time and cost-sensitive deployments. Despite
+advances in speculative decoding, KV-cache quantization, and static batching,
+existing methods share a fundamental limitation: they apply a single
+optimization strategy uniformly across all tokens and decoding positions. This
+ignores the well-established observation that token-level difficulty varies
+dramatically — early tokens in a generation are typically more constrained by
+the prompt context, while later tokens exhibit higher entropy. Current
+approaches treat these regimes identically, leading to either excessive compute
+on easy tokens or quality degradation under aggressive compression.
+
+HypothesisToken-level prediction difficulty, as measured by proxy signals such
+as the model's own logit entropy and hidden-state norm velocity, can be
+estimated at inference time with negligible overhead. A lightweight gating
+network trained atop these signals can dynamically select among a portfolio of
+latency-reducing strategies (early-exit, adaptive KV-cache pruning, and sparse
+attention) on a per-token basis, achieving strictly better latency-quality
+Pareto frontiers than any single strategy applied uniformly. Specifically, we
+hypothesize that such a gating mechanism will reduce median per-token latency by
+≥2.5× relative to a no-optimization baseline at ≤1% drop in task accuracy across
+a diverse set of generative benchmarks.
+
+MethodWe propose MosaicDecode, a three-component inference framework:
+
+ 1 Difficulty Probes — At each decoding step, we compute three lightweight proxy
+   features from the hidden states of an intermediate transformer layer: (a)
+   normalized logit entropy of the top-10 predicted tokens, (b) cosine
+   similarity between the current and previous hidden state (velocity proxy),
+   and (c) the attention softmax entropy averaged across heads in the last
+   layer. Each probe adds <1% FLOPs overhead relative to a single forward pass.
+ 2 Confidence Gating Network — A two-layer MLP (hidden dimension128) that maps
+   the three probe features to a routing decision: full compute, early-exit
+   (using the intermediate layer's logits), KV-cache pruning (retain only the
+   top-k attended keys per layer), or sparse attention (attend only to a sliding
+   window of the last N tokens). The gating network is trained via offline
+   imitation learning: we first collect a dataset of oracle routing decisions
+   from a detailed cost-quality simulation over a held-out prompt set, then
+   distill this into the MLP with a cross-entropy + latency-regularized
+   objective.
+ 3 Fallback Guard — If the gating network's confidence is below a threshold τ
+   (tuned on a calibration set), the system falls back to full compute to
+   prevent catastrophic quality loss.
+
+The framework is designed as a plug-in that wraps any decoder-only transformer
+without requiring retraining of the base LLM. All components operate at the
+token level with a per-token overhead of <50 µs on a single A100.
+
+Dataset / BenchmarkWe evaluate on four generation tasks spanning different
+regimes:
+
+
+                                                             Typical Output
+ Task                Dataset             Metric              Length
+ Summarization       CNN/DailyMail       ROUGE-L, latency    50–128 tokens
+                     (test,500 samples)
+ Code generation     HumanEval (all164   pass@1, latency     32–256 tokens
+                     problems)
+ Open-ended QA       Natural Questions   Exact Match, F1,    16–64 tokens
+                     (1000 samples)      latency
+ Long-form           AlpacaEval (500     Win Rate vs         128–512 tokens
+ generation          prompts)            reference, latency
+
+
+Each benchmark is run at three batch sizes (1,4,16) to capture interactive and
+throughput-oriented deployment regimes.
+
+Evaluation Metrics- Primary: Median token latency (ms) across all tokens in the
+generation, measured on a single A100-80G with PyTorch compiled via
+torch.compile. Latency is wall-clock time from input ingestion to full output
+sequence.
+
+ • Primary quality guard: Per-task accuracy metric (ROUGE-L, pass@1, EM/F1, Win
+   Rate) must not drop by more than1% absolute from the baseline.
+ • Secondary: P50/P95/P99 latency, tokens/second throughput, FLOPs per token
+   estimated via torch profiling, and effective memory bandwidth utilization.
+ • Tertiary: Ablation-specific: gating decision distribution (% full / exit /
+   prune / sparse), gating overhead as fraction of total decode time, and
+   fallback rate.
+
+Baselines| Baseline | Description |
+
+|---|---| | No optimization | Standard autoregressive decoding with full
+KV-cache | | Speculative decoding | Standard draft-verify with a4x smaller draft
+model (trained on target model outputs) | | Uniform early-exit | Always exit at
+layer L/2 (median depth) | | Uniform KV-cache pruning | Always prune to top-50%
+of keys per layer | | Uniform sparse attention | Always attend to last256 tokens
+| | MosaicDecave (ours) | Proposed adaptive gating |
+
+All baselines use the same base model (Llama3.18B Instruct) and are evaluated
+with identical generation parameters (temperature =0.0 for deterministic
+metrics, temperature =0.6 for Win Rate).
+
+Ablations| Ablation | What is removed / varied | Purpose |
+
+|---|---|---| | Oracle upper bound | Replace gating MLP with ground-truth
+optimal decision from cost-quality simulation | Estimate headroom above the
+learned gating policy | | Feature ablation | Remove each of the three probe
+features one at a time | Identify which difficulty signal is most predictive | |
+Gate architecture | Replace2-layer MLP with (a) single linear layer, (b)4-layer
+MLP | Sensitivity to gating capacity | | Threshold sweep | Vary fallback
+threshold τ from0.0 (never fallback) to1.0 (always fallback) | Understand the
+latency-quality trade-off frontier | | Per-method oracle | Apply each strategy
+individually only when it is optimal per the oracle simulation | Upper bound on
+how much each strategy contributes |
+
+Expected Failure Modes1. Gating overhead dominates at small batch sizes. If the
+per-token gating cost exceeds the latency savings on easy tokens, the net
+benefit may be negative for batch-1 interactive use cases. Mitigation: fuse the
+probe computation into the existing attention kernel to reduce overhead.
+
+ 2 Proxies lose informativeness at high temperatures. Logit entropy becomes
+   uniformly high under temperature >1, collapsing the routing signal.
+   Mitigation: multiplicative scaling of entropy by inverse temperature;
+   evaluate only at temperature ≤0.8 where latencies matter most.
+ 3 Early-exit degrades long-range reasoning. When the model exits early on
+   tokens that later prove critical for downstream coherence, generation quality
+   can cascade-fail. Mitigation: the fallback guard and a sequence-level
+   consistency check (re-run with full compute if the gating network's average
+   confidence per sequence is below a second threshold).
+ 4 Benchmark metric insensitivity. ROUGE-L and pass@1 may not capture subtle
+   degradation that a human would notice. Mitigation: include AlpacaEval Win
+   Rate as a secondary quality signal, and manually review50 sampled outputs per
+   condition.
+ 5 Attention sink interference. Modern LLMs exhibit attention sink phenomena
+   where initial tokens attract disproportionate attention — this may bias the
+   sparse-attention strategy to retain only early tokens while discarding
+   informative middle context. Mitigation: add a position-bias correction to the
+   sparse attention window.
+
+Limitations- Training-data distribution mismatch. The gating network is trained
+on simulation data from a fixed set of prompts; routing decisions on
+out-of-distribution prompts (e.g., highly technical code with unusual attention
+patterns) may be suboptimal. Cross-dataset evaluation partially addresses this
+but is not a guarantee.
+
+ • No cross-run memory. This proposal was generated as a single-pass artifact
+   without iterative refinement from prior experimental outcomes. No failed
+   precursor strategies were identified and avoided; no successful prior
+   patterns were transferred. Consequently, the method selection, hyperparameter
+   choices, and ablation design reflect only first-principles reasoning and may
+   miss known pitfalls that an evolved system would have already cataloged.
+ • Latency measurement variance. GPU kernel launch overhead, thermal throttling,
+   and system noise introduce variance in per-token latency measurements on the
+   order of5–15%. We report median over3 seeds with5 runs each, but P99 tail
+   latency, which matters for production deployments, may require substantially
+   more samples for stable estimation.
+ • No integration with continuous batching. The evaluation treats each sequence
+   independently; real inference systems use continuous batching where
+   scheduling interacts with per-token cost variability. Extending MosaicDecode
+   to batch-aware gating is left as future work.
+ • Base model specificity. Results are reported for Llama3.18B only. The probe
+   features and gating thresholds may need recalibration for different model
+   families (e.g., Mixture-of-Experts architectures or models with different
+   layer counts).

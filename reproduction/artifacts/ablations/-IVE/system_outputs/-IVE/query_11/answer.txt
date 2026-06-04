@@ -1,0 +1,193 @@
+● think_tool(The user wants a research proposal fo…)
+
+--------------------------------------------------------------------------------
+
+          Table3: Ablation — -IVE (Disable Idea-Validation Evolution)
+
+Ablation description: Idea-validation evolution is disabled. The system may not
+consult, create, or simulate any memory of failed directions, validation
+signals, execution failures, or reusable rejection criteria from prior runs.
+Each proposal is generated without access to accumulated validation wisdom.
+
+--------------------------------------------------------------------------------
+
+Proposal: Functional Dissociation of Reasoning and Knowledge in Transformer LMs
+via Causal Representation Interventions### TitleDisentangling Reasoning from
+Factual Recall in Large Language Models: A Causal Intervention Framework
+
+ProblemLarge language models perform diverse cognitive tasks — mathematical
+reasoning, factual question answering, instruction following, and safety
+compliance — using a single set of parameters. It remains unknown whether these
+capabilities are implemented by dissociable functional circuits or are
+irretrievably entangled in shared representations. If capabilities can be
+decoupled, then targeted model editing, modular fine-tuning, and
+interpretability become tractable. If they are fundamentally entangled, then
+interventions on one capability will unavoidably degrade others, placing hard
+limits on post-hoc model steering.
+
+Current work (Meng et al.,2022; Vig et al.,2020; Geiger et al.,2021) edits
+factual associations or inserts control vectors, but no systematic evaluation
+exists that tests whether reasoning and factual recall occupy separable
+representational subspaces across model scales and families. The field lacks (a)
+a causal framework for defining when two capabilities are dissociated, (b) a
+standardized benchmark for measuring interference between capabilities under
+intervention, and (c) evidence on how dissociation scales with model size and
+training data composition.
+
+HypothesisH1: Reasoning and factual recall occupy partially dissociable
+subspaces in transformer hidden states. Specifically, there exist linear
+subspaces in the residual stream such that targeted read/write interventions on
+the reasoning subspace affect reasoning accuracy by ≥20 percentage points while
+changing factual recall accuracy by ≤5 percentage points, and vice versa for the
+factual subspace.
+
+H2: The degree of dissociation increases with model scale: larger models exhibit
+more structured, separable representations, whereas smaller models (≤1B
+parameters) entangle capabilities due to representation capacity constraints.
+
+H3: Fine-tuning on a reasoning-heavy task strengthens the reasoning subspace
+without proportionally enlarging the factual subspace, suggesting that
+plasticity is locally concentrated rather than uniformly distributed.
+
+MethodWe propose a three-stage causal intervention pipeline:
+
+Stage1 — Subspace Discovery (supervised probing). For each capability
+(reasoning, factual recall), collect a labeled dataset of model hidden states
+from forward passes on capability-specific prompts. Train a linear probe to
+classify whether the model is engaging reasoning vs. factual recall from
+residual stream activations at each layer. Take the probe weight vector as
+defining a capability direction ( v_c ). Validate orthogonality between
+directions via cosine similarity and the dot-product overlap metric from Elhage
+et al. (2022). Repeat across layers0–N to identify the layer(s) with maximal
+separation.
+
+Stage2 — Causal Intervention (subspace ablation and amplification). At the
+discovered layer, perform two types of intervention during forward passes on
+evaluation prompts:
+
+ • Subspace ablation: Project the residual stream orthogonal to ( v_c ),
+   removing the capability direction.
+ • Subspace amplification: Add a scaled version of ( v_c ) to the residual
+   stream, amplifying the capability direction.
+
+Measure the effect on both the target capability and the non-target capability.
+A capability is dissociable if ablating its subspace degrades its own benchmark
+by ≥20 points while leaving the other benchmark's accuracy change within ±5
+points.
+
+Stage3 — Cross-Task Generalization. Repeat the subspace discovered from one
+reasoning task (e.g., GSM8K) on a held-out reasoning task (e.g., MathQA) to test
+whether the subspace is task-specific or capability-general.
+Cross-generalization supports the claim that reasoning exists as a distinct
+capability; failure suggests the subspace merely captures surface task features.
+
+Dataset / BenchmarkWe construct a Capability Interference Benchmark (CIB) with
+four task families:
+
+
+ Capability              Task                    Metric       Source
+ Factual recall          TriviaQA (single-hop)   Exact match  TriviaQA
+ Factual recall          Natural Questions       F1           NQ
+ Reasoning               GSM8K (math word        Accuracy     GSM8K
+                         problems)
+ Reasoning               MathQA (multi-step)     Accuracy     MathQA
+ Control — instruction   AlpacaEval (subset)     Win rate     AlpacaEval
+ following
+ Control — safety        SafetyPrompts (refusal  Refusal %    Anthropic HH-RLHF
+                         rate)
+
+
+The control tasks (instruction following, safety) test whether intervention
+effects are specific to reasoning/factual recall or bleed into unrelated
+capabilities.
+
+Evaluation Metrics| Metric | Definition | Primary / Secondary |
+
+|---|---|---| | Dissociation score | (\Delta)target − (\Delta)non-target under
+intervention (percentage points) | Primary | | Subspace overlap | Cosine
+similarity between probe directions across layers and model sizes | Primary | |
+Intervention efficiency | Minimum intervention magnitude needed for ≥20 pp
+target change | Secondary | | Task generalization gap | GSM8K subspace applied
+to MathQA: performance delta | Secondary | | Side-effect profile |
+Per-intervention accuracy change on control tasks | Guardrail |
+
+A dissociation score ≥15 pp (with ≤5 pp side effect on the non-target) is the
+acceptability threshold. A score ≥25 pp is strong dissociation.
+
+Baselines| Baseline | Description | Why it matters |
+
+|---|---|---| | Random direction ablation | Ablate a random subspace of equal
+dimension | Controls for non-specific damage from any subspace removal | | Mean
+ablation | Ablate the mean activation vector | Controls for magnitude-based
+effects | | Untrained model (random weights) | Repeat Stage1 on a randomly
+initialized model | Tests whether subspace structure emerges from architecture
+alone or requires training | | Full model (no intervention) | Unperturbed
+forward pass | Establishes ceiling performance | | LoRA fine-tuned forgetting |
+Fine-tune model to forget reasoning (gradient-based) | Contrasts learned vs.
+hard-coded dissociation |
+
+Ablations (Within This Proposal)
+
+
+ Ablation                What is tested
+ Layer ablation          Run interventions at every layer individually; test
+                         whether dissociation is layer-specific
+ Model scale sweep       Run full pipeline on Pythia160M /410M /1.4B /6.9B
+                         (same tokenizer, same training data family)
+ Probe method            Compare linear probe vs. linear CCA vs. activation
+                         patching (Geiger et al.,2021) for subspace discovery
+ Training data confound  Repeat on Pythia checkpoints at10%,50%,100% of
+                         training to see if dissociation emerges early or late
+
+
+Expected Failure Modes- No subspace found: Probes achieve chance accuracy across
+all layers, implying reasoning and factual recall are not linearly separable in
+the residual stream. This would falsify H1 and require reformulation into a
+nonlinear or multi-layer framework.
+
+ • Symmetrical interference: Ablating either subspace degrades both capabilities
+   equally. This would support the entanglement hypothesis and suggest
+   fundamental limits on capability-level model editing.
+ • Task-specific, not capability-general: The GSM8K subspace fails to transfer
+   to MathQA. This would weaken H1: the subspace captures mathematical language
+   rather than reasoning per se.
+ • Scale invariance: Pythia160M and6.9B show identical dissociation scores. This
+   would falsify H2 and suggest that representation structuring does not
+   increase with capacity — possibly implicating pre-training objective rather
+   than scale.
+ • Safety collapse: The reasoning intervention degrades refusal rates on
+   SafetyPrompts by >10 pp. This would flag an unacceptable side effect even if
+   the primary dissociation criterion is met.
+
+Limitations1. Linear subspace assumption. The probe-based method assumes
+capability directions are linear in the residual stream. If dissociation exists
+only in nonlinear or attention-head-specific subspaces, this method will miss
+it. Results are therefore lower bounds on actual dissociation.
+
+ 2 Task coverage. Four task families cannot exhaustively represent all LLM
+   capabilities. Creativity, code generation, multilingual understanding, and
+   social reasoning are excluded and may exhibit different entanglement
+   patterns.
+ 3 Prompting confound. Differences in prompt format between reasoning and
+   factual tasks could produce spurious probe directions that reflect prompt
+   structure rather than capability. The cross-task generalization test
+   partially addresses this, but a prompt-difficulty confound (math prompts are
+   harder) may remain.
+ 4 Static evaluation. We measure dissociation at a single inference-time
+   snapshot. Training-time dynamics (how and when dissociation emerges during
+   pre-training) are covered only coarsely via checkpoint ablations and are not
+   the primary focus.
+ 5 Single intervention family. We test only linear subspace projection.
+   Activation patching, representation engineering (RepE), and sparse
+   autoencoder-based methods may yield different dissociation contours.
+ 6 Scale ceiling. The largest model tested (6.9B parameters) is an order of
+   magnitude below frontier models (70B+). Dissociation at this scale may not
+   extrapolate.
+
+--------------------------------------------------------------------------------
+
+Artifact: This proposal was generated under the -IVE ablation (idea-validation
+evolution disabled). No memory of previously failed directions, validation
+signals, or rejection criteria from prior ideation cycles was consulted during
+generation. For comparison, see Table1 (full system) and Tables2a–2c (other
+ablations).

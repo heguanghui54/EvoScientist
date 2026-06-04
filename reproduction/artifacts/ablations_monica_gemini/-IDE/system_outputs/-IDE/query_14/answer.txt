@@ -1,0 +1,38 @@
+● think_tool(I need to generate one complete resea…)
+
+Learned Adaptive Draft Horizon for Speculative Decoding in Large Language
+Models### ProblemSpeculative decoding reduces inference latency by having a
+small draft model propose K tokens per step while the target model verifies them
+in parallel via a single forward pass. Every implementation to date uses a
+fixed, predetermined draft length K (e.g., K=4 or K=5). This is substantially
+suboptimal: when the target model is highly confident and would accept most or
+all draft tokens, the fixed horizon underutilizes parallelism and leaves latency
+on the table; when the target model would reject many draft tokens, a long
+horizon wastes compute on tokens that will be discarded, and the effective
+acceptance rate collapses. Since the difficulty of predicting the next token
+varies widely across decoding steps (a boilerplate "Sure, here is" sequence is
+far easier than an unexpected noun), a fixed horizon must compromise between
+these regimes, and no single K achieves optimal throughput across positions,
+prompts, or domains.
+
+HypothesisA lightweight learned critic that predicts the optimal draft length
+for the next speculative step — conditioned on features drawn from the target
+model's recent hidden states — can reduce mean per-token latency by at least20%
+relative to any fixed-horizon baseline, without degrading generation quality
+(measured by perplexity and task accuracy). The critic exploits the observation
+that autoregressive hidden states encode difficulty: when the target model's
+hidden states are stable and near-deterministic across recent positions, longer
+drafts are safe; when they shift abruptly, shorter drafts avoid wasted compute.
+
+MethodWe propose an adaptive speculative decoding pipeline with three
+components:
+
+ 1 Target model: A frozen pretrained LLM (e.g., Llama2-7B or13B) that generates
+   tokens through the standard speculative verification pass.
+ 2 Draft model: A substantially smaller LM (e.g., a125M–350M parameter model, or
+   the target's own early layers with a separate LM head) that proposes up to
+   K_max tokens per step.
+ 3 Horizon Critic: A lightweight predictor (2-layer MLP, ~500K parameters) that
+   at each step t reads a compact feature vector h_t derived from the target
+   model's last hidden layer at position t-1 (or from the average over the past
+   W positions), and outputs a scalar K*_t ∈

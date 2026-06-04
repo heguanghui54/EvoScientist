@@ -1,0 +1,57 @@
+Debiasing in Machine Translation: A Multi-Objective Counterfactual Approach##
+ProblemNeural machine translation (NMT) models absorb and amplify social biases
+present in training corpora, producing translations that systematically distort
+gender, occupational, and demographic associations. For example, gender-neutral
+   source languages (Turkish, Finnish) produce stereotyped gender in English
+    targets; occupational terms skew toward masculine forms; and demographic
+         descriptors carry implicit value judgments. Existing debiasing
+  methods—counterfactual data augmentation, embedding subspace projection, and
+     adversarial training—each address one facet of the problem but degrade
+ translation quality on the other dimensions, and none jointly handles gender,
+    occupational, and representational bias within a single framework while
+                       preserving BLEU and COMET scores.
+
+HypothesisA multi-objective training framework that jointly optimizes a
+translation objective (cross-entropy) and three differentiable bias penalties —
+one for gender-occupation co-occurrence skew, one for pronoun-resolution
+consistency across demographic contexts, and one for target-side sentiment
+asymmetry between demographic groups — will reduce composite bias by ≥40%
+(relative to the base model) while keeping BLEU degradation ≤1.5 points and
+COMET degradation ≤2.0 points. The key claim is that these objectives are
+complementary rather than competing because they regularize different failure
+modes of the same underlying alignment mechanism, so joint optimization
+dominates sequential or single-axis debiasing.
+
+MethodBase model. Transformer-big (Vaswani et al.,2017) trained on WMT14 EN-DE
+and WMT20 TR-EN, with a pretrained mBART-50 warm-start for the multilingual
+setting.
+
+Debiasing framework (3 components).
+
+ 1 Counterfactual data mixer. During each training batch, sample an equal number
+   of parallel sentences from the original corpus and from a counterfactually
+   generated corpus where gender, nationality, and occupational markers are
+   swapped symmetrically (e.g., "nurse → doctor" in one direction, "doctor →
+   nurse" in the other). The counterfactual corpus is produced offline using a
+   rule-based dependency-parser tagger + a masked LM (mT5-small) to fill swapped
+   roles in a grammatically valid way.
+ 2 Differentiable bias penalties. Three auxiliary loss terms added to the
+   standard NLL loss with learned weighting (Kendall et al.,2018):
+
+ • Gender-occupation skew loss (L_gender): On a held-out probe set of occupation
+   sentences (Winogender-derived), compute the KL divergence between the model's
+   predicted gender ratio for each occupation and a uniform distribution. This
+   penalizes the model for collapsing gender predictions toward a single form.
+ • Pronoun-resolution consistency loss (L_pronoun): On templates containing
+   ambiguous antecedents (WinoMT-derived), compute the entropy of the model's
+   gender assignment across demographic variants of the antecedent. High entropy
+   = desirable (the model does not default to stereotype).
+ • Sentiment-asymmetry loss (L_sentiment): On parallel sentences where the
+   source mentions one of two paired demographic groups (man/woman,
+   American/Mexican, doctor/nurse), compute the Pearson correlation between the
+   demographic indicator and the sentiment score (from a frozen XLM-RoBERTa
+   sentiment head) of the target translation. Minimize the absolute correlation
+   toward zero.
+
+ 3 Multi-objective weighting. Learned uncertainty weights (Kendall et al.,2018)
+   over `

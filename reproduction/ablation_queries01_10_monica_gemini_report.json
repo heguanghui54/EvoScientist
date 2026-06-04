@@ -1,6 +1,7 @@
 {
   "date": "2026-06-04",
   "status": "partial",
+  "superseded_by": "reproduction/ablation_queries01_15_monica_gemini_report.json",
   "paper_exact": false,
   "artifact_root": "reproduction/artifacts/ablations",
   "mirror_artifact_root": "reproduction/artifacts/ablations_monica_gemini",
