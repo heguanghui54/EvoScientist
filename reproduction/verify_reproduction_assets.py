@@ -85,6 +85,7 @@ def main() -> None:
         "refresh_ablation_artifacts.py",
         "build_paper_level_evidence_runbook.py",
         "verify_paper_level_evidence_gate.py",
+        "build_table1_replacement_summary.py",
         "build_paper_reproduction_plan.py",
         "compare_reproduction_to_paper.py",
         "audit_reproduction_artifacts.py",
@@ -698,6 +699,46 @@ def main() -> None:
     assert "K-Dense Proxy Monica/Gemini Judge Report" in k_dense_proxy_md_path.read_text(
         encoding="utf-8"
     )
+    table1_replacement_json_path = ROOT / "table1_replacement_all_baselines_monica_report.json"
+    table1_replacement_md_path = ROOT / "table1_replacement_all_baselines_monica_report.md"
+    assert table1_replacement_json_path.is_file(), "missing all-baseline Table 1 replacement JSON report"
+    assert table1_replacement_md_path.is_file(), "missing all-baseline Table 1 replacement markdown report"
+    table1_replacement = json.loads(table1_replacement_json_path.read_text(encoding="utf-8"))
+    assert table1_replacement["status"] == "complete"
+    assert table1_replacement["completion_scope"] == "replacement_table1_all_baselines"
+    assert table1_replacement["paper_exact"] is False
+    assert table1_replacement["baseline_mode"] == "mixed_replacement_and_proxy_baselines"
+    assert table1_replacement["covered_baselines"] == [
+        "Virtual Scientist",
+        "AI-Researcher",
+        "InternAgent",
+        "AI Scientist-v2",
+        "Hypogenic",
+        "Novix",
+        "K-Dense",
+    ]
+    assert table1_replacement["judge"]["provider"] == "monica"
+    assert table1_replacement["judge"]["model"] == "gemini-3-flash-preview"
+    assert table1_replacement["judge"]["input_records"] == 420
+    assert table1_replacement["judge"]["output_records"] == 420
+    canonical_table1_inputs = ROOT / "artifacts" / "judge_inputs" / "results.jsonl"
+    canonical_table1_outputs = ROOT / "artifacts" / "judge_outputs" / "results.jsonl"
+    canonical_table1_json = ROOT / "artifacts" / "tables" / "idea_generation_win_tie_lose.json"
+    canonical_table1_csv = ROOT / "artifacts" / "tables" / "idea_generation_win_tie_lose.csv"
+    assert sum(1 for line in canonical_table1_inputs.read_text(encoding="utf-8").splitlines() if line.strip()) == 420
+    assert sum(1 for line in canonical_table1_outputs.read_text(encoding="utf-8").splitlines() if line.strip()) == 420
+    assert canonical_table1_json.is_file(), "missing canonical Table 1 aggregate JSON"
+    assert canonical_table1_csv.is_file(), "missing canonical Table 1 aggregate CSV"
+    canonical_table1 = json.loads(canonical_table1_json.read_text(encoding="utf-8"))
+    assert canonical_table1["raw_records"] == 420
+    assert set(canonical_table1["baselines"]) == set(table1_replacement["covered_baselines"])
+    for baseline in table1_replacement["covered_baselines"]:
+        dims = canonical_table1["baselines"][baseline]["dimensions"]
+        assert set(dims) == {"Clarity", "Novelty", "Feasibility", "Relevance"}
+        assert all(row["n"] == 60 for row in dims.values())
+    assert "Table 1 Replacement All-Baselines Monica/Gemini Judge Report" in table1_replacement_md_path.read_text(
+        encoding="utf-8"
+    )
     virtual_scientist_probe_json_path = ROOT / "virtual_scientist_baseline_probe.json"
     virtual_scientist_probe_md_path = ROOT / "virtual_scientist_baseline_probe.md"
     assert virtual_scientist_probe_json_path.is_file(), "missing Virtual Scientist probe JSON"
@@ -1149,7 +1190,7 @@ def main() -> None:
     assert action_plan_md_path.is_file(), "missing paper reproduction action plan markdown"
     action_plan = json.loads(action_plan_json_path.read_text(encoding="utf-8"))
     assert action_plan["status"] == "incomplete"
-    assert action_plan["action_count"] == 2
+    assert action_plan["action_count"] == 1
     assert "final_gate" in action_plan
     assert action_plan["baseline_readiness_matrix"] == "reproduction/baseline_readiness_matrix.json"
     assert action_plan["baseline_rerun_manifest"] == "reproduction/baseline_rerun_manifest.json"
@@ -1157,20 +1198,20 @@ def main() -> None:
     assert any(action.get("runbook") == "reproduction/paper_level_evidence_runbook/paper_level_evidence_runbook.json" for action in action_plan["actions"])
     assert any(action.get("gate") == "reproduction/paper_level_evidence_gate.json" for action in action_plan["actions"])
     components_in_plan = {action["component"] for action in action_plan["actions"]}
-    assert "table1_llm_idea_generation" in components_in_plan
+    assert "table1_llm_idea_generation" not in components_in_plan
     assert "table2_human_idea_generation" in components_in_plan
     assert "table3_ablation_idea_generation" not in components_in_plan
     assert "figure2_code_execution" not in components_in_plan
     action_plan_md = action_plan_md_path.read_text(encoding="utf-8")
     assert "Paper Reproduction Action Plan" in action_plan_md
-    assert "gemini-3-flash" in action_plan_md
     planned_systems = {action.get("system") for action in action_plan["actions"] if action.get("system")}
     assert "Virtual Scientist" not in planned_systems
     assert "AI-Researcher" not in planned_systems
     assert "Hypogenic" not in planned_systems
     assert "Novix" not in planned_systems
     assert "K-Dense" not in planned_systems
-    assert any(action["kind"] == "paper_judge_completion" for action in action_plan["actions"])
+    assert not any(action["kind"] == "paper_judge_completion" for action in action_plan["actions"])
+    assert any(action["kind"] == "human_label_import" for action in action_plan["actions"])
     assert "Baseline Readiness" in action_plan_md
     assert "baseline_rerun_manifest.json" in action_plan_md
     assert "paper_level_evidence_runbook.json" in action_plan_md
@@ -1737,7 +1778,9 @@ def main() -> None:
         generated_plan = json.loads(plan_json.read_text(encoding="utf-8"))
         assert generated_plan["status"] == "incomplete"
         assert generated_plan["action_count"] == action_plan["action_count"]
-        assert "'Virtual Scientist'" in plan_md.read_text(encoding="utf-8")
+        generated_plan_md = plan_md.read_text(encoding="utf-8")
+        assert "human_label_import" in generated_plan_md
+        assert "'Virtual Scientist'" not in generated_plan_md
 
         runbook_json = tmp_path / "internagent_qa_runbook.json"
         runbook_md = tmp_path / "internagent_qa_runbook.md"

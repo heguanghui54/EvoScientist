@@ -115,6 +115,8 @@ def audit_table1(artifacts_root: Path) -> dict[str, Any]:
     report = {
         "paper_table": "Table 1 LLM idea-generation evaluation",
         "expected_pairwise_records": len(expected_ids),
+        "paper_exact": False,
+        "completion_scope": "replacement_or_imported_table1_artifacts",
         "system_outputs": system_outputs,
         "judge_inputs": table1_audit.audit_jsonl_coverage(
             path=judge_inputs,
@@ -128,6 +130,7 @@ def audit_table1(artifacts_root: Path) -> dict[str, Any]:
             path=aggregate_json,
             baselines=baselines,
         ),
+        "replacement_summary": file_status(ROOT / "table1_replacement_all_baselines_monica_report.json"),
     }
     report["complete"] = all(
         [
@@ -260,8 +263,9 @@ def build_report(args: argparse.Namespace) -> dict[str, Any]:
         },
         "blocking_items": blocking,
         "replacement_baseline_note": (
-            "Direct-DeepSeek comparison is useful as a replacement baseline, "
-            "but it does not satisfy the paper's seven-baseline Table 1 claim."
+            "The seven-baseline Table 1 replacement/proxy judge coverage is now "
+            "complete, but it is not paper-exact author raw output or original "
+            "judge-transcript evidence."
         ),
     })
 
@@ -303,10 +307,11 @@ def render_markdown(report: dict[str, Any]) -> str:
     ]
     lines.append(
         "| Table 1 LLM judge | {status} | expected {expected} pairwise records; "
-        "missing baseline outputs: {missing} |".format(
+        "missing baseline outputs: {missing}; paper-exact: {paper_exact} |".format(
             status="complete" if table1["complete"] else "incomplete",
             expected=table1["expected_pairwise_records"],
             missing=", ".join(missing_baselines) or "none",
+            paper_exact=str(table1.get("paper_exact", False)).lower(),
         )
     )
     table2 = components["table2_human_idea_generation"]

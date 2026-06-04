@@ -13,19 +13,18 @@ are present in the checkout.
 | Component | Status | Evidence |
 | --- | --- | --- |
 | Full trajectories | complete | 30/30 successful final reports; non-success IDs: none |
-| Table 1 LLM judge | incomplete | expected 420 pairwise records; missing baseline outputs: none |
+| Table 1 LLM judge | complete | expected 420 pairwise records; missing baseline outputs: none; paper-exact: false |
 | Table 2 human eval | incomplete | missing files: inputs.jsonl, labels.jsonl, aggregate.json |
 | Table 3 ablation | complete | missing variants: none |
 | Figure 2 code execution | complete | missing files: none |
 
 ## Blocking Items
 
-- incomplete: table1_llm_idea_generation
 - incomplete: table2_human_idea_generation
 
 ## Interpretation
 
-Direct-DeepSeek comparison is useful as a replacement baseline, but it does not satisfy the paper's seven-baseline Table 1 claim.
+The seven-baseline Table 1 replacement/proxy judge coverage is now complete, but it is not paper-exact author raw output or original judge-transcript evidence.
 
 The reproduction harness is therefore ready for further experiments,
 but the paper-level reproduction goal remains incomplete.

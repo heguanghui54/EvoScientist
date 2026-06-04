@@ -1,0 +1,378 @@
+{
+  "target_system": "EvoScientist",
+  "tie_threshold": 0.0,
+  "raw_records": 420,
+  "baselines": {
+    "Virtual Scientist": {
+      "dimensions": {
+        "Clarity": {
+          "baseline": "Virtual Scientist",
+          "dimension": "Clarity",
+          "n": 60,
+          "win": 26,
+          "tie": 12,
+          "lose": 22,
+          "win_pct": 43.33,
+          "tie_pct": 20.0,
+          "lose_pct": 36.67,
+          "gap": 6.66
+        },
+        "Novelty": {
+          "baseline": "Virtual Scientist",
+          "dimension": "Novelty",
+          "n": 60,
+          "win": 23,
+          "tie": 5,
+          "lose": 32,
+          "win_pct": 38.33,
+          "tie_pct": 8.33,
+          "lose_pct": 53.33,
+          "gap": -15.0
+        },
+        "Feasibility": {
+          "baseline": "Virtual Scientist",
+          "dimension": "Feasibility",
+          "n": 60,
+          "win": 28,
+          "tie": 2,
+          "lose": 30,
+          "win_pct": 46.67,
+          "tie_pct": 3.33,
+          "lose_pct": 50.0,
+          "gap": -3.33
+        },
+        "Relevance": {
+          "baseline": "Virtual Scientist",
+          "dimension": "Relevance",
+          "n": 60,
+          "win": 8,
+          "tie": 39,
+          "lose": 13,
+          "win_pct": 13.33,
+          "tie_pct": 65.0,
+          "lose_pct": 21.67,
+          "gap": -8.34
+        }
+      },
+      "avg_gap": -5.0
+    },
+    "AI-Researcher": {
+      "dimensions": {
+        "Clarity": {
+          "baseline": "AI-Researcher",
+          "dimension": "Clarity",
+          "n": 60,
+          "win": 29,
+          "tie": 7,
+          "lose": 24,
+          "win_pct": 48.33,
+          "tie_pct": 11.67,
+          "lose_pct": 40.0,
+          "gap": 8.33
+        },
+        "Novelty": {
+          "baseline": "AI-Researcher",
+          "dimension": "Novelty",
+          "n": 60,
+          "win": 37,
+          "tie": 4,
+          "lose": 19,
+          "win_pct": 61.67,
+          "tie_pct": 6.67,
+          "lose_pct": 31.67,
+          "gap": 30.0
+        },
+        "Feasibility": {
+          "baseline": "AI-Researcher",
+          "dimension": "Feasibility",
+          "n": 60,
+          "win": 23,
+          "tie": 1,
+          "lose": 36,
+          "win_pct": 38.33,
+          "tie_pct": 1.67,
+          "lose_pct": 60.0,
+          "gap": -21.67
+        },
+        "Relevance": {
+          "baseline": "AI-Researcher",
+          "dimension": "Relevance",
+          "n": 60,
+          "win": 7,
+          "tie": 42,
+          "lose": 11,
+          "win_pct": 11.67,
+          "tie_pct": 70.0,
+          "lose_pct": 18.33,
+          "gap": -6.66
+        }
+      },
+      "avg_gap": 2.5
+    },
+    "InternAgent": {
+      "dimensions": {
+        "Clarity": {
+          "baseline": "InternAgent",
+          "dimension": "Clarity",
+          "n": 60,
+          "win": 57,
+          "tie": 0,
+          "lose": 3,
+          "win_pct": 95.0,
+          "tie_pct": 0.0,
+          "lose_pct": 5.0,
+          "gap": 90.0
+        },
+        "Novelty": {
+          "baseline": "InternAgent",
+          "dimension": "Novelty",
+          "n": 60,
+          "win": 52,
+          "tie": 0,
+          "lose": 8,
+          "win_pct": 86.67,
+          "tie_pct": 0.0,
+          "lose_pct": 13.33,
+          "gap": 73.34
+        },
+        "Feasibility": {
+          "baseline": "InternAgent",
+          "dimension": "Feasibility",
+          "n": 60,
+          "win": 56,
+          "tie": 0,
+          "lose": 4,
+          "win_pct": 93.33,
+          "tie_pct": 0.0,
+          "lose_pct": 6.67,
+          "gap": 86.66
+        },
+        "Relevance": {
+          "baseline": "InternAgent",
+          "dimension": "Relevance",
+          "n": 60,
+          "win": 46,
+          "tie": 12,
+          "lose": 2,
+          "win_pct": 76.67,
+          "tie_pct": 20.0,
+          "lose_pct": 3.33,
+          "gap": 73.34
+        }
+      },
+      "avg_gap": 80.84
+    },
+    "AI Scientist-v2": {
+      "dimensions": {
+        "Clarity": {
+          "baseline": "AI Scientist-v2",
+          "dimension": "Clarity",
+          "n": 60,
+          "win": 37,
+          "tie": 6,
+          "lose": 17,
+          "win_pct": 61.67,
+          "tie_pct": 10.0,
+          "lose_pct": 28.33,
+          "gap": 33.34
+        },
+        "Novelty": {
+          "baseline": "AI Scientist-v2",
+          "dimension": "Novelty",
+          "n": 60,
+          "win": 11,
+          "tie": 3,
+          "lose": 46,
+          "win_pct": 18.33,
+          "tie_pct": 5.0,
+          "lose_pct": 76.67,
+          "gap": -58.34
+        },
+        "Feasibility": {
+          "baseline": "AI Scientist-v2",
+          "dimension": "Feasibility",
+          "n": 60,
+          "win": 34,
+          "tie": 1,
+          "lose": 25,
+          "win_pct": 56.67,
+          "tie_pct": 1.67,
+          "lose_pct": 41.67,
+          "gap": 15.0
+        },
+        "Relevance": {
+          "baseline": "AI Scientist-v2",
+          "dimension": "Relevance",
+          "n": 60,
+          "win": 15,
+          "tie": 35,
+          "lose": 10,
+          "win_pct": 25.0,
+          "tie_pct": 58.33,
+          "lose_pct": 16.67,
+          "gap": 8.33
+        }
+      },
+      "avg_gap": -0.42
+    },
+    "Hypogenic": {
+      "dimensions": {
+        "Clarity": {
+          "baseline": "Hypogenic",
+          "dimension": "Clarity",
+          "n": 60,
+          "win": 29,
+          "tie": 9,
+          "lose": 22,
+          "win_pct": 48.33,
+          "tie_pct": 15.0,
+          "lose_pct": 36.67,
+          "gap": 11.66
+        },
+        "Novelty": {
+          "baseline": "Hypogenic",
+          "dimension": "Novelty",
+          "n": 60,
+          "win": 9,
+          "tie": 1,
+          "lose": 50,
+          "win_pct": 15.0,
+          "tie_pct": 1.67,
+          "lose_pct": 83.33,
+          "gap": -68.33
+        },
+        "Feasibility": {
+          "baseline": "Hypogenic",
+          "dimension": "Feasibility",
+          "n": 60,
+          "win": 33,
+          "tie": 1,
+          "lose": 26,
+          "win_pct": 55.0,
+          "tie_pct": 1.67,
+          "lose_pct": 43.33,
+          "gap": 11.67
+        },
+        "Relevance": {
+          "baseline": "Hypogenic",
+          "dimension": "Relevance",
+          "n": 60,
+          "win": 9,
+          "tie": 41,
+          "lose": 10,
+          "win_pct": 15.0,
+          "tie_pct": 68.33,
+          "lose_pct": 16.67,
+          "gap": -1.67
+        }
+      },
+      "avg_gap": -11.67
+    },
+    "Novix": {
+      "dimensions": {
+        "Clarity": {
+          "baseline": "Novix",
+          "dimension": "Clarity",
+          "n": 60,
+          "win": 29,
+          "tie": 7,
+          "lose": 24,
+          "win_pct": 48.33,
+          "tie_pct": 11.67,
+          "lose_pct": 40.0,
+          "gap": 8.33
+        },
+        "Novelty": {
+          "baseline": "Novix",
+          "dimension": "Novelty",
+          "n": 60,
+          "win": 27,
+          "tie": 4,
+          "lose": 29,
+          "win_pct": 45.0,
+          "tie_pct": 6.67,
+          "lose_pct": 48.33,
+          "gap": -3.33
+        },
+        "Feasibility": {
+          "baseline": "Novix",
+          "dimension": "Feasibility",
+          "n": 60,
+          "win": 27,
+          "tie": 4,
+          "lose": 29,
+          "win_pct": 45.0,
+          "tie_pct": 6.67,
+          "lose_pct": 48.33,
+          "gap": -3.33
+        },
+        "Relevance": {
+          "baseline": "Novix",
+          "dimension": "Relevance",
+          "n": 60,
+          "win": 11,
+          "tie": 35,
+          "lose": 14,
+          "win_pct": 18.33,
+          "tie_pct": 58.33,
+          "lose_pct": 23.33,
+          "gap": -5.0
+        }
+      },
+      "avg_gap": -0.83
+    },
+    "K-Dense": {
+      "dimensions": {
+        "Clarity": {
+          "baseline": "K-Dense",
+          "dimension": "Clarity",
+          "n": 60,
+          "win": 27,
+          "tie": 9,
+          "lose": 24,
+          "win_pct": 45.0,
+          "tie_pct": 15.0,
+          "lose_pct": 40.0,
+          "gap": 5.0
+        },
+        "Novelty": {
+          "baseline": "K-Dense",
+          "dimension": "Novelty",
+          "n": 60,
+          "win": 19,
+          "tie": 3,
+          "lose": 38,
+          "win_pct": 31.67,
+          "tie_pct": 5.0,
+          "lose_pct": 63.33,
+          "gap": -31.66
+        },
+        "Feasibility": {
+          "baseline": "K-Dense",
+          "dimension": "Feasibility",
+          "n": 60,
+          "win": 31,
+          "tie": 2,
+          "lose": 27,
+          "win_pct": 51.67,
+          "tie_pct": 3.33,
+          "lose_pct": 45.0,
+          "gap": 6.67
+        },
+        "Relevance": {
+          "baseline": "K-Dense",
+          "dimension": "Relevance",
+          "n": 60,
+          "win": 9,
+          "tie": 42,
+          "lose": 9,
+          "win_pct": 15.0,
+          "tie_pct": 70.0,
+          "lose_pct": 15.0,
+          "gap": 0.0
+        }
+      },
+      "avg_gap": -5.0
+    }
+  }
+}

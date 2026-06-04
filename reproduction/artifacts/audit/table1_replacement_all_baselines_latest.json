@@ -1,0 +1,92 @@
+{
+  "status": "complete",
+  "target_system": "EvoScientist",
+  "baselines": [
+    "Virtual Scientist",
+    "AI-Researcher",
+    "InternAgent",
+    "AI Scientist-v2",
+    "Hypogenic",
+    "Novix",
+    "K-Dense"
+  ],
+  "query_count": 30,
+  "expected_pairwise_records": 420,
+  "system_outputs": {
+    "systems_root": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/artifacts/idea_outputs",
+    "systems": {
+      "EvoScientist": {
+        "present": 30,
+        "expected": 30,
+        "missing_query_ids": [],
+        "complete": true
+      },
+      "Virtual Scientist": {
+        "present": 30,
+        "expected": 30,
+        "missing_query_ids": [],
+        "complete": true
+      },
+      "AI-Researcher": {
+        "present": 30,
+        "expected": 30,
+        "missing_query_ids": [],
+        "complete": true
+      },
+      "InternAgent": {
+        "present": 30,
+        "expected": 30,
+        "missing_query_ids": [],
+        "complete": true
+      },
+      "AI Scientist-v2": {
+        "present": 30,
+        "expected": 30,
+        "missing_query_ids": [],
+        "complete": true
+      },
+      "Hypogenic": {
+        "present": 30,
+        "expected": 30,
+        "missing_query_ids": [],
+        "complete": true
+      },
+      "Novix": {
+        "present": 30,
+        "expected": 30,
+        "missing_query_ids": [],
+        "complete": true
+      },
+      "K-Dense": {
+        "present": 30,
+        "expected": 30,
+        "missing_query_ids": [],
+        "complete": true
+      }
+    },
+    "complete": true
+  },
+  "judge_inputs": {
+    "path": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/artifacts/judge_inputs/results.jsonl",
+    "records": 420,
+    "expected_records": 420,
+    "missing_comparison_ids": [],
+    "extra_comparison_ids": [],
+    "complete": true
+  },
+  "judge_outputs": {
+    "path": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/artifacts/judge_outputs/results.jsonl",
+    "records": 420,
+    "expected_records": 420,
+    "missing_comparison_ids": [],
+    "extra_comparison_ids": [],
+    "complete": true
+  },
+  "aggregate_table": {
+    "path": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/artifacts/tables/idea_generation_win_tie_lose.json",
+    "exists": true,
+    "missing_baselines": [],
+    "missing_dimensions": [],
+    "complete": true
+  }
+}
