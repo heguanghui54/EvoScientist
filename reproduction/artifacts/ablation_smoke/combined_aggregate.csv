@@ -3,3 +3,11 @@ baseline,variant,reference_system,dimension,n,win,tie,lose,win_pct,tie_pct,lose_
 -IDE vs EvoScientist,-IDE,EvoScientist,Novelty,1,1,0,0,100.0,0.0,0.0,100.0
 -IDE vs EvoScientist,-IDE,EvoScientist,Feasibility,1,0,0,1,0.0,0.0,100.0,-100.0
 -IDE vs EvoScientist,-IDE,EvoScientist,Relevance,1,0,1,0,0.0,100.0,0.0,0.0
+-IVE vs EvoScientist,-IVE,EvoScientist,Clarity,1,1,0,0,100.0,0.0,0.0,100.0
+-IVE vs EvoScientist,-IVE,EvoScientist,Novelty,1,1,0,0,100.0,0.0,0.0,100.0
+-IVE vs EvoScientist,-IVE,EvoScientist,Feasibility,1,0,0,1,0.0,0.0,100.0,-100.0
+-IVE vs EvoScientist,-IVE,EvoScientist,Relevance,1,1,0,0,100.0,0.0,0.0,100.0
+-all vs EvoScientist,-all,EvoScientist,Clarity,1,1,0,0,100.0,0.0,0.0,100.0
+-all vs EvoScientist,-all,EvoScientist,Novelty,1,0,0,1,0.0,0.0,100.0,-100.0
+-all vs EvoScientist,-all,EvoScientist,Feasibility,1,1,0,0,100.0,0.0,0.0,100.0
+-all vs EvoScientist,-all,EvoScientist,Relevance,1,0,1,0,0.0,100.0,0.0,0.0

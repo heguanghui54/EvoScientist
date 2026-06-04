@@ -1,0 +1,128 @@
+Research Proposal: Compositional Morphology Decomposition for Low-Resource
+ Machine Translation## TitleMorphPiece: Compositional Subword Segmentation via
+           Morphological Parsing for Low-Resource Machine Translation
+
+ProblemLow-resource machine translation suffers acutely from vocabulary sparsity
+— the vast majority of token types in the training corpus appear fewer than five
+times, leaving subword models (BPE, Unigram) with no choice but to either
+fragment the data into meaningless character sequences or retain rare whole-word
+tokens that the model can never learn reliable embeddings for. Existing
+segmentation algorithms operate on purely frequency- or likelihood-driven
+criteria and ignore the morphological structure that is precisely what
+generalizes across low-frequency word forms in agglutinative and morphologically
+rich languages (e.g., Turkish, Finnish, Swahili, Quechua). The result is that
+neural MT models trained on these languages plateau well below usable quality,
+even with modern architectures.
+
+HypothesisSegmenting source and target sentences into linguistically motivated
+morpheme units rather than frequency-optimized BPE subwords will improve BLEU
+and ChrF on low-resource translation pairs by2–4 points, because the
+compositional semantics of morphemes provide a compact, transferable
+representation that bridges the gap between sparse surface forms. This
+improvement will be most pronounced for languages with productive agglutinative
+morphology and smallest for isolating languages.
+
+MethodMorphPiece is a two-stage segmentation pipeline.
+
+Stage1 — Morphological lexicon induction. Given a raw corpus in the low-resource
+language, we first run a lightweight unsupervised morphological segmenter
+(Morfessor2.0 with semi-supervised extensions, using an induced affix list from
+a small set of paradigm seeds if available). This produces a set of hypothesized
+morpheme boundaries for each token. The output is a morpheme vocabulary of size
+~8k–16k (matched to the typical BPE vocabulary size used in the baseline).
+
+Stage2 — Compositional segmentation with fallback. During MT preprocessing, each
+word is greedily segmented into the longest matching morpheme sequence from the
+induced lexicon. Any residual characters (from out-of-lexicon words or
+non-morphological borrowings) are handled by a fallback byte-level BPE with a
+small vocabulary (2k). This hybrid ensures full coverage without fragmenting
+known morphemes.
+
+The segmented corpus is then used to train a standard Transformer-base
+(6L–6L,512d–2048dff) with the standard label-smoothed cross-entropy objective.
+No architectural changes — the intervention is purely in the preprocessing.
+
+Dataset / BenchmarkWe evaluate on four low-resource translation pairs spanning
+different morphological profiles:
+
+
+ Language Pair    Morph. Type            Train Sentences  Domain
+ Turkish–English  Agglutinative          200k             TED talks
+ Finnish–English  Agglutinative          200k             TED talks (Tatoeba
+                                                          subset)
+ Swahili–English  Agglutinative (Bantu)  100k             News + JW300
+ Chinese–English  Isolating              200k             TED talks
+
+
+All datasets are from official IWSLT2017 low-resource tracks or the FLORES
+benchmark validation sets.
+
+Evaluation Metrics- BLEU (sacreBLEU, tokenized and detokenized) — primary
+metric, statistical significance via bootstrap resampling (p <0.05).
+
+ • chrF (n=6) — character-level metric that better captures morphological
+   well-formedness.
+ • Vocabulary coverage — proportion of held-out validation types that can be
+   fully segmented by the induced lexicon without fallback, as a process
+   diagnostic.
+ • Embedding norm variance — to check whether rare-token embeddings collapse
+   under different segmentations.
+
+Baselines1. BPE-16k — standard SentencePiece BPE,16k joint vocabulary (default
+in most MT toolkits).
+
+ 2 Unigram-16k — SentencePiece Unigram language model, same vocabulary size.
+ 3 BPE-32k — larger vocabulary to test whether simply adding more BPE units
+   closes the gap.
+ 4 Morfessor + BPE — existing work that replaces BPE with Morfessor segments
+   directly (our Stage1 alone), to isolate the benefit of the compositional
+   fallback stage.
+
+All baselines use the same Transformer-base architecture, optimization schedule,
+and random seed to ensure fair comparison.
+
+Ablations1. No fallback BPE — full Morfessor segmentation only (identical to
+baseline4). Tests whether the fallback BPE is essential.
+
+ 2 No boundary regularization — remove the special morpheme-boundary marker
+   tokens that we insert. Tests whether positional boundary information matters.
+ 3 Larger morpheme vocabulary (32k) — tests diminishing returns.
+ 4 Greedy vs. Viterbi decoding — compare longest-match segmentation against a
+   probabilistic lattice using morpheme n-gram frequencies. Tests whether
+   greediness is a bottleneck.
+
+Expected Failure Modes1. Morfessor segmentation quality degrades at very small
+corpus sizes (<50k). Below this threshold, the induced morphemes become
+unreliable and the pipeline may perform worse than BPE, because incorrect splits
+compound into noisy training data. If this occurs, we fall back to a small set
+of hand-written morphotactic rules for those languages.
+
+ 2 No improvement on isolating languages (Chinese). Since Chinese has minimal
+   inflectional morphology, the morpheme lexicon is effectively character-level,
+   and the method should perform roughly at parity with character-level BPE. We
+   flag this in advance to avoid overclaiming generality.
+ 3 Increased training time due to longer sequences. Morpheme segmentation
+   produces20–40% longer sequences than BPE, which increases GPU memory and
+   per-iteration time. We will control for wall-clock time and report both
+   per-epoch BLEU and total-training-time BLEU.
+ 4 Fallback BPE becomes dominant (>50% of tokens) for languages with heavy
+   borrowing. If loanwords overwhelm the induced lexicon, the method collapses
+   to BPE-2k, which is too small. We monitor the fallback ratio and, if it
+   exceeds30%, increase the fallback vocabulary to4k in a sensitivity analysis.
+
+Limitations- The method is designed for and tested only on languages with
+transparent morphology (agglutinative, moderately fusional). Languages with
+extreme fusion or suppletion (Arabic, Hebrew) may see smaller gains because
+morpheme boundaries are less reliable without a supervised parser.
+
+ • We evaluate only on Transformer-base. It is unknown whether larger
+   architectures (Transformer-big, mT5) would benefit proportionally or saturate
+   the gain.
+ • The unsupervised morphological lexicon is not guaranteed to be linguistically
+   correct — it only needs to be useful for the downstream task. If it learns
+   spurious patterns that happen to correlate with meaning, those may not
+   transfer to out-of-domain data. We explicitly test cross-domain
+   generalization.
+ • We do not evaluate on truly extremely low-resource scenarios (<10k sentences)
+   where even unsupervised morphology induction may fail. That regime likely
+   requires a different approach (e.g., massively multilingual pretraining).

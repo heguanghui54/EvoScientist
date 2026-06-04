@@ -1,0 +1,29 @@
+{
+  "variant": "-all",
+  "query_count": 1,
+  "complete": true,
+  "dry_run": false,
+  "proposal_only": true,
+  "reference_system": "EvoScientist",
+  "reference_root": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/artifacts/idea_outputs/EvoScientist",
+  "complete_query_ids": [
+    1
+  ],
+  "missing_reference_query_ids": [],
+  "outputs": [
+    {
+      "query_id": 1,
+      "topic": "Machine translation",
+      "dir": "reproduction/artifacts/ablation_smoke/-all/system_outputs/-all/query_01",
+      "reference_present": true,
+      "status": "ok",
+      "returncode": 0,
+      "elapsed_seconds": 23.43,
+      "answer_chars": 7208,
+      "workspace_dir": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/runs/ablation-minus-all-q01"
+    }
+  ],
+  "paper_exact": false,
+  "caveat": "Replacement ablation run driven by prompt-level disabled-component constraints. The public checkout does not expose the paper's native IDE/IVE ablation switches.",
+  "judge_input_records": 1
+}

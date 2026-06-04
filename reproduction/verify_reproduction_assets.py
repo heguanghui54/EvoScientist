@@ -728,6 +728,27 @@ def main() -> None:
     assert "-IDE Query-01 Ablation Smoke Report" in ablation_smoke_md_path.read_text(
         encoding="utf-8"
     )
+    ablation_all_smoke_json_path = ROOT / "ablation_query01_smoke_report.json"
+    ablation_all_smoke_md_path = ROOT / "ablation_query01_smoke_report.md"
+    assert ablation_all_smoke_json_path.is_file(), "missing query-01 ablation smoke JSON"
+    assert ablation_all_smoke_md_path.is_file(), "missing query-01 ablation smoke markdown"
+    ablation_all_smoke = json.loads(ablation_all_smoke_json_path.read_text(encoding="utf-8"))
+    assert ablation_all_smoke["variants"] == ["-IDE", "-IVE", "-all"]
+    assert ablation_all_smoke["variant_count"] == 3
+    assert ablation_all_smoke["status"] == "complete"
+    assert ablation_all_smoke["paper_exact"] is False
+    for variant in ablation_all_smoke["variants"]:
+        vroot = ROOT / "artifacts" / "ablation_smoke" / variant
+        assert (vroot / "system_outputs_complete.json").is_file()
+        assert (vroot / "judge_inputs.jsonl").is_file()
+        assert (vroot / "judge_outputs.jsonl").is_file()
+        assert (vroot / "aggregate.json").is_file()
+        assert (vroot / "system_outputs" / variant / "query_01" / "answer.txt").is_file()
+    combined_smoke = json.loads((ROOT / "artifacts" / "ablation_smoke" / "combined_aggregate.json").read_text(encoding="utf-8"))
+    assert set(combined_smoke["variants"]) == {"-IDE", "-IVE", "-all"}
+    assert "Query-01 Ablation Smoke Report" in ablation_all_smoke_md_path.read_text(
+        encoding="utf-8"
+    )
     action_plan_json_path = ROOT / "paper_reproduction_action_plan.json"
     action_plan_md_path = ROOT / "paper_reproduction_action_plan.md"
     assert action_plan_json_path.is_file(), "missing paper reproduction action plan JSON"

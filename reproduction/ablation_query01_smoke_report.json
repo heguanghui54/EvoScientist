@@ -1,0 +1,36 @@
+{
+  "date": "2026-06-04",
+  "baseline": "Table 3 replacement ablation",
+  "variants": ["-IDE", "-IVE", "-all"],
+  "query_ids": [1],
+  "query_count": 1,
+  "variant_count": 3,
+  "paper_exact": false,
+  "status": "complete",
+  "runner": "reproduction/run_ablation_variants.py",
+  "judge_provider": "deepseek",
+  "judge_model": "deepseek-v4-flash",
+  "artifacts_root": "reproduction/artifacts/ablation_smoke",
+  "combined_aggregate_json": "reproduction/artifacts/ablation_smoke/combined_aggregate.json",
+  "aggregate_summary": {
+    "-IDE": {
+      "Clarity": {"n": 1, "win": 1, "tie": 0, "lose": 0, "gap": 100.0},
+      "Novelty": {"n": 1, "win": 1, "tie": 0, "lose": 0, "gap": 100.0},
+      "Feasibility": {"n": 1, "win": 0, "tie": 0, "lose": 1, "gap": -100.0},
+      "Relevance": {"n": 1, "win": 0, "tie": 1, "lose": 0, "gap": 0.0}
+    },
+    "-IVE": {
+      "Clarity": {"n": 1, "win": 1, "tie": 0, "lose": 0, "gap": 100.0},
+      "Novelty": {"n": 1, "win": 1, "tie": 0, "lose": 0, "gap": 100.0},
+      "Feasibility": {"n": 1, "win": 0, "tie": 0, "lose": 1, "gap": -100.0},
+      "Relevance": {"n": 1, "win": 1, "tie": 0, "lose": 0, "gap": 100.0}
+    },
+    "-all": {
+      "Clarity": {"n": 1, "win": 1, "tie": 0, "lose": 0, "gap": 100.0},
+      "Novelty": {"n": 1, "win": 0, "tie": 0, "lose": 1, "gap": -100.0},
+      "Feasibility": {"n": 1, "win": 1, "tie": 0, "lose": 0, "gap": 100.0},
+      "Relevance": {"n": 1, "win": 0, "tie": 1, "lose": 0, "gap": 0.0}
+    }
+  },
+  "caveat": "This is a one-query replacement ablation smoke test for all three Table 3 variants. It is not the paper's full Table 3 reproduction and is not paper-exact because the public checkout does not expose native IDE/IVE ablation switches."
+}

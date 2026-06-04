@@ -1,0 +1,229 @@
+Title: Bidirectional Lexical Induction for Zero-Shot Machine Translation via
+Phonological Bridging---
+
+Problem
+
+Low-resource machine translation—where parallel corpora contain fewer than100K
+sentence pairs or are entirely absent—remains the central bottleneck for
+extending MT to the world's7,000+ languages. Current approaches fall into three
+camps, each with a significant gap:
+
+ 1 Massively multilingual NMT (e.g., M2M-100, NLLB): require hundreds of
+   languages in a single model and degrade on truly low-resource languages not
+   seen during pretraining.
+ 2 Unsupervised NMT (e.g., XLM, mBART): rely on large monolingual corpora and
+   cross-lingual pretraining, but still break down when monolingual data is also
+   scarce (<1M sentences).
+ 3 Lexicon-based pivot methods: use bilingual dictionaries to bridge through a
+   high-resource pivot language—but dictionaries for low-resource language pairs
+   are typically small, noisy, or nonexistent.
+
+The core unsolved problem is how to construct a usable translation lexicon for
+an unseen language pair when no parallel data, no dictionary, and minimal
+monolingual data exist for that specific pair.
+
+--------------------------------------------------------------------------------
+
+Hypothesis
+
+Phonological features (sound patterns, syllable structures, phoneme inventories)
+encode systematic cross-linguistic correspondences that survive language contact
+and cognate retention more robustly than lexical surface forms. If we model the
+mapping between phonological feature vectors of two languages as a low-rank
+alignment problem, we can induce a bilingual lexicon good enough to seed a
+neural translation model, even when no parallel text or existing dictionary is
+available for the pair.
+
+Concretely: Given two languages A and B with (a) their phoneme inventories, (b)
+a list of common-word phonological transcriptions in each, and (c) a small set
+of known cognates or loanwords (e.g.,50–100 pairs extracted from a Swadesh list
+using an unsupervised phoneme-edit-distance match), we can learn a linear or
+shallow non-linear projection from the phonological feature space of A to that
+of B. Applying this projection to all available word-forms in A yields candidate
+translations in B's phonological space, which are then mapped to surface forms
+via B's phoneme-to-grapheme rules. The resulting noisy lexicon—estimated
+at1,000–5,000 entries—serves as synthetic parallel data to finetune a pretrained
+multilingual encoder-decoder (e.g., mT5-small) on the target pair.
+
+--------------------------------------------------------------------------------
+
+Method
+
+The proposal has four stages:
+
+**Stage1 — Phonological feature extraction.**For each language, obtain a phoneme
+inventory and map each phoneme to a binary or continuous articulatory feature
+vector (place, manner, voicing, etc.) using cross-linguistic feature databases
+(e.g., PHOIBLE, PanPhon). Encode each word as the average or RNN-pooled feature
+vector over its phoneme sequence.
+
+**Stage2 — Seed cognate mining.**From the207-item Swadesh list in each language,
+compute pairwise phoneme-edit-distance (aligning by phonological features rather
+than arbitrary substitution costs). Retain the top-100 pairs with lowest
+distance as "seed cognates." This step requires no parallel data—only a list of
+basic vocabulary transcribed phonemically.
+
+**Stage3 — Lexicon induction via feature-space projection.**Learn a projection
+matrix P from the phonological feature vectors of language A (source) to those
+of language B (target), regularized by a sparsity or low-rank penalty, using
+only the seed cognate pairs as supervision. Apply P to every source word's
+feature vector, producing a predicted target feature vector. Decode this vector
+back to a phoneme sequence via nearest-neighbor search over B's real phoneme
+inventory, then convert to graphemes using B's phoneme-to-grapheme rules. Retain
+predictions where the decoding confidence exceeds a threshold.
+
+**Stage4 — MT finetuning.**Use the induced lexicon to create synthetic parallel
+sentence pairs: for each source sentence from a monolingual corpus, replace a
+subset of content words with their induced target translations while keeping
+function words and syntax in the source language. The resulting "code-switched"
+parallel data (10K–50K pseudo-parallel sentences) is used to finetune a
+pretrained multilingual model (mT5-small) for translation from source to target.
+Evaluate on held-out human-collected test sets where available, or on
+back-translation perplexity.
+
+--------------------------------------------------------------------------------
+
+Dataset / Benchmark
+
+We evaluate on three truly low-resource language pairs from the FLORES-200
+benchmark:- Luo (luo) → Swahili (swh) — both Bantu/Nilotic, share some
+phonological patterns- Faroese (fao) → Icelandic (isl) — closely related
+Germanic languages with systematic sound correspondences- Hausa (hau) → Yoruba
+(yor) — unrelated African languages, tests whether phonological features
+generalize beyond genetic relatednessMonolingual data: Bible translations
+(typically20K–30K verses) and JW300.Phoneme inventories: PHOIBLE for all four
+languages.Seed cognate lists: constructed from Swadesh list entries in each
+language, with manual verification by existing dictionaries (used only for
+evaluation, never for training).Baseline test sets: FLORES-200 devtest splits
+for these language pairs.
+
+--------------------------------------------------------------------------------
+
+Evaluation Metrics
+
+
+ Metric                  Purpose
+ Lexicon precision@k     Precision at ranks1,5,10 of induced translation
+                         candidates against gold dictionary (e.g., from PanLex
+                         or expert-built lexicons).
+ Lexicon coverage        Fraction of source-word types for which any candidate
+                         is proposed above confidence threshold.
+ BLEU (SacreBLEU)        Translation quality on FLORES-200 devtest (primary MT
+                         metric).
+ chrF++                  Character-level metric, more robust for
+                         morphologically rich low-resource languages.
+ COMET (wmt22-comet-da)  Learned metric better correlated with human judgment
+                         for low-resource settings.
+
+
+For MT evaluation, we report mean ± std across3 random seeds and apply paired
+bootstrap resampling for significance tests (∆BLEU ≥1.0 with p <0.05).
+
+--------------------------------------------------------------------------------
+
+Baselines
+
+
+ Baseline                  Description               Why it is important
+ Direct mT5-small (no      Zero-shot prompting       Measures the lower bound
+ adaptation)               without any finetuning
+ mT5-small +               Finetune on               Strong unsupervised
+ back-translation          back-translated           baseline
+                           monolingual data
+                           (standard unsupervised
+                           MT)
+ mT5-small + Dic-tune      Finetune using an         Controls for the benefit
+                           existing bilingual        of lexical supervision
+                           dictionary (PanLex) with  quality
+                           the same code-switch
+                           strategy
+ NLLB-200-distilled-600M   State-of-the-art          Upper-bound comparison
+                           massively multilingual    from a much larger model
+                           model that covers many
+                           low-resource languages
+ Random projection         Replace the learned       Ablation for the
+ lexicon                   projection P with a       phonological mapping
+                           random linear projection  hypothesis
+
+
+--------------------------------------------------------------------------------
+
+Ablations
+
+
+ Ablation       Change from full method         What it tests
+ -Seed          Replace seed cognates with      Whether the cognate-mining step
+                randomly paired Swadesh         is necessary
+                entries
+ -Feats         Replace phonological features   Whether feature structure
+                with random binary vectors      matters vs. random
+ +Char n-grams  Replace phonological features   Whether phonological features
+                with character bigram           outperform surface-form n-grams
+                embeddings
+ +Big seed      Increase seed cognates to500    Upper-bound on how much the
+                (using gold dictionary)         seed matters
+ -LowRank       Remove low-rank regularization  Whether regularization helps
+                on P                            generalization
+
+
+--------------------------------------------------------------------------------
+
+Expected Failure Modes
+
+ 1 Phoneme transcription unavailability. Many low-resource languages lack
+   phonemically transcribed Swadesh lists. For these, we would need to first
+   apply grapheme-to-phoneme prediction (itself a low-resource problem), which
+   introduces compounding errors. This proposal assumes phonemic transcriptions
+   are obtainable—a strong assumption that limits applicability to languages
+   without basic linguistic documentation.
+ 2 Non-cognate majority. For distantly related or unrelated pairs
+   (Hausa↔Yoruba), the phonological correspondence signaled by cognates may
+   cover too small a fraction of the vocabulary. The induced projection will
+   generalize poorly to non-cognate vocabulary, yielding low coverage. The
+   method may only work for within-family pairs.
+ 3 Tone and suprasegmentals. The binary feature vector approach flattens tonal
+   distinctions (e.g., Hausa has high/low tone that distinguishes minimal
+   pairs). Encoding tone as a separate feature dimension may be insufficient for
+   lexical disambiguation, leading to ambiguous target predictions.
+ 4 Phoneme-to-grapheme ambiguity. Languages like Faroese have complex,
+   non-deterministic orthography-to-phoneme mappings. Reversing the direction
+   (phoneme→grapheme) is underdetermined, producing multiple valid surface forms
+   with no disambiguation signal.
+ 5 Seed cognate contamination. The unsupervised phoneme-edit-distance matching
+   on Swadesh lists may produce false cognates (chance phonological similarity)
+   that corrupt the projection. With only50–100 seeds, even5–10 false pairs
+   could dominate the learned mapping.
+ 6 Code-switched data quality ceiling. The synthetic parallel data produced by
+   word substitution preserves source-language syntax, which may produce
+   ungrammatical target-language sentences. The MT model may learn to translate
+   word-by-word without capturing target-language grammatical structure—a
+   well-known pathology of word-replacement augmentation.
+
+--------------------------------------------------------------------------------
+
+Limitations
+
+ • Scope of evaluation. Only three language pairs from FLORES-200 are tested.
+   Two are within-family (Bantu/Bantu, Germanic/Germanic); only one is
+   cross-family (Afro-Asiatic/Niger-Congo). Generalization claims beyond these
+   families are speculative.
+ • Phonological feature coverage. The binary feature vectors from PHOIBLE are
+   simplified and language-typologist-constructed, not learned from data. Subtle
+   phonetic distinctions (e.g., vowel harmony processes, allophonic variation)
+   are lost.
+ • Monolingual data requirements. The method still requires ~20K sentences of
+   monolingual data per language (from Bible or JW300 corpora). For languages
+   with <5K written sentences, even this minimal data may not exist. In such
+   cases, the code-switched parallel data is too small for finetuning.
+ • No human evaluation. BLEU and COMET are imperfect proxies for translation
+   quality, especially on low-resource languages where test sets are small and
+   often Bible-domain. A human acceptability rating would strengthen claims but
+   is outside the scope of this proposal.
+ • Controlled for model scale. All experiments use mT5-small (~300M parameters).
+   Results may not transfer to larger models (e.g., mT5-XXL, NLLB-3.3B) that can
+   compensate for noisy lexical inputs with stronger language modeling. The
+   method's marginal benefit at scale is untested.
+ • English-centric evaluation. FLORES-200 translations are from English. The
+   induced source→target direction (e.g., Luo→Swahili) is evaluated via a pivot
+   through English test sets. True source→target evaluation without English
+   mediation requires native speaker judgment not available in this proposal.

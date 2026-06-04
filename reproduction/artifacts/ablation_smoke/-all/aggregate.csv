@@ -1,0 +1,5 @@
+baseline,variant,reference_system,dimension,n,win,tie,lose,win_pct,tie_pct,lose_pct,gap
+-all vs EvoScientist,-all,EvoScientist,Clarity,1,1,0,0,100.0,0.0,0.0,100.0
+-all vs EvoScientist,-all,EvoScientist,Novelty,1,0,0,1,0.0,0.0,100.0,-100.0
+-all vs EvoScientist,-all,EvoScientist,Feasibility,1,1,0,0,100.0,0.0,0.0,100.0
+-all vs EvoScientist,-all,EvoScientist,Relevance,1,0,1,0,0.0,100.0,0.0,0.0
