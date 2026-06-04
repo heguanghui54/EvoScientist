@@ -244,6 +244,42 @@ Question → Retrieve → Decompose Claims → Conflict Detection
 <tr><td>Key libraries</td><td>transformers, torch, NLI models (DeBERTa-v3), MuSiQue/HotpotQA datasets</td><td></td></tr>
 <tr><td>Stored per run</td><td>seeds, configs, checkpoints, logs, predictions</td><td></td></tr>
 </tbody></table>
-<p>All code will use deterministic seeds and logged configs for reproducibility.</p></article></main>
+<p>All code will use deterministic seeds and logged configs for reproducibility.</p>
+<p>---</p>
+<h2>Appendix: Reproducibility and Evaluation Notes</h2>
+<h3>A. Query and Writing Scope</h3>
+<p>This appendix was added as a final paper-writing pass during the local reproduction. It documents the reproduction context for this generated proposal and does not change the main proposal text, experimental outputs, judge outputs, or aggregate scores.</p>
+<table><tbody>
+<tr><td>Field</td><td>Value</td></tr>
+<tr><td>Query id</td><td>25</td></tr>
+<tr><td>Topic</td><td>Multi-source reasoning</td></tr>
+<tr><td>Original user goal</td><td>Generate a research proposal on complex reasoning with multi-source information.</td></tr>
+<tr><td>Source report</td><td>`artifacts/remote_fetch/full_trajectories/EvoScientist/query_25/final_report.md`</td></tr>
+</tbody></table>
+<h3>B. Local Artifacts for This Report</h3>
+<ul>
+<li>`artifacts/remote_fetch/full_trajectories/EvoScientist/query_25/final_report.md` (17318 bytes)</li>
+<li>`artifacts/remote_fetch/full_trajectories/EvoScientist/query_25/prompt.txt` (684 bytes)</li>
+<li>`artifacts/remote_fetch/full_trajectories/EvoScientist/query_25/query.json` (145 bytes)</li>
+<li>`artifacts/remote_fetch/full_trajectories/EvoScientist/query_25/stdout.txt` (8164 bytes)</li>
+<li>`artifacts/remote_fetch/full_trajectories/EvoScientist/query_25/stderr.txt` (251 bytes)</li>
+</ul>
+<p>The browsable HTML preview for this report is generated from the Markdown source by `reproduction/build_all_paper_previews.py`. The all-report index is `reproduction/artifacts/paper_previews/all_evoscientist_reports/index.html`.</p>
+<h3>C. Evaluation Protocol Used in This Reproduction</h3>
+<p>The local reproduction package evaluates the EvoScientist public final reports against replacement or proxy baseline outputs where direct paper-exact baseline outputs were not publicly available. The user-scoped Table 1 replacement uses 30 queries, 7 baseline systems, and 2 swapped comparison orders, yielding 420 Monica/Gemini judge records. The judged dimensions are Clarity, Novelty, Feasibility, and Relevance.</p>
+<p>For the Table 2 style check, this reproduction uses Monica/Gemini surrogate labels over 120 inputs and 1,440 dimension-level labels. Formal PhD human labels were intentionally left outside the current user scope. The resulting evidence should therefore be read as a reproduction-oriented proxy, not as a paper-exact human evaluation.</p>
+<h3>D. Limits and Non-Claims</h3>
+<ul>
+<li>This appendix is local documentation for reproducibility; it is not a new EvoScientist generation step.</li>
+<li>The pass does not add new experimental evidence beyond artifacts already present in the reproduction directory.</li>
+<li>Paper-exact reproduction remains blocked by missing author-side raw baseline outputs, original Gemini judge transcripts, and formal human-label artifacts.</li>
+<li>Claims in the main generated proposal remain those of the generated report; this appendix only records how the local reproduction package stores and evaluates it.</li>
+</ul>
+<h3>E. Verification Commands</h3>
+<pre><code>
+.venv/bin/python reproduction/verify_user_scope_reproduction.py --strict
+.venv/bin/python reproduction/verify_reproduction_assets.py
+bash reproduction/run_preflight.sh
+</code></pre></article></main>
 </body>
 </html>

@@ -92,6 +92,7 @@ def main() -> None:
         "build_final_reproduction_dossier.py",
         "build_reproducibility_bundle.py",
         "verify_user_scope_reproduction.py",
+        "add_final_report_appendices.py",
         "build_html_report.py",
         "build_all_paper_previews.py",
         "build_paper_reproduction_plan.py",
@@ -115,6 +116,8 @@ def main() -> None:
     paper_artifact_schema_md_path = ROOT / "paper_artifact_schema.md"
     full_status_json_path = ROOT / "full_trajectory_status.json"
     full_status_md_path = ROOT / "full_trajectory_status.md"
+    appendix_pass_json_path = ROOT / "final_report_appendix_pass.json"
+    appendix_pass_md_path = ROOT / "final_report_appendix_pass.md"
     baseline_readiness_json_path = ROOT / "baseline_readiness_matrix.json"
     baseline_readiness_md_path = ROOT / "baseline_readiness_matrix.md"
     baseline_rerun_manifest_json_path = ROOT / "baseline_rerun_manifest.json"
@@ -129,6 +132,8 @@ def main() -> None:
     assert paper_artifact_schema_md_path.is_file(), "missing paper artifact schema markdown"
     assert full_status_json_path.is_file(), "missing full trajectory status JSON"
     assert full_status_md_path.is_file(), "missing full trajectory status markdown"
+    assert appendix_pass_json_path.is_file(), "missing final report appendix pass JSON"
+    assert appendix_pass_md_path.is_file(), "missing final report appendix pass markdown"
     assert baseline_readiness_json_path.is_file(), "missing baseline readiness matrix JSON"
     assert baseline_readiness_md_path.is_file(), "missing baseline readiness matrix markdown"
     assert baseline_rerun_manifest_json_path.is_file(), "missing baseline rerun manifest JSON"
@@ -1144,6 +1149,8 @@ def main() -> None:
     for query_id in range(1, 31):
         page = all_reports_root / f"query_{query_id:02d}.html"
         assert page.is_file(), f"missing HTML preview for query {query_id:02d}"
+        page_text = page.read_text(encoding="utf-8")
+        assert "Appendix: Reproducibility and Evaluation Notes" in page_text
     all_reports_index = all_reports_index_path.read_text(encoding="utf-8")
     assert "All 30 EvoScientist final reports" in all_reports_index
     assert "CrossLingual-RAG" in all_reports_index
@@ -1359,6 +1366,14 @@ def main() -> None:
     assert "paper_level_evidence_runbook.json" in action_plan_md
     assert "paper_level_evidence_gate.json" in action_plan_md
     full_status = json.loads(full_status_json_path.read_text(encoding="utf-8"))
+    appendix_pass = json.loads(appendix_pass_json_path.read_text(encoding="utf-8"))
+    assert appendix_pass["status"] == "complete"
+    assert appendix_pass["scope"] == "final_paper_writing_appendix_only"
+    assert appendix_pass["reports_checked"] == 30
+    assert appendix_pass["experimental_outputs_changed"] is False
+    assert appendix_pass["judge_outputs_changed"] is False
+    assert all(item["has_appendix_after"] for item in appendix_pass["records"])
+    assert "Final Report Appendix Pass" in appendix_pass_md_path.read_text(encoding="utf-8")
     expected_success_ids = list(range(1, 31))
     expected_incomplete_ids = []
     assert full_status["full_trajectory_counts"]["successful_final_reports"] == 30
@@ -1368,6 +1383,16 @@ def main() -> None:
         item = full_status["successful_queries"][f"query_{query_id:02d}"]
         assert item["artifact_files"]["final_report.md"]["bytes"] >= 10000
         assert item["final_report"]["title"], f"missing title for query {query_id}"
+        final_report_text = (
+            ROOT
+            / "artifacts"
+            / "remote_fetch"
+            / "full_trajectories"
+            / "EvoScientist"
+            / f"query_{query_id:02d}"
+            / "final_report.md"
+        ).read_text(encoding="utf-8")
+        assert "Appendix: Reproducibility and Evaluation Notes" in final_report_text
     assert "CrossLingual-RAG" in full_status["successful_queries"]["query_01"]["final_report"]["title"]
     assert "TraceRoute" in full_status["successful_queries"]["query_02"]["final_report"]["title"]
     assert "Multi-Perspective" in full_status["successful_queries"]["query_03"]["final_report"]["title"]

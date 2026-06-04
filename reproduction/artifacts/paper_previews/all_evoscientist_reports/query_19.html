@@ -195,6 +195,42 @@ P(i ≻ j | θᵢ, θⱼ) = σ(θᵢ − θⱼ)    where σ(x) = 1 / (1 + exp(�
 <p>7. Guo, Z., et al. (2024). &quot;A Bayesian Active Learning Approach to LLM Evaluation.&quot; *arXiv preprint*.</p>
 <p>8. Wirth, C., et al. (2017). &quot;A survey of preference-based reinforcement learning methods.&quot; *JMLR*.</p>
 <p>9. Bishop, C. M. (2006). *Pattern Recognition and Machine Learning* (Laplace approximation, Ch. 4).</p>
-<p>10. Rainforth, T., et al. (2024). &quot;Modern Bayesian Experimental Design.&quot; *Statistical Science*, 39(1).</p></article></main>
+<p>10. Rainforth, T., et al. (2024). &quot;Modern Bayesian Experimental Design.&quot; *Statistical Science*, 39(1).</p>
+<p>---</p>
+<h2>Appendix: Reproducibility and Evaluation Notes</h2>
+<h3>A. Query and Writing Scope</h3>
+<p>This appendix was added as a final paper-writing pass during the local reproduction. It documents the reproduction context for this generated proposal and does not change the main proposal text, experimental outputs, judge outputs, or aggregate scores.</p>
+<table><tbody>
+<tr><td>Field</td><td>Value</td></tr>
+<tr><td>Query id</td><td>19</td></tr>
+<tr><td>Topic</td><td>Evaluation leaderboards</td></tr>
+<tr><td>Original user goal</td><td>Generate a research proposal on how to construct efficient leaderboards for LLM evaluation.</td></tr>
+<tr><td>Source report</td><td>`artifacts/remote_fetch/full_trajectories/EvoScientist/query_19/final_report.md`</td></tr>
+</tbody></table>
+<h3>B. Local Artifacts for This Report</h3>
+<ul>
+<li>`artifacts/remote_fetch/full_trajectories/EvoScientist/query_19/final_report.md` (13639 bytes)</li>
+<li>`artifacts/remote_fetch/full_trajectories/EvoScientist/query_19/prompt.txt` (695 bytes)</li>
+<li>`artifacts/remote_fetch/full_trajectories/EvoScientist/query_19/query.json` (157 bytes)</li>
+<li>`artifacts/remote_fetch/full_trajectories/EvoScientist/query_19/stdout.txt` (7967 bytes)</li>
+<li>`artifacts/remote_fetch/full_trajectories/EvoScientist/query_19/stderr.txt` (251 bytes)</li>
+</ul>
+<p>The browsable HTML preview for this report is generated from the Markdown source by `reproduction/build_all_paper_previews.py`. The all-report index is `reproduction/artifacts/paper_previews/all_evoscientist_reports/index.html`.</p>
+<h3>C. Evaluation Protocol Used in This Reproduction</h3>
+<p>The local reproduction package evaluates the EvoScientist public final reports against replacement or proxy baseline outputs where direct paper-exact baseline outputs were not publicly available. The user-scoped Table 1 replacement uses 30 queries, 7 baseline systems, and 2 swapped comparison orders, yielding 420 Monica/Gemini judge records. The judged dimensions are Clarity, Novelty, Feasibility, and Relevance.</p>
+<p>For the Table 2 style check, this reproduction uses Monica/Gemini surrogate labels over 120 inputs and 1,440 dimension-level labels. Formal PhD human labels were intentionally left outside the current user scope. The resulting evidence should therefore be read as a reproduction-oriented proxy, not as a paper-exact human evaluation.</p>
+<h3>D. Limits and Non-Claims</h3>
+<ul>
+<li>This appendix is local documentation for reproducibility; it is not a new EvoScientist generation step.</li>
+<li>The pass does not add new experimental evidence beyond artifacts already present in the reproduction directory.</li>
+<li>Paper-exact reproduction remains blocked by missing author-side raw baseline outputs, original Gemini judge transcripts, and formal human-label artifacts.</li>
+<li>Claims in the main generated proposal remain those of the generated report; this appendix only records how the local reproduction package stores and evaluates it.</li>
+</ul>
+<h3>E. Verification Commands</h3>
+<pre><code>
+.venv/bin/python reproduction/verify_user_scope_reproduction.py --strict
+.venv/bin/python reproduction/verify_reproduction_assets.py
+bash reproduction/run_preflight.sh
+</code></pre></article></main>
 </body>
 </html>

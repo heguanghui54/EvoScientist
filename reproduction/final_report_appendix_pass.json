@@ -1,0 +1,282 @@
+{
+  "status": "complete",
+  "generated_at": "2026-06-04T17:04:48.246753+00:00",
+  "scope": "final_paper_writing_appendix_only",
+  "reports_checked": 30,
+  "appendices_appended": 30,
+  "reports_already_with_appendix": 0,
+  "experimental_outputs_changed": false,
+  "judge_outputs_changed": false,
+  "records": [
+    {
+      "query_id": 1,
+      "topic": "Machine translation",
+      "action": "appended",
+      "path": "artifacts/remote_fetch/full_trajectories/EvoScientist/query_01/final_report.md",
+      "bytes_before": 16755,
+      "bytes_after": 19687,
+      "has_appendix_after": true
+    },
+    {
+      "query_id": 2,
+      "topic": "Software engineering",
+      "action": "appended",
+      "path": "artifacts/remote_fetch/full_trajectories/EvoScientist/query_02/final_report.md",
+      "bytes_before": 12736,
+      "bytes_after": 15672,
+      "has_appendix_after": true
+    },
+    {
+      "query_id": 3,
+      "topic": "LLM evaluation",
+      "action": "appended",
+      "path": "artifacts/remote_fetch/full_trajectories/EvoScientist/query_03/final_report.md",
+      "bytes_before": 14291,
+      "bytes_after": 17270,
+      "has_appendix_after": true
+    },
+    {
+      "query_id": 4,
+      "topic": "Healthcare agents",
+      "action": "appended",
+      "path": "artifacts/remote_fetch/full_trajectories/EvoScientist/query_04/final_report.md",
+      "bytes_before": 19644,
+      "bytes_after": 22574,
+      "has_appendix_after": true
+    },
+    {
+      "query_id": 5,
+      "topic": "Literature review automation",
+      "action": "appended",
+      "path": "artifacts/remote_fetch/full_trajectories/EvoScientist/query_05/final_report.md",
+      "bytes_before": 21137,
+      "bytes_after": 24084,
+      "has_appendix_after": true
+    },
+    {
+      "query_id": 6,
+      "topic": "Speech recognition",
+      "action": "appended",
+      "path": "artifacts/remote_fetch/full_trajectories/EvoScientist/query_06/final_report.md",
+      "bytes_before": 10720,
+      "bytes_after": 13650,
+      "has_appendix_after": true
+    },
+    {
+      "query_id": 7,
+      "topic": "Model efficiency",
+      "action": "appended",
+      "path": "artifacts/remote_fetch/full_trajectories/EvoScientist/query_07/final_report.md",
+      "bytes_before": 23221,
+      "bytes_after": 26170,
+      "has_appendix_after": true
+    },
+    {
+      "query_id": 8,
+      "topic": "AI agents",
+      "action": "appended",
+      "path": "artifacts/remote_fetch/full_trajectories/EvoScientist/query_08/final_report.md",
+      "bytes_before": 12569,
+      "bytes_after": 15490,
+      "has_appendix_after": true
+    },
+    {
+      "query_id": 9,
+      "topic": "Model deployment",
+      "action": "appended",
+      "path": "artifacts/remote_fetch/full_trajectories/EvoScientist/query_09/final_report.md",
+      "bytes_before": 11892,
+      "bytes_after": 14855,
+      "has_appendix_after": true
+    },
+    {
+      "query_id": 10,
+      "topic": "Text-to-SQL",
+      "action": "appended",
+      "path": "artifacts/remote_fetch/full_trajectories/EvoScientist/query_10/final_report.md",
+      "bytes_before": 18447,
+      "bytes_after": 21358,
+      "has_appendix_after": true
+    },
+    {
+      "query_id": 11,
+      "topic": "LLM capabilities",
+      "action": "appended",
+      "path": "artifacts/remote_fetch/full_trajectories/EvoScientist/query_11/final_report.md",
+      "bytes_before": 19843,
+      "bytes_after": 22792,
+      "has_appendix_after": true
+    },
+    {
+      "query_id": 12,
+      "topic": "Factual consistency",
+      "action": "appended",
+      "path": "artifacts/remote_fetch/full_trajectories/EvoScientist/query_12/final_report.md",
+      "bytes_before": 14279,
+      "bytes_after": 17246,
+      "has_appendix_after": true
+    },
+    {
+      "query_id": 13,
+      "topic": "Data synthesis",
+      "action": "appended",
+      "path": "artifacts/remote_fetch/full_trajectories/EvoScientist/query_13/final_report.md",
+      "bytes_before": 13159,
+      "bytes_after": 16082,
+      "has_appendix_after": true
+    },
+    {
+      "query_id": 14,
+      "topic": "Inference efficiency",
+      "action": "appended",
+      "path": "artifacts/remote_fetch/full_trajectories/EvoScientist/query_14/final_report.md",
+      "bytes_before": 18206,
+      "bytes_after": 21164,
+      "has_appendix_after": true
+    },
+    {
+      "query_id": 15,
+      "topic": "Machine translation",
+      "action": "appended",
+      "path": "artifacts/remote_fetch/full_trajectories/EvoScientist/query_15/final_report.md",
+      "bytes_before": 13452,
+      "bytes_after": 16384,
+      "has_appendix_after": true
+    },
+    {
+      "query_id": 16,
+      "topic": "Knowledge injection",
+      "action": "appended",
+      "path": "artifacts/remote_fetch/full_trajectories/EvoScientist/query_16/final_report.md",
+      "bytes_before": 13228,
+      "bytes_after": 16217,
+      "has_appendix_after": true
+    },
+    {
+      "query_id": 17,
+      "topic": "Information extraction",
+      "action": "appended",
+      "path": "artifacts/remote_fetch/full_trajectories/EvoScientist/query_17/final_report.md",
+      "bytes_before": 15237,
+      "bytes_after": 18172,
+      "has_appendix_after": true
+    },
+    {
+      "query_id": 18,
+      "topic": "UX evaluation",
+      "action": "appended",
+      "path": "artifacts/remote_fetch/full_trajectories/EvoScientist/query_18/final_report.md",
+      "bytes_before": 17254,
+      "bytes_after": 20200,
+      "has_appendix_after": true
+    },
+    {
+      "query_id": 19,
+      "topic": "Evaluation leaderboards",
+      "action": "appended",
+      "path": "artifacts/remote_fetch/full_trajectories/EvoScientist/query_19/final_report.md",
+      "bytes_before": 13639,
+      "bytes_after": 16601,
+      "has_appendix_after": true
+    },
+    {
+      "query_id": 20,
+      "topic": "Text generation",
+      "action": "appended",
+      "path": "artifacts/remote_fetch/full_trajectories/EvoScientist/query_20/final_report.md",
+      "bytes_before": 20182,
+      "bytes_after": 23125,
+      "has_appendix_after": true
+    },
+    {
+      "query_id": 21,
+      "topic": "Content detection",
+      "action": "appended",
+      "path": "artifacts/remote_fetch/full_trajectories/EvoScientist/query_21/final_report.md",
+      "bytes_before": 14376,
+      "bytes_after": 17338,
+      "has_appendix_after": true
+    },
+    {
+      "query_id": 22,
+      "topic": "Code LLM security",
+      "action": "appended",
+      "path": "artifacts/remote_fetch/full_trajectories/EvoScientist/query_22/final_report.md",
+      "bytes_before": 15238,
+      "bytes_after": 18162,
+      "has_appendix_after": true
+    },
+    {
+      "query_id": 23,
+      "topic": "Code LLM evaluation",
+      "action": "appended",
+      "path": "artifacts/remote_fetch/full_trajectories/EvoScientist/query_23/final_report.md",
+      "bytes_before": 16680,
+      "bytes_after": 19634,
+      "has_appendix_after": true
+    },
+    {
+      "query_id": 24,
+      "topic": "RAG",
+      "action": "appended",
+      "path": "artifacts/remote_fetch/full_trajectories/EvoScientist/query_24/final_report.md",
+      "bytes_before": 22379,
+      "bytes_after": 25341,
+      "has_appendix_after": true
+    },
+    {
+      "query_id": 25,
+      "topic": "Multi-source reasoning",
+      "action": "appended",
+      "path": "artifacts/remote_fetch/full_trajectories/EvoScientist/query_25/final_report.md",
+      "bytes_before": 17318,
+      "bytes_after": 20268,
+      "has_appendix_after": true
+    },
+    {
+      "query_id": 26,
+      "topic": "Data filtering",
+      "action": "appended",
+      "path": "artifacts/remote_fetch/full_trajectories/EvoScientist/query_26/final_report.md",
+      "bytes_before": 14949,
+      "bytes_after": 17905,
+      "has_appendix_after": true
+    },
+    {
+      "query_id": 27,
+      "topic": "Long-context understanding",
+      "action": "appended",
+      "path": "artifacts/remote_fetch/full_trajectories/EvoScientist/query_27/final_report.md",
+      "bytes_before": 15229,
+      "bytes_after": 18206,
+      "has_appendix_after": true
+    },
+    {
+      "query_id": 28,
+      "topic": "Alignment",
+      "action": "appended",
+      "path": "artifacts/remote_fetch/full_trajectories/EvoScientist/query_28/final_report.md",
+      "bytes_before": 12259,
+      "bytes_after": 15199,
+      "has_appendix_after": true
+    },
+    {
+      "query_id": 29,
+      "topic": "Alignment",
+      "action": "appended",
+      "path": "artifacts/remote_fetch/full_trajectories/EvoScientist/query_29/final_report.md",
+      "bytes_before": 17955,
+      "bytes_after": 20874,
+      "has_appendix_after": true
+    },
+    {
+      "query_id": 30,
+      "topic": "Audio foundation models",
+      "action": "appended",
+      "path": "artifacts/remote_fetch/full_trajectories/EvoScientist/query_30/final_report.md",
+      "bytes_before": 18630,
+      "bytes_after": 21581,
+      "has_appendix_after": true
+    }
+  ]
+}
