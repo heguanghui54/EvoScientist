@@ -1,0 +1,193 @@
+{
+  "runner": "run_table1_proxy_baselines.py",
+  "baseline": "Hypogenic",
+  "mode": "proxy_replacement_baseline",
+  "paper_exact": false,
+  "provider": "monica",
+  "model": "gemini-3-flash-preview",
+  "temperature": 0.7,
+  "query_count": 30,
+  "caveat": "Proxy replacement output generated from baseline-specific prompting. This is not the original paper raw Table 1 output.",
+  "outputs": [
+    {
+      "id": 1,
+      "topic": "Machine translation",
+      "dir": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/artifacts/idea_outputs/Hypogenic/query_01",
+      "status": "ok"
+    },
+    {
+      "id": 2,
+      "topic": "Software engineering",
+      "dir": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/artifacts/idea_outputs/Hypogenic/query_02",
+      "status": "ok"
+    },
+    {
+      "id": 3,
+      "topic": "LLM evaluation",
+      "dir": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/artifacts/idea_outputs/Hypogenic/query_03",
+      "status": "ok"
+    },
+    {
+      "id": 4,
+      "topic": "Healthcare agents",
+      "dir": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/artifacts/idea_outputs/Hypogenic/query_04",
+      "status": "ok"
+    },
+    {
+      "id": 5,
+      "topic": "Literature review automation",
+      "dir": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/artifacts/idea_outputs/Hypogenic/query_05",
+      "status": "ok"
+    },
+    {
+      "id": 6,
+      "topic": "Speech recognition",
+      "dir": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/artifacts/idea_outputs/Hypogenic/query_06",
+      "status": "ok"
+    },
+    {
+      "id": 7,
+      "topic": "Model efficiency",
+      "dir": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/artifacts/idea_outputs/Hypogenic/query_07",
+      "status": "ok"
+    },
+    {
+      "id": 8,
+      "topic": "AI agents",
+      "dir": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/artifacts/idea_outputs/Hypogenic/query_08",
+      "status": "ok"
+    },
+    {
+      "id": 9,
+      "topic": "Model deployment",
+      "dir": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/artifacts/idea_outputs/Hypogenic/query_09",
+      "status": "ok"
+    },
+    {
+      "id": 10,
+      "topic": "Text-to-SQL",
+      "dir": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/artifacts/idea_outputs/Hypogenic/query_10",
+      "status": "ok"
+    },
+    {
+      "id": 11,
+      "topic": "LLM capabilities",
+      "dir": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/artifacts/idea_outputs/Hypogenic/query_11",
+      "status": "ok"
+    },
+    {
+      "id": 12,
+      "topic": "Factual consistency",
+      "dir": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/artifacts/idea_outputs/Hypogenic/query_12",
+      "status": "ok"
+    },
+    {
+      "id": 13,
+      "topic": "Data synthesis",
+      "dir": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/artifacts/idea_outputs/Hypogenic/query_13",
+      "status": "ok"
+    },
+    {
+      "id": 14,
+      "topic": "Inference efficiency",
+      "dir": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/artifacts/idea_outputs/Hypogenic/query_14",
+      "status": "ok"
+    },
+    {
+      "id": 15,
+      "topic": "Machine translation",
+      "dir": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/artifacts/idea_outputs/Hypogenic/query_15",
+      "status": "ok"
+    },
+    {
+      "id": 16,
+      "topic": "Knowledge injection",
+      "dir": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/artifacts/idea_outputs/Hypogenic/query_16",
+      "status": "ok"
+    },
+    {
+      "id": 17,
+      "topic": "Information extraction",
+      "dir": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/artifacts/idea_outputs/Hypogenic/query_17",
+      "status": "ok"
+    },
+    {
+      "id": 18,
+      "topic": "UX evaluation",
+      "dir": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/artifacts/idea_outputs/Hypogenic/query_18",
+      "status": "ok"
+    },
+    {
+      "id": 19,
+      "topic": "Evaluation leaderboards",
+      "dir": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/artifacts/idea_outputs/Hypogenic/query_19",
+      "status": "ok"
+    },
+    {
+      "id": 20,
+      "topic": "Text generation",
+      "dir": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/artifacts/idea_outputs/Hypogenic/query_20",
+      "status": "ok"
+    },
+    {
+      "id": 21,
+      "topic": "Content detection",
+      "dir": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/artifacts/idea_outputs/Hypogenic/query_21",
+      "status": "ok"
+    },
+    {
+      "id": 22,
+      "topic": "Code LLM security",
+      "dir": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/artifacts/idea_outputs/Hypogenic/query_22",
+      "status": "ok"
+    },
+    {
+      "id": 23,
+      "topic": "Code LLM evaluation",
+      "dir": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/artifacts/idea_outputs/Hypogenic/query_23",
+      "status": "ok"
+    },
+    {
+      "id": 24,
+      "topic": "RAG",
+      "dir": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/artifacts/idea_outputs/Hypogenic/query_24",
+      "status": "ok"
+    },
+    {
+      "id": 25,
+      "topic": "Multi-source reasoning",
+      "dir": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/artifacts/idea_outputs/Hypogenic/query_25",
+      "status": "ok"
+    },
+    {
+      "id": 26,
+      "topic": "Data filtering",
+      "dir": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/artifacts/idea_outputs/Hypogenic/query_26",
+      "status": "ok"
+    },
+    {
+      "id": 27,
+      "topic": "Long-context understanding",
+      "dir": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/artifacts/idea_outputs/Hypogenic/query_27",
+      "status": "ok"
+    },
+    {
+      "id": 28,
+      "topic": "Alignment",
+      "dir": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/artifacts/idea_outputs/Hypogenic/query_28",
+      "status": "ok"
+    },
+    {
+      "id": 29,
+      "topic": "Alignment",
+      "dir": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/artifacts/idea_outputs/Hypogenic/query_29",
+      "status": "ok"
+    },
+    {
+      "id": 30,
+      "topic": "Audio foundation models",
+      "dir": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/artifacts/idea_outputs/Hypogenic/query_30",
+      "status": "ok"
+    }
+  ]
+}

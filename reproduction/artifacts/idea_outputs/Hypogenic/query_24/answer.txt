@@ -1,0 +1,46 @@
+### 1. Title
+**GAIR: Gap-Aware Iterative Retrieval via Explicit Information-Gap Modeling**
+
+### 2. Problem and Motivation
+Standard Retrieval-Augmented Generation (RAG) systems struggle with multi-hop questions where the answer requires connecting disparate pieces of evidence (e.g., "What is the population of the city where the inventor of the X-ray was born?"). Current iterative RAG methods (like IRCoT) simply append retrieved context to the original query to find the next "hop." This often leads to **semantic drift**, where the retriever becomes overwhelmed by the noise of previously retrieved text, or **retrieval saturation**, where the system keeps retrieving the same documents because it cannot distinguish between what it already knows and what it still needs to find.
+
+### 3. Core Hypothesis
+Explicitly modeling the "Information Gap"—the specific logical bridge missing between the currently retrieved context and the final goal—as a standalone query generation task will significantly improve retrieval precision and reasoning accuracy compared to cumulative query expansion.
+
+**Why this is surprising:** Most RAG research focuses on *adding* more context to the prompt to help the model "see" the path. This hypothesis suggests that "masking" what we already know and focusing strictly on the "unknown" produces a cleaner signal for the retriever, even if it ignores the broader context during the search step.
+
+### 4. Method
+The proposed method, **Gap-Aware Iterative Retrieval (GAIR)**, follows a four-step loop:
+
+1.  **State Assessment:** Given the question $Q$ and currently retrieved context $C_t$, an LLM is prompted to generate a "Current Knowledge Summary" ($S_t$) and a "Missing Link" statement ($L_t$).
+2.  **Gap Query Generation:** Instead of searching with $Q + C_t$, the LLM generates a query $q_{next}$ specifically designed to satisfy $L_t$. The prompt constraint is: "What single fact, if known, would allow us to answer $Q$ using $S_t$?"
+3.  **Targeted Retrieval:** Retrieve $k$ documents using $q_{next}$.
+4.  **Verification and Termination:** An evaluator (LLM) determines if $\{S_t + \text{new documents}\}$ is sufficient to answer $Q$. If yes, generate the final answer. If no, update $C_{t+1}$ and repeat.
+
+### 5. Dataset or Benchmark
+*   **HotpotQA (Multi-hop, Bridge-type):** Focus on the "distractor" and "fullwiki" settings to test retrieval under noise.
+*   **MuSiQue-Ans:** A more complex multi-hop dataset designed to prevent "shortcut" reasoning that bypasses hops.
+*   **2WikiMultiHopQA:** To test the ability to navigate structured relationships (e.g., family trees, filmographies).
+
+### 6. Evaluation Metrics
+*   **Answer Accuracy:** Exact Match (EM) and F1 score.
+*   **Retrieval Precision:** Mean Reciprocal Rank (MRR) and Recall@K for the specific gold documents required for each hop.
+*   **Hop Efficiency:** The average number of retrieval steps taken to reach the correct answer (lower is better, indicating less "wandering").
+*   **Faithfulness:** Human or LLM-based evaluation of whether the final answer is logically supported by the retrieved "gap" documents.
+
+### 7. Baselines
+*   **Vanilla RAG:** Single-hop retrieval using the original query.
+*   **Self-Ask:** LLM generates sub-questions and searches for them sequentially.
+*   **IRCoT (Interleaving Retrieval and Chain-of-Thought):** Iteratively retrieves based on the full generated CoT trace.
+*   **ReAct:** Interleaving reasoning traces and search actions in a loop.
+
+### 8. Ablations
+*   **No-Gap Baseline:** Use the same iterative loop but generate $q_{next}$ based on the entire history rather than the "Missing Link" statement.
+*   **Context-Only Retrieval:** Retrieve using only the previously found documents as the query (testing if the original question is even necessary for intermediate hops).
+*   **Fixed-Hop vs. Dynamic:** Compare GAIR with a version that always performs a fixed number of hops (e.g., 2 or 3) to see if the "Verification" step prevents over-retrieval.
+
+### 9. Failure Modes and Feasibility Risks
+*   **Hallucinated Gaps:** The LLM might identify a "missing link" that does not exist or is logically impossible, leading the retriever into a dead end.
+*   **Recursive Loops:** The system might get stuck in a loop if the retriever fails to find the specific "Gap Query" result, and the LLM keeps identifying the same gap.
+*   **Cost/Latency:** Iterative LLM calls for "Gap Generation" and "Verification" increase inference time and API costs compared to single-shot RAG.
+*   **Feasibility:** High. This requires no model training; it is a prompting and orchestration strategy that can be implemented using frameworks like LangChain or LlamaIndex.

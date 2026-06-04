@@ -1,0 +1,42 @@
+**1. Title**
+The Linguistic Trap: Quantifying and Reversing the Monocultural Bottleneck in Multilingual RLHF
+
+**2. Problem and Motivation**
+Current Large Language Models (LLMs) exhibit a "Western bias" not only in their knowledge base but also in their normative alignment. Even when prompted in non-Western languages (e.g., Arabic, Japanese, or Swahili), models often default to Western, Educated, Industrialized, Rich, and Democratic (WEIRD) values regarding individualism, authority, and social hierarchy. This is largely attributed to Reinforcement Learning from Human Feedback (RLHF) being performed primarily by English-speaking annotators or using translated English preference datasets. This "alignment drift" risks marginalizing global perspectives and renders models less effective or even culturally offensive in local contexts.
+
+**3. Core Hypothesis**
+The "Cultural Bottleneck" Hypothesis: LLMs possess latent cultural reasoning patterns from their diverse multilingual pre-training, but standard English-centric RLHF creates a dominant "monocultural prior" that actively suppresses these patterns. If this is true, then **low-resource Cultural Preference Tuning (CPT)**—using a tiny fraction of culturally specific preference data—will outperform **Massive Translated Preference Tuning** in achieving cultural fidelity, proving that the bottleneck is an alignment issue rather than a data-scarcity issue in pre-training.
+
+This is surprising because it suggests that "more data" (via translation) is actually detrimental to cross-cultural alignment if it reinforces the wrong normative priors.
+
+**4. Method**
+1.  **Phase A: Baseline Assessment.** Evaluate a base model (e.g., Llama-3-Base) and its RLHF counterpart (Llama-3-Instruct) on a set of culturally sensitive moral dilemmas.
+2.  **Phase B: Data Construction.** Develop a "Cultural Preference Dataset" for three target cultures (e.g., Japanese, Arabic, and Brazilian Portuguese). For each culture, identify 500 high-conflict scenarios (e.g., filial piety vs. individual career growth).
+3.  **Phase C: Preference Tuning.**
+    *   *Condition 1 (Translated RLHF):* Fine-tune the base model on 10,000 translated English preference pairs.
+    *   *Condition 2 (Targeted CPT):* Fine-tune the base model on only 500 native-language preference pairs curated by cultural insiders.
+4.  **Phase D: Evaluation.** Compare the models’ responses against the World Values Survey (WVS) benchmarks for those specific regions.
+
+**5. Dataset or Benchmark**
+*   **The Global Values Alignment Benchmark (GVAB):** A custom dataset derived from the World Values Survey (WVS) and the Moral Foundations Questionnaire (MFQ).
+*   **Scenarios:** 1,500 prompt-response pairs (500 per culture) where responses are labeled "Culturally Consistent" or "Culturally Inconsistent" based on regional WVS means.
+
+**6. Evaluation Metrics**
+*   **Cultural Fidelity Score (CFS):** The percentage of model responses that align with the majority normative preference of the target culture as defined by WVS data.
+*   **Cross-Linguistic Consistency:** A measure of how much the model's values change when the *same* question is asked in English versus the native language (testing if the "monocultural prior" still dominates in English).
+*   **Jensen-Shannon Divergence (JSD):** The distance between the model's response distribution and the human response distribution in the target culture.
+
+**7. Baselines**
+*   **Base Model:** The raw pre-trained model without instruction tuning.
+*   **Standard Instruct Model:** The publicly available RLHF version (e.g., Llama-3-7B-Instruct).
+*   **Translated-Instruct:** The base model tuned on a large-scale translation of the Anthropic Helpful/Harmless dataset into the target language.
+
+**8. Ablations**
+*   **Language-Only Tuning:** Tuning on native language text (SFT) without preference labels to see if language exposure alone restores cultural values.
+*   **Data Volume Scaling:** Testing if the 500-pair CPT holds its advantage as the Translated RLHF dataset grows to 50,000 pairs.
+*   **Cross-Culture Contamination:** Applying Japanese CPT and testing its effect on Arabic prompts to see if cultural tuning is specific or creates a new "global" bias.
+
+**9. Failure Modes and Feasibility Risks**
+*   **Stereotyping Risk:** The model might over-correct and produce "caricatures" of a culture rather than nuanced alignment.
+*   **Intra-cultural Diversity:** No culture is a monolith; using WVS means might ignore significant internal diversity (e.g., urban vs. rural Arabic speakers).
+*   **Catastrophic Forgetting:** Targeted CPT might degrade the model’s general reasoning or safety guardrails (e.g., becoming "too" aligned with a culture's specific hierarchy norms such that it refuses to criticize authority).

@@ -1,0 +1,41 @@
+**1. Title**
+Dynamic Latent Recurrence (DLR): Breaking the Small Model Ceiling via Iterative Weight-Sharing Passes.
+
+**2. Problem and Motivation**
+Small Language Models (SMLMs, <3B parameters) are constrained by a "representation bottleneck." While they can be trained on trillions of tokens, their fixed architectural depth limits the complexity of the functions they can approximate. Current efforts to improve SMLMs focus on higher-quality data or distillation from larger models. However, these methods do not address the fundamental structural limitation: a single forward pass through a shallow network lacks the "computational budget" to resolve complex, multi-step logical dependencies that emerge in larger 70B+ models.
+
+**3. Core Hypothesis**
+The performance ceiling of SMLMs is not a result of "too few parameters" for knowledge storage, but "too few layers" for iterative reasoning. I hypothesize that a small model can achieve the performance of a model 5–10x its size by **recursively cycling its hidden states through its own layers**, effectively simulating a deeper architecture via weight-sharing across "virtual" layers.
+
+**4. Method**
+*   **Recursive Architecture:** Modify a standard Transformer (e.g., Llama-1B) to allow the output of the final layer to be fed back as the input to the first layer for $N$ iterations.
+*   **Temporal State Injection:** To prevent the model from getting stuck in fixed-point attractors, inject a "Step Embedding" (similar to a positional embedding) into the hidden state at each iteration. This tells the model which "virtual depth" it is currently operating at.
+*   **Dynamic Halting Mechanism:** Implement a "Ponder Head"—a small classifier trained to predict the confidence of the current hidden state. If confidence exceeds a threshold, the model exits the loop and generates a token.
+*   **Training Objective:** Use "Consistency Training." The model is trained to ensure that the latent representation at iteration $i$ is a refinement of iteration $i-1$, using a contrastive loss to keep the trajectory stable.
+
+**5. Dataset or Benchmark**
+*   **Reasoning:** GSM8K (Grade school math) and MATH.
+*   **Knowledge:** MMLU (Massive Multitask Language Understanding).
+*   **Code:** HumanEval.
+*   **Logic:** BigBench Hard (BBH).
+*   *Note:* These benchmarks are chosen because they require multi-step processing where "depth" is historically more beneficial than "width."
+
+**6. Evaluation Metrics**
+*   **Accuracy vs. Parameter Count:** Comparing DLR-SMLMs against static models of the same parameter size.
+*   **FLOPs-Efficiency:** Measuring the accuracy gain per unit of compute (since recursion increases inference time).
+*   **Effective Depth:** Analyzing how many iterations are typically used for "Easy" vs. "Hard" questions.
+
+**7. Baselines**
+*   **Standard SMLMs:** Llama-3-1B, Phi-3-Mini (3.8B), and Qwen-2-1.5B.
+*   **Deep-but-Thin Models:** A standard Transformer with the same "total" depth as the recursive model but without weight sharing (to test if weight sharing is a bottleneck or a benefit).
+*   **Chain-of-Thought (CoT):** Standard SMLMs using natural language "scratchpads" (to see if latent recursion is more efficient than token-based reasoning).
+
+**8. Ablations**
+*   **Iteration Count:** Fix $N$ at 1, 2, 4, and 8 to see where diminishing returns occur.
+*   **Step Embeddings:** Remove the temporal embeddings to test if the model can distinguish between "virtual layers."
+*   **Weight Tying:** Compare the recursive model against a model where each "pass" uses unique weights (standard scaling) to quantify the efficiency of weight reuse.
+
+**9. Failure Modes and Feasibility Risks**
+*   **Vanishing/Exploding Gradients:** Repeatedly passing through the same weights may lead to numerical instability. *Mitigation:* Use Weight Normalization and residual scaling.
+*   **Inference Latency:** While the parameter count remains small (fitting on edge devices), the execution time increases linearly with iterations. *Mitigation:* The "Ponder Head" ensures easy tokens are processed in a single pass.
+*   **Overfitting to the Loop:** The model might learn to only "solve" the problem at exactly $N$ iterations. *Mitigation:* Randomized iteration counts during training (Stochastic Depth).

@@ -1,0 +1,44 @@
+### 1. Title
+**Resolving the Dialectic: Contradiction-Driven Synthesis for Automated Literature Reviews**
+
+### 2. Problem and Motivation
+Current automated literature review systems primarily function as "concatenative summarizers." They extract key points from a set of papers and arrange them sequentially (e.g., "Author A found X; Author B found Y"). This approach fails to provide **synthesis**—the ability to identify where researchers disagree, why their results differ, and how those contradictions define the frontier of a field. A high-quality human-written review does not just list facts; it maps the "tension" between studies. Without a mechanism to identify and reconcile conflicting claims, automated reviews remain superficial and lack critical depth.
+
+### 3. Core Hypothesis
+Explicitly constraining a Large Language Model (LLM) to identify and attempt to reconcile claim-level contradictions between papers will produce literature reviews that score significantly higher on "critical synthesis" and "insight density" than standard Retrieval-Augmented Generation (RAG) or summarization-based baselines.
+
+### 4. Method
+The proposed system, **Dialectic-Gen**, operates in four stages:
+1.  **Atomic Claim Extraction:** For a given set of input papers $\{P_1, P_2, ... P_n\}$, the model extracts atomic scientific claims (e.g., "Method X improves accuracy by 5%").
+2.  **Tension Mapping:** A cross-document encoder identifies pairs of claims that are mutually exclusive or show significant variance in results (e.g., Paper A says "Transformer-XL is optimal for long-range dependencies," while Paper B says "State Space Models outperform Transformers on long sequences").
+3.  **Synthesis via Reconciliation:** The LLM is prompted to write the review by centering each section around these identified "tensions." For each tension, the model must:
+    *   State the conflicting findings.
+    *   Hypothesize a confounding variable (e.g., differences in dataset scale or hardware).
+    *   Propose a unifying framework if possible.
+4.  **Verification:** A final pass ensures that the synthesized "reconciliations" do not introduce hallucinations and are grounded in the provided text.
+
+### 5. Dataset or Benchmark
+*   **Primary Dataset:** The **S2ORC (Semantic Scholar Open Research Corpus)**, specifically filtered for "Survey" or "Review" papers in the Computer Science and Biomedicine domains.
+*   **Inputs:** The bibliographies of 500 high-quality human-written review papers.
+*   **Ground Truth:** The original human-written "Discussion" or "Synthesis" sections of those review papers.
+
+### 6. Evaluation Metrics
+*   **Synthesis Score (Human Eval):** Expert reviewers rate the output on a 1-5 scale for "Critical Synthesis" (how well it connects disparate ideas) versus "List-like Summarization."
+*   **Contradiction Recall:** The percentage of known conflicting findings in a sub-field (manually annotated) that the model successfully identified.
+*   **Factuality/Faithfulness:** Using NLI (Natural Language Inference) to ensure the synthesized claims are supported by the source documents.
+*   **ROUGE-L and METEOR:** Standard overlap metrics against the original human-written review.
+
+### 7. Baselines
+*   **Vanilla RAG:** Standard Llama-3 or GPT-4o prompted to "Write a literature review for these 10 papers."
+*   **Long-Context Summarization:** Providing the full text of all papers to a long-context model (e.g., Claude 3.5 Sonnet) with a generic summarization prompt.
+*   **Multi-Document Summarization (MDS) SOTA:** Hierarchical models like PRIMERA.
+
+### 8. Ablations
+*   **No Contradiction Detection:** Removing Stage 2 and 3 to see if the atomic claim extraction alone improves quality.
+*   **No Reconciliation:** Identifying the contradictions but not forcing the model to explain *why* they might exist.
+*   **Random Tension:** Forcing the model to find "tensions" between unrelated papers to test for "hallucinated conflict."
+
+### 9. Failure Modes and Feasibility Risks
+*   **Hallucinated Conflict:** The model may perceive a contradiction where there is merely a difference in terminology (semantic drift).
+*   **Computational Complexity:** Cross-document claim comparison scales quadratically $O(N^2)$ with the number of claims. This requires efficient pruning or embedding-based pre-filtering.
+*   **Expert Knowledge Gap:** The model might lack the deep domain expertise required to actually "reconcile" two conflicting results (e.g., understanding a subtle difference in a chemical reagent), leading to plausible-sounding but scientifically incorrect explanations.

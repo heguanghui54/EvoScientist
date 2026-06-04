@@ -1,0 +1,42 @@
+### 1. Title
+**Trace-Guided Latent Alignment (TGLA): Enhancing Semantic Equivalence in Automated Code Refactoring**
+
+### 2. Problem and Motivation
+Current Large Language Models (LLMs) excel at "local" code generation and style-based refactoring (e.g., converting a for-loop to a list comprehension). However, they frequently introduce subtle functional regressions when performing complex structural refactoring, such as decomposing a monolithic function into smaller modules or optimizing algorithms. The core issue is that standard training objectives (next-token prediction) prioritize syntactic plausibility over semantic preservation. There is a critical need for a method that ensures the "before" and "after" states of code remain functionally identical across all execution paths.
+
+### 3. Core Hypothesis
+Aligning the latent representations of original and refactored code through a shared "Execution Trace Encoder" will significantly reduce functional regressions. Specifically, by forcing the model to minimize the distance between the latent embeddings of the original code and the refactored code—conditioned on identical input-output traces—the model will learn to prioritize logic preservation over mere stylistic similarity.
+
+### 4. Method
+The proposed method, **Trace-Guided Latent Alignment (TGLA)**, involves a two-stage training process:
+1.  **Trace Encoding:** Train a transformer-based encoder to map execution traces (a sequence of input values, intermediate variable states, and return values) into a latent vector space.
+2.  **Contrastive Alignment:** During the fine-tuning of a Code-LLM (e.g., CodeLlama or StarCoder), use a triplet loss or contrastive loss. For a given code snippet $C_{orig}$ and its refactored version $C_{refactor}$, the model must ensure that:
+    *   The latent representation of $C_{orig}$ and $C_{refactor}$ are pushed together when they produce the same execution trace.
+    *   They are pushed away from "negative" refactorings (code that looks similar but fails unit tests).
+3.  **Inference:** At inference time, the model generates refactored code. A lightweight "Trace-Checker" (a pre-trained version of the encoder) ranks candidates based on their predicted semantic distance from the original code's trace.
+
+### 5. Dataset or Benchmark
+*   **Dataset:** A customized version of **MBPP (Mostly Basic Python Problems)** and **HumanEval**.
+*   **Augmentation:** Use rule-based refactoring tools (like `Rope` or `Bowler`) to generate 50,000 "ground truth" refactoring pairs from high-quality GitHub repositories.
+*   **Trace Generation:** Use `sys.settrace` in Python to capture execution states for each function in the dataset across 10-20 diverse input sets.
+
+### 6. Evaluation Metrics
+*   **Functional Correctness (Pass@k):** The percentage of refactored solutions that pass all original unit tests.
+*   **Semantic Distance:** Cosine similarity between the latent trace embeddings of the original and refactored code.
+*   **Refactoring Gain:** Reduction in Cyclomatic Complexity or Halstead Volume, ensuring the code was actually "improved" and not just copied.
+
+### 7. Baselines
+*   **Zero-shot LLMs:** GPT-3.5/GPT-4 with a "refactor this code" prompt.
+*   **Supervised Fine-Tuning (SFT):** A Code-LLM fine-tuned on the same refactoring pairs using only standard cross-entropy loss (no latent alignment).
+*   **Rule-based Systems:** Static refactoring tools (e.g., Pylint's refactoring suggestions).
+
+### 8. Ablations
+*   **No Trace Encoder:** Train with latent alignment between $C_{orig}$ and $C_{refactor}$ but without conditioning on execution traces (testing the value of dynamic data).
+*   **Syntactic Loss Only:** Remove the contrastive loss and rely solely on next-token prediction to see if the structural alignment is the primary driver of performance.
+*   **Trace Granularity:** Compare aligning only on Input/Output pairs versus aligning on intermediate variable states.
+
+### 9. Failure Modes and Feasibility Risks
+*   **Computational Overhead:** Capturing execution traces for thousands of functions is time-consuming and requires a secure sandbox environment to prevent arbitrary code execution risks.
+*   **Non-Deterministic Code:** Functions involving random seeds, time, or network calls will produce inconsistent traces, potentially confusing the latent alignment.
+*   **Trace Sparsity:** If the input sets do not cover all branches of the code, the model might learn to preserve semantics only for the "happy path," leading to regressions in edge cases.
+*   **Feasibility:** The approach is feasible for languages with strong introspection (Python, Java) but may be harder to implement for low-level languages like C++ without significant instrumentation.

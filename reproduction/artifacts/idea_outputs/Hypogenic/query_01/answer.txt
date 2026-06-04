@@ -1,0 +1,43 @@
+**1. Title**
+Entropy-Matched Syntactic Scaffolding (EMSS) for Low-Resource Machine Translation
+
+**2. Problem and Motivation**
+Current low-resource machine translation (LRMT) relies heavily on transfer learning from high-resource languages (HRLs). The standard selection criterion for a source HRL is genealogical relatedness (e.g., using Spanish to help translate Quechua). However, genealogical similarity does not always translate to statistical or structural compatibility in the latent space of a Transformer. Many LRLs suffer from "transfer interference" where the HRL’s dominant syntax overrides the LRL’s nuances. There is a need for a method that selects or modifies HRL data based on the statistical "rhythm" of the target LRL rather than just linguistic history.
+
+**3. Core Hypothesis**
+Cross-lingual transfer from an HRL to an LRL is more effective when the HRL training data is filtered to match the **token-level entropy** and **part-of-speech (POS) sequence distribution** of the LRL, even if the two languages are genealogically unrelated.
+
+*Why this is surprising:* This hypothesis suggests that a Transformer’s ability to generalize to a new language depends more on the "statistical shape" of the sequences (how predictable the next token is and the structural patterns of grammar) than on shared vocabulary or common ancestral roots. It implies that an unrelated but "statistically similar" language could be a better donor than a related but "statistically divergent" one.
+
+**4. Method**
+1.  **Statistical Profiling:** Take a small monolingual corpus of the target LRL ($C_{LRL}$) and calculate:
+    *   The distribution of N-gram POS tags (using a universal dependency tagger).
+    *   The average self-information (entropy) per token position.
+2.  **Scaffolding Selection:** From a massive HRL corpus (e.g., English or French), use a sliding window to identify segments that most closely match the $C_{LRL}$ profiles in terms of POS density and entropy.
+3.  **Warm-up Pre-training:** Initialize a standard Transformer (or a multilingual model like mBART). Conduct a "warm-up" phase using the selected HRL "scaffold" data.
+4.  **Constrained Fine-tuning:** Fine-tune the model on the available (limited) LRL-English parallel data, using an adapter-based approach to preserve the structural patterns learned during the warm-up.
+
+**5. Dataset or Benchmark**
+*   **Target LRLs:** Yoruba (Niger-Congo), Quechua (Quechuan), and Lao (Tai-Kadai) from the **FLORES-200** dataset.
+*   **HRL Donor:** English (WMT datasets).
+*   **Evaluation Set:** The standard dev/test splits provided by FLORES-200.
+
+**6. Evaluation Metrics**
+*   **Primary:** BLEU score and chrF (more robust for morphologically rich LRLs).
+*   **Neural:** COMET or BLEURT to capture semantic preservation.
+*   **Structural:** KL-divergence between the POS distributions of the model's output and the ground truth LRL text.
+
+**7. Baselines**
+*   **Direct Fine-tuning:** Training on LRL-English parallel data only.
+*   **Vanilla Multilingual Transfer:** Using a pre-trained mBART-50 or M2M-100 without entropy matching.
+*   **Genealogical Transfer:** Transferring from the closest related language available (e.g., Igbo for Yoruba).
+
+**8. Ablations**
+*   **Entropy-only Matching:** Matching token entropy but ignoring POS sequences.
+*   **POS-only Matching:** Matching grammatical structures but ignoring entropy/complexity.
+*   **Random Subsampling:** Using an equal amount of HRL data selected at random instead of matched scaffolding.
+
+**9. Failure Modes and Feasibility Risks**
+*   **Tagging Noise:** POS taggers for LRLs are often inaccurate. If the initial profile of the LRL is wrong, the scaffolding will be misaligned.
+*   **Data Scarcity:** If the LRL is so low-resource that even a representative monolingual profile cannot be built, the method defaults to random selection.
+*   **Compute:** Profiling massive HRL corpora (like the Pile or Common Crawl) for entropy/POS is computationally expensive, though this can be mitigated by sampling.

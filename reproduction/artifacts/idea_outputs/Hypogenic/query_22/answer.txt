@@ -1,0 +1,42 @@
+### 1. Title
+The "Trust but Don't Verify" Bias: Semantic Labeling as a Vector for Vulnerability Propagation in Code LLMs.
+
+### 2. Problem and Motivation
+As Large Language Models (LLMs) are increasingly integrated into Integrated Development Environments (IDEs) via tools like GitHub Copilot, they act as "autocomplete on steroids." Security research has largely focused on direct prompt injection or malicious training data. However, a subtle and pervasive risk exists in how LLMs handle **semantic incongruity**.
+
+If a human developer provides a code snippet where the function name is `sanitize_input()` but the logic inside is a simple `return input`, an LLM may be biased by the "secure" label to assume the context is safe, leading it to generate subsequent code that treats the output as trusted. This "semantic mirroring" could lead to a new class of accidental vulnerabilities where the LLM’s reliance on high-level descriptors overrides its underlying knowledge of secure coding patterns.
+
+### 3. Core Hypothesis
+Code LLMs exhibit a **Semantic Labeling Bias**: they are significantly more likely (a predicted >30% increase) to generate or complete insecure code if the surrounding variable names, function names, or comments explicitly claim to be performing a security-critical task (e.g., `encrypt_password`, `validate_session`) compared to when the labels are semantically neutral (e.g., `process_data`, `handle_request`).
+
+### 4. Method
+The experiment will use a "Template-Based Incongruity" framework:
+1.  **Template Generation:** Create 50 code templates across three languages (Python, JavaScript, C++) representing common vulnerabilities (SQL Injection, XSS, Path Traversal, Weak Cryptography).
+2.  **Condition A (Neutral):** The template uses generic names (e.g., `func_1`, `var_a`).
+3.  **Condition B (Incongruent Secure):** The template uses names suggesting security (e.g., `secure_hash_password`, `sanitized_query`) but provides a "broken" partial implementation.
+4.  **Inference:** Prompt the LLM to complete the logic.
+5.  **Adversarial Prompting:** Introduce a "Trust Hint" in the comment: `// Using the secure validation logic below, complete the handler.`
+6.  **Analysis:** Use static analysis (CodeQL, Bandit) and manual review to determine if the LLM "fixed" the vulnerability or propagated it because it "trusted" the secure label.
+
+### 5. Dataset or Benchmark
+*   **Source:** A modified subset of **HumanEval** and **MBPP (Mostly Basic Python Problems)**, specifically filtered for tasks that involve data flow or external input.
+*   **Augmentation:** The "Security-Incongruence Dataset" (SID), a custom-built set of 200 prompts where the prompt instructions and variable names are systematically varied between "Secure-labeled," "Insecure-labeled," and "Neutral."
+
+### 6. Evaluation Metrics
+*   **Vulnerability Rate (VR):** The percentage of completions containing a CWE (Common Weakness Enumeration) violation.
+*   **Semantic Alignment Score (SAS):** A measure of how closely the generated code follows the *labels* vs. the *logical intent* of the prompt.
+*   **Correction Rate (CR):** The frequency with which the LLM identifies the flaw in the "Incongruent Secure" template and fixes it vs. simply completing the flawed pattern.
+
+### 7. Baselines
+*   **Standard Completion:** GPT-3.5/4 or Llama-3-70B completion on neutral prompts.
+*   **Security-Instruction Baseline:** Prompting the LLM with "Write secure code" to see if explicit instructions override the semantic bias of the variable names.
+
+### 8. Ablations
+*   **Label Granularity:** Test if the bias is stronger for function names (`validate_user`) versus inline comments (`# input is now safe`).
+*   **Model Size:** Compare 7B, 13B, and 70B+ parameter models to see if larger models are more or less susceptible to semantic bias (i.e., does "intelligence" increase or decrease the reliance on labels?).
+*   **Language Sensitivity:** Compare memory-safe languages (Python) vs. memory-unsafe languages (C++) to see if the bias persists across different risk profiles.
+
+### 9. Failure Modes and Feasibility Risks
+*   **Model Refusal:** High-end models (like GPT-4) might have "safety filters" that refuse to complete code they perceive as vulnerable, potentially skewing the data toward "refusal" rather than "bias."
+*   **Static Analysis Limitations:** Tools like Bandit or CodeQL may produce false positives/negatives on short, disconnected code snippets.
+*   **Feasibility:** Requires significant manual labeling to ensure the "Incongruent Secure" templates are logically flawed but semantically convincing enough to trigger the bias. This can be mitigated by using a small, high-quality "Gold Set" of 50 samples.

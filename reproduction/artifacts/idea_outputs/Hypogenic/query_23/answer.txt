@@ -1,0 +1,47 @@
+### 1. Title
+**SIM-CODE: Evaluating Code LLMs through the Lens of Execution-Simulation Consistency**
+
+### 2. Problem and Motivation
+Current code LLM benchmarks (e.g., HumanEval, MBPP) primarily rely on "functional correctness"—whether a model-generated snippet passes a set of unit tests. However, this "black-box" evaluation fails to distinguish between a model that truly understands the logic it produces and one that is merely performing high-probability sequence matching from its training data.
+
+As code becomes more complex, "stochastic parroting" leads to brittle software that fails under minor edge cases or architectural shifts. A "deep" evaluation framework must move beyond output-matching to assess the model's internal "mental model" of the code’s state-space.
+
+### 3. Core Hypothesis
+The "Simulation Gap"—defined as the discrepancy between a model’s ability to generate functional code and its ability to predict the intermediate variable states (traces) of that same code—is a more accurate predictor of a model's out-of-distribution (OOD) generalization than standard functional correctness.
+
+**Surprising Element:** A model may achieve 90% Pass@1 on a task but fail to predict the value of a loop counter halfway through its own generated code more than 40% of the time, revealing a fundamental lack of causal reasoning.
+
+### 4. Method
+The SIM-CODE framework employs a dual-task evaluation protocol:
+
+1.  **Generation Task:** The model generates a solution for a programming prompt.
+2.  **Simulation Task (The "Trace Probe"):** For the code generated in Task 1 (or a canonical reference solution), the model is provided with a specific input and asked to provide a "Trace Map"—a step-by-step log of specific variable values at designated line numbers.
+3.  **Consistency Scoring:** We calculate the **Simulation Gap Index (SGI)**, which measures how often the model generates "correct" code that it cannot actually "execute" mentally.
+4.  **Perturbation Analysis:** We introduce "Logic Anchors" (e.g., changing a `>` to a `<` or swapping two variable assignments) and measure if the model’s simulation and generation errors correlate.
+
+### 5. Dataset or Benchmark
+We will construct **SIM-Bench**, derived from a curated subset of HumanEval and MBPP, but augmented:
+*   **Trace Probes:** Each problem includes 5–10 "Execution Checkpoints" (line-variable pairs) where the state must be predicted.
+*   **OOD Variants:** Each problem has three variants: (a) Standard, (b) Obfuscated (renamed variables), and (c) Logic-Flipped (inverted conditions).
+*   **Languages:** Python and Rust (to test memory-model understanding).
+
+### 6. Evaluation Metrics
+*   **Pass@1 (Gen):** Standard functional correctness.
+*   **Trace-Acc (Sim):** The percentage of variable states correctly predicted during the Simulation Task.
+*   **Simulation Gap Index (SGI):** $SGI = 1 - \frac{P(Simulate | Generate)}{P(Generate)}$. A high SGI indicates "hallucinated" logic.
+*   **Robustness Delta:** The drop in Pass@1 when moving from Standard to Obfuscated variants.
+
+### 7. Baselines
+*   **Instruction-Tuned Models:** GPT-4o, Claude 3.5 Sonnet.
+*   **Code-Specific Models:** CodeLlama (7B, 34B), StarCoder2, DeepSeek-Coder.
+*   **Search-Based Baseline:** A system using BM25 to retrieve similar code from GitHub to simulate "copy-paste" behavior without understanding.
+
+### 8. Ablations
+*   **Chain-of-Thought (CoT) Impact:** Does requiring the model to "think step-by-step" before predicting the trace close the Simulation Gap?
+*   **Code Complexity:** Testing the SGI across different Cyclomatic Complexity tiers to see if the gap widens exponentially with nested logic.
+*   **Self-Generated vs. Reference:** Comparing the model's ability to simulate its *own* code versus simulating human-written reference code.
+
+### 9. Failure Modes and Feasibility Risks
+*   **Format Sensitivity:** The model might fail the Simulation Task not because it lacks understanding, but because it struggles to output the Trace Map in the required JSON/text format. *Mitigation: Use few-shot prompting and flexible parsers.*
+*   **Data Leakage:** If the Trace Map for a common HumanEval problem exists in the training data, the Simulation Task becomes a memory task. *Mitigation: Use the "Logic-Flipped" and "Obfuscated" variants to ensure novelty.*
+*   **Computational Cost:** Running dual-task evaluations for every model iteration is expensive. *Mitigation: Implement a tiered evaluation where only high-performing models on the Generation Task are subjected to the Simulation Task.*

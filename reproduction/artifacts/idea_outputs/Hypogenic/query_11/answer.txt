@@ -1,0 +1,42 @@
+### 1. Title
+**Decoupling Logic from Language: Identifying the Modular Circuitry of Logical Consistency in Transformer Models**
+
+### 2. Problem and Motivation
+Large Language Models (LLMs) are often criticized for producing "fluent nonsense"—text that is grammatically perfect but logically contradictory. Currently, it is unclear whether "logical reasoning" and "linguistic fluency" are emergent properties that share the same underlying neural pathways, or if they are decoupled systems that can be independently manipulated. If these capabilities are coupled, improving one necessitates scaling the other. If they are decoupled, we can theoretically enhance a model's reasoning without increasing its size or changing its linguistic training data.
+
+### 3. Core Hypothesis
+**Hypothesis:** Logical reasoning (the ability to maintain transitive consistency) and linguistic fluency (the ability to predict the next token according to grammatical rules) are mediated by distinct, non-overlapping sets of attention heads in the middle-to-late layers of Transformer models.
+
+**Why this is surprising:** Standard scaling laws suggest that all capabilities emerge simultaneously as a function of compute and data. This hypothesis suggests that LLMs are more modular than they appear, implying that a model could, in theory, be "lobotomized" of its logic while remaining a perfectly fluent speaker, or vice versa.
+
+### 4. Method
+We will use **Causal Mediation Analysis (CMA)** and **Activation Patching** to identify specific "Logic Heads" vs. "Fluency Heads."
+
+1.  **Task Contrast:** Define two sets of prompts.
+    *   *Logic Set:* Syllogisms where the conclusion requires a transitive jump (e.g., "A=B, B=C, therefore A=?").
+    *   *Fluency Set:* Grammatically complex but logically vacant sentences (e.g., "The colorless green ideas sleep furiously...").
+2.  **Circuit Identification:** For a specific model (e.g., Llama-3-8B), we will perform "head-scrubbing." We systematically ablate individual attention heads and measure the "Indirect Effect" on the model's output.
+3.  **Intervention:** Once candidate heads are identified, we will perform a "Cross-Ablation" experiment. We will freeze the "Fluency Heads" and noise the "Logic Heads" to see if the model retains grammatical structure while failing the logic test. We will then do the inverse.
+
+### 5. Dataset or Benchmark
+*   **Logic:** A subset of **LogiQA** and a synthetic **Transitive Inference Dataset** (controlled for length and vocabulary).
+*   **Fluency:** **BLiMP** (Benchmark of Linguistic Minimal Pairs) to measure grammatical sensitivity, and **Penn Treebank** to measure perplexity.
+
+### 6. Evaluation Metrics
+*   **Logic Score (LS):** Accuracy on the final token of logical deductions.
+*   **Fluency Score (FS):** Perplexity (PPL) and grammatical error rate (using an external checker like LanguageTool).
+*   **Decoupling Ratio (DR):** The ratio of $(\Delta LS / \Delta FS)$ during targeted ablation. A high DR indicates successful decoupling.
+
+### 7. Baselines
+*   **Random Ablation:** Randomly zeroing out the same number of attention heads.
+*   **Layer-wise Ablation:** Zeroing out entire layers to see if logic is simply "deeper" than language.
+*   **Magnitude-based Pruning:** Removing weights with the smallest magnitude regardless of their function.
+
+### 8. Ablations
+*   **Head vs. MLP:** We will repeat the intervention on MLP (Feed-Forward) blocks to see if logic is stored in the "knowledge" weights (MLPs) or the "routing" weights (Attention).
+*   **Prompt Variation:** Testing if the "Logic Heads" are sensitive to the *format* of the prompt (e.g., "Q&A" vs. "Chain-of-Thought").
+
+### 9. Failure Modes and Feasibility Risks
+*   **Entanglement Risk:** The most significant risk is that logic and language are fundamentally entangled (e.g., the model uses the same heads to understand "if-then" syntax and "if-then" logic). If the Decoupling Ratio remains near 1.0, the hypothesis is falsified.
+*   **Model Specificity:** The identified "Logic Core" might not generalize across different model architectures (e.g., Llama vs. Mistral).
+*   **Task Complexity:** Simple syllogisms might be too easy; the "logic circuit" might only activate for complex, multi-step reasoning, making it harder to isolate.

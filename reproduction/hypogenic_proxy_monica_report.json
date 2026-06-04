@@ -1,0 +1,88 @@
+{
+  "date": "2026-06-04",
+  "status": "partial",
+  "completion_scope": "replacement_table1_hypogenic_proxy",
+  "paper_exact": false,
+  "covered_baseline": "Hypogenic",
+  "baseline_mode": "proxy_replacement_baseline",
+  "idea_outputs": {
+    "baseline": "Hypogenic",
+    "answers": 30,
+    "root": "reproduction/artifacts/idea_outputs/Hypogenic"
+  },
+  "judge": {
+    "provider": "monica",
+    "model": "gemini-3-flash-preview",
+    "input_records": 60,
+    "output_records": 60
+  },
+  "aggregate": {
+    "target_system": "EvoScientist",
+    "tie_threshold": 0.0,
+    "raw_records": 60,
+    "baselines": {
+      "Hypogenic": {
+        "dimensions": {
+          "Clarity": {
+            "baseline": "Hypogenic",
+            "dimension": "Clarity",
+            "n": 60,
+            "win": 29,
+            "tie": 9,
+            "lose": 22,
+            "win_pct": 48.33,
+            "tie_pct": 15.0,
+            "lose_pct": 36.67,
+            "gap": 11.66
+          },
+          "Novelty": {
+            "baseline": "Hypogenic",
+            "dimension": "Novelty",
+            "n": 60,
+            "win": 9,
+            "tie": 1,
+            "lose": 50,
+            "win_pct": 15.0,
+            "tie_pct": 1.67,
+            "lose_pct": 83.33,
+            "gap": -68.33
+          },
+          "Feasibility": {
+            "baseline": "Hypogenic",
+            "dimension": "Feasibility",
+            "n": 60,
+            "win": 33,
+            "tie": 1,
+            "lose": 26,
+            "win_pct": 55.0,
+            "tie_pct": 1.67,
+            "lose_pct": 43.33,
+            "gap": 11.67
+          },
+          "Relevance": {
+            "baseline": "Hypogenic",
+            "dimension": "Relevance",
+            "n": 60,
+            "win": 9,
+            "tie": 41,
+            "lose": 10,
+            "win_pct": 15.0,
+            "tie_pct": 68.33,
+            "lose_pct": 16.67,
+            "gap": -1.67
+          }
+        },
+        "avg_gap": -11.67
+      }
+    }
+  },
+  "caveats": [
+    "Proxy replacement output generated with baseline-specific prompting, not the original Hypogenic raw Table 1 output.",
+    "Public Hypogenic artifacts do not expose a public batch runner or paper raw outputs.",
+    "Monica/Gemini judge completed 60 valid records with per-record retries enabled."
+  ],
+  "remaining_missing_baselines": [
+    "Novix",
+    "K-Dense"
+  ]
+}

@@ -1,0 +1,45 @@
+### 1. Title
+**Contrastive Synthesis: Forcing Inter-Source Conflict Resolution for Multi-Hop Reasoning**
+
+### 2. Problem and Motivation
+Large Language Models (LLMs) often struggle with multi-source reasoning because they treat retrieved context as a monolithic block of text. This leads to "lost-in-the-middle" effects or a failure to recognize nuanced dependencies between sources (e.g., Source A provides a fact that is only true under a condition specified in Source B). Current Retrieval-Augmented Generation (RAG) systems typically concatenate documents and rely on the model’s self-attention to find links. However, this often results in "hallucinated consistency," where the model ignores subtle contradictions or fails to bridge logical gaps between disparate pieces of evidence.
+
+### 3. Core Hypothesis
+**Explicitly prompting a model to identify "potential logical tensions" or "conditional dependencies" between independent sources—prior to generating a final answer—acts as a structural regularizer that improves multi-hop reasoning accuracy, even when the sources are fundamentally complementary.**
+
+*Why this is surprising:* Intuition suggests that if sources are supportive, looking for "conflict" would be counter-productive or lead to hallucinations of error. This hypothesis posits that the act of *searching* for tension forces the model to map the boundaries of each fact more precisely, preventing the "blending" of distinct contexts that often causes reasoning errors.
+
+### 4. Method
+The proposed experiment uses a three-stage pipeline called **Contrastive Synthesis (CS)**:
+
+1.  **Source Analysis:** The model extracts the core claims from $N$ retrieved sources independently.
+2.  **Contrastive Mapping:** The model is prompted to identify any points where Source A *limits*, *expands*, or *potentially contradicts* Source B. If no conflict exists, the model must explicitly state the "dependency link" (e.g., "Source B provides the date for the event described in Source A").
+3.  **Final Synthesis:** The model generates the final answer using the original sources plus the Contrastive Map created in Stage 2.
+
+The experiment compares this to a standard "Read-and-Answer" (Direct) approach and a standard Chain-of-Thought (CoT) approach.
+
+### 5. Dataset or Benchmark
+*   **MuSiQue-Answerable:** A multi-hop QA dataset designed to require integration of up to 4 disparate sources.
+*   **StrategyQA:** To test implicit reasoning where multi-source information must be synthesized against common-sense knowledge.
+*   **Contradictory-HotpotQA (Synthetic):** A modified version of HotpotQA where one supporting document is slightly altered to contradict another, testing the model's robustness to misinformation.
+
+### 6. Evaluation Metrics
+*   **Exact Match (EM) and F1 Score:** Standard metrics for QA accuracy.
+*   **Reasoning Trace Fidelity:** A manual or model-based audit (using a stronger model like GPT-4o) to check if the final answer correctly cited the specific "dependency link" identified in the Contrastive Mapping stage.
+*   **Conflict Detection Sensitivity:** Accuracy in identifying the intentionally seeded contradictions in the synthetic dataset.
+
+### 7. Baselines
+*   **Standard RAG:** Context concatenation + direct prompt.
+*   **Chain-of-Thought (CoT):** "Think step-by-step" applied to the concatenated context.
+*   **Self-Ask:** A method where the model asks and answers sub-questions before the final answer.
+
+### 8. Ablations
+*   **No-Conflict Ablation:** Removing the requirement to find "tensions" and only asking for "similarities" between sources.
+*   **Source-Order Ablation:** Shuffling the order of sources to see if Contrastive Synthesis mitigates positional bias (the "lost-in-the-middle" effect).
+*   **Single-Source Control:** Running the pipeline on single-source queries to measure the "hallucination tax" (how often the model finds conflicts that don't exist).
+
+### 9. Failure Modes and Feasibility Risks
+*   **Over-Skepticism:** The model might hallucinate contradictions between perfectly compatible sources, leading to "I cannot answer" responses or convoluted reasoning.
+*   **Token Overhead:** The three-stage process significantly increases the number of tokens processed, which may increase latency and cost.
+*   **Sensitivity to Prompting:** The "Contrastive Mapping" stage might require highly specific prompt engineering to prevent the model from simply summarizing the documents instead of analyzing their relationship.
+*   **Feasibility:** This is highly feasible using existing API-based models (e.g., Claude 3.5 Sonnet, GPT-4o) or open-weights models (e.g., Llama-3-70B) with sufficient context windows.

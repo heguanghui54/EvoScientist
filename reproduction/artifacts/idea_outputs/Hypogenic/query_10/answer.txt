@@ -1,0 +1,48 @@
+### 1. Title
+**Minimal Functional Subgraph (MFS) Pruning: Reducing Schema Hallucination in Text-to-SQL via Relational Graph Extraction**
+
+### 2. Problem and Motivation
+Current Large Language Models (LLMs) struggle with "Schema Linking" in Text-to-SQL tasks, especially when dealing with large-scale databases (e.g., the BIRD benchmark). When presented with dozens of tables and hundreds of columns, LLMs often hallucinate join conditions or select columns that are semantically similar but logically incorrect for the specific database schema. Existing techniques like RAG-based schema retrieval often provide too much "noise," leading the model to incorporate irrelevant tables into the generated SQL.
+
+### 3. Core Hypothesis
+The "Distraction Hypothesis": The primary bottleneck in complex Text-to-SQL is not the model’s understanding of SQL syntax, but its inability to ignore irrelevant schema elements in a large context window.
+
+**Hypothesis:** Explicitly constraining the LLM to generate a **Minimal Functional Subgraph (MFS)**—a subset of the schema containing only the necessary tables and their foreign-key relationships—*before* generating the SQL will result in higher Execution Accuracy than providing the full schema, even if the pruning step is performed by a smaller, less capable model.
+
+### 4. Method
+The proposed method follows a three-stage pipeline:
+
+1.  **Entity-Relationship Extraction:** Given a natural language query (NLQ), a model extracts the primary entities and attributes mentioned.
+2.  **MFS Construction:**
+    *   Represent the database schema as a graph $G = (V, E)$, where $V$ are tables/columns and $E$ are foreign key constraints.
+    *   Use a "Pruner" LLM to identify the "Anchor Nodes" (tables mentioned in the query).
+    *   Apply a shortest-path algorithm (or a Steiner Tree approximation) to find the minimal set of tables needed to connect all Anchor Nodes. This forms the MFS.
+3.  **Constrained Generation:**
+    *   Provide the LLM with *only* the DDL (Data Definition Language) of the MFS.
+    *   The prompt explicitly forbids using tables or columns outside this subgraph.
+    *   Generate the final SQL query using the restricted context.
+
+### 5. Dataset or Benchmark
+*   **Spider:** The standard cross-domain Text-to-SQL benchmark.
+*   **BIRD (Big Bench for Large-scale Database Grounded Text-to-SQL):** Crucial for testing the hypothesis, as it contains large schemas where "noise" is a significant factor.
+
+### 6. Evaluation Metrics
+*   **Execution Accuracy (EX):** The percentage of queries where the executed SQL result matches the ground truth result.
+*   **Exact Set Match (EM):** The percentage of queries where the generated SQL matches the gold SQL structure.
+*   **Schema Linking Precision/Recall:** Specifically measuring how many of the tables/columns in the MFS were actually necessary for the final query.
+
+### 7. Baselines
+*   **Direct Prompting:** Zero-shot and Few-shot GPT-4o/Claude 3.5 with the full schema.
+*   **DIN-SQL:** A multi-step decomposition framework (current state-of-the-art approach).
+*   **RESDSQL:** A specialized model for schema linking and SQL generation.
+
+### 8. Ablations
+*   **No-Graph Baseline:** Pruning based on semantic similarity (embedding search) without considering foreign-key connectivity.
+*   **Oracle Pruning:** Providing the model with the exact tables used in the gold SQL to determine the "upper bound" of performance if pruning were perfect.
+*   **Pruner Model Size:** Comparing the effectiveness of the MFS construction when using a small model (e.g., Llama-3-8B) versus a large model (GPT-4) for the pruning step.
+
+### 9. Failure Modes and Feasibility Risks
+*   **Over-Pruning (Recall Risk):** If the MFS construction step misses a table required for a "JOIN" (e.g., a bridge table in a many-to-many relationship), the SQL generation step will inevitably fail.
+*   **Schema Ambiguity:** In databases with redundant data or multiple paths between tables, the MFS might select a logically sound but contextually incorrect path.
+*   **Computational Overhead:** The three-stage process increases latency and API costs compared to single-turn generation.
+*   **Feasibility:** High. Graph representations of SQL schemas are standard, and the Steiner Tree problem, while NP-hard, is easily solvable for the small graphs typical of relational databases (usually <100 tables).

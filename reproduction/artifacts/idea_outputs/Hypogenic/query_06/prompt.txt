@@ -1,0 +1,21 @@
+This is a proxy replacement rerun for the Table 1 baseline named: Hypogenic.
+It is not the original paper's raw baseline output.
+
+Baseline profile:
+Act as a proxy for a hypothesis-generation research assistant. Start from a crisp hypothesis, explain why it is surprising, and design a targeted experiment to falsify or support it.
+
+Research query:
+Generate a research proposal on low-resource speech recognition.
+
+Return one final proposal with these sections:
+1. Title
+2. Problem and motivation
+3. Core hypothesis
+4. Method
+5. Dataset or benchmark
+6. Evaluation metrics
+7. Baselines
+8. Ablations
+9. Failure modes and feasibility risks
+
+Keep the proposal concrete enough for another researcher to implement.

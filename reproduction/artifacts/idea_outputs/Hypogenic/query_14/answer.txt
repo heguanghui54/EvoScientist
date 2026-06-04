@@ -1,0 +1,40 @@
+**Title:** Semantic Context-Aware Speculative Decoding (SCASD): Leveraging Intra-Prompt Redundancy for Drafting
+
+**Problem and Motivation:**
+Speculative decoding typically reduces Large Language Model (LLM) inference latency by using a small "drafter" model to predict future tokens, which the larger "target" model then verifies in parallel. However, this approach requires loading a second model into memory, which increases VRAM pressure and introduces synchronization overhead. Furthermore, small drafter models often lack the specific context or "style" of a long prompt, leading to low token acceptance rates in specialized domains (e.g., long-form code generation or legal document analysis).
+
+**Core Hypothesis:**
+Large Language Models exhibit high "semantic locality" in long-context inference. I hypothesize that the KV (Key-Value) cache of the current generation contains sufficient structural information to act as its own drafter. Specifically, a lightweight similarity-search mechanism over the existing KV cache can identify recurring patterns to "copy-paste" speculative token sequences, achieving a higher acceptance rate than a generalized small drafter model without the memory overhead of a second model.
+
+**Method:**
+1.  **Pattern Identification:** As the target model generates tokens, we monitor the attention heads. When a "trigger" token is generated, we perform a fast k-Nearest Neighbor (k-NN) search of the current hidden state against the keys stored in the KV cache.
+2.  **Sequence Speculation:** If a high-similarity match is found in the history, the system retrieves the subsequent $N$ tokens that followed that historical match.
+3.  **Dynamic Drafting:** These $N$ tokens are treated as the "draft" for the current step.
+4.  **Verification:** The target model performs a single forward pass on the $N+1$ tokens (the current token + the draft). Standard speculative verification (e.g., Rejection Sampling) is applied to accept or reject the draft.
+5.  **Fallback:** If no high-confidence match is found in the KV cache, the system reverts to standard autoregressive decoding for that step to avoid search overhead.
+
+**Dataset or Benchmark:**
+*   **LongBench:** To test performance on long-context retrieval and summarization.
+*   **HumanEval / MBPP:** To test structured repetition in code generation.
+*   **WikiText-103:** To evaluate general linguistic redundancy.
+
+**Evaluation Metrics:**
+*   **Tokens Per Second (TPS):** Primary measure of inference speed.
+*   **Speedup Ratio:** TPS (SCASD) / TPS (Standard Autoregressive).
+*   **Mean Acceptance Length ($\alpha$):** The average number of tokens accepted per speculative draft.
+*   **Memory Overhead:** VRAM usage compared to a standard Drafter-Target model pair.
+
+**Baselines:**
+1.  **Standard Autoregressive Decoding:** No speculation.
+2.  **Vanilla Speculative Decoding:** Using a small drafter model (e.g., Llama-7B as target, Llama-68M as drafter).
+3.  **Medusa:** Multiple-head speculation without a separate drafter model (to compare against internal head-based speculation).
+
+**Ablations:**
+*   **Similarity Threshold:** How strict the k-NN match must be to trigger a draft.
+*   **Draft Length ($N$):** Testing the optimal number of tokens to "copy" from the KV cache (e.g., 3, 5, or 10 tokens).
+*   **Search Frequency:** Comparing searching at every token vs. searching only after specific punctuation or structural markers (e.g., `\n`, `{`, ` `).
+
+**Failure Modes and Feasibility Risks:**
+*   **Search Latency:** If the k-NN search over the KV cache is too slow, it may negate the speed gains from parallel verification. This can be mitigated by using FAISS or optimized GPU kernels for similarity search.
+*   **Low Redundancy Tasks:** In highly creative or stochastic outputs (e.g., high-temperature poetry), the KV cache may not contain relevant recurring patterns, leading to a 0% acceptance rate and a slight slowdown due to search overhead.
+*   **Context Window Limits:** The effectiveness of the method is limited by the size of the KV cache; very short prompts will not have enough history to provide useful drafts.

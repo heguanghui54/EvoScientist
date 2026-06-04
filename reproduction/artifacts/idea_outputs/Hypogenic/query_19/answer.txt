@@ -1,0 +1,43 @@
+### 1. Title
+**Active Item Response Theory (A-IRT): Dynamic Prompt Selection for Accelerated LLM Ranking Convergence**
+
+### 2. Problem and Motivation
+Current LLM leaderboards (e.g., Open LLM Leaderboard, LMSYS Chatbot Arena) typically rely on exhaustive testing across static benchmarks or random sampling of user prompts. This approach is computationally expensive and inefficient because many prompts are either too easy (all models pass) or too hard (all models fail), providing little information about the relative performance of models. As the number of models and benchmarks grows, the cost of maintaining high-fidelity rankings becomes a bottleneck for open-source research.
+
+### 3. Core Hypothesis
+Evaluating LLMs on a subset of prompts selected via an active **Item Response Theory (IRT)** framework—specifically choosing prompts with high "discrimination" parameters for models of a specific "ability" level—can achieve a ranking correlation (Spearman’s $\rho > 0.95$) with the full benchmark while using less than 20% of the total inference budget.
+
+**Why this is surprising:** Most researchers treat benchmarks as monolithic sets. This hypothesis suggests that for any given pair of models, the vast majority of benchmark questions are "noise" that does not contribute to their relative ranking, and that these informative questions can be identified on-the-fly without prior knowledge of the new model’s specific weights.
+
+### 4. Method
+The proposed method, **Active-IRT**, treats LLM evaluation as an adaptive testing problem:
+1.  **Calibration Phase:** Using a set of "anchor" models (e.g., Llama-2, GPT-3.5, Mistral-7B), estimate the parameters for every prompt in a large pool (e.g., MMLU) using a 2-Parameter Logistic (2PL) IRT model. Each prompt is assigned a *difficulty* ($\beta$) and a *discrimination* ($\alpha$).
+2.  **Estimation Loop:** When a new model $M$ is evaluated:
+    *   Start with a small random seed of 10 prompts to get an initial "ability" ($\theta$) estimate.
+    *   **Active Selection:** Select the next $N$ prompts that maximize the **Fisher Information** at the current estimated $\theta$. This prioritizes prompts where the model has a ~50% chance of success and the prompt is known to distinguish well between similar models.
+    *   **Update:** Re-estimate $\theta$ using Maximum Likelihood Estimation.
+3.  **Termination:** Stop when the standard error of $\theta$ falls below a predefined threshold.
+
+### 5. Dataset or Benchmark
+*   **Primary Pool:** The **MMLU (Massive Multitask Language Understanding)** dataset (57 subjects, ~16k questions).
+*   **Secondary Pool:** **GSM8K** (for math-specific ranking) to test if the IRT parameters generalize across reasoning tasks.
+
+### 6. Evaluation Metrics
+*   **Ranking Fidelity:** Spearman’s Rank Correlation ($\rho$) between the Active-IRT leaderboard and the "Gold Standard" leaderboard (full benchmark results).
+*   **Efficiency Gain:** The ratio of prompts used in Active-IRT vs. the full benchmark to reach the same ranking stability.
+*   **Stability:** The variance in a model's rank when the active selection is repeated with different random seeds.
+
+### 7. Baselines
+*   **Uniform Random Sampling:** Selecting a fixed percentage of prompts randomly from the benchmark.
+*   **Static Difficulty Pruning:** Using only "hard" questions (as determined by average accuracy across anchor models) for all evaluations.
+*   **Full Benchmark:** The standard approach of running every model on every prompt.
+
+### 8. Ablations
+*   **Anchor Set Size:** How many models are needed in the calibration phase to get reliable prompt parameters? (Test with 3, 5, 10, and 20 anchors).
+*   **IRT Model Complexity:** Compare the 1PL (Rasch) model (difficulty only) against the 2PL model (difficulty + discrimination).
+*   **Cross-Domain Transfer:** Use IRT parameters calibrated on "Humanities" prompts to evaluate models on "STEM" prompts to test parameter robustness.
+
+### 9. Failure Modes and Feasibility Risks
+*   **Model Overfitting:** If a model is trained specifically on the "high discrimination" prompts, the leaderboard becomes gameable. (Mitigation: Keep the IRT parameters and selected subsets private or rotate them).
+*   **Parameter Drift:** As models get significantly smarter, prompts that were once discriminative may become "too easy" for all new models (ceiling effect). (Mitigation: Periodically update the anchor set with state-of-the-art models).
+*   **Computational Overhead:** The cost of re-estimating $\theta$ after every few prompts must be lower than the cost of the LLM inference itself. (Mitigation: Batch the active selection process).

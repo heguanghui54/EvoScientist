@@ -1,0 +1,43 @@
+**1. Title**
+Cross-Entropy Divergence Filtering (CEDF): Prioritizing Domain-Unique Signal over General-Domain Fluency
+
+**2. Problem and Motivation**
+Standard data filtering pipelines for Large Language Models (LLMs) rely heavily on "fluency" metrics, such as perplexity scores from a general-purpose model (e.g., a model trained on Wikipedia or C4). While effective for general-purpose pre-training, these filters often discard high-value domain-specific data—such as dense scientific papers, legal statutes, or complex code—because they appear as "outliers" or "low-fluency" noise relative to standard English. Conversely, keeping all domain-related data introduces noise from low-quality forums or OCR errors. There is a need for a filtering mechanism that distinguishes between "domain-relevant complexity" and "generic linguistic noise."
+
+**3. Core Hypothesis**
+Data samples that exhibit a high **Cross-Entropy Divergence**—defined as having high perplexity under a general-purpose LLM but low perplexity under a small, domain-specific "expert" model—contain the highest density of unique domain knowledge. Prioritizing these "divergent" samples during fine-tuning or specialized pre-training will yield superior downstream performance compared to filtering based on absolute perplexity or keyword density.
+
+**4. Method**
+The CEDF method follows a four-step pipeline:
+1.  **Seed Training:** Train or fine-tune a "micro-expert" model (e.g., 125M–400M parameters) on a small, gold-standard, curated dataset of the target domain (e.g., 1GB of peer-reviewed journals).
+2.  **Scoring:** For every candidate document $d$ in a large, noisy domain-specific corpus, calculate two scores:
+    *   $L_{gen}(d)$: Normalized log-likelihood from a frozen general-purpose model (e.g., Llama-3-8B).
+    *   $L_{exp}(d)$: Normalized log-likelihood from the micro-expert model.
+3.  **Divergence Calculation:** Assign a priority score $S = L_{gen}(d) - L_{exp}(d)$. High $S$ indicates the content is surprising to a general model but predictable to a domain expert.
+4.  **Selection:** Rank the noisy corpus by $S$ and select the top $N$ tokens for the final training set.
+
+**5. Dataset or Benchmark**
+*   **Domain:** Biomedicine.
+*   **Source Corpus:** A "noisy" version of the PubMed Open Access Subset (including OCR errors and supplementary materials) mixed with general web crawls (Common Crawl filtered for "medical" keywords).
+*   **Evaluation Benchmark:** PubMedQA, MedQA (USMLE style), and BioASQ.
+
+**6. Evaluation Metrics**
+*   **Primary:** Accuracy/F1-score on the evaluation benchmarks after training a base model (e.g., Mistral-7B) on the filtered data.
+*   **Efficiency:** Performance-per-token (how much accuracy is gained per 1 billion tokens of filtered data).
+*   **Knowledge Probe:** Accuracy on a "Rare Term" extraction task to see if the filter preserved niche terminology.
+
+**7. Baselines**
+*   **Random Sampling:** Uniformly sampling from the noisy domain corpus.
+*   **Perplexity Filtering:** Selecting data with the lowest absolute perplexity according to a general-purpose model (traditional approach).
+*   **Keyword Filtering:** Selecting data based on the frequency of domain-specific terms (e.g., UMLS medical terms).
+*   **EL2N (Error L2-Norm):** A common data-pruning metric used in vision, adapted for language.
+
+**8. Ablations**
+*   **Expert Model Size:** Testing if a 125M expert is sufficient or if a larger (1B+) expert is required for effective scoring.
+*   **Seed Size:** Varying the amount of gold-standard data used to train the micro-expert (from 10MB to 10GB).
+*   **Divergence vs. Expert-only:** Comparing $L_{gen} - L_{exp}$ against simply using $L_{exp}$ (to see if the general model's baseline is actually necessary).
+
+**9. Failure Modes and Feasibility Risks**
+*   **Expert Overfitting:** If the micro-expert overfits to the gold-standard seed, it might assign high scores only to documents that are stylistically identical to the seed, missing valid but stylistically diverse domain data.
+*   **Computational Overhead:** Running two models over a multi-terabyte corpus is computationally expensive. This can be mitigated by using heavily quantized versions of the scoring models or subsampling.
+*   **Short Document Bias:** Perplexity-based metrics often favor shorter, repetitive documents. Length normalization is required to prevent the filter from selecting only "list-like" data.

@@ -1,0 +1,42 @@
+**1. Title**
+Minimizing Intervention Frequency (MIF) as a Robust Proxy for Latent Value Alignment
+
+**2. Problem and Motivation**
+Current value alignment techniques, such as Reinforcement Learning from Human Feedback (RLHF), rely on explicit reward models derived from human preferences. However, these models often suffer from "reward hacking," where agents exploit the gap between the proxy reward and actual human intent. Furthermore, explicit rules (Constitutional AI) struggle with the "specification gaming" problem in novel or high-entropy environments. There is a critical need for a training signal that captures the latent "common sense" of human values without requiring an exhaustive list of explicit preferences.
+
+**3. Core Hypothesis**
+Explicitly optimizing an agent to minimize the frequency and intensity of human interventions (e.g., "undo" commands, overrides, or emergency stops) produces more robust out-of-distribution (OOD) alignment than optimizing for an explicit preference-based reward model. This is based on the intuition that humans intervene primarily when an agent violates a high-stakes latent value, making "non-intervention" a high-fidelity signal for "safe and aligned behavior."
+
+**4. Method**
+*   **Environment Setup:** Utilize a multi-agent sandbox (e.g., a modified "Overcooked" or "Crafter" environment) containing "fragile" objects and human-simulated "safety inspectors."
+*   **Training Protocol:**
+    *   **Group A (Baseline):** Trained using a standard reward model based on pairwise preferences (RLHF).
+    *   **Group B (MIF):** Trained with a sparse reward signal. The primary objective is task completion, but the agent receives a massive negative penalty whenever a human supervisor intervenes to stop or correct its trajectory.
+*   **Intervention Mechanism:** The supervisor triggers an intervention based on a hidden set of "taboo" states (e.g., breaking an object, blocking a path) that the agent is never explicitly told about.
+*   **Dynamic Scaling:** Implement a "curiosity-driven" exploration where the agent purposefully tests boundaries to map the "intervention-free zone."
+
+**5. Dataset or Benchmark**
+*   **Environment:** A custom-built "Household Assistant" simulator using the AI2-THOR or Habitat platform.
+*   **Scenarios:** 50 distinct tasks (e.g., "clean the kitchen," "organize the desk") with 200 hidden "value constraints" (e.g., "don't move the sleeping cat," "don't put electronics in water").
+*   **OOD Testing:** Introduce 10 entirely new objects and 5 new rooms not seen during the intervention-mapping phase.
+
+**6. Evaluation Metrics**
+*   **Intervention Rate (IR):** The frequency of human overrides in OOD scenarios.
+*   **Alignment Stability:** The variance in agent behavior when the reward model is perturbed.
+*   **Task Success Rate (TSR):** To ensure the agent isn't just "doing nothing" to avoid interventions (the "lazy agent" problem).
+*   **Value Generalization Score:** The agent’s ability to avoid hidden constraints in new environments without prior feedback.
+
+**7. Baselines**
+*   **PPO-RLHF:** Standard Proximal Policy Optimization using a reward model trained on human preferences.
+*   **Constitutional AI (CAI):** An agent constrained by a predefined set of natural language principles (e.g., "Be helpful, harmless, and honest").
+*   **Safe RL (Lagrangian):** A baseline that treats safety as a hard constraint with a fixed cost.
+
+**8. Ablations**
+*   **Intervention Granularity:** Compare binary "Stop" signals vs. scalar "Correction" signals (e.g., moving the agent back 2 steps).
+*   **Human-in-the-loop vs. Simulated Supervisor:** Replacing the simulated safety inspector with a heuristic-based "oracle" to see if the hypothesis holds without human-centric noise.
+*   **Penalty Magnitude:** Varying the weight of the intervention penalty to find the threshold where the agent becomes overly risk-averse (The "Freeze" point).
+
+**9. Failure Modes and Feasibility Risks**
+*   **The "Lazy Agent" Trap:** The agent may learn that the best way to minimize intervention is to do absolutely nothing. Mitigation: Use a "minimum progress" threshold or a secondary, lower-weighted task reward.
+*   **Intervention Noise:** Human supervisors may be inconsistent. Mitigation: Use multiple supervisor models and average the intervention signal.
+*   **Sample Efficiency:** Learning from sparse intervention signals may require significantly more environment steps than dense reward models. Feasibility: High-throughput simulation environments are necessary to make this computationally viable.

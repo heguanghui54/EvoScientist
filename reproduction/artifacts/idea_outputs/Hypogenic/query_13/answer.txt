@@ -1,0 +1,49 @@
+### 1. Title
+**State-Inversion Synthesis: Boosting Code Reasoning via Target-State-to-Code Mapping**
+
+### 2. Problem and Motivation
+Current synthetic data generation for code Large Language Models (LLMs) primarily follows the "Self-Instruct" paradigm: generating a natural language prompt and then generating the corresponding code. While effective for learning syntax and API usage, this approach often fails to teach models the underlying causal relationship between code execution and memory state. Models frequently hallucinate the outcome of complex loops or pointer manipulations because they treat code as a sequence of tokens rather than a series of state transformations. There is a need for a synthesis method that forces the model to reason backward from a desired execution outcome to the logic required to produce it.
+
+### 3. Core Hypothesis
+Training a model on **Inverse State Mapping**—where the input is a specific target memory state (e.g., a complex nested dictionary or a specific heap configuration) and the output is the minimal code required to reach that state from a given input—will result in higher performance on competitive programming benchmarks (e.g., HumanEval, MBPP) than training on standard instruction-to-code pairs.
+
+**Why this is surprising:** Most researchers assume that "intent" (natural language) is the primary signal for code generation. This hypothesis suggests that "state delta" is a more foundational signal for logical reasoning, and that a model can learn general programming logic better by solving "how do I get to this specific memory state?" rather than "how do I solve this word problem?"
+
+### 4. Method
+1.  **Seed Program Selection:** Use a small set of high-quality, diverse Python functions from the public domain.
+2.  **State Extraction:** Execute these programs using a tracer (like `sys.settrace` or a debugger-like wrapper). At various points in the execution, capture the "State Snapshot": the values of all local and global variables, including complex structures like lists, sets, and objects.
+3.  **Synthesis Task Generation:**
+    *   **Input:** A "Start State" (e.g., `x = [5, 2, 9]`) and a "Target State" (e.g., `x = [2, 5, 9]`).
+    *   **Task:** Generate the Python code (e.g., `x.sort()`) that transforms the Start State into the Target State.
+4.  **Teacher Verification:** Use a powerful teacher model (e.g., GPT-4o) to generate multiple candidate solutions for these state-transition tasks.
+5.  **Execution Filtering (The "Ground Truth" Filter):** Every synthetic example is executed in a sandbox. If the generated code does not result in the exact Target State when given the Start State, the example is discarded. This ensures 100% label accuracy for the synthetic data.
+6.  **Fine-tuning:** Fine-tune a base model (e.g., Llama-3-8B) on these verified (State-In, Code-Out) pairs.
+
+### 5. Dataset or Benchmark
+*   **Training Set:** 50,000 synthetic "State-Inversion" pairs generated from the execution traces of 2,000 seed problems.
+*   **Evaluation:**
+    *   **HumanEval & MBPP:** To test general coding proficiency.
+    *   **CRUXEval:** Specifically designed to test code reasoning and execution simulation.
+    *   **LeetCode Hard:** To test complex algorithmic reasoning.
+
+### 6. Evaluation Metrics
+*   **Pass@k:** The standard metric for code generation.
+*   **Reasoning Accuracy:** Percentage of cases where the model correctly predicts the output of a code snippet (using the CRUXEval-O benchmark).
+*   **State Alignment Score:** A custom metric measuring how close the model's generated code gets to the intended execution state in cases where the code is syntactically correct but logically flawed.
+
+### 7. Baselines
+*   **Base Model:** The pre-trained model without fine-tuning (e.g., Llama-3-8B).
+*   **CodeAlpaca:** A model fine-tuned on standard instruction-following data.
+*   **OSS-Instruct:** A baseline using the "evol-instruct" method of mutating existing code snippets.
+*   **Direct Execution Prediction:** Training the model to predict the output of a code snippet (Forward reasoning) rather than the code itself (Inverse reasoning).
+
+### 8. Ablations
+*   **State Complexity:** Compare training on simple scalar states (integers/strings) vs. complex data structures (nested JSON/objects).
+*   **Verification vs. No Verification:** Compare the performance of the model trained on all teacher-generated code vs. only the code that passed the execution-filter.
+*   **State vs. Natural Language:** Mix varying ratios of State-Inversion data with standard instruction-to-code data to find the optimal balance.
+
+### 9. Failure Modes and Feasibility Risks
+*   **State Explosion:** Randomly generated states might be reachable by infinite variations of code, making the learning signal noisy.
+*   **Representation Bottleneck:** Representing a massive heap state in text (JSON-like) might exceed the model's context window or be difficult for the tokenizer to process efficiently.
+*   **Overfitting to Short Snippets:** The model might become excellent at "micro-logic" (sorting, filtering) but lose the ability to structure large-scale programs or follow complex natural language requirements.
+*   **Feasibility:** Python's execution tracing is mature, making data collection feasible, but the sandbox must be strictly controlled to prevent the execution of malicious or resource-intensive synthetic code.

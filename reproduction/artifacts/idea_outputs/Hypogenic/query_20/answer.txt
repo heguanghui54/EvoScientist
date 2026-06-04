@@ -1,0 +1,42 @@
+### 1. Title
+**Structural vs. Lexical Diversity: Quantifying Logical Trajectory Variety in Chain-of-Thought Generation**
+
+### 2. Problem and Motivation
+Current evaluation metrics for diversity in text generation—such as Self-BLEU, Distinct-n, and semantic embedding variance—primarily focus on surface-level lexical variation or broad semantic shifts. However, in the context of Large Language Models (LLMs) performing reasoning tasks (e.g., Chain-of-Thought), these metrics fail to distinguish between "useful diversity" (exploring different logical paths to a solution) and "noise" (mere synonym swapping or stylistic jitter). Consequently, models that appear "diverse" by standard metrics may simply be generating redundant reasoning steps in different words, which does not improve ensemble techniques like Self-Consistency.
+
+### 3. Core Hypothesis
+Increasing lexical diversity (vocabulary and syntax variance) beyond a certain threshold in multi-step reasoning tasks is negatively correlated with reasoning accuracy, whereas increasing **Structural Diversity**—defined as the variety of unique logical dependency graphs extracted from reasoning chains—is positively correlated with the performance gain of majority-vote ensembles.
+
+### 4. Method
+The proposed method involves three stages:
+1.  **Generation:** Sample $k$ reasoning paths (Chain-of-Thought) for a given prompt using high-temperature sampling or diverse beam search.
+2.  **Structural Extraction:** Use a smaller, frozen "Extractor" model (e.g., GPT-4o-mini or a fine-tuned Llama-3) to convert each reasoning path into a simplified **Reasoning Graph**. Nodes represent intermediate propositions or calculations, and edges represent logical dependencies (e.g., "Step A implies Step B").
+3.  **Diversity Quantification:**
+    *   Calculate **Structural Entropy**: The Shannon entropy of the set of unique graph isomorphisms generated across $k$ samples.
+    *   Calculate **Mean Graph Edit Distance (mGED)**: The average distance between the extracted logical structures.
+4.  **Correlation Analysis:** Measure how these structural metrics correlate with the accuracy of a Self-Consistency ensemble compared to traditional metrics like Self-BLEU.
+
+### 5. Dataset or Benchmark
+*   **GSM8K (Grade School Math):** To evaluate structural diversity in deterministic mathematical logic.
+*   **StrategyQA:** To evaluate diversity in multi-hop commonsense reasoning where multiple evidence paths might exist.
+*   **Big-Bench Hard (BBH):** Specifically the "Logical Deduction" and "Formal Fallacies" subsets.
+
+### 6. Evaluation Metrics
+*   **Structural Entropy (Proposed):** Diversity based on unique logical paths.
+*   **Self-Consistency Gain:** The delta between the accuracy of a single greedy sample and a majority vote of $k$ diverse samples.
+*   **Standard Diversity Baselines:** Self-BLEU (overlap), Distinct-n (n-gram variety), and V-Measure (cluster quality in embedding space).
+
+### 7. Baselines
+*   **Temperature Sampling ($T=0.7$ to $1.2$):** The standard method for inducing diversity.
+*   **Diverse Beam Search (DBS):** A decoding-time intervention to force lexical variety.
+*   **Stochastic Paraphrasing:** A baseline where a model is explicitly prompted to "rephrase the previous reasoning path" to see if lexical diversity without structural change improves results.
+
+### 8. Ablations
+*   **Granularity of Extraction:** Compare "Sentence-level" nodes vs. "Proposition-level" nodes in the reasoning graph.
+*   **Model Size for Extraction:** Testing if a 7B model can extract logical structures as reliably as a 70B model for the purpose of the metric.
+*   **Graph vs. Sequence:** Comparing the graph-based diversity to a simple "step-ordering" diversity (treating the logic as a linear sequence of abstract tags).
+
+### 9. Failure Modes and Feasibility Risks
+*   **Extraction Noise:** The "Extractor" model might fail to capture the true logic, or it might hallucinate dependencies, leading to an inaccurate Structural Entropy score.
+*   **Isomorphism Complexity:** Computing graph isomorphisms for very long reasoning chains (e.g., 20+ steps) could become computationally expensive, though this can be mitigated by simplifying the graph schema.
+*   **Redundancy in Logic:** In simple tasks (like basic arithmetic), there may only be one valid logical path, making the structural diversity metric collapse to zero regardless of lexical variety. This makes the metric more suitable for complex, multi-hop reasoning than for simple tasks.

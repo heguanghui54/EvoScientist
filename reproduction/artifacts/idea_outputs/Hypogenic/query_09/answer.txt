@@ -1,0 +1,41 @@
+### 1. Title
+**SHABA: Semantic Head-Aware Bit-Allocation for Edge LLM Quantization**
+
+### 2. Problem and Motivation
+Deploying Large Language Models (LLMs) on edge devices is constrained by strict memory bandwidth and capacity. Current quantization techniques (like GPTQ or AWQ) typically apply a uniform bit-width (e.g., 4-bit) across all weights or use channel-wise scaling based on magnitude. However, uniform quantization fails to account for the functional heterogeneity of the transformer architecture. Some attention heads are "heavy hitters" that capture complex semantic relationships, while others perform redundant or simple syntactic tasks. Forcing a uniform bit-width either wastes memory on redundant parameters or degrades the performance of critical ones.
+
+### 3. Core Hypothesis
+The information density of attention heads in an LLM is non-uniform and can be quantified using the Shannon Entropy of their attention maps. **Hypothesis:** By allocating higher bit-precision (e.g., 8-bit) to high-entropy "semantic" heads and aggressive low-precision (e.g., 2-bit) to low-entropy "structural" heads, an LLM can achieve a lower total memory footprint than a uniform 4-bit model while maintaining superior reasoning and linguistic performance.
+
+### 4. Method
+The proposed method, **SHABA**, consists of three stages:
+1.  **Entropy Profiling:** Run a small calibration dataset (e.g., 128 samples from Pile) through the pre-trained model. For each attention head $h$ in each layer $l$, calculate the average Shannon Entropy $H$ of the attention matrix $A$: $H(A) = -\sum P_{ij} \log P_{ij}$.
+2.  **Bit-Budgeting Optimization:** Define a target average bit-width (e.g., 3.5 bits). Formulate a constrained optimization problem to assign bit-widths $B \in \{2, 4, 8\}$ to each head such that the weighted average of $B$ meets the target, maximizing the total entropy preserved.
+3.  **Head-Wise Quantization:** Apply Post-Training Quantization (PTQ) using the assigned bit-widths. For 2-bit and 4-bit heads, use rounding-to-nearest with head-wise scaling factors. For 8-bit heads, use simple symmetric quantization to preserve high-fidelity signals.
+4.  **Edge Implementation:** Use a custom inference kernel that supports mixed-precision head-wise computation, grouping heads of the same bit-width to maintain SIMD efficiency.
+
+### 5. Dataset or Benchmark
+*   **Calibration:** A 128-sample subset of the **RedPajama** dataset.
+*   **Language Modeling:** **WikiText-2** and **C4** (to measure perplexity).
+*   **Reasoning/Knowledge:** **MMLU** (Massive Multitask Language Understanding), **HellaSwag** (commonsense reasoning), and **GSM8K** (math reasoning).
+
+### 6. Evaluation Metrics
+*   **Perplexity (PPL):** Lower is better.
+*   **Task Accuracy:** Zero-shot accuracy on MMLU and HellaSwag.
+*   **Compression Ratio:** Total model size in MB compared to FP16 and uniform 4-bit.
+*   **Edge Latency:** Inference speed (tokens/sec) on a **Raspberry Pi 5 (8GB)** or **NVIDIA Jetson Orin Nano**.
+
+### 7. Baselines
+*   **Uniform 4-bit GPTQ:** The standard for post-training quantization.
+*   **AWQ (Activation-aware Weight Quantization):** A channel-wise scaling method that protects salient weights.
+*   **Round-To-Nearest (RTN) 3-bit:** A naive baseline for aggressive compression.
+
+### 8. Ablations
+*   **Random Allocation:** Assigning bit-widths to heads randomly rather than via entropy.
+*   **Magnitude-based Allocation:** Assigning bit-widths based on the $L_2$ norm of the weights instead of the entropy of the activations.
+*   **Layer-wise vs. Head-wise:** Comparing the benefit of granularity (treating the whole layer as one bit-width vs. individual heads).
+
+### 9. Failure Modes and Feasibility Risks
+*   **Kernel Overhead:** The primary risk is that the overhead of managing mixed-precision kernels on edge hardware might negate the speed gains from reduced memory bandwidth. If the hardware cannot switch between 2-bit and 8-bit logic efficiently, latency may increase despite a smaller model size.
+*   **Entropy Stability:** The entropy of a head might be highly dependent on the calibration data. If the calibration set is too narrow (e.g., only code), the model might perform poorly on general prose.
+*   **Feasibility:** PTQ is computationally cheap, making this highly feasible for rapid iteration. The main engineering challenge lies in the custom C++/CUDA kernels for mixed-bit-width matrix multiplication.

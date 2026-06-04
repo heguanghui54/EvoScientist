@@ -1,0 +1,42 @@
+### 1. Title
+**Counterfactual Pivot Tracking (CPT): Enhancing Agentic Reasoning via Entropy-Based Backtracking**
+
+### 2. Problem and Motivation
+Large Language Models (LLMs) frequently fail in complex, multi-step reasoning tasks due to "cascaded errors." When an agent makes a single logical or factual mistake early in a reasoning chain, it typically continues to build upon that false premise, leading to a total failure of the trajectory. Current "Self-Correction" methods often fail because the model is biased by its own previous incorrect reasoning present in the context window. There is a need for a mechanism that allows agents to identify the specific "pivot point" where a reasoning path diverged from correctness and systematically explore alternative logical branches.
+
+### 3. Core Hypothesis
+**Hypothesis:** Explicitly identifying "high-entropy pivot points"—steps where multiple plausible logical paths exist—and forcing the agent to generate counterfactual alternatives at these points will yield higher success rates in long-horizon reasoning than standard self-correction or linear Chain-of-Thought.
+
+**Why this is surprising:** Most current agents treat reasoning as a linear or best-of-N search. This hypothesis suggests that the *uncertainty* of a step (its entropy) is a more reliable signal for where to backtrack than the model's posterior "self-reflection" on whether the final answer is wrong.
+
+### 4. Method
+The CPT framework consists of three phases:
+1.  **Exploration with Uncertainty Tagging:** The agent generates a reasoning chain. At each step $i$, the model must output: (a) the logical step, and (b) a "pivot score" (1-10) indicating how many other valid logical directions could have been taken at this juncture.
+2.  **External Verification:** A reward model or a deterministic verifier (e.g., a code interpreter or math checker) evaluates the final output.
+3.  **Counterfactual Backtracking:** If the outcome is incorrect, the agent does not restart. Instead, it identifies the step with the highest "pivot score." It is then prompted to: *"At step $i$, you chose Path A. Generate the most likely alternative, Path B, and continue reasoning from there."* This forces the model to prune the failed branch and explore the counterfactual space without re-generating the early, correct steps.
+
+### 5. Dataset or Benchmark
+*   **MATH Benchmark:** To test rigorous logical steps in mathematics.
+*   **Big-Bench Hard (BBH):** Specifically the "Logical Deduction" and "Navigate" tasks where a single wrong turn ruins the outcome.
+*   **AIME (American Invitational Mathematics Examination):** To test extremely high-depth reasoning (20+ steps).
+
+### 6. Evaluation Metrics
+*   **Success Rate (Accuracy):** Percentage of problems solved correctly.
+*   **Recovery Rate:** The ratio of problems solved after an initial failure through backtracking vs. total initial failures.
+*   **Token Efficiency:** The number of tokens required to reach a correct solution compared to Tree-of-Thought (ToT).
+
+### 7. Baselines
+*   **Chain-of-Thought (CoT):** Standard zero-shot/few-shot prompting.
+*   **Self-Consistency (SC):** Majority voting over $N$ independent paths.
+*   **Tree-of-Thoughts (ToT):** Using a search algorithm (BFS/DFS) to explore the reasoning space.
+*   **Standard Self-Correction:** Asking the model "Review your answer and fix any mistakes" after a failure.
+
+### 8. Ablations
+*   **Random Backtracking:** Backtracking to a random step instead of the "high-entropy pivot point" to test if the entropy signal is actually useful.
+*   **No Counterfactual Prompting:** Backtracking to the pivot but providing no guidance on exploring an alternative path.
+*   **Linear Retry:** Simply retrying the entire prompt from scratch upon failure.
+
+### 9. Failure Modes and Feasibility Risks
+*   **Poor Self-Calibration:** The LLM might be "confident but wrong," assigning a low pivot score (low entropy) to the very step where it made a mistake. This would lead the agent to backtrack to the wrong location.
+*   **Context Window Saturation:** Maintaining multiple branches and counterfactuals might exhaust the context window for very long problems.
+*   **Feasibility:** This method is highly feasible as it requires no fine-tuning, only structured prompting and a lightweight state-management wrapper (e.g., Python/LangGraph). Its success depends heavily on the base model's ability to estimate its own uncertainty.

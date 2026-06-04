@@ -1,0 +1,43 @@
+### 1. Title
+**Cognitive Calibration: Evaluating LLM UX through Real-time Uncertainty Visualization.**
+
+### 2. Problem and Motivation
+Current Large Language Model (LLM) evaluations focus heavily on model performance (accuracy, reasoning, safety) rather than the human-AI interaction loop. A primary pain point in LLM UX is the "Black Box" phenomenon: users cannot distinguish between a model’s high-confidence factual statement and a high-confidence hallucination. This leads to "Ghost Chasing," where users spend excessive time iteratively prompting a model that lacks the underlying data to answer correctly. Improving UX requires moving beyond raw accuracy to "Cognitive Calibration"—the degree to which a user’s trust in the model matches the model’s actual competence at a specific moment.
+
+### 3. Core Hypothesis
+Explicitly visualizing token-level uncertainty (e.g., via confidence heatmaps) in the UI significantly reduces task completion time and "Prompt Iteration Fatigue" compared to using a more accurate but opaque model. Specifically, a user will be more productive with a 7B-parameter model that highlights its own uncertainty than with a 70B-parameter model that presents all outputs with uniform visual certainty.
+
+### 4. Method
+The study employs a 2x2 factorial design with a controlled user experiment:
+1.  **Participants:** 60 users (30 technical, 30 non-technical) tasked with solving complex information retrieval and code debugging problems.
+2.  **Interface Variables:**
+    *   *Control:* Standard chat interface (plain text).
+    *   *Experimental:* "Uncertainty UI" where text background color maps to log-probability (e.g., white = high confidence, deep red = low confidence/high entropy).
+3.  **Model Variables:**
+    *   *High-Capability (HC):* A SOTA model (e.g., GPT-4o).
+    *   *Mid-Capability (MC):* A smaller, more error-prone model (e.g., Llama-3-8B).
+4.  **Task Design:** Users are given "Impossible Tasks" (questions with no answer in the training data) and "Difficult Tasks" (requiring multi-step reasoning).
+5.  **Procedure:** Users are timed as they attempt to reach a "verified" answer. We track how quickly they give up on impossible tasks and how efficiently they verify difficult ones.
+
+### 5. Dataset or Benchmark
+*   **Tasks:** A curated subset of the **StrategyQA** and **HaluEval** datasets, modified to include "Unanswerable" variants.
+*   **Ground Truth:** Each task has a verified "Correct" or "Unanswerable" status.
+
+### 6. Evaluation Metrics
+*   **Calibration Score (Primary):** The correlation between the user's reported confidence in an answer and the model's actual correctness.
+*   **Time-to-Abandon (TTA):** Time spent on unanswerable tasks (lower is better, indicating the user recognized the model’s limitations quickly).
+*   **Prompt Iteration Count:** The number of follow-up prompts required to reach a correct conclusion.
+*   **System Usability Scale (SUS):** Post-task subjective satisfaction.
+
+### 7. Baselines
+*   **Baseline 1 (Standard HC):** GPT-4o with no uncertainty visualization.
+*   **Baseline 2 (Verbalized Uncertainty):** A model prompted to explicitly state "I am unsure" in the text response (e.g., "Self-Correction" or "Chain-of-Verification" methods).
+
+### 8. Ablations
+*   **Granularity Ablation:** Compare token-level heatmaps vs. sentence-level confidence scores.
+*   **Modality Ablation:** Compare visual heatmaps vs. numerical percentages (e.g., "85% confident") displayed at the end of the response.
+
+### 9. Failure Modes and Feasibility Risks
+*   **Cognitive Overload:** Users may find flickering colors or heatmaps distracting, leading to lower performance despite better information.
+*   **The "Hallucination Trap":** LLMs are often "confidently wrong." If the model assigns high log-probability to a hallucination, the UI will mislead the user. This experiment assumes a non-zero correlation between log-probs and truthfulness, which is a known limitation in RLHF-tuned models.
+*   **Feasibility:** Accessing log-probabilities is easy for open-source models (Llama/Mistral) but restricted for some closed-source APIs, potentially limiting the choice of "High-Capability" models.

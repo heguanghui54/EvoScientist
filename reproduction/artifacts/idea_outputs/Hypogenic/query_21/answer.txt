@@ -1,0 +1,37 @@
+1. **Title**
+Disentangling Eloquence from Automation: Reducing AI-Detection False Positives via Syntactic Complexity Variance (SCV) Analysis
+
+2. **Problem and Motivation**
+Current AI-generated content (AIGC) detectors suffer from high False Positive Rates (FPR), particularly when evaluating non-native English speakers, academic researchers, or legal professionals. This "bias toward clarity" occurs because LLMs are trained to minimize perplexity, and high-quality human technical writing also minimizes perplexity for the sake of communication. Consequently, detectors often conflate "clear, structured writing" with "machine-generated text." This creates a significant ethical risk, where students or professionals are wrongly accused of academic dishonesty simply for writing clearly.
+
+3. **Core Hypothesis**
+The "Stylistic Overlap Hypothesis": False positives occur because detectors focus on local token-level probability (low entropy) rather than global structural variance. I hypothesize that human-written text—even when highly formal—exhibits significantly higher **Syntactic Complexity Variance (SCV)** across a document compared to LLM-generated text, which maintains a "flat" or homogeneous complexity profile. By weighting structural variance over mean perplexity, we can reduce false positives in technical human writing without significantly degrading detection of true AI content.
+
+4. **Method**
+The proposed method, **VarDetect**, operates in three stages:
+*   **Stage 1: Feature Extraction.** For a given document, calculate the Dependency Tree Depth (DTD) and the Clause-to-Sentence Ratio (CSR) for every sentence.
+*   **Stage 2: Variance Mapping.** Instead of averaging these scores, generate a "Complexity Profile" (a time-series of syntactic depth). Calculate the standard deviation and the "burstiness" (inter-event timing of complex structures) of this profile.
+*   **Stage 3: Contrastive Classification.** Train a lightweight Random Forest classifier that takes two inputs: (a) the output probability from a standard transformer-based detector (e.g., RoBERTa-base-detector) and (b) the SCV features. The model is trained to "overrule" the transformer detector if the SCV is above a specific human-calibrated threshold.
+
+5. **Dataset or Benchmark**
+*   **Human Sample (The "High-Risk" Set):** 5,000 TOEFL essays (non-native speakers), 2,000 ArXiv abstracts (Physics/CS), and 1,000 legal briefs.
+*   **AI Sample:** 8,000 matched-topic generations from GPT-4o, Claude 3.5 Sonnet, and Llama-3 (70B), using "standard" and "academic" personas.
+*   **Total:** 16,000 samples, split 60/20/20 for training, validation, and testing.
+
+6. **Evaluation Metrics**
+*   **Primary Metric:** False Positive Rate (FPR) at a fixed True Positive Rate (TPR) of 90%.
+*   **Secondary Metrics:** Area Under the Precision-Recall Curve (AUPRC) and the "Native-Speaker Gap" (the difference in FPR between native and non-native English samples).
+
+7. **Baselines**
+*   **GPTZero:** Commercial/API-based baseline for current state-of-the-art.
+*   **DetectGPT:** A zero-shot probability-based baseline.
+*   **RoBERTa-Large-Detector:** A standard supervised classification baseline.
+
+8. **Ablations**
+*   **Mean vs. Variance:** Test the model using only the mean syntactic complexity versus only the variance (SCV) to prove that the *fluctuation* of complexity is the key differentiator.
+*   **No-Transformer:** Test the SCV features alone to see if structural variance is a sufficient signal for detection without perplexity data.
+
+9. **Failure Modes and Feasibility Risks**
+*   **Short-Text Limitation:** SCV requires multiple sentences to calculate variance. The method may fail or revert to baseline performance for samples under 100 words (e.g., social media posts).
+*   **Adversarial Prompting:** A sophisticated user could instruct an LLM to "vary sentence structure and complexity significantly," potentially mimicking high SCV.
+*   **Feasibility:** Dependency parsing (Stage 1) is computationally more expensive than simple perplexity checks, which may slow down inference for very large documents.

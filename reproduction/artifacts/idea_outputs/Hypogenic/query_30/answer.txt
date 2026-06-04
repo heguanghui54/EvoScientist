@@ -1,0 +1,42 @@
+**Title:** Material-Aware Latent Grounding (MALG): Injecting Physical Commonsense into Audio Foundation Models
+
+**Problem and Motivation:**
+Current general-purpose audio foundation models (e.g., CLAP, AudioLM) primarily learn to associate audio signals with semantic text labels (e.g., "a car engine idling"). However, these models often lack "physical commonsense"—the ability to understand the underlying physical properties of the sound source, such as material density, surface friction, or object elasticity. This leads to failures in complex reasoning tasks, such as distinguishing between a "hollow plastic strike" and a "solid wooden strike" when the semantic labels are similar. By grounding audio in the physical properties of the world, we can create more robust models for scene decomposition and zero-shot generalization.
+
+**Core Hypothesis:**
+Explicitly training an audio foundation model to predict latent physical attributes (Material, Force, and Geometry) as an auxiliary task—even using noisy, machine-generated labels—will improve zero-shot performance on abstract audio reasoning and source separation more effectively than simply increasing the scale of text-audio pairs.
+
+*Why this is surprising:* Traditional wisdom suggests that with enough data, a transformer will implicitly learn these physics. This hypothesis posits that physical grounding is a "privileged" information category that requires explicit architectural or objective-driven inductive biases to be captured efficiently.
+
+**Method:**
+1.  **Architecture:** A dual-tower transformer (Audio Encoder and Text/Attribute Encoder) similar to CLAP, but with an additional **Physical Attribute Head (PAH)** branching from the audio latent space.
+2.  **Auxiliary Training:** During pre-training, the model is tasked with a multi-objective loss:
+    *   $L_{contrastive}$: Standard audio-text alignment.
+    *   $L_{physical}$: A regression loss predicting three physical coefficients: *Hardness* (high-frequency decay), *Resonance* (Q-factor), and *Mass* (spectral centroid shift).
+3.  **Pseudo-Labeling:** Since large-scale audio datasets (like AudioSet) lack physical metadata, we use a "teacher" model trained on synthetic data (e.g., NVIDIA Isaac Gym or SoundingJoy) to generate physical pseudo-labels for real-world audio samples.
+
+**Dataset or Benchmark:**
+*   **Pre-training:** AudioSet-2M and VGGSound, augmented with physical pseudo-labels.
+*   **Evaluation:**
+    *   **Audio-Text Retrieval:** Standard benchmarks (Clotho, AudioCaps).
+    *   **The "Material-Reasoning" Benchmark:** A custom test set of 1,000 samples where the model must choose which of two sounds represents a heavier or harder object (e.g., "Which sound involves a metal object?").
+
+**Evaluation Metrics:**
+*   **mAP (Mean Average Precision):** For standard classification.
+*   **Zero-Shot Accuracy:** On the "Material-Reasoning" benchmark.
+*   **Physical Correlation (R²):** Accuracy of the PAH head compared to ground-truth synthetic data.
+
+**Baselines:**
+1.  **CLAP (Contrastive Language-Audio Pretraining):** The standard semantic-only baseline.
+2.  **Audio-MAE:** A self-supervised masked autoencoder approach without physical grounding.
+3.  **ImageBind:** A multimodal model that uses vision as a bridge, to see if visual grounding is superior to physical grounding.
+
+**Ablations:**
+1.  **No Physics:** Train the same architecture without the $L_{physical}$ loss.
+2.  **Hard Labels vs. Soft Labels:** Compare using discrete material categories (Wood, Metal, Plastic) versus continuous physical coefficients.
+3.  **Bottleneck Size:** Vary the dimensionality of the Physical Attribute Head to see if a tighter bottleneck forces better feature abstraction.
+
+**Failure Modes and Feasibility Risks:**
+*   **Pseudo-label Noise:** If the teacher model (trained on synthetic data) fails to generalize to real-world noisy environments, the $L_{physical}$ loss may introduce more noise than signal.
+*   **Overfitting to Timbre:** The model might learn to associate "high pitch" with "small mass" too strictly, failing on edge cases like large bells or small heavy lead weights.
+*   **Computational Cost:** Training on 2M+ samples with an auxiliary head increases convergence time, though this can be mitigated by freezing the audio backbone for the first 50% of training.

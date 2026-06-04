@@ -1,0 +1,43 @@
+**1. Title**
+Selective Neural Plasticity: Mitigating Semantic Entanglement in Domain-Specific Knowledge Injection via Gradient-Based Neuron Masking.
+
+**2. Problem and Motivation**
+Large Language Models (LLMs) often struggle with "knowledge injection" for specialized domains (e.g., clinical medicine, rare legal jurisdictions). Standard approaches like Full Fine-Tuning (FFT) or Low-Rank Adaptation (LoRA) frequently lead to two failures: (1) **Catastrophic Forgetting**, where the model loses general reasoning capabilities, and (2) **Semantic Entanglement**, where domain-specific terms are "overwritten" by general-purpose priors (e.g., a model interpreting a specific medical acronym through the lens of common internet slang). Current research often treats all model weights as equally available for update, but this ignores the fact that certain neurons are critical for "foundational logic" while others may be redundant or underutilized.
+
+**3. Core Hypothesis**
+The primary cause of hallucination and knowledge drift during domain injection is the corruption of "high-utility" general-reasoning neurons. I hypothesize that by identifying and freezing neurons with high Fisher Information relative to a general-purpose corpus, and restricting domain updates to "low-utility" neurons (Selective Neural Plasticity), we can inject specialized knowledge with 30% higher factual accuracy and significantly lower degradation of general reasoning compared to standard LoRA.
+
+**4. Method**
+The proposed method, **Selective Neural Plasticity (SNP)**, consists of three phases:
+1.  **Importance Mapping:** Run a small, representative sample of a general dataset (e.g., TinyStories or C4) through the base model. Calculate the Fisher Information Matrix (FIM) for all MLP (Multi-Layer Perceptron) weights to identify which neurons are most critical for general language modeling.
+2.  **Sparsity Masking:** Create a binary mask $M$ that freezes the top $k\%$ of neurons (those with the highest FIM scores).
+3.  **Targeted Injection:** Fine-tune the model on the domain-specific corpus using a modified objective function:
+    $$\mathcal{L} = \mathcal{L}_{CE} + \lambda D_{KL}(P_{base} || P_{tuned})$$
+    where the gradient updates are applied only to the non-masked (low-utility) neurons. This forces the model to "allocate" new knowledge into underutilized parameters rather than overwriting foundational ones.
+
+**5. Dataset or Benchmark**
+*   **Injection Corpus:** *PubMed Central (PMC) Open Access Subset* (specifically focusing on rare diseases or recent pharmacology not present in the base model's pre-training cut-off).
+*   **Evaluation Benchmarks:**
+    *   *Domain-Specific:* **PubMedQA** and **BioASQ** (to test knowledge acquisition).
+    *   *General Knowledge:* **MMLU** (Massive Multitask Language Understanding) to measure preservation of general reasoning.
+
+**6. Evaluation Metrics**
+*   **Knowledge Gain:** Delta in Accuracy on PubMedQA/BioASQ compared to the base model.
+*   **Reasoning Retention:** The "Forgetting Score," defined as the percentage drop in MMLU performance post-injection.
+*   **Hallucination Rate:** Human or LLM-as-a-judge evaluation of "Factuality" on 200 generated medical summaries.
+
+**7. Baselines**
+*   **Zero-Shot Base:** The un-tuned model (e.g., Llama-3-8B).
+*   **Full Fine-Tuning (FFT):** Standard end-to-end training on the domain corpus.
+*   **LoRA (Low-Rank Adaptation):** The current industry standard for parameter-efficient fine-tuning.
+*   **RAG (Retrieval-Augmented Generation):** Providing the domain knowledge in the prompt context without weight updates.
+
+**8. Ablations**
+*   **Random Masking:** Instead of using FIM, freeze a random $k\%$ of neurons to prove that the *selection* of neurons matters.
+*   **Inverted Masking:** Freeze the "low-utility" neurons and train the "high-utility" ones (to demonstrate that this causes catastrophic failure).
+*   **Sparsity Sensitivity:** Vary $k$ (the percentage of frozen neurons) from 10% to 90% to find the optimal balance between plasticity and stability.
+
+**9. Failure Modes and Feasibility Risks**
+*   **Dead Neurons:** If the base model is already highly compressed (e.g., a 1B parameter model), there may not be enough "low-utility" neurons to store complex new domain knowledge.
+*   **Compute Overhead:** Calculating the Fisher Information Matrix for very large models (70B+) is computationally expensive, though this can be mitigated by using diagonal approximations or layer-wise estimation.
+*   **Knowledge Complexity:** If the domain knowledge is fundamentally contradictory to the base model's world-view, the "low-utility" neurons might not be sufficient to override the primary logic paths.

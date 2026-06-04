@@ -1,0 +1,42 @@
+### 1. Title
+**Phonetic Uncertainty Distillation (PUD): Leveraging High-Resource Teacher Entropy for Low-Resource Acoustic Modeling**
+
+### 2. Problem and Motivation
+Automatic Speech Recognition (ASR) for low-resource languages suffers from the "data scarcity trap." While self-supervised models like wav2vec 2.0 provide a strong foundation, fine-tuning them on fewer than 10 hours of data often leads to overfitting or "phonetic collapse," where the model fails to distinguish between subtle acoustic boundaries unique to the target language. Current transfer learning methods typically use "hard" labels from a high-resource model or simple weight initialization. These methods ignore the rich information contained in the **uncertainty** (the probability distribution) of a high-resource teacher model when it encounters unfamiliar phonetic structures.
+
+### 3. Core Hypothesis
+Training a low-resource ASR model to minimize the Kullback-Leibler (KL) divergence between its output distribution and the **soft-label distribution** of a high-resource "teacher" model (e.g., an English-trained phoneme recognizer) will outperform standard fine-tuning. Specifically, the hypothesis is that the teacher’s "uncertainty" (high entropy) over low-resource speech acts as a structured regularizer, signaling which acoustic segments are phonetically ambiguous and preventing the student model from making overconfident, incorrect predictions.
+
+### 4. Method
+The proposed method, Phonetic Uncertainty Distillation (PUD), involves a two-stage training process:
+
+1.  **Teacher Preparation:** Use a transformer-based model (e.g., wav2vec 2.0 Large) pre-trained and fine-tuned on a high-resource dataset (e.g., LibriSpeech 960h) to act as a universal phonetic feature extractor.
+2.  **Distillation Phase:** When training on the low-resource target language, the loss function is modified to:
+    $$L_{total} = (1 - \alpha)L_{CTC} + \alpha L_{KL}$$
+    *   $L_{CTC}$ is the standard Connectionist Temporal Classification loss against the ground-truth low-resource transcripts.
+    *   $L_{KL}$ is the KL-Divergence between the student’s predicted probability distribution and the teacher’s distribution (after applying a temperature $T$ to soften the outputs).
+3.  **Phonetic Mapping:** Since the teacher and student have different label sets (e.g., English phonemes vs. target language characters), a linear projection layer is used to align the teacher's latent phonetic space with the student’s output space before calculating the KL divergence.
+
+### 5. Dataset or Benchmark
+*   **Target Languages:** Use the **Common Voice** dataset, specifically selecting languages with <10 hours of validated data (e.g., Kyrgyz, Tatar, or Dhivehi).
+*   **High-Resource Teacher:** Models trained on **LibriSpeech** (English) or **VoxPopuli** (Multilingual).
+
+### 6. Evaluation Metrics
+*   **Word Error Rate (WER):** Primary metric for transcript accuracy.
+*   **Character Error Rate (CER):** To measure performance at the phonetic/graphemic level.
+*   **Phoneme Boundary Precision:** Using forced alignment to see if PUD improves the temporal localization of phonemes compared to the baseline.
+
+### 7. Baselines
+1.  **Vanilla XLSR-53:** Fine-tuning the multilingual wav2vec 2.0 model directly on the low-resource data.
+2.  **Cross-Lingual Transfer (Standard):** Initializing with English weights and fine-tuning without distillation.
+3.  **Pseudo-Labeling:** Using the teacher to generate hard labels for the low-resource data and training on those labels.
+
+### 8. Ablations
+*   **Temperature Sensitivity:** Varying $T$ (from 1.0 to 10.0) to see how "soft" the teacher's labels need to be.
+*   **Weighting Factor ($\alpha$):** Testing the balance between the ground-truth CTC loss and the distillation loss.
+*   **Teacher Freezing:** Comparing a frozen teacher versus a teacher that is slowly updated (EMA - Exponential Moving Average) during training.
+
+### 9. Failure Modes and Feasibility Risks
+*   **Phonetic Incompatibility:** If the teacher language is phonetically "too far" from the target (e.g., English teacher for a tonal language like Yoruba), the teacher's uncertainty might be noise rather than useful signal.
+*   **Computational Overhead:** Running two large transformer models (teacher and student) during training increases VRAM requirements significantly.
+*   **Alignment Risk:** The linear projection layer might fail to map the teacher's phoneme space to the student's character space effectively if the target language's orthography is non-phonetic.

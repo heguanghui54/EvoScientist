@@ -1,0 +1,47 @@
+### 1. Title
+**Dynamic Bottleneck Anchoring (DBA): Enhancing Long-Context Retrieval via Sparse Hierarchical Latent Tokens**
+
+### 2. Problem and Motivation
+Current Large Language Models (LLMs) struggle with "attention dilution" and the "lost-in-the-middle" phenomenon. As context windows expand to hundreds of thousands of tokens, the softmax attention mechanism distributes probability mass across a vast number of keys, often causing the model to miss fine-grained details or fail to synthesize information across distant segments. While linear attention and State Space Models (SSMs) address computational complexity, they often sacrifice the high-fidelity retrieval capabilities of standard Transformers. There is a need for a mechanism that maintains the precision of full attention while providing a structured "map" of the context to prevent signal degradation.
+
+### 3. Core Hypothesis
+Restricting long-range attention to a set of periodically placed "Anchor Tokens"—which are forced to compress local context into a dense latent representation—will improve long-context retrieval accuracy. This is surprising because it suggests that **bottlenecking** information (intentionally losing raw token data in favor of synthesized anchors) will yield higher retrieval performance than allowing the model to attend to the entire raw token stream.
+
+### 4. Method
+The proposed method, **Dynamic Bottleneck Anchoring (DBA)**, involves the following:
+1.  **Anchor Insertion:** During fine-tuning, a special trainable token `[ANC]` is inserted every $k$ tokens (e.g., $k=512$).
+2.  **Hierarchical Attention Masking:**
+    *   Standard tokens in a block attend to each other (local attention).
+    *   Standard tokens are *not* allowed to attend to distant standard tokens.
+    *   Standard tokens *are* allowed to attend to all preceding `[ANC]` tokens.
+    *   `[ANC]` tokens attend to all previous `[ANC]` tokens and the $k$ raw tokens in their immediate local block.
+3.  **Compression Objective:** To ensure `[ANC]` tokens capture meaningful data, a secondary objective is added during training where the model must reconstruct a randomly masked keyword from the local block using only the `[ANC]` token representation.
+4.  **Inference:** At inference time, the KV-cache for raw tokens can be evicted for distant blocks, keeping only the KV-pairs for `[ANC]` tokens, significantly reducing memory overhead while maintaining a "global map" of the document.
+
+### 5. Dataset or Benchmark
+*   **Needle In A Haystack (NIAH):** To test basic retrieval at varying depths and context lengths (up to 128k).
+*   **LongBench:** To evaluate performance on real-world tasks like multi-document summarization and long-form QA.
+*   **RULER:** A more complex benchmark that tests variable-count retrieval and frequent item extraction to ensure the anchors aren't just capturing the "gist" but also specific entities.
+
+### 6. Evaluation Metrics
+*   **Recall Accuracy:** Percentage of correct "needle" retrievals in NIAH.
+*   **F1 Score / Rough-L:** For summarization and QA tasks in LongBench.
+*   **Perplexity vs. Context Length:** To ensure the model remains stable as the sequence grows.
+*   **KV-Cache Compression Ratio:** Measurement of memory savings compared to full-attention models.
+
+### 7. Baselines
+*   **Standard Transformer (Full Attention):** To establish the "lost-in-the-middle" baseline.
+*   **LongLoRA / YaRN:** Current state-of-the-art methods for extending context windows via RoPE scaling.
+*   **StreamingLLM:** To compare against sliding-window attention mechanisms that use "attention sinks."
+*   **Mamba / Jamba:** To compare against hybrid SSM-Transformer architectures.
+
+### 8. Ablations
+*   **Anchor Density:** Testing performance with $k=128, 256, 512, 1024$ to find the optimal compression ratio.
+*   **Without Compression Objective:** Training the anchors without the reconstruction loss to see if the attention mechanism alone is sufficient to learn useful latent representations.
+*   **Anchor-Only Attention:** Forcing the model to *only* look at anchors (no local attention) to test the limits of the latent representation.
+
+### 9. Failure Modes and Feasibility Risks
+*   **Information Smearing:** The `[ANC]` tokens might aggregate information too broadly, losing specific numerical data or names (loss of granularity).
+*   **Training Divergence:** Introducing a secondary reconstruction loss might interfere with the primary language modeling objective if not weighted correctly.
+*   **Implementation Complexity:** Modifying the attention mask to handle the hierarchical structure requires custom CUDA kernels (e.g., via Triton) to be computationally efficient compared to standard FlashAttention.
+*   **Feasibility:** High. The method builds on existing concepts like "summary tokens" and "sparse attention," making it implementable within existing deep learning frameworks (PyTorch/HuggingFace).

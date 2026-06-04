@@ -1,0 +1,48 @@
+### 1. Title
+**Contrastive Internal State Alignment (CISA): Resolving Hallucinations by Steering Factuality-Sensitive Neurons**
+
+### 2. Problem and Motivation
+Large Language Models (LLMs) frequently suffer from factual inconsistency, where they generate plausible-sounding but incorrect information. Current solutions like Retrieval-Augmented Generation (RAG) are computationally expensive and depend on external database quality. Recent research suggests that LLMs often "know" the correct information within their internal parameters (parametric memory) but fail to surface it during the decoding process due to the influence of the prompt’s style or linguistic probability. The motivation for this research is to develop an inference-time intervention that forces the model to prioritize its internal factual representations over linguistic fluency.
+
+### 3. Core Hypothesis
+Factual consistency is not a knowledge-retrieval problem but an internal competition between "factuality-sensitive" neurons and "fluency-sensitive" neurons. By identifying a sparse subset of neurons that consistently activate during the processing of verified factual statements and dynamically boosting their activation during generation, we can significantly reduce hallucinations without retraining the model or using external tools.
+
+### 4. Method
+The proposed method, **Contrastive Internal State Alignment (CISA)**, consists of two phases:
+
+1.  **Neuron Identification (Probing Phase):**
+    *   Pass a contrastive dataset (pairs of true and false versions of the same statement, e.g., "The capital of France is Paris" vs. "The capital of France is Lyon") through the model.
+    *   Record the activations of all neurons in the Multi-Layer Perceptron (MLP) layers.
+    *   Identify "Factuality Neurons" using a signal-to-noise ratio (SNR) metric, selecting those that show high variance between true/false pairs but low variance across different factual topics.
+
+2.  **Dynamic Steering (Inference Phase):**
+    *   During standard generation, monitor the "entity density" of the output.
+    *   When the model begins generating entities (detected via a lightweight NER tagger or high attention to specific tokens), apply a steering vector to the Factuality Neurons identified in Phase 1.
+    *   The steering vector shifts the hidden states toward the "true" activation subspace identified during probing, effectively "anchoring" the model to its factual memory.
+
+### 5. Dataset or Benchmark
+*   **HaluEval:** A large-scale hallucination evaluation dataset containing both generated and human-annotated hallucinated samples.
+*   **TruthfulQA:** To measure the model's ability to avoid common misconceptions.
+*   **WikiBio Hallucination Benchmark:** For testing consistency in long-form biography generation.
+
+### 6. Evaluation Metrics
+*   **FactScore:** An automated metric that breaks down long-form generation into individual points and verifies them against Wikipedia.
+*   **Knowledge Retention (KR):** Accuracy on closed-book QA tasks.
+*   **Perplexity (PPL):** To ensure that steering doesn't degrade the linguistic quality or fluency of the model.
+*   **Hallucination Rate:** Percentage of contradicted facts in a generated summary.
+
+### 7. Baselines
+*   **Standard Decoding:** Greedy search and Nucleus sampling (Top-p).
+*   **DoLa (Decoding by Contrasting Layers):** A baseline that contrasts logits from early layers against late layers to improve factuality.
+*   **RAG (Retrieval-Augmented Generation):** A baseline using a BM25 retriever on Wikipedia to provide context.
+*   **Self-Reflection/CoT:** Prompting the model to "think step-by-step" or "verify your answer."
+
+### 8. Ablations
+*   **Random Neuron Steering:** Steering a random subset of neurons instead of Factuality Neurons to test the specificity of the identified neurons.
+*   **Static vs. Dynamic Steering:** Applying the steering vector throughout the entire generation versus only when entities are detected.
+*   **Layer-wise Sensitivity:** Testing the effect of steering only in early layers (knowledge retrieval) versus late layers (linguistic processing).
+
+### 9. Failure Modes and Feasibility Risks
+*   **The "Liar's Paradox":** If the model’s internal parametric memory is fundamentally incorrect (i.e., it learned a falsehood during pre-training), CISA will amplify the incorrect fact rather than correcting it.
+*   **Fluency Degradation:** Aggressive steering might lead to repetitive or ungrammatical text if the Factuality Neurons overlap significantly with syntax-processing neurons.
+*   **Computational Overhead:** While lighter than RAG, identifying neurons for every model architecture requires a one-time "probing" cost that may be high for extremely large models (e.g., 70B+ parameters).

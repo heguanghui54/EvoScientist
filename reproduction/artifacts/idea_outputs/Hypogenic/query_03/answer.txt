@@ -1,0 +1,41 @@
+**1. Title**
+Counter-Factual Justification (CFJ): Mitigating Confirmation Bias in LLM-as-a-Judge via Adversarial Self-Reflection.
+
+**2. Problem and Motivation**
+Current LLM-based evaluators (LLM-as-a-Judge) suffer from "confirmation bias" and "rationalization": the model often makes a sub-second intuitive decision based on surface features (like verbosity or position) and then generates a Chain-of-Thought (CoT) explanation that merely justifies that initial bias. This leads to low correlation with human experts on complex reasoning tasks and high sensitivity to prompt ordering. If we can force the judge to decouple its "intuition" from its "justification," we can improve evaluation accuracy.
+
+**3. Core Hypothesis**
+Explicitly requiring an LLM judge to construct a rigorous justification for a *counter-factual* score (i.e., a score different from its initial inclination) before finalizing its judgment will significantly reduce positional and verbosity bias and increase alignment with human ground-truth labels.
+
+**4. Method**
+The CFJ framework operates in three distinct stages:
+1.  **Initial Intuition:** The judge is presented with a prompt and a response (or pair of responses) and asked to provide an initial, unreasoned score ($S_{init}$).
+2.  **Counter-Factual Justification:** The judge is then prompted: *"Assume for a moment that this response is actually 2 points lower/higher than your initial score. Identify three subtle technical flaws or missed nuances that would justify this lower/higher rating."* This forces the model to search for evidence it initially ignored.
+3.  **Synthesis and Final Verdict:** The judge is presented with its initial intuition and its own adversarial critique. It is then instructed to weigh both sets of evidence to provide a final, calibrated score ($S_{final}$).
+
+**5. Dataset or Benchmark**
+*   **MT-Bench:** A standard benchmark for multi-turn conversations with human-graded ground truth.
+*   **RewardBench:** Specifically designed to evaluate the evaluators (reward models), focusing on reasoning, safety, and coding.
+*   **LLMBar:** A dataset containing "natural" vs. "adversarial" prompts where surface features (like length) contradict quality.
+
+**6. Evaluation Metrics**
+*   **Human Alignment:** Spearman and Pearson correlation between the judge's scores and human gold-standard scores.
+*   **Positional Bias Score:** The delta in win rates when the order of two responses is swapped in a pairwise comparison.
+*   **Verbosity Bias Coefficient:** The correlation between response length and score, controlled for actual correctness.
+
+**7. Baselines**
+*   **Direct Scoring:** Zero-shot prompting (e.g., "Rate this from 1-10").
+*   **Chain-of-Thought (CoT) Judge:** Standard "Think step-by-step before scoring."
+*   **Prometheus-2:** A state-of-the-art open-source evaluator model designed for feedback.
+*   **Reference-based Evaluation:** Using a gold-standard answer in the prompt to guide the judge.
+
+**8. Ablations**
+*   **No-Inversion Control:** The judge generates two justifications for its *initial* score instead of one for a counter-factual score.
+*   **Random Score Justification:** The judge is asked to justify a randomly assigned score (1-10) to see if the benefit comes from the *adversarial* nature or just the extra computation.
+*   **Single-Pass vs. Multi-Pass:** Comparing a long single prompt containing the CFJ instructions against a multi-turn conversation where the judge is "pushed" by the system.
+
+**9. Failure Modes and Feasibility Risks**
+*   **Critique Hallucination:** The model might invent non-existent errors in the counter-factual stage just to satisfy the prompt instructions.
+*   **Inertia:** Weak LLMs (e.g., GPT-3.5) might refuse to find flaws in a response they already deemed "perfect," leading to no change in the final score.
+*   **Cost/Latency:** This method triples the tokens used per evaluation, which may be prohibitive for large-scale leaderboard generation.
+*   **Feasibility:** High. This requires no fine-tuning and can be implemented via simple API orchestration (e.g., LangChain or DSPy).

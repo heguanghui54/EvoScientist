@@ -1,0 +1,44 @@
+### 1. Title
+**Neutral-Space Projection: Debiasing Machine Translation via Latent-Space Orthogonalization of Ambiguous Source Embeddings**
+
+### 2. Problem and Motivation
+Machine Translation (MT) systems frequently exhibit gender bias, typically by defaulting to masculine pronouns for high-status professions (e.g., "The doctor") and feminine pronouns for others (e.g., "The nurse") when translating from gender-neutral languages (like Turkish or Finnish) into gendered ones (like English or Spanish).
+
+Current approaches, such as Counterfactual Data Augmentation (CDA), require retraining large models on modified datasets, which is computationally expensive and can introduce "over-correction" (e.g., calling everyone "they" even when gender is specified). There is a critical need for a targeted, inference-time or post-hoc intervention that suppresses gendered information *only* when the source context is genuinely ambiguous.
+
+### 3. Core Hypothesis
+The "gender" of a noun phrase in a Transformer-based MT model is encoded as a specific, identifiable vector direction within the encoder's latent representations. By identifying this "gender subspace" and projecting encoder hidden states onto its orthogonal complement—specifically when a source sentence lacks explicit gender cues—the decoder will be forced to rely on neutral forms or balanced sampling rather than biased priors, without degrading the overall semantic quality of the translation.
+
+### 4. Method
+1.  **Gender Subspace Identification:** Use a small parallel corpus of gendered pairs (e.g., "The actor/The actress") to extract hidden states from the encoder. Apply Linear Discriminant Analysis (LDA) or Principal Component Analysis (PCA) to identify the primary vector direction ($v_{gender}$) that distinguishes these pairs.
+2.  **Ambiguity Detection:** Implement a lightweight "Gender Cues Classifier" that scans the source sentence for explicit gendered markers (names, specific familial terms).
+3.  **Latent Projection:** During inference, if the classifier deems the source sentence gender-neutral, the encoder’s final hidden states ($H$) are transformed using a projection matrix $P$:
+    $$H_{neutral} = H - (H \cdot v_{gender}) v_{gender}$$
+4.  **Decoupled Decoding:** The decoder receives $H_{neutral}$. Because the "gender signal" is removed from the bottleneck, the decoder's cross-attention is forced to utilize the neutral probability space, which can then be steered toward gender-neutral pronouns (e.g., "they") or balanced via beam search.
+
+### 5. Dataset or Benchmark
+*   **Training/Subspace Discovery:** A subset of the **Europarl** or **WMT14** English-French/German datasets.
+*   **Evaluation:**
+    *   **WinoMT:** A standard benchmark for gender bias in MT consisting of 3,888 sentences where professional nouns must be linked to gendered pronouns.
+    *   **MuST-SHE:** A dataset for evaluating gender bias in speech and text translation.
+
+### 6. Evaluation Metrics
+*   **Gender Accuracy:** Percentage of correctly translated pronouns in WinoMT (pro-stereotypical vs. anti-stereotypical).
+*   **ΔG (Gender Gap):** The difference in accuracy between masculine and feminine professional translations.
+*   **BLEU / ChrF:** To ensure that the latent projection does not destroy the semantic meaning or grammatical fluency of the translation.
+*   **Neutrality Score:** Frequency of neutral pronoun usage in ambiguous contexts.
+
+### 7. Baselines
+*   **Vanilla Transformer:** A standard Transformer-base model with no debiasing.
+*   **CDA (Counterfactual Data Augmentation):** A model retrained on a dataset where "he/she" and "doctor/nurse" pairs are swapped.
+*   **Gender-Tagging:** A model where a `<MALE>` or `<FEMALE>` tag is prepended to the source, and a `<NEUTRAL>` tag is used for debiasing.
+
+### 8. Ablations
+*   **Projection Strength:** Varying the degree of orthogonalization (partial vs. full projection).
+*   **Layer-wise Intervention:** Applying the projection at different layers of the encoder (e.g., only the last layer vs. all layers).
+*   **Selective vs. Global:** Applying the projection to all sentences regardless of whether the source is ambiguous.
+
+### 9. Failure Modes and Feasibility Risks
+*   **Semantic Bleeding:** The "gender direction" in the latent space might be entangled with other semantic features (e.g., specific professions). Projecting it out might inadvertently weaken the model's understanding of the profession itself, leading to lower BLEU scores.
+*   **Grammaticality in Target:** In highly inflected languages (e.g., Spanish or Arabic), gender affects not just pronouns but also adjectives and verbs. A neutral latent state might lead to "grammatical hallucinations" where the decoder produces inconsistent gender agreements.
+*   **Feasibility:** Identifying a single "gender direction" that generalizes across all professions may be difficult; the subspace might be non-linear or manifold-dependent.
