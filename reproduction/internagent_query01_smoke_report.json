@@ -1,0 +1,107 @@
+{
+  "date": "2026-06-04",
+  "baseline": "InternAgent",
+  "query_id": 1,
+  "topic": "Machine translation",
+  "paper_exact": false,
+  "status": "complete",
+  "external_checkout": "/Users/hgh54913/research/InternAgent",
+  "external_head": "e341f8f181e6d337317c6bc2cddae6391b1f0390",
+  "runner": "reproduction/run_internagent_qa_baseline.py",
+  "model": "deepseek-chat",
+  "judge_model": "deepseek-v4-flash",
+  "files": {
+    "external_output": {
+      "path": "/Users/hgh54913/research/InternAgent/outputs/evoscientist_table1_queries/internagent/query_01.md",
+      "exists": true,
+      "bytes": 2505
+    },
+    "imported_output": {
+      "path": "reproduction/artifacts/idea_outputs/InternAgent/query_01/answer.txt",
+      "exists": true,
+      "bytes": 2505
+    },
+    "judge_input": {
+      "path": "reproduction/artifacts/judge_inputs/evosci_vs_internagent_query01.jsonl",
+      "exists": true,
+      "bytes": 22326
+    },
+    "judge_output": {
+      "path": "reproduction/artifacts/judge_outputs/evosci_vs_internagent_query01_deepseek.jsonl",
+      "exists": true,
+      "bytes": 3447
+    },
+    "aggregate_json": {
+      "path": "reproduction/artifacts/tables/evosci_vs_internagent_query01_deepseek.json",
+      "exists": true,
+      "bytes": 1337
+    },
+    "aggregate_csv": {
+      "path": "reproduction/artifacts/tables/evosci_vs_internagent_query01_deepseek.csv",
+      "exists": true,
+      "bytes": 265
+    }
+  },
+  "judge_records": 2,
+  "aggregate": {
+    "target_system": "EvoScientist",
+    "tie_threshold": 0.0,
+    "raw_records": 2,
+    "baselines": {
+      "InternAgent": {
+        "dimensions": {
+          "Clarity": {
+            "baseline": "InternAgent",
+            "dimension": "Clarity",
+            "n": 2,
+            "win": 2,
+            "tie": 0,
+            "lose": 0,
+            "win_pct": 100.0,
+            "tie_pct": 0.0,
+            "lose_pct": 0.0,
+            "gap": 100.0
+          },
+          "Novelty": {
+            "baseline": "InternAgent",
+            "dimension": "Novelty",
+            "n": 2,
+            "win": 2,
+            "tie": 0,
+            "lose": 0,
+            "win_pct": 100.0,
+            "tie_pct": 0.0,
+            "lose_pct": 0.0,
+            "gap": 100.0
+          },
+          "Feasibility": {
+            "baseline": "InternAgent",
+            "dimension": "Feasibility",
+            "n": 2,
+            "win": 2,
+            "tie": 0,
+            "lose": 0,
+            "win_pct": 100.0,
+            "tie_pct": 0.0,
+            "lose_pct": 0.0,
+            "gap": 100.0
+          },
+          "Relevance": {
+            "baseline": "InternAgent",
+            "dimension": "Relevance",
+            "n": 2,
+            "win": 1,
+            "tie": 1,
+            "lose": 0,
+            "win_pct": 50.0,
+            "tie_pct": 50.0,
+            "lose_pct": 0.0,
+            "gap": 50.0
+          }
+        },
+        "avg_gap": 87.5
+      }
+    }
+  },
+  "caveat": "This is a replacement-baseline smoke run for one recovered paper query. It is not the paper's original raw InternAgent Table 1 output."
+}

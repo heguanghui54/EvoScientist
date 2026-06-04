@@ -369,6 +369,13 @@ The 30-query InternAgent QA replacement-baseline runbook is recorded in
 `reproduction/internagent_qa_runbook.md`,
 `reproduction/internagent_qa_runbook.json`, and
 `reproduction/internagent_qa_runbook.sh`.
+The executable DeepSeek-backed InternAgent QA replacement runner is
+`reproduction/run_internagent_qa_baseline.py`. A completed query-01 smoke run is
+summarized in `reproduction/internagent_query01_smoke_report.json` and
+`reproduction/internagent_query01_smoke_report.md`; it covers one recovered
+query, import into the shared output layout, two swapped DeepSeek judge records,
+aggregation, and local audit. It is replacement-only evidence, not the original
+paper's raw InternAgent Table 1 output package.
 The AI Scientist-v2 ideation replacement-baseline probe and runbook are recorded
 in `reproduction/ai_scientist_v2_baseline_probe.md` and
 `reproduction/ai_scientist_v2_ideation_runbook/`.

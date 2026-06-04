@@ -1,0 +1,60 @@
+{
+  "target_system": "EvoScientist",
+  "tie_threshold": 0.0,
+  "raw_records": 2,
+  "baselines": {
+    "InternAgent": {
+      "dimensions": {
+        "Clarity": {
+          "baseline": "InternAgent",
+          "dimension": "Clarity",
+          "n": 2,
+          "win": 2,
+          "tie": 0,
+          "lose": 0,
+          "win_pct": 100.0,
+          "tie_pct": 0.0,
+          "lose_pct": 0.0,
+          "gap": 100.0
+        },
+        "Novelty": {
+          "baseline": "InternAgent",
+          "dimension": "Novelty",
+          "n": 2,
+          "win": 2,
+          "tie": 0,
+          "lose": 0,
+          "win_pct": 100.0,
+          "tie_pct": 0.0,
+          "lose_pct": 0.0,
+          "gap": 100.0
+        },
+        "Feasibility": {
+          "baseline": "InternAgent",
+          "dimension": "Feasibility",
+          "n": 2,
+          "win": 2,
+          "tie": 0,
+          "lose": 0,
+          "win_pct": 100.0,
+          "tie_pct": 0.0,
+          "lose_pct": 0.0,
+          "gap": 100.0
+        },
+        "Relevance": {
+          "baseline": "InternAgent",
+          "dimension": "Relevance",
+          "n": 2,
+          "win": 1,
+          "tie": 1,
+          "lose": 0,
+          "win_pct": 50.0,
+          "tie_pct": 50.0,
+          "lose_pct": 0.0,
+          "gap": 50.0
+        }
+      },
+      "avg_gap": 87.5
+    }
+  }
+}

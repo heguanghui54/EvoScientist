@@ -1,0 +1,12 @@
+# InternAgent QA Replacement Output: Query 01
+
+Topic: Machine translation
+Prompt: Generate a research proposal on low-resource machine translation.
+Model: deepseek-chat
+Paper-exact: false
+
+This answer was generated through InternAgent QA mode as a replacement baseline, not from the EvoScientist paper's original raw InternAgent outputs.
+
+## Answer
+
+The research proposal addresses low-resource machine translation by first identifying key challenges—data scarcity, domain mismatch, morphological richness, and lack of standardized evaluation—and then reviewing existing approaches such as transfer learning, multilingual models, back-translation, unsupervised MT, and linguistic resource injection. The core of the proposal is a novel multi-stage framework called Morphologically-Aware Iterative Transfer Learning with Linguistic Injection (MAITLI), which integrates morphological awareness at every stage: morphologically-enhanced multilingual pre-training, iterative quality-filtered back-translation, domain-adaptive curriculum learning, fine-tuning with a morphology-aware loss and dynamic metric integration (chrF, COMET), and diversity-driven ensemble selection. Expected contributions include 3–5 BLEU and 5–8 chrF improvements over standard transfer learning, a 40–60% reduction in grammatical errors over vanilla back-translation, parity with supervised systems trained on 50,000+ sentences using only 10,000 seed sentences for distant language pairs, and 10–15% relative COMET improvements in domain adaptation. The required resources include a seed corpus of ~10,000 parallel sentences, 1–5 million monolingual sentences per language, a morphological analyzer (or 500–1,000 annotated words to build one), and 100 domain-labeled sentences per domain. Software relies on open-source tools (mBART, UniMorph, HFST, SacreBLEU, COMET) and computational resources of ~200–400 GPU-hours on a single 16 GB GPU per language pair. The evaluation plan uses six language pairs (Finnish–English, Turkish–English, Swahili–English, Somali–English, Quechua–English, and English–French as a control) with test sets from Flores-101 and custom medical/legal out-of-domain sets. Five baselines (standard transfer learning, transfer + vanilla back-translation, transfer + back-translation + curriculum learning, unsupervised MT, and simple ensemble) are compared using BLEU, chrF, COMET, and morphological accuracy, with three random seeds and bootstrap significance testing (p<0.05).

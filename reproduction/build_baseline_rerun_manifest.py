@@ -28,7 +28,7 @@ PREP_COMMANDS: dict[str, list[str]] = {
     ],
     "InternAgent": [
         ".venv/bin/python reproduction/build_internagent_qa_runbook.py",
-        "bash /path/to/EvoScientist/reproduction/internagent_qa_runbook.sh",
+        ".venv/bin/python reproduction/run_internagent_qa_baseline.py --limit 30 --max-iter 5 --resume",
     ],
     "AI Scientist-v2": [
         ".venv/bin/python reproduction/build_ai_scientist_v2_ideation_runbook.py",

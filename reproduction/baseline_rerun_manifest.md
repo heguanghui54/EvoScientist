@@ -55,7 +55,7 @@ Commands:
 
 ```bash
 .venv/bin/python reproduction/build_internagent_qa_runbook.py
-bash /path/to/EvoScientist/reproduction/internagent_qa_runbook.sh
+.venv/bin/python reproduction/run_internagent_qa_baseline.py --limit 30 --max-iter 5 --resume
 .venv/bin/python reproduction/import_baseline_outputs.py --system-name InternAgent --source $HOME/research/InternAgent/outputs/evoscientist_table1_queries/internagent --source-format directory --output-root reproduction/artifacts/idea_outputs --strict
 .venv/bin/python reproduction/build_pairwise_judge_inputs.py --systems-root reproduction/artifacts/idea_outputs --baseline InternAgent --output reproduction/artifacts/judge_inputs/evosci_vs_internagent.jsonl
 .venv/bin/python reproduction/run_llm_judge.py --provider deepseek --model deepseek-v4-flash --input reproduction/artifacts/judge_inputs/evosci_vs_internagent.jsonl --output reproduction/artifacts/judge_outputs/evosci_vs_internagent_deepseek.jsonl --resume

@@ -109,7 +109,7 @@ def table1_actions(components: dict[str, Any], protocol: dict[str, Any]) -> list
             )
             actions[-1]["replacement_run_template"] = [
                 ".venv/bin/python reproduction/build_internagent_qa_runbook.py",
-                "bash /path/to/EvoScientist/reproduction/internagent_qa_runbook.sh",
+                ".venv/bin/python reproduction/run_internagent_qa_baseline.py --limit 30 --max-iter 5 --resume",
                 ".venv/bin/python reproduction/import_baseline_outputs.py --system-name InternAgent --source $HOME/research/InternAgent/outputs/evoscientist_table1_queries/internagent --source-format directory --output-root reproduction/artifacts/idea_outputs --strict",
             ]
         if baseline == "AI Scientist-v2":

@@ -58,6 +58,8 @@ def main() -> None:
         "probe_ai_researcher_baseline.py",
         "probe_internagent_baseline.py",
         "build_internagent_qa_runbook.py",
+        "run_internagent_qa_baseline.py",
+        "build_internagent_query01_smoke_report.py",
         "probe_ai_scientist_v2_baseline.py",
         "build_ai_scientist_v2_ideation_runbook.py",
         "convert_ai_scientist_v2_ideation_outputs.py",
@@ -178,6 +180,40 @@ def main() -> None:
     internagent_runbook_sh = internagent_runbook_sh_path.read_text(encoding="utf-8")
     assert internagent_runbook_sh.count("python launch.py --mode qa") == 30
     assert "query_30.md" in internagent_runbook_sh
+    internagent_runner_text = (ROOT / "run_internagent_qa_baseline.py").read_text(
+        encoding="utf-8"
+    )
+    assert "deepseek-chat" in internagent_runner_text
+    assert "workflow.main" in internagent_runner_text
+    assert "o4-mini" in internagent_runner_text
+    internagent_smoke_json_path = ROOT / "internagent_query01_smoke_report.json"
+    internagent_smoke_md_path = ROOT / "internagent_query01_smoke_report.md"
+    assert internagent_smoke_json_path.is_file(), "missing InternAgent query-01 smoke JSON"
+    assert internagent_smoke_md_path.is_file(), "missing InternAgent query-01 smoke markdown"
+    internagent_smoke = json.loads(internagent_smoke_json_path.read_text(encoding="utf-8"))
+    assert internagent_smoke["baseline"] == "InternAgent"
+    assert internagent_smoke["query_id"] == 1
+    assert internagent_smoke["paper_exact"] is False
+    assert internagent_smoke["status"] == "complete"
+    assert internagent_smoke["judge_records"] == 2
+    assert (
+        ROOT / "artifacts" / "idea_outputs" / "InternAgent" / "query_01" / "answer.txt"
+    ).is_file()
+    assert (
+        ROOT / "artifacts" / "judge_inputs" / "evosci_vs_internagent_query01.jsonl"
+    ).is_file()
+    assert (
+        ROOT / "artifacts" / "judge_outputs" / "evosci_vs_internagent_query01_deepseek.jsonl"
+    ).is_file()
+    assert (
+        ROOT / "artifacts" / "tables" / "evosci_vs_internagent_query01_deepseek.json"
+    ).is_file()
+    smoke_dims = internagent_smoke["aggregate"]["baselines"]["InternAgent"]["dimensions"]
+    assert set(smoke_dims) == {"Clarity", "Novelty", "Feasibility", "Relevance"}
+    assert smoke_dims["Clarity"]["n"] == 2
+    assert "InternAgent Query-01 Smoke Report" in internagent_smoke_md_path.read_text(
+        encoding="utf-8"
+    )
     ai_scientist_probe_json_path = ROOT / "ai_scientist_v2_baseline_probe.json"
     ai_scientist_probe_md_path = ROOT / "ai_scientist_v2_baseline_probe.md"
     assert ai_scientist_probe_json_path.is_file(), "missing AI Scientist-v2 probe JSON"
@@ -368,7 +404,7 @@ def main() -> None:
     assert "gemini-3-flash" in action_plan_md
     assert "internagent_baseline_probe.json" in action_plan_md
     assert "build_internagent_qa_runbook.py" in action_plan_md
-    assert "internagent_qa_runbook.sh" in action_plan_md
+    assert "run_internagent_qa_baseline.py" in action_plan_md
     assert "virtual_scientist_baseline_probe.json" in action_plan_md
     assert "ai_scientist_v2_baseline_probe.json" in action_plan_md
     assert "build_ai_scientist_v2_ideation_runbook.py" in action_plan_md
@@ -466,6 +502,7 @@ def main() -> None:
         "AI-Researcher baseline probe is recorded",
         "InternAgent baseline probe is recorded",
         "InternAgent QA runbook is executable",
+        "InternAgent query-01 replacement smoke is complete",
         "AI Scientist-v2 baseline probe is recorded",
         "AI Scientist-v2 ideation runbook is executable",
         "Hypogenic baseline probe is recorded",

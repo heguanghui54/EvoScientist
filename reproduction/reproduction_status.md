@@ -34,6 +34,7 @@ and paper-level experimental reproduction.
 | AI-Researcher baseline probe is recorded | `ai_researcher_baseline_probe.json` records that the public runner is benchmark-instance based, not a drop-in runner for the 30 recovered queries | Verified |
 | InternAgent baseline probe is recorded | `internagent_baseline_probe.json` records a QA CLI replacement-baseline path and its paper-exact limitations | Verified |
 | InternAgent QA runbook is executable | `build_internagent_qa_runbook.py` generates 30 query commands plus import/judge/audit steps for the replacement baseline | Verified |
+| InternAgent query-01 replacement smoke is complete | `internagent_query01_smoke_report.json` records one real InternAgent QA run, import, 2 swapped DeepSeek judge records, aggregate table, and local audit completion for query 01 | Verified |
 | AI Scientist-v2 baseline probe is recorded | `ai_scientist_v2_baseline_probe.json` records an ideation-adapter replacement path and its paper-exact limitations | Verified |
 | AI Scientist-v2 ideation runbook is executable | `build_ai_scientist_v2_ideation_runbook.py` generates 30 topic files plus ideation/import/judge/audit steps | Verified |
 | Hypogenic baseline probe is recorded | `hypogenic_baseline_probe.json` records a hosted Assistant/IdeaHub/Arena adapter path and its paper-exact limitations | Verified |
