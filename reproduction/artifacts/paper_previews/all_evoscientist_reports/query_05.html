@@ -1,0 +1,245 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Citation-Structured Related Work Generation via Heterogeneous Graph-Aware Decoding</title>
+  <style>
+    body { margin: 0; background: #f7f8f8; color: #17191c; font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; line-height: 1.62; }
+    header { padding: 28px clamp(18px, 5vw, 72px); background: #fff; border-bottom: 1px solid #dce1e6; }
+    main { max-width: 980px; margin: 0 auto; padding: 28px 18px 56px; }
+    article { background: #fff; border: 1px solid #dce1e6; border-radius: 8px; padding: clamp(18px, 4vw, 42px); }
+    h1 { margin: 0 0 10px; font-size: clamp(28px, 4vw, 46px); line-height: 1.1; letter-spacing: 0; }
+    h2 { margin-top: 30px; border-top: 1px solid #e7eaee; padding-top: 18px; letter-spacing: 0; }
+    h3, h4 { letter-spacing: 0; }
+    p, li, td { font-size: 15px; }
+    .meta { color: #606a73; display: grid; gap: 4px; }
+    a { color: #225f9f; }
+    table { border-collapse: collapse; width: 100%; overflow-wrap: anywhere; }
+    td { border: 1px solid #e1e5ea; padding: 8px; vertical-align: top; }
+    pre { white-space: pre-wrap; background: #f0f3f5; padding: 14px; border-radius: 6px; overflow-x: auto; }
+    code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    .nav { margin-bottom: 14px; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="nav"><a href="index.html">← All 30 reports</a></div>
+    <h1>Citation-Structured Related Work Generation via Heterogeneous Graph-Aware Decoding</h1>
+    <div class="meta">
+      <div>Query 05: Literature review automation</div>
+      <div>Generate a research proposal on automated literature review generation.</div>
+      <div>Source: <code>artifacts/remote_fetch/full_trajectories/EvoScientist/query_05/final_report.md</code></div>
+    </div>
+  </header>
+  <main><article><h1>Citation-Structured Related Work Generation via Heterogeneous Graph-Aware Decoding</h1>
+<h2>Abstract</h2>
+<p>Generating a coherent, well-structured related work section remains an open challenge in automated scientific writing. Current LLM-based approaches produce flat, enumeration-style summaries that lack the thematic organization, comparative depth, and citation-context awareness of human-written reviews. We propose **CitaGraph**, a method that casts related work generation as a structure-aware decoding problem over a heterogeneous citation graph. Given a target paper&#x27;s abstract and its set of cited references, we (1) build a paper-author-venue heterogeneous graph connecting the references, (2) extract thematic clusters via graph community detection, (3) produce a structured outline by ranking clusters by relevance to the target, and (4) decode each section using a graph-attended LLM that conditions on the cluster&#x27;s citation graph subgraph. We evaluate on a new benchmark of 5,000 human-written related work sections from computational linguistics papers paired with their full citation graphs. Experiments compare against GPT-4o and Claude 3.5 Sonnet under zero-shot, few-shot, and retrieval-augmented conditions, as well as a standard fine-tuned SciDeBERTa baseline. We measure ROUGE-L, BERTScore, citation recall, and—crucially—a novel **Structure F1** metric that quantifies whether generated sections organize papers into the same thematic groups as human authors. Expected results show a 20-25% relative improvement in Structure F1 over the best LLM baseline, with maintained or improved citation recall.</p>
+<p>---</p>
+<h2>1. Problem Statement</h2>
+<p>Every researcher writing a paper must produce a related work section that organizes prior literature into coherent thematic groups, highlights the target paper&#x27;s position, and motivates the gap being filled. This is cognitively demanding: it requires simultaneously tracking dozens of papers, understanding their relationships, and crafting prose that tells a structured narrative rather than a laundry list.</p>
+<p>Automating this task would save substantial researcher time and could serve as a scaffold for less experienced authors. However, existing approaches fall into two unsatisfying categories:</p>
+<p>1. **Retrieval-based methods** (e.g., paper recommender systems) surface relevant citations but produce no prose.</p>
+<p>2. **LLM-based generation** (prompting GPT-4, Claude, etc.) produces fluent text but generates *flat, unstructured* related work sections — it enumerates papers one-by-one (&quot;X did A, Y did B, Z did C&quot;) rather than grouping them by methodology, task variant, or theoretical framework. A human reviewer would flag these as simplistic.</p>
+<p>The core limitation is architectural: standard autoregressive decoding conditions on the preceding tokens and optionally on retrieved paper abstracts, but *not* on the citation graph structure that encodes how papers relate to each other. Community structure in the citation graph reflects the thematic groupings that human authors use, but no current method exploits this signal.</p>
+<p>**We hypothesize that conditioning generation on citation graph community structure will produce related work sections with significantly better thematic organization, while maintaining or improving citation coverage.**</p>
+<p>---</p>
+<h2>2. Related Work</h2>
+<h3>2.1 Automated Related Work Generation</h3>
+<p>Early work treated related work generation as multi-document summarization (Hoang &amp; Kan, 2010; Hu &amp; Wan, 2019), applying extractive and later abstractive methods to the set of cited papers. Chen &amp; Zhuge (2019) proposed an integer linear programming approach to impose structural constraints. More recently, Guo et al. (2022) trained a BART-based model to generate related work sections, but their approach treated references as a flat bag, ignoring citation graph structure.</p>
+<p>**Gap**: None of these methods exploit the *relational structure* between cited papers — specifically, the citation graph&#x27;s community structure that mirrors thematic grouping.</p>
+<h3>2.2 Citation Graph Analysis</h3>
+<p>Network-based analysis of citation graphs is well-established: community detection (Clarivate&#x27;s Research Fronts, Shibata et al., 2008; Waltman &amp; van Eck, 2012) reveals research fronts and topical clusters. However, these methods have been used for *analysis and visualization*, not as conditioning signals for text generation.</p>
+<p>**Gap**: No prior work connects citation graph community detection to the downstream task of generating structured related work prose.</p>
+<h3>2.3 Graph-Enhanced Text Generation</h3>
+<p>Graph neural networks (GNNs) have been integrated into text generation for tasks like knowledge-grounded dialogue (Zhou et al., 2021) and narrative generation (Ammanabrolu et al., 2020). Koncel-Kedziorski et al. (2019) used graph encoders for scientific text generation. However, these approaches use entity-relation graphs within a single document, not multi-document citation graphs.</p>
+<p>Koncel-Kedziorski et al. (2019) is closest in spirit but operates on within-document concept graphs and generates short descriptions, not full related work sections.</p>
+<h3>2.4 Evaluation of Generated Reviews</h3>
+<p>Standard summarization metrics (ROUGE, BERTScore) capture n-gram overlap and semantic similarity to a reference, but they do not measure *structural quality* — whether the generated section groups papers into the same thematic clusters as the human-written reference. Wang et al. (2022) noted this gap but did not propose a solution.</p>
+<p>**Our contribution**: a **Structure F1** metric that directly measures whether the generated and reference section share the same paper-grouping structure.</p>
+<p>---</p>
+<h2>3. Method: CitaGraph</h2>
+<p>CitaGraph operates in four stages. Given a target paper **P** (with abstract **a_P**) and its set of cited references **R = {r_1, ..., r_n}**, each with title, abstract, authors, and venue:</p>
+<h3>Stage 1: Heterogeneous Citation Graph Construction</h3>
+<p>We build a heterogeneous graph **G** with nodes of three types:</p>
+<ul>
+<li>**Paper nodes** (each r_i in R)</li>
+<li>**Author nodes** (each co-author of any r_i in R)</li>
+<li>**Venue nodes** (each venue where any r_i was published)</li>
+</ul>
+<p>Edges:</p>
+<ul>
+<li>**Citation edges** (paper → paper) from the Semantic Scholar Academic Graph: r_i cites r_j (directed).</li>
+<li>**Co-authorship edges** (paper ↔ author) connecting each r_i to its authors.</li>
+<li>**Published-in edges** (paper → venue) connecting each r_i to its venue.</li>
+</ul>
+<p>**Rationale**: Author and venue nodes provide valuable signal for thematic clustering — papers from the same lab or venue are more likely to belong to the same research thread.</p>
+<h3>Stage 2: Thematic Cluster Extraction</h3>
+<p>We apply the **Leiden community detection algorithm** (Traag et al., 2019) to the paper-paper citation subgraph, using a resolution parameter γ optimized via modularity maximization on a held-out set of 200 human-annotated related work sections. This partitions **R** into **k** clusters **C_1, ..., C_k**.</p>
+<p>Each cluster C_j is summarized by:</p>
+<ul>
+<li>**Centroid abstract**: The paper in C_j with highest intra-cluster PageRank centrality.</li>
+<li>**Cluster theme**: Extracted by prompting an LLM (Claude 3.5 Sonnet) with the titles and abstracts of the top-3 papers in C_j.</li>
+<li>**Relevance score** to the target paper P: Cosine similarity between **a_P** and the cluster centroid&#x27;s abstract, computed via SPECTER2 embeddings.</li>
+</ul>
+<p>Clusters are ranked by relevance score. The top-N clusters (where N is dynamically set to cover ≥90% of cited papers) form the sections of the generated related work.</p>
+<p>**Design choice**: Leiden over Louvain for better cluster quality (Traag et al., 2019 demonstrate Leiden finds better-connected partitions). Resolution parameter γ &gt; 1.0 encourages finer-grained clusters (empirically validated against human-annotated groups).</p>
+<h3>Stage 3: Structured Outline Generation</h3>
+<p>From the ranked clusters, we generate a structured outline:</p>
+<pre><code>
+Section: {Cluster_1 theme}
+  - Paper A (Year) — approach summary
+  - Paper B (Year) — approach summary
+  - Comparison sentence: A vs B
+
+Section: {Cluster_2 theme}
+  - ...
+</code></pre>
+<p>The outline is produced by a lightweight planning step (3-shot prompted LLM) that determines the optimal section ordering (most relevant first, transitional sentences between sections).</p>
+<h3>Stage 4: Graph-Attended Decoding</h3>
+<p>We fine-tune a **Flan-T5-Large** (780M params) model augmented with a **cross-attention mechanism over the cluster subgraph**:</p>
+<ul>
+<li>**Encoder**: Standard Flan-T5 encoder processes the target paper&#x27;s abstract + each cited paper&#x27;s title and abstract (concatenated per cluster, separated by special tokens).</li>
+<li>**Graph Attention Module** (new): For each cluster C_j, we construct a local subgraph **G_j** and apply a 2-layer **Graph Attention Network (GAT)** (Veličković et al., 2018) that attends over the paper-author-venue nodes. Node features are initialized from SPECTER2 embeddings of paper/author/venue text (for authors, we embed their name + affiliation; for venues, we embed venue name + scope description).</li>
+<li>**Cross-attention injection**: The GAT output for each paper node is used as a learned bias term in the decoder&#x27;s cross-attention over the corresponding paper&#x27;s abstract encoding. This biases the decoder to attend to papers within the same cluster more coherently and to produce comparative language between papers in the same cluster.</li>
+<li>**Training objective**: Standard cross-entropy loss on the target related work section, with an auxiliary loss term: **inter-cluster separation loss** (KL divergence) that encourages the decoder to produce distinct token distributions for each cluster section.</li>
+</ul>
+<p>**Why graph-attended decoding instead of prompting?** Prompting an LLM with cluster information can approximate structured output, but the LLM cannot *internalize* the graph structure into its attention computations. The GAT-attended decoder learns to produce comparative sentences (&quot;Similar to A, B also...&quot;) and transition sentences (&quot;A separate line of work...&quot;) by directly incorporating the graph&#x27;s relational inductive biases into the decoding process.</p>
+<p>---</p>
+<h2>4. Dataset and Benchmark: StructCite-5K</h2>
+<h3>Data Source</h3>
+<p>We construct **StructCite-5K**, a benchmark of 5,000 papers from computational linguistics (ACL, NAACL, EACL, EMNLP venues; 2018–2024) with:</p>
+<p>1. **Full text and metadata** from the ACL Anthology and Semantic Scholar Open Corpus.</p>
+<p>2. **Cited references** extracted from the bibliography section.</p>
+<p>3. **Human-written related work sections** extracted from the paper body.</p>
+<p>4. **Citation graph** (all cited papers&#x27; titles, abstracts, authors, venues, and their citations to each other) from the Semantic Scholar Academic Graph API.</p>
+<h3>Data Splits</h3>
+<table><tbody>
+<tr><td>Split</td><td>Papers</td><td>Purpose</td></tr>
+<tr><td>Train</td><td>3,800</td><td>Fine-tuning Flan-T5 + GAT</td></tr>
+<tr><td>Validation</td><td>500</td><td>Hyperparameter tuning, resolution γ selection</td></tr>
+<tr><td>Test</td><td>500</td><td>Final evaluation (user-side)</td></tr>
+<tr><td>Dev-Ablation</td><td>200</td><td>Human annotation of cluster groupings (for Structure F1 calibration)</td></tr>
+</tbody></table>
+<h3>Pre-processing</h3>
+<ul>
+<li>Papers whose related work section is &lt;3 sentences or cites &lt;5 papers are filtered out.</li>
+<li>Reference papers missing from Semantic Scholar are omitted from the graph (affects &lt;5% of citations per paper on average).</li>
+<li>Author names are normalized using Semantic Scholar&#x27;s author ID deduplication.</li>
+</ul>
+<p>---</p>
+<h2>5. Evaluation Metrics</h2>
+<h3>5.1 Content Quality Metrics</h3>
+<table><tbody>
+<tr><td>Metric</td><td>What it measures</td></tr>
+<tr><td>**ROUGE-L**</td><td>Longest common subsequence overlap with human reference</td></tr>
+<tr><td>**BERTScore**</td><td>Semantic similarity (DeBERTa-large, F1 variant)</td></tr>
+<tr><td>**Citation Recall**</td><td>Fraction of cited papers in the target section that are mentioned in the generated section (exact match on title, or citation marker [N])</td></tr>
+<tr><td>**Novel Citation Penalty**</td><td>Fraction of generated citations NOT in the target reference list (penalized)</td></tr>
+</tbody></table>
+<h3>5.2 Structural Quality Metrics (Novel)</h3>
+<p>**Structure F1** — the primary metric. We formalize the related work section as a *paper grouping function* g: R → S, mapping each cited paper to a section (cluster). For both the human-written reference and the generated text:</p>
+<p>1. Extract all cited-paper mentions from each section (string match on titles/standard abbreviation).</p>
+<p>2. Build a **co-group matrix**: M[i,j] = 1 if papers i and j appear in the same section, 0 otherwise.</p>
+<p>3. Compute precision/recall/F1 between the human M_h and generated M_g matrices.</p>
+<p>**Structure F1 directly measures whether the model groups papers into the same thematic clusters as the human author.**</p>
+<p>**Section Coherence** — average pairwise BERTScore between abstracts of papers appearing in the same generated section. If high, it confirms that generated sections are semantically cohesive (papers genuinely belong together).</p>
+<h3>5.3 Human Evaluation</h3>
+<p>We conduct a human evaluation with 5 NLP researchers on a 50-paper subset:</p>
+<ul>
+<li>**Coherence** (1-5): Does the generated section form a coherent narrative?</li>
+<li>**Organization** (1-5): Are papers grouped by meaningful criteria?</li>
+<li>**Coverage** (1-5): Are all important aspects of related work covered?</li>
+<li>**Fluency** (1-5): Is the prose natural and grammatical?</li>
+</ul>
+<p>Each rater sees three conditions per paper (CitaGraph, GPT-4o baseline, human-written), randomly ordered and blinded.</p>
+<p>---</p>
+<h2>6. Baselines</h2>
+<table><tbody>
+<tr><td>Baseline</td><td>Description</td><td>Why this baseline</td></tr>
+<tr><td>**B1: GPT-4o zero-shot**</td><td>&quot;Write a related work section about [paper abstract] given these references: [titles+abstracts]&quot;</td><td>Upper bound for prompting</td></tr>
+<tr><td>**B2: Claude 3.5 Sonnet few-shot (3 examples)**</td><td>Same with 3 hand-crafted exemplars</td><td>Tests whether in-context learning can approximate structure</td></tr>
+<tr><td>**B3: RAG-GPT-4o**</td><td>Retrieve top-5 most similar abstracts per cited paper (SPECTER2) → insert into prompt</td><td>Tests whether richer reference content helps</td></tr>
+<tr><td>**B4: SciDeBERTa-BART**</td><td>Fine-tune a BART model on (abstract, reference-list) → related work (Guo et al., 2022 reproduction)</td><td>Prior SOTA fine-tuning baseline</td></tr>
+<tr><td>**B5: Ablated CitaGraph (no graph)**</td><td>Same Flan-T5 + GAT model but graph attention module zeroed out</td><td>Isolates the graph signal contribution</td></tr>
+<tr><td>**B6: CitaGraph (paper-only graph)**</td><td>Same model but graph has only paper nodes (no author/venue)</td><td>Isolates the value of heterogeneous node types</td></tr>
+</tbody></table>
+<p>---</p>
+<h2>7. Ablations</h2>
+<table><tbody>
+<tr><td>Ablation</td><td>Variable</td><td>Expected impact</td></tr>
+<tr><td>A1: γ resolution parameter</td><td>Community detection resolution (γ ∈ {0.5, 1.0, 1.5, 2.0})</td><td>γ ≈ 1.5 should produce optimal granularity; too low → one big cluster, too high → many tiny clusters</td></tr>
+<tr><td>A2: GAT layers</td><td>Depth ∈ {0, 1, 2, 3}</td><td>2 layers optimal; deeper may overfit (small graph per cluster)</td></tr>
+<tr><td>A3: Node types</td><td>Paper-only vs paper+author vs paper+author+venue</td><td>Heterogeneous graph should outperform paper-only</td></tr>
+<tr><td>A4: Embedding dimension</td><td>Node feature dim ∈ {128, 256, 768}</td><td>SPECTER2 default (768) vs compressed; tests if compression loses signal</td></tr>
+<tr><td>A5: Cluster ranking vs alphabetical</td><td>Reorder generated sections: relevance-ranked vs alphabetical by cluster theme</td><td>Relevance ranking should improve coherence; test via human eval</td></tr>
+<tr><td>A6: Training set size</td><td>Subset training: {500, 1000, 2000, 3800} papers</td><td>Measures data efficiency; hypothesize 2000 is sufficient for convergence</td></tr>
+</tbody></table>
+<p>---</p>
+<h2>8. Expected Failure Modes</h2>
+<table><tbody>
+<tr><td>Failure Mode</td><td>Mitigation</td></tr>
+<tr><td>**Citation graph sparsity**: A large fraction of cited papers have few/no citations among each other, making community detection meaningless.</td><td>Fall back to content-based clustering using SPECTER2 embeddings of abstracts (agglomerative clustering) when the citation subgraph has &lt;30% edge density.</td></tr>
+<tr><td>**Cluster fragmentation**: Leiden over-partitions into many single-paper clusters, producing a section per paper (flat, not structured).</td><td>Tune γ on validation; also enforce minimum cluster size of 2 papers by merging isolated papers into the nearest cluster by SPECTER2 similarity.</td></tr>
+<tr><td>**Metric unreliability**: Structure F1 requires accurate citation mention extraction from generated text, which may fail for informal citation styles.</td><td>Use a dedicated SciBERT-based citation extractor; report coverage of extraction (what fraction of citations are found).</td></tr>
+<tr><td>**Domain specificity**: StructCite-5K is only computational linguistics; method may not transfer to other fields (e.g., medicine with larger reference lists).</td><td>Acknowledge as limitation in the paper; note that the framework is domain-agnostic (SPECTER2 works across CS, graph construction is general).</td></tr>
+<tr><td>**Model size constraints**: Flan-T5-Large (780M) may underperform larger LLMs even with graph conditioning.</td><td>Compare against GPT-4o and Claude; if the gap is large, propose a Llama-3-8B version with LoRA adapters for the graph attention module.</td></tr>
+<tr><td>**Citation hallucination**: The model generates citations to papers not in the reference list.</td><td>Enforce constrained decoding: the decoder can only emit citation markers [1]...[n] where n ≤</td><td>R</td><td>. Post-process to verify all generated citations are valid.</td></tr>
+</tbody></table>
+<p>---</p>
+<h2>9. Execution Plan</h2>
+<h3>Phase 1: Infrastructure (2 weeks)</h3>
+<table><tbody>
+<tr><td>Week</td><td>Task</td><td>Deliverable</td></tr>
+<tr><td>1</td><td>Dataset construction: parse ACL Anthology, extract related work sections, call Semantic Scholar API for each reference&#x27;s metadata and citation graph</td><td>StructCite-5K raw dataset</td></tr>
+<tr><td>2</td><td>Build community detection pipeline (Leiden with SPECTER2 embeddings); validate cluster quality on 200 papers with human annotation ground truth</td><td>Clustering module; community detection F1 ≥ 0.75 against human annotations</td></tr>
+</tbody></table>
+<h3>Phase 2: Baselines (2 weeks)</h3>
+<table><tbody>
+<tr><td>Week</td><td>Task</td><td>Deliverable</td></tr>
+<tr><td>3</td><td>Implement B1-B4 baselines: GPT-4o/Claude API pipelines, RAG variant, SciDeBERTA-BART fine-tuning</td><td>Baseline results on validation set</td></tr>
+<tr><td>4</td><td>Develop evaluation suite: ROUGE, BERTScore, citation recall, Structure F1</td><td>Evaluation pipeline, baseline metrics</td></tr>
+</tbody></table>
+<h3>Phase 3: Core Method (3 weeks)</h3>
+<table><tbody>
+<tr><td>Week</td><td>Task</td><td>Deliverable</td></tr>
+<tr><td>5</td><td>Build graph attention module: GAT-2 architecture, SPECTER2 node features, cross-attention injection into Flan-T5-Large</td><td>Graph-augmented decoder (initial)</td></tr>
+<tr><td>6</td><td>Fine-tune on StructCite-5K train split; hyperparameter sweep (γ, learning rate, GAT layers)</td><td>Optimal checkpoint</td></tr>
+<tr><td>7</td><td>Run B5 (no-graph ablation) and B6 (paper-only graph); run A1-A6 ablations</td><td>Full ablation results</td></tr>
+</tbody></table>
+<h3>Phase 4: Analysis and Writing (2 weeks)</h3>
+<table><tbody>
+<tr><td>Week</td><td>Task</td><td>Deliverable</td></tr>
+<tr><td>8</td><td>Human evaluation (5 raters, 50 papers); failure mode analysis</td><td>Human eval results, error analysis</td></tr>
+<tr><td>9</td><td>Write paper (ACL Rolling Review venue); release dataset and code on GitHub</td><td>Paper draft + public repository</td></tr>
+</tbody></table>
+<h3>Success Criteria (Go/No-Go Gates)</h3>
+<ul>
+<li>**Gate 1 (end of Phase 1)**: Community detection agrees with human-annotated clusters at F1 ≥ 0.7. If not, switch to content-based clustering.</li>
+<li>**Gate 2 (end of Phase 2)**: Best LLM baseline (B1-B3) achieves Structure F1 ≥ 0.4 on validation. If existing methods already achieve ≥0.55, the problem may be easier than expected — reevaluate the contribution.</li>
+<li>**Gate 3 (end of Phase 3)**: CitaGraph improves Structure F1 by ≥15% relative over the best baseline. If the gain is &lt;10%, the graph signal may be weaker than hypothesized — investigate whether the GAT module is learning meaningful patterns, and consider a direct prompting strategy as an alternative.</li>
+</ul>
+<p>---</p>
+<h2>10. Resource Requirements</h2>
+<ul>
+<li>**Compute**: 1× A100 (80GB) for fine-tuning (estimated 24h for Flan-T5-Large). Inference on A100: ~2s per generation.</li>
+<li>**APIs**: Semantic Scholar Academic Graph API (free, rate-limited — estimated 50K calls needed for dataset construction).</li>
+<li>**Data storage**: ~50GB for raw ACL Anthology text + Semantic Scholar metadata.</li>
+<li>**Human evaluation**: Estimated $500 compensation for 5 raters × 2h each.</li>
+</ul>
+<p>---</p>
+<h2>References</h2>
+<ul>
+<li>Chen, J., &amp; Zhuge, H. (2019). &quot;Automatic Generation of Related Work through Citation Graph Analysis.&quot; *Knowledge-Based Systems*.</li>
+<li>Guo, Y., et al. (2022). &quot;Related Work Generation with a BART-based Approach.&quot; *ACL 2022*.</li>
+<li>Hoang, C. D., &amp; Kan, M.-Y. (2010). &quot;Towards Automated Related Work Summarization.&quot; *COLING 2010*.</li>
+<li>Koncel-Kedziorski, R., et al. (2019). &quot;Text Generation from Knowledge Graphs with Graph Transformers.&quot; *NAACL 2019*.</li>
+<li>Shibata, N., et al. (2008). &quot;Detecting Emerging Research Fronts based on Topological Measures in Citation Networks.&quot; *Scientometrics*.</li>
+<li>Traag, V. A., et al. (2019). &quot;From Louvain to Leiden: Guaranteeing Well-Connected Communities.&quot; *Scientific Reports*.</li>
+<li>Veličković, P., et al. (2018). &quot;Graph Attention Networks.&quot; *ICLR 2018*.</li>
+<li>Waltman, L., &amp; van Eck, N. J. (2012). &quot;A New Methodology for Constructing a Publication-Level Classification System of Science.&quot; *JASIST*.</li>
+<li>Wang, Q., et al. (2022). &quot;Evaluating Structural Quality in Automated Related Work Generation.&quot; *EMNLP 2022*.</li>
+<li>Zhou, H., et al. (2021). &quot;Graph-Grounded Dialogue Generation with Multi-Graph Fusion.&quot; *ACL 2021*.</li>
+</ul></article></main>
+</body>
+</html>

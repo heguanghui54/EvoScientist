@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Structured vs. Unstructured Knowledge Injection in Biomedical LLMs:</title>
+  <style>
+    body { margin: 0; background: #f7f8f8; color: #17191c; font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; line-height: 1.62; }
+    header { padding: 28px clamp(18px, 5vw, 72px); background: #fff; border-bottom: 1px solid #dce1e6; }
+    main { max-width: 980px; margin: 0 auto; padding: 28px 18px 56px; }
+    article { background: #fff; border: 1px solid #dce1e6; border-radius: 8px; padding: clamp(18px, 4vw, 42px); }
+    h1 { margin: 0 0 10px; font-size: clamp(28px, 4vw, 46px); line-height: 1.1; letter-spacing: 0; }
+    h2 { margin-top: 30px; border-top: 1px solid #e7eaee; padding-top: 18px; letter-spacing: 0; }
+    h3, h4 { letter-spacing: 0; }
+    p, li, td { font-size: 15px; }
+    .meta { color: #606a73; display: grid; gap: 4px; }
+    a { color: #225f9f; }
+    table { border-collapse: collapse; width: 100%; overflow-wrap: anywhere; }
+    td { border: 1px solid #e1e5ea; padding: 8px; vertical-align: top; }
+    pre { white-space: pre-wrap; background: #f0f3f5; padding: 14px; border-radius: 6px; overflow-x: auto; }
+    code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    .nav { margin-bottom: 14px; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="nav"><a href="index.html">← All 30 reports</a></div>
+    <h1>Structured vs. Unstructured Knowledge Injection in Biomedical LLMs:</h1>
+    <div class="meta">
+      <div>Query 16: Knowledge injection</div>
+      <div>Generate a research proposal on addressing the challenges of knowledge injection in domain-specific Large Language Models.</div>
+      <div>Source: <code>artifacts/remote_fetch/full_trajectories/EvoScientist/query_16/final_report.md</code></div>
+    </div>
+  </header>
+  <main><article><h1>Structured vs. Unstructured Knowledge Injection in Biomedical LLMs:</h1>
+<h1>A Controlled Study of Adaptation Architecture and Catastrophic Forgetting</h1>
+<p>---</p>
+<h2>1. Problem Statement</h2>
+<p>Domain-specific Large Language Models (e.g., BioMistral, Clinical Camel, Med-PaLM) are typically adapted by fine-tuning a general-purpose base model on biomedical corpora. However, this process faces a fundamental tension: **injecting new domain knowledge risks catastrophic forgetting of the general capabilities that made the base model useful**. Prior work documents this trade-off empirically (Luo et al., 2023; Ovadia et al., 2023), but three critical gaps remain:</p>
+<p>1. **No controlled comparison of knowledge formats.** Structured knowledge (knowledge graph triples, ontological relations) and unstructured knowledge (raw biomedical text) differ in density, redundancy, and format. It is unknown which causes less forgetting per unit of injected knowledge, because prior studies compare unequal data quantities and sources.</p>
+<p>2. **No consensus on adapter placement.** LoRA-based adaptation is the standard PEFT method, but contradictory findings report that middle layers (Cong et al., 2025), all layers (Hu et al., 2023), only 5% of layers (Bafghi et al., 2025), or gated mixtures (Han et al., 2024) perform best. No study has tested whether the optimal placement interacts with knowledge format.</p>
+<p>3. **Biomedical LLMs rarely report general capability retention.** Most biomedical LLM papers report only domain benchmarks (MedQA, PubMedQA) and omit MMLU, GSM8K, or HellaSwag — making the forgetting dimension invisible.</p>
+<p>**This proposal addresses all three gaps in a single controlled design.**</p>
+<p>---</p>
+<h2>2. Hypothesis</h2>
+<p>**Primary hypothesis (H1):** Structured knowledge injection (training on text derived from biomedical knowledge graph triples) achieves higher domain knowledge gain per unit of catastrophic forgetting compared to matched-volume unstructured corpus fine-tuning, because structured data presents knowledge in a disentangled, high-signal format that requires fewer parameter updates.</p>
+<p>**Secondary hypothesis (H2):** The optimal adapter placement strategy depends on knowledge format — specifically, middle-layer-only adaptation is sufficient for structured knowledge (which encodes compact relational patterns), while unstructured knowledge requires broader adaptation (all-layers or gated mixture) because its patterns are more diffuse.</p>
+<p>**Tertiary hypothesis (H3):** Structured injection with optimal adapter placement matches or exceeds a RAG baseline on domain QA while retaining more general capability, demonstrating that fine-tuning and retrieval are complementary rather than competing strategies.</p>
+<p>---</p>
+<h2>3. Method</h2>
+<h3>3.1 Design: 2 × 3 Factorial + Reference Baselines</h3>
+<table><tbody>
+<tr><td>Factor</td><td>Levels</td></tr>
+<tr><td>**Knowledge Format** (A)</td><td>A1: Structured (KG-derived text) · A2: Unstructured (raw biomedical corpus)</td></tr>
+<tr><td>**Adapter Strategy** (B)</td><td>B1: Middle-only · B2: All-layers · B3: Selective gating (SLIM)</td></tr>
+</tbody></table>
+<p>Each of the 6 conditions is run with 3 random seeds = **18 fine-tuning runs**.</p>
+<p>**Reference baselines:** (1) Untuned base model, (2) Full fine-tune on unstructured corpus, (3) RAG-only (no fine-tuning).</p>
+<h3>3.2 Base Model</h3>
+<p>**Mistral-7B-v0.3** — chosen because:</p>
+<ul>
+<li>It is the base of BioMistral-7B, enabling direct comparison</li>
+<li>7B is the most studied scale in PEFT literature (majority of prior work)</li>
+<li>It has strong general capabilities (MMLU ~64%), leaving room to measure forgetting</li>
+</ul>
+<h3>3.3 Knowledge Sources (Matched for Content and Volume)</h3>
+<p>**Both conditions receive the same underlying biomedical knowledge encoded in two formats, matched to within 5% token count:**</p>
+<p>**Condition A1 — Structured (KG → Text):**</p>
+<ul>
+<li>Source: **UMLS** (Unified Medical Language System) and **BIOSSES** biomedical KG</li>
+<li>Process: Extract (subject, relation, object) triples from UMLS (e.g., *Metformin, TREATS, Diabetes Mellitus Type 2*)</li>
+<li>Convert each triple to natural language sentences via 3 templates (e.g., *&quot;Metformin is used to treat type 2 diabetes mellitus.&quot;*, *&quot;For type 2 diabetes mellitus, one treatment option is metformin.&quot;*)</li>
+<li>Filter to the ~500K most clinically relevant triples (ranked by relation frequency in PubMed)</li>
+<li>Final dataset: ~3M sentences, ~50M tokens</li>
+</ul>
+<p>**Condition A2 — Unstructured (Raw Corpus):**</p>
+<ul>
+<li>Source: **PubMed Central** open-access subset (same time window as UMLS release)</li>
+<li>Process: Sample biomedical abstracts and article snippets whose entity coverage matches the UMLS triple set (ensured via entity-linking with SciSpacy)</li>
+<li>Filter to sentences containing at least one UMLS entity from the structured set</li>
+<li>Target: ~50M tokens (matched to A1)</li>
+</ul>
+<p>This matching ensures that **differences between A1 and A2 are attributable to knowledge format, not knowledge content or volume**.</p>
+<h3>3.4 Adapter Strategies</h3>
+<p>All three use rank-16 LoRA (α=32, dropout=0.1) on query and value projections.</p>
+<table><tbody>
+<tr><td>Strategy</td><td>Implementation</td><td>Modules Adapted</td><td>Rationale</td></tr>
+<tr><td>**B1: Middle-only**</td><td>LoRA on layers 8–20 of 32</td><td>13 layers</td><td>Middle layers are hypothesized to encode domain-specific patterns (Cong et al., 2025)</td></tr>
+<tr><td>**B2: All-layers**</td><td>LoRA on all 32 layers</td><td>32 layers</td><td>Standard practice; maximum capacity (Hu et al., 2023)</td></tr>
+<tr><td>**B3: Selective gating**</td><td>SLIM (Soft LoRA + Identity Mixture) per layer</td><td>Gated, ~5-40% active</td><td>Learns which layers to adapt; balances capacity and regularization (Han et al., 2024)</td></tr>
+</tbody></table>
+<p>Training: 3 epochs, batch size 16, learning rate 2e-4 (cosine schedule), sequence length 1024, BF16 mixed precision. Single A100-80GB per run (~2-4 hours per condition).</p>
+<p>---</p>
+<h2>4. Dataset / Benchmark</h2>
+<h3>4.1 Domain Knowledge Evaluation (3 benchmarks)</h3>
+<table><tbody>
+<tr><td>Benchmark</td><td>Type</td><td>Size</td><td>Metric</td><td>Used By</td></tr>
+<tr><td>**MedQA (USMLE)**</td><td>Multi-choice QA</td><td>12,723</td><td>Accuracy</td><td>Standard medical LLM eval</td></tr>
+<tr><td>**PubMedQA**</td><td>Binary QA (yes/no/maybe)</td><td>1,000</td><td>F1, accuracy</td><td>De facto biomedical QA</td></tr>
+<tr><td>**BioASQ 12b**</td><td>Factoid QA</td><td>~500</td><td>F1, SOTA F1</td><td>Biomedical semantic QA</td></tr>
+</tbody></table>
+<h3>4.2 General Capability Retention (4 benchmarks)</h3>
+<table><tbody>
+<tr><td>Benchmark</td><td>Capability</td><td>Metric</td><td>Rationale</td></tr>
+<tr><td>**MMLU**</td><td>Broad knowledge + reasoning</td><td>Accuracy (5-shot)</td><td>De facto standard for general knowledge retention</td></tr>
+<tr><td>**HellaSwag**</td><td>Commonsense reasoning</td><td>Accuracy</td><td>Tests world knowledge not present in biomedical data</td></tr>
+<tr><td>**GSM8K**</td><td>Math reasoning</td><td>Accuracy</td><td>Tests whether mathematical reasoning degrades</td></tr>
+<tr><td>**ARC-Challenge**</td><td>Science reasoning</td><td>Accuracy</td><td>Tests grade-school science (overlap check with biomedical)</td></tr>
+</tbody></table>
+<h3>4.3 Forgetting Metrics</h3>
+<ul>
+<li>**Capability Retention Rate (CRR):** (post-adaptation score / base score) × 100 for each general benchmark</li>
+<li>**Domain Transfer Efficiency (DTE):** Δ domain accuracy / Δ forgetting (↓MMLU) — knowledge per unit forgetting</li>
+<li>**Composite Score:** 0.5 × (mean domain accuracy) + 0.5 × (mean CRR) — balances both objectives</li>
+</ul>
+<p>---</p>
+<h2>5. Baselines</h2>
+<table><tbody>
+<tr><td>Baseline</td><td>Description</td><td>Purpose</td></tr>
+<tr><td>**Untuned Mistral-7B**</td><td>Base model, no adaptation</td><td>Lower bound for domain, upper bound for general</td></tr>
+<tr><td>**Full fine-tune**</td><td>All parameters, unstructured corpus</td><td>Upper bound for domain, lower bound for general</td></tr>
+<tr><td>**RAG-only**</td><td>No fine-tuning; retrieve from PubMed abstracts via Contriever-MSB</td><td>Practical alternative; no forgetting by design</td></tr>
+<tr><td>**BioMistral-7B**</td><td>Published biomedical Mistral (Labrak et al., 2024)</td><td>External reference point</td></tr>
+<tr><td>**DoRA (all-layers)**</td><td>DoRA adapter on all layers (SOTA LoRA variant)</td><td>SOTA adapter comparison</td></tr>
+</tbody></table>
+<p>---</p>
+<h2>6. Ablations</h2>
+<table><tbody>
+<tr><td>Ablation</td><td>What Is Changed</td><td>Why</td></tr>
+<tr><td>**Ablation 1: Rank scaling**</td><td>r = 8, 16, 32 for best condition</td><td>Tests sensitivity to adapter capacity</td></tr>
+<tr><td>**Ablation 2: Template diversity**</td><td>1 template vs. 3 templates for A1</td><td>Tests whether structured format diversity matters</td></tr>
+<tr><td>**Ablation 3: Data volume**</td><td>25%, 50%, 100% of training data</td><td>Tests whether format effects scale with data</td></tr>
+<tr><td>**Ablation 4: Model scale**</td><td>Swap Mistral-7B for Llama-3-8B</td><td>Tests generalization to different base architectures</td></tr>
+<tr><td>**Ablation 5: Sequential FT**</td><td>First adapt on structured, then on unstructured</td><td>Tests if order of formats matters</td></tr>
+</tbody></table>
+<p>---</p>
+<h2>7. Expected Failure Modes and Mitigations</h2>
+<table><tbody>
+<tr><td>Failure Mode</td><td>Likelihood</td><td>Mitigation</td></tr>
+<tr><td>**No significant difference between A1 and A2**</td><td>Moderate</td><td>Post-hoc analysis: compute per-entity knowledge density; the format effect may be concentrated in rare entities</td></tr>
+<tr><td>**All adapter strategies perform similarly**</td><td>Moderate</td><td>Check whether the biomedical domain is &quot;easy&quot; (high base-model overlap); if so, switch to a more distant domain (e.g., legal) in a follow-up</td></tr>
+<tr><td>**Forgetting is negligible across all conditions**</td><td>Low (contradicts Luo et al.)</td><td>If observed, test with longer training (6 epochs) and higher rank (r=64) to force saturation</td></tr>
+<tr><td>**SLIM collapses to all-layers (no gating)**</td><td>Low</td><td>Add L1 regularization on gating weights; evaluate entropy of gate distribution</td></tr>
+<tr><td>**Template-based structured data is unnatural**</td><td>Low</td><td>Run human evaluation (N=3 clinicians) on naturalness of A1 sentences; compare perplexity vs. A2</td></tr>
+<tr><td>**KG triple coverage is sparse**</td><td>Moderate</td><td>Augment with LLM-generated paraphrases of triple sentences (using GPT-4o with strict factual constraints)</td></tr>
+</tbody></table>
+<p>---</p>
+<h2>8. Execution Plan</h2>
+<h3>Stage 1: Data Curation (1-2 weeks)</h3>
+<p>1. Download UMLS and extract clinically relevant triples → filter by relation frequency</p>
+<p>2. Download PubMed Central subset; entity-link with SciSpacy to match UMLS coverage</p>
+<p>3. Generate structured dataset (3 templates per triple) → verify token count match</p>
+<p>4. Validate: sample 200 sentences per condition, check by human annotator for factual correctness</p>
+<h3>Stage 2: Implementation &amp; Infrastructure (1 week)</h3>
+<p>1. Implement adapter strategies using HuggingFace PEFT library</p>
+<p>2. Implement SLIM gating module for B3</p>
+<p>3. Set up evaluation pipeline: 7 benchmarks × 3 seeds = 21 eval runs per condition</p>
+<p>4. Verify reproducibility: run 1 condition with 2 seeds, check variance &lt; 2%</p>
+<h3>Stage 3: Main Experiment (1-2 weeks on 4× A100)</h3>
+<p>1. Run all 6 factorial conditions + 3 baselines (Table 1)</p>
+<p>2. Run 5 ablations (rank scaling, template diversity, data volume, model scale, sequential FT)</p>
+<p>3. Track: training loss curves, validation perplexity, and 7 benchmark scores per checkpoint</p>
+<h3>Stage 4: Analysis (1 week)</h3>
+<p>1. Compute CRR, DTE, composite score for each condition</p>
+<p>2. Two-way ANOVA: Knowledge Format × Adapter Strategy on composite score</p>
+<p>3. Post-hoc: Tukey HSD for pairwise comparisons</p>
+<p>4. For SLIM: analyze gating distribution per layer — do certain layers consistently gate?</p>
+<p>5. Failure mode analysis: on which MedQA sub-topics does each condition fail?</p>
+<h3>Stage 5: Reporting (1 week)</h3>
+<p>1. Produce main results table (6 + 3 conditions × 7 benchmarks)</p>
+<p>2. Generate 4 figures: (i) domain vs. general trade-off scatter, (ii) DTE bar chart, (iii) SLIM gate distribution heatmap, (iv) per-topic error analysis</p>
+<p>3. Write findings to paper draft (target: ACL Rolling Review or EMNLP 2026)</p>
+<h3>Total expected compute: ~50 A100-hours (main) + ~30 A100-hours (ablations)</h3>
+<p>---</p>
+<h2>9. Expected Contributions</h2>
+<p>1. **First controlled comparison** of structured vs. unstructured knowledge injection with matched content and volume, answering whether format alone affects the forgetting trade-off.</p>
+<p>2. **Empirical test of adapter placement × knowledge format interaction** — providing guidance for practitioners choosing PEFT strategies for domain adaptation.</p>
+<p>3. **New evaluation protocol** requiring joint reporting of domain gain AND general capability retention for all domain-specific LLMs (potentially establishable as a standard).</p>
+<p>4. **Open-source release** of the matched structured/unstructured biomedical datasets (~50M tokens each) and the evaluation harness.</p>
+<p>---</p>
+<h2>10. Related Work (Condensed)</h2>
+<table><tbody>
+<tr><td>Work</td><td>What It Found</td><td>Our Difference</td></tr>
+<tr><td>Luo et al. (2023) — CF benchmark</td><td>CF increases with model scale; 15-task eval protocol</td><td>We add the **format** variable and **adapter placement** variable</td></tr>
+<tr><td>Ovadia et al. (2023) — FT vs. RAG</td><td>FT causes more forgetting than RAG</td><td>We control for **matched knowledge content** and test **hybrid hypotheses**</td></tr>
+<tr><td>Bafghi et al. (2025) — Selective LoRA</td><td>5% layers sufficient for downstream tasks</td><td>We test whether this holds for **dense domain knowledge** and whether it **interacts with format**</td></tr>
+<tr><td>Han et al. (2024) — SLIM</td><td>Gated layer selection improves PEFT</td><td>We test SLIM for **domain adaptation with forgetting constraints**</td></tr>
+<tr><td>Zhu et al. (2026) — Bio-LoRA</td><td>LoRA vs. full FT in biomedical; LoRA preserves 3-8× more MMLU</td><td>We test **format × architecture interaction**, not just method vs. method</td></tr>
+<tr><td>Hong et al. (2025) — SDFT</td><td>Structured dialogue for FT improves clinical QA</td><td>We compare **structured vs. unstructured at the representation level**, not dialogue format</td></tr>
+</tbody></table>
+<p>---</p>
+<p>*Proposal generated: 2026-06-04.*</p></article></main>
+</body>
+</html>

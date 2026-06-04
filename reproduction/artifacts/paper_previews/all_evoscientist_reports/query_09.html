@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AToMP-Edge: Adaptive Token-Level Mixed-Precision Quantization for W4A4 LLM Inference on Edge Devices</title>
+  <style>
+    body { margin: 0; background: #f7f8f8; color: #17191c; font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; line-height: 1.62; }
+    header { padding: 28px clamp(18px, 5vw, 72px); background: #fff; border-bottom: 1px solid #dce1e6; }
+    main { max-width: 980px; margin: 0 auto; padding: 28px 18px 56px; }
+    article { background: #fff; border: 1px solid #dce1e6; border-radius: 8px; padding: clamp(18px, 4vw, 42px); }
+    h1 { margin: 0 0 10px; font-size: clamp(28px, 4vw, 46px); line-height: 1.1; letter-spacing: 0; }
+    h2 { margin-top: 30px; border-top: 1px solid #e7eaee; padding-top: 18px; letter-spacing: 0; }
+    h3, h4 { letter-spacing: 0; }
+    p, li, td { font-size: 15px; }
+    .meta { color: #606a73; display: grid; gap: 4px; }
+    a { color: #225f9f; }
+    table { border-collapse: collapse; width: 100%; overflow-wrap: anywhere; }
+    td { border: 1px solid #e1e5ea; padding: 8px; vertical-align: top; }
+    pre { white-space: pre-wrap; background: #f0f3f5; padding: 14px; border-radius: 6px; overflow-x: auto; }
+    code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    .nav { margin-bottom: 14px; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="nav"><a href="index.html">← All 30 reports</a></div>
+    <h1>AToMP-Edge: Adaptive Token-Level Mixed-Precision Quantization for W4A4 LLM Inference on Edge Devices</h1>
+    <div class="meta">
+      <div>Query 09: Model deployment</div>
+      <div>Generate a research proposal on solving quantization challenges for LLM deployment on edge devices.</div>
+      <div>Source: <code>artifacts/remote_fetch/full_trajectories/EvoScientist/query_09/final_report.md</code></div>
+    </div>
+  </header>
+  <main><article><h1>AToMP-Edge: Adaptive Token-Level Mixed-Precision Quantization for W4A4 LLM Inference on Edge Devices</h1>
+<h2>1. Problem</h2>
+<p>Deploying large language models (LLMs) on edge devices (Jetson Orin, mobile NPUs, Raspberry Pi) requires aggressive quantization to fit within 4–16 GB of memory and meet real-time latency constraints. Weight-only INT4 quantization (W4A16) is the current edge standard — it reduces memory by 4× but gains no compute acceleration because activations remain FP16. To realize both memory and compute savings, **W4A4 quantization (4-bit weights + 4-bit activations)** is needed.</p>
+<p>**The core challenge**: Activation outliers — a small fraction of channels with 10–100× larger magnitudes than the median — cause catastrophic accuracy loss at 4-bit activation precision. Existing solutions (QuaRot, InfoQuant, OmniQuant) solve this on server GPUs using Hadamard rotations or learned transformations, but (a) they assume INT4 tensor cores absent from edge hardware, and (b) they apply uniform precision to every token, ignoring that outliers are sparse and token-dependent.</p>
+<p>**Key gap**: No prior work has evaluated or optimized W4A4 quantization for real edge hardware, and no method exploits the token-level sparsity of activation outliers to reduce compute cost.</p>
+<h2>2. Hypothesis</h2>
+<p>Token-level mixed-precision for activations — where a lightweight runtime detector routes outlier tokens to INT8 and typical tokens to INT4 — can match the accuracy of uniform W4A4 methods while maintaining the compute and memory benefits on edge hardware. This is feasible because outlier tokens constitute &lt;1% of all tokens [validated on LLaMA-2/3, Qwen, Gemma in prior work] and are detectable with sub-5μs overhead.</p>
+<h2>3. Method: AToMP-Edge</h2>
+<p>AToMP-Edge has three components operating at inference time:</p>
+<h3>3.1 Weight Pre-Processing (offline)</h3>
+<p>Apply AWQ-style activation-aware weight quantization: per-channel INT4 quantization with 1% salient channel protection, using group size g=128. This reduces weight memory by 4× with negligible accuracy loss (validated by Lin et al., MLSys 2024). The weights are stored as INT4 and block-decompressed to INT8 at runtime for computation (since edge hardware lacks native INT4 compute units).</p>
+<h3>3.2 Outlier Detector (lightweight, per-token)</h3>
+<p>A two-layer MLP (hidden dim 64, ReLU activation, ~2K parameters) that takes as input per-token activation statistics: mean, max, min, and top-5 channel magnitudes of the current token&#x27;s hidden state (d_model floats, aggregated). It outputs a binary decision: INT4 or INT8 for this token&#x27;s activations.</p>
+<p>**Training**: Calibrate on 128 sequences from WikiText-2. Ground-truth labels are tokens whose INT4 activation error (cosine distance to FP16 activation) exceeds a threshold τ. Train to minimize binary cross-entropy with class-weighting (10:1 for outlier class).</p>
+<p>**Inference cost**: ~3–5 μs per token on Jetson Orin CPU core (measured estimate from 2K-param MLP). Adds negligible overhead to the ~1–10 ms per-token decoding time.</p>
+<h3>3.3 Activation Quantization (runtime)</h3>
+<ul>
+<li>**INT4 path** (typical tokens, ~99%): Per-token min-max INT4 quantization with per-channel scaling factors. Compute: decompress INT4 weights to INT8 → INT8 × INT4 (via lookup or INT8 widening).</li>
+<li>**INT8 path** (outlier tokens, ~1%): Per-token dynamic INT8 quantization with per-channel scaling. Standard INT8 × INT8 GEMM.</li>
+<li>**Fallback**: If detector confidence is low (&lt;0.6), route to INT8 as a safety margin.</li>
+</ul>
+<h3>3.4 Edge-Optimized Compute Kernel</h3>
+<p>INT4 weights are block-decompressed (g=128) to INT8 on-the-fly per layer. The INT4-activation path uses a custom kernel that avoids materializing full INT4 tensors: it reads per-token scale factors, scales the weights, and performs INT8 × FP32 widening multiply-accumulate. This is implementable in TensorRT or CoreML custom ops.</p>
+<h2>4. Dataset / Benchmark</h2>
+<h3>Models (2.6B–8B parameter range, covering small→medium edge-deployable LLMs)</h3>
+<table><tbody>
+<tr><td>Model</td><td>Parameters</td><td>Notes</td></tr>
+<tr><td>LLaMA-3.1-8B</td><td>8B</td><td>Strong general-purpose baseline</td></tr>
+<tr><td>Qwen2.5-7B</td><td>7B</td><td>Strong multilingual + reasoning</td></tr>
+<tr><td>Phi-3-mini-4K</td><td>3.8B</td><td>Small, edge-oriented design</td></tr>
+<tr><td>Gemma-2-2.6B</td><td>2.6B</td><td>Lightweight, mobile-friendly</td></tr>
+</tbody></table>
+<h3>Benchmarks</h3>
+<table><tbody>
+<tr><td>Benchmark</td><td>Metric</td><td>What it measures</td></tr>
+<tr><td>WikiText-2</td><td>Perplexity (PPL)</td><td>Language modeling quality</td></tr>
+<tr><td>ARC-Challenge</td><td>Accuracy</td><td>Scientific reasoning</td></tr>
+<tr><td>MMLU (5-shot)</td><td>Accuracy</td><td>Multi-task knowledge</td></tr>
+<tr><td>GSM8K (8-shot)</td><td>Accuracy</td><td>Math reasoning</td></tr>
+<tr><td>HellaSwag</td><td>Accuracy</td><td>Commonsense reasoning</td></tr>
+</tbody></table>
+<h3>Edge Hardware</h3>
+<table><tbody>
+<tr><td>Device</td><td>Compute</td><td>Memory</td><td>INT8 Support</td><td>Target Use-Case</td></tr>
+<tr><td>Jetson Orin NX 16GB</td><td>1024-core Ampere GPU + 8-core CPU</td><td>16 GB</td><td>Yes (TensorRT)</td><td>Robotics, drone, local AI</td></tr>
+<tr><td>Apple M2 (Mac Mini)</td><td>10-core GPU + 16-core Neural Engine</td><td>16–24 GB</td><td>Yes (CoreML ANE)</td><td>Desktop-edge, local AI apps</td></tr>
+<tr><td>Raspberry Pi 5</td><td>Broadcom VideoCore VII GPU + 4-core Cortex-A76</td><td>8 GB</td><td>Partial (CPU only)</td><td>Low-cost edge, IoT</td></tr>
+</tbody></table>
+<h2>5. Evaluation Metrics</h2>
+<p>1. **Accuracy retention**: Perplexity degradation (ΔPPL ≤ 0.5) and task accuracy drop (≤ 2%) vs FP16 baseline.</p>
+<p>2. **Latency**: Tokens/second on each edge device. Target: ≥ 80% of W4A16 throughput for AToMP-Edge, ≥ 120% for the INT4-activation-only subset.</p>
+<p>3. **Memory**: Peak memory usage during 4K-token generation. Target: ≤ W4A16 memory + 10 MB for detector.</p>
+<p>4. **Outlier token ratio**: Percentage of tokens routed to INT8. Success if ≤ 2% across all benchmarks.</p>
+<p>5. **Compute-accuracy Pareto frontier**: (tokens/sec) / (accuracy degradation %) — higher is better.</p>
+<h2>6. Baselines</h2>
+<table><tbody>
+<tr><td>Baseline</td><td>Description</td><td>Why it matters</td></tr>
+<tr><td>FP16</td><td>Full precision, no quantization</td><td>Upper bound on accuracy, lower bound on speed</td></tr>
+<tr><td>W4A16 (AWQ / GGUF Q4_K_M)</td><td>Current edge standard</td><td>Compute floor to beat</td></tr>
+<tr><td>W8A8 (SmoothQuant)</td><td>Compute-accelerated baseline</td><td>Activation quantization without mixed-precision</td></tr>
+<tr><td>Uniform W4A8 (OmniQuant)</td><td>Fixed W4A8 precision</td><td>Ablates the mixed-precision benefit</td></tr>
+<tr><td>Uniform W4A4 (QuaRot)</td><td>Server SOTA W4A4, adapted for edge</td><td>Accuracy ceiling for uniform W4A4</td></tr>
+</tbody></table>
+<h2>7. Ablations</h2>
+<table><tbody>
+<tr><td>Ablation</td><td>What it tests</td><td>Variants</td></tr>
+<tr><td>1. Outlier threshold τ</td><td>Sensitivity of detector to classification threshold</td><td>τ ∈ {0.01, 0.05, 0.1, 0.5, 1.0} (cosine distance)</td></tr>
+<tr><td>2. Detection method</td><td>Complexity vs accuracy trade-off</td><td>Threshold-based (top-k channel magnitude) vs MLP vs static (no detection, always INT4)</td></tr>
+<tr><td>3. Weight quantization</td><td>Impact of weight quality</td><td>AWQ (g=128) vs GPTQ (g=128) vs RTN (round-to-nearest)</td></tr>
+<tr><td>4. Weight group size</td><td>Memory / accuracy trade-off</td><td>g ∈ {32, 64, 128, 256, 512}</td></tr>
+<tr><td>5. Activation quantizer</td><td>Non-outlier activation quality</td><td>Min-max vs percentile (99.9%) vs BFP4 (block floating point)</td></tr>
+</tbody></table>
+<h2>8. Expected Failure Modes</h2>
+<p>1. **Detector overhead exceeds savings**. If outlier token ratio &gt; 5% on some benchmarks (e.g., math reasoning where precise tokens cluster), the detection + INT8 routing overhead may negate compute savings from INT4. *Mitigation*: evaluate outlier ratio per-benchmark; fall back to uniform INT8 mode for outlier-heavy workloads.</p>
+<p>2. **Cross-model detector transfer fails**. The detector trained on LLaMA-3.1 may not generalize to Phi-3 or Gemma. *Mitigation*: train per-model detectors; evaluate zero-shot transfer as a bonus experiment.</p>
+<p>3. **Worst-case latency spikes**. A burst of consecutive outlier tokens (e.g., during arithmetic) causes intermittent latency spikes. *Mitigation*: measure 95th and 99th percentile latency, not just mean.</p>
+<p>4. **INT4 activation error accumulates over long contexts**. Per-token INT4 quantization noise may compound across 4K+ token sequences. *Mitigation*: measure PPL on 8K-context sequences; compare cumulative error drift vs FP16.</p>
+<p>5. **Hardware compatibility limits**. Raspberry Pi 5 has no native INT8 GEMM — all compute runs on Cortex-A76 with NEON. *Mitigation*: lower priority for RPi; primary evaluation on Jetson and M2 with INT8 support.</p>
+<p>6. **Memory overhead of detector + scaling factors**. Per-token scaling adds ~2 bytes per activation channel. For d_model=4096, that&#x27;s ~8 KB per token — negligible for batch=1, but could matter for larger batches. *Mitigation*: measure total memory overhead in the 4K-context setting.</p>
+<h2>9. Execution Plan</h2>
+<h3>Phase 1: Baselines &amp; Infrastructure (Weeks 1–2)</h3>
+<ul>
+<li>Set up evaluation harness on Jetson Orin + M2 + RPi 5.</li>
+<li>Implement FP16, W4A16 (AWQ), W8A8 (SmoothQuant) baselines.</li>
+<li>Reproduce QuaRot on server GPU; measure uniform W4A4 accuracy.</li>
+<li>**Success signal**: All baselines running on all 3 edge devices, metrics match published numbers within 5%.</li>
+</ul>
+<h3>Phase 2: Outlier Analysis &amp; Detector Training (Weeks 3–4)</h3>
+<ul>
+<li>Profile activation outlier distributions across 4 models (WikiText-2 + MMLU subset).</li>
+<li>Train per-model outlier detectors on 128 sequences.</li>
+<li>Measure detector inference latency on each device&#x27;s CPU.</li>
+<li>**Success signal**: Detector achieves ≥95% precision/recall on held-out calibration set; runs in &lt;5 μs.</li>
+</ul>
+<h3>Phase 3: AToMP-Edge Implementation (Weeks 5–6)</h3>
+<ul>
+<li>Implement INT4 weight storage + block-decompression kernel.</li>
+<li>Implement INT4 activation path + INT8 activation path with runtime routing.</li>
+<li>Integrate detector into generation loop.</li>
+<li>Benchmark end-to-end latency on Jetson Orin (primary target).</li>
+<li>**Success signal**: End-to-end inference with AToMP-Edge produces correct outputs; latency is ≤ 1.2× W4A16 baseline.</li>
+</ul>
+<h3>Phase 4: Full Evaluation (Weeks 7–8)</h3>
+<ul>
+<li>Run all benchmarks on all 4 models × 3 edge devices.</li>
+<li>Run all 5 ablations.</li>
+<li>Document failure modes and cross-model generalization.</li>
+<li>Write paper draft with results tables and Pareto plots.</li>
+<li>**Success signal**: At least one model achieves ΔPPL ≤ 1.0 and task accuracy drop ≤ 3% on all benchmarks while using ≤ 2% outlier tokens.</li>
+</ul>
+<h3>Contingency: If W4A4 activation quality collapses</h3>
+<p>If per-token INT4 activation quantization is fundamentally too lossy (even for non-outlier tokens), pivot to **W4A8 with token-level precision reduction** — where typical tokens use INT8 activations and outlier tokens use FP16. This sacrifices compute acceleration but preserves the weight memory savings and provides a controlled comparison of the detection framework.</p>
+<h2>10. Relationship to Prior Work</h2>
+<table><tbody>
+<tr><td>Prior Work</td><td>What it does</td><td>What AToMP-Edge adds</td></tr>
+<tr><td>**SmoothQuant** (Xiao et al., ICML 2023)</td><td>W8A8 via activation→weight smoothing</td><td>Extends to W4A4 with mixed-precision handling of residual outliers</td></tr>
+<tr><td>**AWQ** (Lin et al., MLSys 2024)</td><td>W4A16 via salient channel protection</td><td>Composable: AWQ weight pre-processing + AToMP activation quantization</td></tr>
+<tr><td>**QuaRot** (Ashkboos et al., NeurIPS 2024)</td><td>W4A4KV4 via Hadamard rotation</td><td>Removes per-token adaptivity; AToMP exploits outlier sparsity</td></tr>
+<tr><td>**OmniQuant** (Shao et al., ICLR 2024)</td><td>W2-4A4 via learnable clipping + eq. transform</td><td>Static per-layer; AToMP is per-token dynamic</td></tr>
+<tr><td>**Atom** (Zhao et al., MLSys 2024)</td><td>W4A4 with mixed-precision + fine-grained groups</td><td>Server-focused; AToMP targets real edge hardware</td></tr>
+<tr><td>**MoBiQuant** (2026)</td><td>Recursive residual quantization + token router</td><td>Similar spirit but no edge deployment; AToMP focuses on INT4 compute path</td></tr>
+<tr><td>**MELT-ing point** (Laskaridis et al., 2024)</td><td>Systematic edge LLM study (W4A16 only)</td><td>Extends to W4A4 + activation quantization on same hardware</td></tr>
+</tbody></table>
+<p>---</p>
+<p>*Proposal prepared from: SmoothQuant (ICML 2023), AWQ (MLSys 2024), OmniQuant (ICLR 2024), QuaRot (NeurIPS 2024), Atom (MLSys 2024), MoBiQuant (2026), MELT-ing point (2024), Outlier-Safe Pre-Training (ACL 2025).*</p></article></main>
+</body>
+</html>

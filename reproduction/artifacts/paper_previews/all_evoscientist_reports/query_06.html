@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Research Proposal: Selective Pseudo-Labeling with Adapter-Based Fine-Tuning for Extremely Low-Resource ASR</title>
+  <style>
+    body { margin: 0; background: #f7f8f8; color: #17191c; font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; line-height: 1.62; }
+    header { padding: 28px clamp(18px, 5vw, 72px); background: #fff; border-bottom: 1px solid #dce1e6; }
+    main { max-width: 980px; margin: 0 auto; padding: 28px 18px 56px; }
+    article { background: #fff; border: 1px solid #dce1e6; border-radius: 8px; padding: clamp(18px, 4vw, 42px); }
+    h1 { margin: 0 0 10px; font-size: clamp(28px, 4vw, 46px); line-height: 1.1; letter-spacing: 0; }
+    h2 { margin-top: 30px; border-top: 1px solid #e7eaee; padding-top: 18px; letter-spacing: 0; }
+    h3, h4 { letter-spacing: 0; }
+    p, li, td { font-size: 15px; }
+    .meta { color: #606a73; display: grid; gap: 4px; }
+    a { color: #225f9f; }
+    table { border-collapse: collapse; width: 100%; overflow-wrap: anywhere; }
+    td { border: 1px solid #e1e5ea; padding: 8px; vertical-align: top; }
+    pre { white-space: pre-wrap; background: #f0f3f5; padding: 14px; border-radius: 6px; overflow-x: auto; }
+    code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    .nav { margin-bottom: 14px; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="nav"><a href="index.html">← All 30 reports</a></div>
+    <h1>Research Proposal: Selective Pseudo-Labeling with Adapter-Based Fine-Tuning for Extremely Low-Resource ASR</h1>
+    <div class="meta">
+      <div>Query 06: Speech recognition</div>
+      <div>Generate a research proposal on low-resource speech recognition.</div>
+      <div>Source: <code>artifacts/remote_fetch/full_trajectories/EvoScientist/query_06/final_report.md</code></div>
+    </div>
+  </header>
+  <main><article><h1>Research Proposal: Selective Pseudo-Labeling with Adapter-Based Fine-Tuning for Extremely Low-Resource ASR</h1>
+<p>**Subproblem choice**: Low-resource ASR with &lt;2 hours of transcribed speech is a practically important regime (hundreds of endangered and under-documented languages). Current large multilingual models (Whisper, XLS-R) provide strong priors but degrade sharply when available transcribed data is extremely scarce and acoustically or orthographically distant from the training distribution. I focus on the interaction between **parameter-efficient fine-tuning** and **iterative self-training with pseudo-label filtering** — a specific, under-studied regime where the two techniques may interfere or synergize.</p>
+<p>---</p>
+<h2>1. Problem</h2>
+<p>Adapting a large multilingual ASR model (Whisper large-v3) to an extremely low-resource target language — defined as ≤2 hours of transcribed speech. Two issues dominate:</p>
+<ul>
+<li>**Full fine-tuning** collapses on tiny seed data (overfitting, catastrophic forgetting of the multilingual prior).</li>
+<li>**Pseudo-labeling** (self-training on untranscribed target-language audio) generates noisy targets. With extremely limited seed data, errors compound across iterations — standard confidence thresholds fail because the model is confidently wrong on OOD acoustic patterns.</li>
+</ul>
+<p>**Gap in the literature**: Adapter-based fine-tuning (LoRA, bottleneck adapters) and pseudo-labeling are each studied separately for low-resource ASR. Their **interaction** is not characterized: Do adapters regularize pseudo-label noise, or do they lack the capacity to learn from self-training? Is there an optimal point where adapter rank and pseudo-label confidence threshold trade off?</p>
+<h2>2. Hypothesis</h2>
+<p>**Primary hypothesis**: For extremely low-resource ASR (≤2h transcribed), combining **LoRA adaptation** with **length- and confidence-aware pseudo-label filtering** produces lower WER than either full fine-tuning or LoRA alone, because adapters preserve the multilingual prior while the proposed filtering mitigates confirmation bias in self-training.</p>
+<p>**Secondary hypothesis**: An optimal LoRA rank exists as a function of seed data size — too low a rank underfits the target language, too high a rank overfits noisy pseudo-labels — and this optimum shifts as pseudo-labeled data accumulates across self-training iterations.</p>
+<h2>3. Method</h2>
+<h3>3.1 Base Model</h3>
+<p>Whisper large-v3 (~1.5B params). Frozen encoder + LoRA-decoder fine-tuning. Rationale: Whisper&#x27;s encoder is already strong on universal acoustic representations; the decoder maps to the target token set, which is the primary source of language-specific errors.</p>
+<h3>3.2 LoRA Configuration</h3>
+<ul>
+<li>**Target modules**: All attention query/value projections in the decoder.</li>
+<li>**Rank sweep**: r ∈ {2, 4, 8, 16, 32} across experiments.</li>
+<li>**α = 2× r**, dropout = 0.1, no bias tuning.</li>
+</ul>
+<h3>3.3 Iterative Self-Training (IST) Pipeline</h3>
+<pre><code>
+Seed: D_labeled (1-2h)
+Pool: D_unlabeled (50-100h target-language audio)
+For t = 1..T (T ≤ 5):
+  1. Train LoRA model on D_labeled ∪ D_pseudo (t-1)
+  2. Generate transcriptions for D_unlabeled (beam=5)
+  3. Filter pseudo-labels
+  4. Add filtered pseudo-labels to D_pseudo(t)
+  5. Evaluate on held-out D_dev
+</code></pre>
+<h3>3.4 Pseudo-Label Filtering (Novel Component)</h3>
+<p>Standard confidence filtering uses model-assigned log-probability. In extremely low-resource settings, this is unreliable. We propose **Length-Adjusted Confidence with Duration Outlier Detection (LAC-DOD)**:</p>
+<p>1. **Length-ratio check**: Compute `len(predicted_text) / len(reference_audio_duration)`. Discard utterances outside [0.5, 3.0] characters/second (a phonetically motivated range).</p>
+<p>2. **Duration-aware confidence**: Weight the average log-probability of the predicted tokens by the inverse of the utterance duration: `score = (1/L) Σ log p(y_i|x) · (τ / dur)`, where τ is a reference duration (5s). This penalizes short, easy utterances and rewards correct recognition of longer, harder ones.</p>
+<p>3. **Top-k% selection**: Select utterances in the top 30% by LAC-DOD score.</p>
+<p>This will be ablated against naive confidence filtering (threshold at 0.8 log-prob) and no filtering (all pseudo-labels accepted).</p>
+<h2>4. Dataset / Benchmark</h2>
+<p>We target two evaluation scenarios:</p>
+<table><tbody>
+<tr><td>Language</td><td>Family</td><td>Script</td><td>Seed (labeled)</td><td>Unlabeled pool</td><td>Dev/Test</td></tr>
+<tr><td>**Fongbe** (fon)</td><td>Niger-Congo</td><td>Latin</td><td>2h (Common Voice)</td><td>80h (Mozilla + YouTube)</td><td>1h each</td></tr>
+<tr><td>**Uyghur** (uig)</td><td>Turkic</td><td>Arabic</td><td>1.5h (Common Voice)</td><td>60h (Common Voice unused)</td><td>1h each</td></tr>
+</tbody></table>
+<p>Both are genuinely low-resource with existing open data, have non-English phonotactics, and use different scripts — testing generalization beyond the Indo-European-heavy Whisper training set. Fongbe is tonally contrastive; Uyghur features vowel harmony — both stress Whisper&#x27;s decoder in different ways.</p>
+<p>**Public datasets**: Common Voice 17.0 (for both languages, split into seed/unlabeled pools), supplemented by YouTube audio (Fongbe news broadcasts, preprocessed with Silero VAD at 16 kHz).</p>
+<h2>5. Evaluation Metrics</h2>
+<table><tbody>
+<tr><td>Metric</td><td>Usage</td></tr>
+<tr><td>**Word Error Rate (WER)**</td><td>Primary metric on dev/test</td></tr>
+<tr><td>**Character Error Rate (CER)**</td><td>Secondary metric (handles tonal diacritics more granularly)</td></tr>
+<tr><td>**Oracle WER**</td><td>WER on pseudo-labels vs ground-truth (computed on a 1h held-out subset of the unlabeled pool) — measures pseudo-label quality directly</td></tr>
+<tr><td>**Confidence-Calibration Gap**</td><td>ECE = Σ</td><td>accuracy(bin) - confidence(bin)</td><td>— measures whether model confidence is trustworthy for filtering</td></tr>
+<tr><td>**Tone Error Rate (TER)**</td><td>For Fongbe: proportion of tonal diacritics misassigned (specific diagnostic)</td></tr>
+</tbody></table>
+<p>All metrics reported with **bootstrapped 95% confidence intervals** (1,000 resamples) and **across 3 seeds**.</p>
+<h2>6. Baselines</h2>
+<table><tbody>
+<tr><td>Baseline</td><td>Description</td></tr>
+<tr><td>**B0**: Zero-shot</td><td>Whisper large-v3, no fine-tuning</td></tr>
+<tr><td>**B1**: Full fine-tune</td><td>Full Whisper fine-tune on D_labeled</td></tr>
+<tr><td>**B2**: LoRA only</td><td>LoRA (r=8) on D_labeled, no self-training</td></tr>
+<tr><td>**B3**: Full + naive IST</td><td>Full fine-tune + iterative self-training with confidence threshold (0.8)</td></tr>
+<tr><td>**B4**: LoRA + naive IST</td><td>LoRA (r=8) + iterative self-training with confidence threshold (0.8)</td></tr>
+<tr><td>**B5**: XLS-R + LoRA</td><td>wav2vec 2.0 XLS-R (300M) with LoRA decoder + CTC head (model-family ablation)</td></tr>
+</tbody></table>
+<p>Our proposed method (LoRA + LAC-DOD filtering) is compared against all. The strongest incidental baselines are B4 (isolates the filtering contribution) and B5 (tests whether the finding transfers to a different architecture family).</p>
+<h2>7. Ablations</h2>
+<table><tbody>
+<tr><td>Ablation</td><td>Question Answered</td></tr>
+<tr><td>A1: LAC-DOD vs confidence-threshold only vs no filtering</td><td>Does the novel filter add value over simpler alternatives?</td></tr>
+<tr><td>A2: LoRA rank sweep (r=2,4,8,16,32) at fixed seed size</td><td>Is there an optimal rank for extremely low resource?</td></tr>
+<tr><td>A3: Seed size sweep (0.5, 1, 2, 5h)</td><td>How does the advantage scale with more seed data?</td></tr>
+<tr><td>A4: Self-training iterations (T=1,3,5)</td><td>When does pseudo-labeling plateau or degrade?</td></tr>
+<tr><td>A5: LoRA target modules (QKV only vs all linear layers)</td><td>Is targeting QKV in the decoder sufficient?</td></tr>
+<tr><td>A6: Language mismatch — apply same pipeline to Fongbe → Uyghur cross-eval</td><td>How much of the result is language-specific vs general?</td></tr>
+</tbody></table>
+<p>Ablations A1 and A2 are the most critical — they directly test the primary and secondary hypotheses.</p>
+<h2>8. Expected Failure Modes</h2>
+<table><tbody>
+<tr><td>Failure Mode</td><td>Likelihood</td><td>Mitigation</td></tr>
+<tr><td>**Pseudo-labels too noisy even with LAC-DOD**</td><td>Medium</td><td>Fall back to no self-training; the experiment still produces a valuable comparison of LoRA vs full fine-tune at varying seed sizes</td></tr>
+<tr><td>**Whisper tokenizer (byte-level BPE) maps tonal diacritics poorly**</td><td>Medium-High (Fongbe)</td><td>Report CER and tone-specific TER; switch to character-level CTC head as an alternative in the XLS-R baseline (B5)</td></tr>
+<tr><td>**LoRA adapters underfit target-language phonotactics**</td><td>Medium</td><td>Sweep higher ranks; if r=32 also underfits, the conclusion is that extremely low-resource ASR requires full fine-tuning with heavy regularization (still publishable)</td></tr>
+<tr><td>**Results differ between Fongbe and Uyghur**</td><td>High (expected)</td><td>This is informative — script (Latin vs Arabic) and tonal contrast likely interact differently with Whisper&#x27;s tokenizer. We treat each as a case study rather than averaging.</td></tr>
+<tr><td>**Model collapses on first IST iteration (confirmation bias)**</td><td>Medium</td><td>The LAC-DOD filter is designed specifically to mitigate this. If it fails, the first iteration becomes a data point showing that IST is harmful below a data threshold.</td></tr>
+<tr><td>**Compute constraints**</td><td>Low</td><td>LoRA keeps training memory at ~24 GB (single A10G or RTX 3090). Each training run is ~2h on one GPU. Full experiment sweep requires ~60 runs (≈120 GPU-hours).</td></tr>
+</tbody></table>
+<h2>9. Execution Plan</h2>
+<h3>Stage 0: Data Preparation (Week 1)</h3>
+<ul>
+<li>Download Common Voice 17.0 for Fongbe and Uyghur; partition into seed (2h), dev (1h), test (1h), unlabeled pool (remainder).</li>
+<li>Download/prescreen YouTube audio for Fongbe; run VAD, resample to 16 kHz.</li>
+<li>Verify Whisper tokenizer coverage on both languages (report OOV rate for each).</li>
+</ul>
+<h3>Stage 1: Baselines (Week 2)</h3>
+<ul>
+<li>Run B0 (zero-shot), B1 (full fine-tune), B2 (LoRA only).</li>
+<li>Tune learning rate, batch size, epochs on D_dev (grid search).</li>
+<li>**Success signal**: All baselines produce stable, reproducible WERs with &lt;5% relative variance across seeds.</li>
+</ul>
+<h3>Stage 2: LoRA Rank Sweep (Week 2-3)</h3>
+<ul>
+<li>Run A2: r ∈ {2,4,8,16,32} for both languages.</li>
+<li>Identify optimal rank per language.</li>
+<li>**Success signal**: Non-monotonic WER as r increases (i.e., clear optimal rank exists).</li>
+</ul>
+<h3>Stage 3: Self-Training Pipeline (Weeks 3-4)</h3>
+<ul>
+<li>Implement IST loop + LAC-DOD filter.</li>
+<li>Run B3, B4 (naive IST baselines) and proposed method on both languages.</li>
+<li>Run A1 (filtering ablation), A4 (iteration ablation).</li>
+<li>**Success signal**: Proposed method improves over B4 at T≥2 for at least one language.</li>
+</ul>
+<h3>Stage 4: Ablations &amp; Analysis (Week 4-5)</h3>
+<ul>
+<li>Run A3 (seed sweep), A5 (target module), A6 (cross-eval).</li>
+<li>Compute calibration gaps, oracle pseudo-label quality.</li>
+<li>**Success signal**: Ablations produce clean monotonic or interpretable patterns.</li>
+</ul>
+<h3>Stage 5: Write-Up (Week 5-6)</h3>
+<ul>
+<li>Full paper draft with tables, calibration plots, and failure analysis.</li>
+<li>Target venue: Interspeech or ACL (workshop track) — 4–6 page paper.</li>
+</ul>
+<p>---</p>
+<p>**Total estimated compute**: ~120 GPU-hours (single GPU). All code, configs, and processed data splits will be released as a reproducible benchmark for extremely low-resource ASR adaptation.</p></article></main>
+</body>
+</html>

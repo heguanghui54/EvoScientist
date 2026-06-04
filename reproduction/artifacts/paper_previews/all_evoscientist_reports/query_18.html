@@ -1,0 +1,228 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>How Uncertainty Communication Format Interacts with User Expertise to Shape Appropriate Reliance on LLMs</title>
+  <style>
+    body { margin: 0; background: #f7f8f8; color: #17191c; font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; line-height: 1.62; }
+    header { padding: 28px clamp(18px, 5vw, 72px); background: #fff; border-bottom: 1px solid #dce1e6; }
+    main { max-width: 980px; margin: 0 auto; padding: 28px 18px 56px; }
+    article { background: #fff; border: 1px solid #dce1e6; border-radius: 8px; padding: clamp(18px, 4vw, 42px); }
+    h1 { margin: 0 0 10px; font-size: clamp(28px, 4vw, 46px); line-height: 1.1; letter-spacing: 0; }
+    h2 { margin-top: 30px; border-top: 1px solid #e7eaee; padding-top: 18px; letter-spacing: 0; }
+    h3, h4 { letter-spacing: 0; }
+    p, li, td { font-size: 15px; }
+    .meta { color: #606a73; display: grid; gap: 4px; }
+    a { color: #225f9f; }
+    table { border-collapse: collapse; width: 100%; overflow-wrap: anywhere; }
+    td { border: 1px solid #e1e5ea; padding: 8px; vertical-align: top; }
+    pre { white-space: pre-wrap; background: #f0f3f5; padding: 14px; border-radius: 6px; overflow-x: auto; }
+    code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    .nav { margin-bottom: 14px; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="nav"><a href="index.html">← All 30 reports</a></div>
+    <h1>How Uncertainty Communication Format Interacts with User Expertise to Shape Appropriate Reliance on LLMs</h1>
+    <div class="meta">
+      <div>Query 18: UX evaluation</div>
+      <div>Generate a research proposal on user experience evaluation for Large Language Models.</div>
+      <div>Source: <code>artifacts/remote_fetch/full_trajectories/EvoScientist/query_18/final_report.md</code></div>
+    </div>
+  </header>
+  <main><article><h1>How Uncertainty Communication Format Interacts with User Expertise to Shape Appropriate Reliance on LLMs</h1>
+<h2>A Research Proposal on User Experience Evaluation for Large Language Models</h2>
+<p>---</p>
+<h2>1. Subproblem Selection and Motivation</h2>
+<p>**Broad query:** User experience evaluation for Large Language Models.</p>
+<p>**Specific subproblem chosen (author&#x27;s decision):** How does the *format* of LLM uncertainty communication interact with *user domain expertise* to affect appropriate reliance, trust calibration, and task performance in factual question-answering?</p>
+<p>**Why this subproblem:** The literature on LLM trust and overreliance has grown rapidly (Kim et al. 2024, 2025; Zhou et al. 2024; Bo et al. 2024; Steyvers et al. 2024), producing a clear result: users systematically over-rely on confidently wrong LLM outputs. Several interventions have been proposed — verbalized uncertainty, numerical confidence scores, and behavioral uncertainty displays (e.g., showing multiple sampled answers). However, a critical gap remains: **existing work treats users as a homogeneous population.** No study has systematically examined whether the *optimal* uncertainty communication format depends on the user&#x27;s domain expertise. An expert fact-checker and a novice searching for quick answers may need fundamentally different signals to calibrate their trust appropriately. This proposal addresses that gap directly.</p>
+<p>---</p>
+<h2>2. Problem Statement</h2>
+<p>When LLMs provide factual answers with some expression of uncertainty — a verbal hedge (&quot;I&#x27;m not certain, but...&quot;), a numerical confidence score (&quot;I&#x27;m 75% confident&quot;), or behavioral inconsistency (&quot;Three out of five sampled answers agree with this&quot;) — do these formats *differentially* affect appropriate reliance depending on the user&#x27;s prior expertise in the domain?</p>
+<p>**Null hypothesis (H₀):** Uncertainty communication format and user expertise independently affect appropriate reliance, with no interaction.</p>
+<p>**Alternative hypothesis (H₁):** The effectiveness of uncertainty communication format on appropriate reliance is moderated by user domain expertise. Specifically:</p>
+<ul>
+<li>**H₁a:** Novice users benefit more from verbal hedges (simple, intuitive) than from numerical confidence or behavioral uncertainty.</li>
+<li>**H₁b:** Expert users benefit more from numerical confidence scores (precise, calibratable against their own knowledge) than from verbal hedges or behavioral uncertainty.</li>
+<li>**H₁c:** Behavioral uncertainty displays (showing sampled-answer disagreement) produce the most robust improvements across *all* expertise levels, because they convey information about the model&#x27;s epistemic state without requiring the user to interpret a numeric or verbal format.</li>
+</ul>
+<p>These sub-hypotheses are grounded in prior findings: verbal hedges reduced overreliance but also reduced appropriate reliance (Kim et al. 2024); numerical confidence can be misinterpreted (Steyvers et al. 2024); behavioral inconsistency was the most effective single intervention (Kim et al. 2025).</p>
+<p>---</p>
+<h2>3. Method</h2>
+<h3>3.1 Design</h3>
+<p>**3 (Uncertainty format) × 2 (User expertise) mixed design.**</p>
+<ul>
+<li>**Between-subjects factor (random assignment):** Uncertainty communication format.</li>
+</ul>
+<p>1. **Verbal hedge:** LLM prefaces its answer with a calibrated natural-language uncertainty expression (e.g., &quot;I&#x27;m not entirely sure, but I think the answer is...&quot;). Wording is dynamically selected from a validated set (Zhou et al. 2024 taxonomy).</p>
+<p>2. **Numerical confidence:** LLM appends a confidence percentage based on its token-level probability (e.g., &quot;Answer: Paris. Confidence: 82%&quot;). Displayed alongside the answer in a standardized format.</p>
+<p>3. **Behavioral uncertainty:** LLM shows a summary of 5 independent sampling runs (e.g., &quot;3 out of 5 sampled responses agree with this answer&quot;). This is the inconsistency-display format from Kim et al. (2025).</p>
+<ul>
+<li>**Measured between-subjects factor (blocked post-hoc):** User domain expertise, measured via a pre-task quiz of 10 questions spanning the same domains as the main task, with self-rated confidence for each answer. Users are divided into terciles (low / medium / high expertise).</li>
+</ul>
+<ul>
+<li>**Within-subjects factor:** Question difficulty (easy / hard), validated via a pilot (see Section 7). Each user sees 30 easy and 30 hard questions.</li>
+</ul>
+<h3>3.2 Dependent Variables (Primary and Secondary)</h3>
+<table><tbody>
+<tr><td>Variable</td><td>Type</td><td>Definition</td><td>Measurement</td></tr>
+<tr><td>**Appropriate reliance score (primary)**</td><td>Behavioral</td><td>Agreement rate with correct answers minus agreement rate with incorrect answers. Range: [−1, +1]. Higher = better calibrated trust.</td><td>Computed from user responses (accept/reject LLM answer).</td></tr>
+<tr><td>**Task accuracy**</td><td>Behavioral</td><td>Proportion of questions where the user&#x27;s final answer (after seeing LLM output) is correct.</td><td>Ground-truth labels from the dataset.</td></tr>
+<tr><td>**Verification rate**</td><td>Behavioral</td><td>Proportion of trials where the user performs an explicit verification action (clicks a &quot;verify with source&quot; button).</td><td>Logged clicks.</td></tr>
+<tr><td>**Trust score**</td><td>Subjective</td><td>Post-task 7-item Likert scale adapted from Bach et al. (2023) trust dimensions: perceived competence, benevolence, transparency, and reliance intention.</td><td>Mean of 7 items (Cronbach&#x27;s α expected &gt; 0.80 based on prior use).</td></tr>
+<tr><td>**Calibration error**</td><td>Calibration</td><td></td><td>perceived accuracy − actual accuracy</td><td>, where perceived accuracy is the user&#x27;s estimate of how many LLM answers were correct.</td><td>User self-report after each block (10 questions).</td></tr>
+<tr><td>**Decision time**</td><td>Behavioral</td><td>Time from LLM answer display to user decision.</td><td>Logged in milliseconds.</td></tr>
+</tbody></table>
+<h3>3.3 Data Collection</h3>
+<ul>
+<li>**Sample:** N = 600 participants recruited via Prolific (stratified by education level to ensure variance in domain expertise), paid £9/hr for ~30 min session. This sample size is powered to detect a small-to-medium interaction effect (f = 0.15, α = 0.05, power = 0.90 for a 3×2 ANOVA with 100 per cell).</li>
+<li>**Attention checks:** 5 catch trials interspersed where the LLM-provided answer is clearly absurd (e.g., &quot;What is the capital of France?&quot; → &quot;Tokyo&quot;). Participants failing ≥2 are excluded.</li>
+<li>**Exclusion criteria:** Completion time &lt; 10 min, ≥2 failed attention checks, or self-report of not taking the task seriously (single debrief item).</li>
+</ul>
+<p>---</p>
+<h2>4. Dataset and Benchmark</h2>
+<h3>4.1 Primary Dataset: TruthfulQA (Lin et al. 2021)</h3>
+<ul>
+<li>**Size:** 817 questions across 38 categories.</li>
+<li>**Selection:** 60 questions will be sampled, stratified by category, with 30 easy and 30 hard (validated in pilot, see Section 7).</li>
+<li>**Why TruthfulQA:** Designed to probe LLM truthfulness; questions have verifiable ground truth with known common misconceptions. Widely used in prior overreliance studies (Kim et al. 2024, 2025; Zhou et al. 2024). Covers diverse domains (health, law, science, pop culture), enabling meaningful expertise measurement.</li>
+</ul>
+<h3>4.2 Supplementary Dataset: TriviaQA (Joshi et al. 2017)</h3>
+<ul>
+<li>**Size:** 95k QA pairs from trivia web sources.</li>
+<li>**Selection:** 20 additional questions per participant (cold-start buffer, not analyzed), used to familiarize users with the interface and format.</li>
+<li>**Why TriviaQA:** Used in Kim et al. (2025) for large-scale overreliance experiments. Clean ground truth, controlled difficulty.</li>
+</ul>
+<h3>4.3 Controlled LLM Outputs (Stimulus Construction)</h3>
+<p>For each question, the LLM (GPT-4o) generates answers that are:</p>
+<ul>
+<li>**Correct (30 questions):** LLM provides the verified correct answer. Uncertainty communication is calibrated to reflect genuine model confidence (i.e., high-confidence questions get high numeric/hedge/consistency signals).</li>
+<li>**Incorrect (30 questions):** LLM provides a plausible-sounding *incorrect* answer. Uncertainty communication is *systematically miscalibrated* (overconfident) on 20 of these (to mimic the real-world overconfidence documented by Zhou et al. 2024) and *well-calibrated* on 10 (for comparison). This mirrors the 50/50 split used in prior work (Kim et al. 2024).</li>
+</ul>
+<p>All stimuli are validated for plausibility by 3 independent raters before the main experiment.</p>
+<p>---</p>
+<h2>5. Evaluation Metrics</h2>
+<h3>5.1 Primary Analysis</h3>
+<p>**3 × 2 between-subjects ANOVA** on the primary appropriate-reliace score.</p>
+<ul>
+<li>Main effect of uncertainty format.</li>
+<li>Main effect of expertise tercile.</li>
+<li>**Interaction: format × expertise (the key test of H₁).**</li>
+</ul>
+<h3>5.2 Secondary Analyses</h3>
+<ul>
+<li>**ANCOVA** with decision time as a covariate (to control for effort).</li>
+<li>**Post-hoc pairwise comparisons** (Tukey HSD) on significant interactions.</li>
+<li>**Mixed-effects logistic regression** on per-trial agreement (random intercepts for participant and question). Predictors: format, expertise, difficulty, correctness × {format, expertise} interactions.</li>
+<li>**Calibration curves:** Plot perceived accuracy vs. actual accuracy per format × expertise cell.</li>
+</ul>
+<h3>5.3 Effect Size Targets</h3>
+<table><tbody>
+<tr><td>Metric</td><td>Minimum practically meaningful effect</td><td>Interpretation</td></tr>
+<tr><td>Appropriate reliance (Δ between best and worst format within expertise group)</td><td>≥ 0.08</td><td>Equivalent to ~1.5 fewer overreliance errors out of 20 hard+incorrect trials</td></tr>
+<tr><td>Trust calibration error reduction</td><td>≥ 0.10</td><td>10 percentage points improvement in accuracy estimation</td></tr>
+<tr><td>Verification rate increase on incorrect trials</td><td>≥ 10 pp</td><td>10 percentage point increase in verification behavior</td></tr>
+</tbody></table>
+<p>---</p>
+<h2>6. Baselines</h2>
+<h3>6.1 No-Uncertainty Baseline (Control)</h3>
+<p>A fourth condition (n = 150, separate between-subjects) where the LLM presents its answer with no uncertainty expression. This mirrors the default behavior of most deployed LLMs.</p>
+<h3>6.2 Literature Benchmark Comparisons</h3>
+<p>Expected ranges from prior work (reported on analogous tasks):</p>
+<table><tbody>
+<tr><td>Condition</td><td>Appropriate Reliance (Kim et al. 2024)</td><td>Overreliance Rate (Kim et al. 2025)</td></tr>
+<tr><td>No uncertainty</td><td>~0.30</td><td>~72%</td></tr>
+<tr><td>Verbal hedge</td><td>~0.38</td><td>~58%</td></tr>
+<tr><td>Behavioral uncertainty</td><td>—</td><td>~45% (from inconsistency condition)</td></tr>
+</tbody></table>
+<p>Our study adds the **expertise × format interaction** analysis that these prior studies did not report.</p>
+<h3>6.3 Ablation: Effect of Question-Specific Confidence Calibration</h3>
+<p>Within the numerical condition, confidence scores are either:</p>
+<ul>
+<li>**Well-calibrated:** Confidence ≈ model accuracy on that question type (estimated from held-out validation set).</li>
+<li>**Overconfident:** Confidence overstates accuracy by 20–30 pp.</li>
+</ul>
+<p>This within-condition ablation tests whether the benefit of numerical confidence depends on its calibration quality — a factor that prior work has not isolated.</p>
+<p>---</p>
+<h2>7. Ablations</h2>
+<table><tbody>
+<tr><td>Ablation</td><td>Description</td><td>What It Tests</td></tr>
+<tr><td>**A1 — Format × difficulty**</td><td>Re-run analysis with question difficulty as the moderator instead of user expertise.</td><td>Is the effect driven by task properties rather than user properties?</td></tr>
+<tr><td>**A2 — Format × correctness**</td><td>Separate appropriate reliance into agreement-with-correct vs. agreement-with-incorrect.</td><td>Does a format reduce overreliance (good) at the cost of reducing appropriate reliance on correct answers (bad)?</td></tr>
+<tr><td>**A3 — No uncertainty baseline only**</td><td>Compare each format against the no-uncertainty control, collapsing expertise.</td><td>Replicate prior work findings in our setup.</td></tr>
+<tr><td>**A4 — Self-reported vs. measured expertise**</td><td>Compare results using self-reported expertise (single Likert item) vs. measured expertise (quiz score).</td><td>Tests whether simple self-report is sufficient for expertise stratification.</td></tr>
+<tr><td>**A5 — Verification rate decomposition**</td><td>Split verification rate by correctness of LLM answer.</td><td>Does a format help users verify selectively — more verification on incorrect answers, less on correct ones?</td></tr>
+</tbody></table>
+<p>---</p>
+<h2>8. Expected Failure Modes</h2>
+<table><tbody>
+<tr><td>Failure Mode</td><td>Likelihood</td><td>Mitigation</td></tr>
+<tr><td>**F1 — No interaction effect** (format × expertise is not significant)</td><td>Medium</td><td>Pre-registered analysis plan; the main effects of format and expertise are still informative. Report Bayes factor for the interaction.</td></tr>
+<tr><td>**F2 — Task is too easy (ceiling effects)**</td><td>Medium</td><td>Validate easy/hard split in pilot (Section 7). If ceiling occurs, re-run with harder questions from MMLU or GPQA subsets.</td></tr>
+<tr><td>**F3 — Expertise measurement is noisy**</td><td>Medium</td><td>Use the quiz score (continuous) rather than terciles in the primary analysis as a robustness check. Also record domain-specific self-efficacy.</td></tr>
+<tr><td>**F4 — Participants ignore uncertainty signals**</td><td>Low</td><td>Include comprehension checks after training phase (e.g., &quot;What did the LLM say about its confidence on the last question?&quot;). Exclude if &lt; 70% accuracy.</td></tr>
+<tr><td>**F5 — Numerical confidence is interpreted as a probability of correctness by experts but as a general &quot;quality score&quot; by novices**</td><td>Medium</td><td>Post-task debrief interview (n = 20 per format) to probe qualitative understanding of the uncertainty signal. Include as qualitative supplement.</td></tr>
+<tr><td>**F6 — Fatigue or order effects**</td><td>Low</td><td>Randomize question order per participant. Include block-level position as a covariate.</td></tr>
+</tbody></table>
+<p>---</p>
+<h2>9. Execution Plan</h2>
+<h3>Stage 1: Stimulus Construction (est. 5 days)</h3>
+<p>1. Select 60 TruthfulQA questions + 20 TriviaQA warm-up questions, stratified by category and difficulty.</p>
+<p>2. Generate GPT-4o answers in correct and incorrect variants (3 raters validate plausibility).</p>
+<p>3. Construct all three uncertainty-format renderings per question.</p>
+<p>4. Implement and pretest the web-based experimental interface (React + Firebase for data collection).</p>
+<p>**Success signal:** All 60 × 3 × 2 = 360 stimulus variants reviewed and approved. Interface passes 5 pilot participants with no technical issues.</p>
+<h3>Stage 2: Expertise and Difficulty Pilot (est. 3 days)</h3>
+<p>1. Recruit n = 30 pilot participants (10 per expertise level) via Prolific.</p>
+<p>2. Administer 20-question domain quiz + 30-item self-report battery.</p>
+<p>3. Validate: (a) quiz score correlates with self-report at r &gt; 0.40; (b) easy/hard split has ≥15 pp accuracy difference; (c) time per trial &lt; 45 seconds.</p>
+<p>**Success signal:** All three validation checks pass. If not, adjust question selection or difficulty thresholds.</p>
+<h3>Stage 3: Main Experiment (est. 7 days)</h3>
+<p>1. Recruit N = 600 participants across 4 conditions (3 formats + control, n = 150 each).</p>
+<p>2. Run experiment with random assignment, counterbalanced within-subject factors.</p>
+<p>3. Real-time monitoring of attention check pass rates and completion times.</p>
+<p>**Success signal:** ≥ 500 valid participants after exclusions. Balanced demographics across conditions.</p>
+<h3>Stage 4: Analysis (est. 3 days)</h3>
+<p>1. Pre-registered primary analysis (3×2 ANOVA, ANCOVA, mixed-effects models).</p>
+<p>2. All ablations (A1–A5).</p>
+<p>3. Qualitative analysis of debrief interviews.</p>
+<p>**Success signal:** All analysis scripts produce reproducible outputs. A `renv` or `conda` lockfile is committed.</p>
+<h3>Stage 5: Reporting (est. 3 days)</h3>
+<p>1. Write full paper (Introduction, Related Work, Method, Results, Discussion, Limitations).</p>
+<p>2. Create figures: interaction plots, calibration curves, verification-rate bar charts.</p>
+<p>3. Release pre-registration, data, and analysis code.</p>
+<p>**Success signal:** Paper draft ready for submission to CHI 2027 or IUI 2027.</p>
+<p>---</p>
+<h2>10. Timeline Summary</h2>
+<table><tbody>
+<tr><td>Stage</td><td>Duration</td><td>Key Deliverable</td></tr>
+<tr><td>1. Stimulus construction</td><td>5 days</td><td>360 validated stimuli + working web interface</td></tr>
+<tr><td>2. Pilot</td><td>3 days</td><td>Difficulty/expertise validation report</td></tr>
+<tr><td>3. Main experiment</td><td>7 days</td><td>Raw data (≥500 valid participants)</td></tr>
+<tr><td>4. Analysis</td><td>3 days</td><td>Reproducible notebooks + figures</td></tr>
+<tr><td>5. Reporting</td><td>3 days</td><td>Paper draft + public release</td></tr>
+<tr><td>**Total**</td><td>**~21 days**</td><td></td></tr>
+</tbody></table>
+<p>---</p>
+<h2>11. Contributions (Summary)</h2>
+<p>1. **First systematic test of the interaction** between uncertainty communication format and user expertise for appropriate LLM reliance.</p>
+<p>2. **Practical design guidance:** Which uncertainty format should LLM interfaces use for expert vs. novice users?</p>
+<p>3. **Open dataset + analysis code:** 600-participant behavioral experiment with full stimuli, responses, and reproducible analysis pipeline.</p>
+<p>---</p>
+<h3>References</h3>
+<ul>
+<li>Bach, T. A., et al. (2023). A Systematic Literature Review of User Trust in AI-Enabled Systems. arXiv:2304.08795.</li>
+<li>Bo, J. Y., Wan, S., &amp; Anderson, A. (2024). To Rely or Not to Rely? Evaluating Interventions for Appropriate Reliance on LLMs. arXiv:2412.15584.</li>
+<li>Joshi, M., et al. (2017). TriviaQA: A Large Scale Distantly Supervised Challenge Dataset for Reading Comprehension. ACL.</li>
+<li>Kim, S. S. Y., et al. (2024). &quot;I&#x27;m Not Sure, But...&quot;: Examining the Impact of LLMs&#x27; Uncertainty Expression on User Reliance and Trust. arXiv:2405.00623.</li>
+<li>Kim, S. S. Y., et al. (2025). Fostering Appropriate Reliance on LLMs: The Role of Explanations, Sources, and Inconsistencies. arXiv:2502.08554.</li>
+<li>Lin, S., Hilton, J., &amp; Evans, O. (2021). TruthfulQA: Measuring How Models Mimic Human Falsehoods. ACL.</li>
+<li>Steyvers, M., et al. (2024). What Large Language Models Know and What People Think They Know. arXiv:2401.13835.</li>
+<li>Villavicencio, M., et al. (2026). Not All Uncertainty Is Equal: How Uncertainty Granularity Shapes Human Verification in LLM-Assisted Decision Making. arXiv:2605.28571.</li>
+<li>Zhou, K., et al. (2024). Relying on the Unreliable: The Impact of Language Models&#x27; Reluctance to Express Uncertainty. arXiv:2401.06730.</li>
+</ul></article></main>
+</body>
+</html>

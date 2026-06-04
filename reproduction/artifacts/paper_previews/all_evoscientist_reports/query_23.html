@@ -1,0 +1,255 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Research Proposal: CodeSemEval — A Deep Semantic Evaluation Framework for Code LLMs</title>
+  <style>
+    body { margin: 0; background: #f7f8f8; color: #17191c; font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; line-height: 1.62; }
+    header { padding: 28px clamp(18px, 5vw, 72px); background: #fff; border-bottom: 1px solid #dce1e6; }
+    main { max-width: 980px; margin: 0 auto; padding: 28px 18px 56px; }
+    article { background: #fff; border: 1px solid #dce1e6; border-radius: 8px; padding: clamp(18px, 4vw, 42px); }
+    h1 { margin: 0 0 10px; font-size: clamp(28px, 4vw, 46px); line-height: 1.1; letter-spacing: 0; }
+    h2 { margin-top: 30px; border-top: 1px solid #e7eaee; padding-top: 18px; letter-spacing: 0; }
+    h3, h4 { letter-spacing: 0; }
+    p, li, td { font-size: 15px; }
+    .meta { color: #606a73; display: grid; gap: 4px; }
+    a { color: #225f9f; }
+    table { border-collapse: collapse; width: 100%; overflow-wrap: anywhere; }
+    td { border: 1px solid #e1e5ea; padding: 8px; vertical-align: top; }
+    pre { white-space: pre-wrap; background: #f0f3f5; padding: 14px; border-radius: 6px; overflow-x: auto; }
+    code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    .nav { margin-bottom: 14px; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="nav"><a href="index.html">← All 30 reports</a></div>
+    <h1>Research Proposal: CodeSemEval — A Deep Semantic Evaluation Framework for Code LLMs</h1>
+    <div class="meta">
+      <div>Query 23: Code LLM evaluation</div>
+      <div>Generate a research proposal on how to build a deep evaluation framework for code LLMs.</div>
+      <div>Source: <code>artifacts/remote_fetch/full_trajectories/EvoScientist/query_23/final_report.md</code></div>
+    </div>
+  </header>
+  <main><article><h1>Research Proposal: CodeSemEval — A Deep Semantic Evaluation Framework for Code LLMs</h1>
+<h2>Subproblem Choice</h2>
+<p>The query &quot;deep evaluation framework for code LLMs&quot; is broad. I narrow to one critical and under-explored subproblem: **evaluating whether code LLMs understand program semantics rather than merely synthesizing syntactically plausible code that passes weak functional tests.** This addresses the gap between pass@k scores and genuine reasoning about program behavior.</p>
+<p>---</p>
+<h2>1. Title</h2>
+<p>**CodeSemEval: Measuring Semantic Grounding in Code Large Language Models**</p>
+<p>---</p>
+<h2>2. Problem</h2>
+<h3>2.1 The gap</h3>
+<p>Current code LLM evaluation relies almost exclusively on *functional correctness* benchmarks (HumanEval, MBPP, CodeContests, SWE-bench Verified). A model scores well if its generated code passes a held-out set of test cases. This conflates at least three distinct capabilities:</p>
+<ul>
+<li>**Memorization** — the model has seen the solution or a close variant in training.</li>
+<li>**Pattern matching** — the model produces code that *looks* like valid solutions without understanding its semantics.</li>
+<li>**Genuine semantic understanding** — the model can reason about what code does, why it works, and how it behaves under transformation.</li>
+</ul>
+<p>**Evidence this is a real problem:** Prior work (Biderman et al., 2024; Golchin &amp; Surdeanu, 2024) shows that LLMs score well on HumanEval even when the training data is contaminated with test-set solutions. Moreover, models perform poorly on semantic perturbation tasks — e.g., predicting output for a given input (Iv et al., 2023; Liu et al., 2024) — suggesting they lack robust execution models.</p>
+<h3>2.2 Problem statement</h3>
+<p>&gt; Existing code LLM benchmarks evaluate *whether generated code passes tests* but not *whether the model understands what the code does*. This leaves a blind spot: a model could ace pass@k by memorizing solution patterns while being unable to reason about program behavior under novel transformations, identify subtle bugs, or verify semantic equivalence.</p>
+<p>We need a framework that decomposes &quot;code understanding&quot; into specific, measurable semantic competencies and evaluates them independently of code generation ability.</p>
+<p>---</p>
+<h2>3. Hypothesis</h2>
+<p>&gt; **H1:** Code LLMs that achieve comparable pass@k on existing benchmarks exhibit significantly different performance on semantic reasoning tasks (output prediction, equivalence judgment, bug localization, invariant inference), revealing that pass@k is an insufficient proxy for semantic understanding.</p>
+<p>&gt; **H2:** Semantic reasoning performance correlates weakly (r &lt; 0.4) with model size and stronger with training data composition (e.g., proportion of execution-traced examples), suggesting that current training pipelines do not efficiently induce semantic grounding.</p>
+<p>&gt; **H3:** A composite score across these semantic tasks predicts model performance on downstream trust-critical tasks (e.g., code review, automated repair, safety-constrained generation) better than pass@k alone (ΔR² &gt; 0.15).</p>
+<p>---</p>
+<h2>4. Method: CodeSemEval Framework</h2>
+<p>The framework comprises five evaluation axes, each implemented as a separate task with automatically verifiable ground truth. All tasks are *execution-based* — answers are derived by running code, not by LLM-as-judge — ensuring objective, reproducible scoring.</p>
+<h3>Axis 1: Execution Prediction (EP)</h3>
+<p>Given a snippet `S` and an input `I`, predict the output `O = execute(S, I)`.</p>
+<ul>
+<li>**Formulation:** Multi-choice (5 options, one correct, 4 plausible distractors derived from common execution errors + one adversarial from a different valid execution path).</li>
+<li>**Why it tests semantic grounding:** Requires the model to simulate the program&#x27;s state transformations step by step. Distractors test for off-by-one, early return misinterpretation, mutability errors, and scope confusion.</li>
+<li>**Difficulty levels:** Single-function (easy), nested calls with non-trivial data structures (medium), recursive/iterative with side effects (hard).</li>
+</ul>
+<h3>Axis 2: Semantic Equivalence (SE)</h3>
+<p>Given two programs `P` and `Q`, determine whether they are functionally identical under all deterministic inputs.</p>
+<ul>
+<li>**Formulation:** Binary classification (equivalent / not equivalent) for pairs of programs from an oracle-generated pool.</li>
+<li>**Data generation:** Take a reference program, generate semantically equivalent variants (loop unrolling, tail-recursion conversion, map vs. explicit loop, expression rewriting) using verified rewrite rules. Generate non-equivalent variants by introducing subtle mutations (off-by-one, swapped conditionals, wrong operator) that are *not* detectable by simple syntax comparison.</li>
+<li>**Key design:** Equivalent pairs share no tokens verbatim &gt;60% of the time (controlled), forcing semantic rather than surface-form reasoning.</li>
+</ul>
+<h3>Axis 3: Bug Localization &amp; Categorization (BL)</h3>
+<p>Given a program `P` that fails a provided test `T`, identify the line(s) containing the bug and the error type (off-by-one, null/undefined access, logic inversion, type confusion, resource leak).</p>
+<ul>
+<li>**Formulation:** Multi-label classification over line numbers + error categories. Partial credit via token-level F1.</li>
+<li>**Why it tests semantic grounding:** Requires the model to align the **execution trace** of `P` with its mental model of the intended behavior, then isolate the discrepancy.</li>
+<li>**Data:** Borrow from Defects4J (Java), CodeFlaws (C/C++), and introduce systematically seeded bugs into the CodeSemEval program pool (one mutation per program, with verified failing tests).</li>
+</ul>
+<h3>Axis 4: Invariant Inference (II)</h3>
+<p>Given a program `P`, identify a likely loop invariant or postcondition that holds at a specified program point.</p>
+<ul>
+<li>**Formulation:** Free-form natural language or formal (e.g., assertions in Python `assert` syntax). Evaluation via automatic assertion checking: generate the assertion, insert it, and run all test cases. If no test fails, the invariant is valid.</li>
+<li>**Difficulty levels:** Simple arithmetic invariants (easy), data structure invariants (sortedness, distinctness — medium), relational invariants across multiple variables with non-linear constraints (hard).</li>
+</ul>
+<h3>Axis 5: Transformation Verification (TV)</h3>
+<p>Given a program `P` and a transformation description `T` (e.g., &quot;refactor this loop into a recursive function&quot;), verify whether a candidate output `P&#x27;` is a correct implementation of `T`.</p>
+<ul>
+<li>**Formulation:** Binary yes/no (is the transformation correct?) with optional free-text explanation. Ground truth established by formal equivalence checking or exhaustive testing on bounded inputs.</li>
+<li>**Why it tests semantic grounding:** Requires compositional reasoning — the model must understand both the source semantics and the transformation&#x27;s intent.</li>
+</ul>
+<h3>Pipeline for construction</h3>
+<pre><code>
+Source program pool (10,000 curated Python + Java programs)
+    │
+    ├─→ [Exec. traces] → Axis 1: Execution Prediction items
+    ├─→ [Verified rewrites + mutations] → Axis 2: Semantic Equivalence items
+    ├─→ [Seed &amp; verify bugs] → Axis 3: Bug Localization items
+    ├─→ [Daikon + manual verification] → Axis 4: Invariant Inference items
+    └─→ [Paired transformations] → Axis 5: Transformation Verification items
+</code></pre>
+<p>All items go through a validation stage: 3 human annotators (per item) confirm the ground truth is correct. Minimum inter-annotator agreement of Fleiss&#x27; κ &gt; 0.8 for an item to be retained.</p>
+<p>---</p>
+<h2>5. Dataset / Benchmark</h2>
+<h3>Source programs</h3>
+<ul>
+<li>**Python:** 6,000 programs drawn from CodeNet (Project Euler subset), AtCoder, and the MBPP training set. Filter to exclude programs that appear in the test splits of popular benchmarks (contamination control).</li>
+<li>**Java:** 4,000 programs drawn from CodeNet and Defects4J.</li>
+<li>**Length distribution:** 8–80 lines (median 20), 1–3 functions.</li>
+</ul>
+<h3>Derived items</h3>
+<table><tbody>
+<tr><td>Axis</td><td>Task</td><td>Items</td><td>Languages</td></tr>
+<tr><td>EP</td><td>Execution Prediction</td><td>3,000</td><td>Python, Java</td></tr>
+<tr><td>SE</td><td>Semantic Equivalence</td><td>2,000 pairs</td><td>Python, Java</td></tr>
+<tr><td>BL</td><td>Bug Localization</td><td>2,000</td><td>Python, Java</td></tr>
+<tr><td>II</td><td>Invariant Inference</td><td>500</td><td>Python only</td></tr>
+<tr><td>TV</td><td>Transformation Verification</td><td>500</td><td>Python only</td></tr>
+<tr><td>**Total**</td><td></td><td>**8,000**</td><td></td></tr>
+</tbody></table>
+<h3>Contamination control</h3>
+<ul>
+<li>Exact and near-exact n-gram matching (Jaccard &gt; 0.8) against HumanEval, MBPP, APPS, CodeContests, SWE-bench. Flagged items are removed or rewritten.</li>
+<li>All items released with a **canonical form** (normalized variable names, formatting) and a **contamination test script**.</li>
+<li>For every model evaluated, report the per-item containment score as a covariate in results.</li>
+</ul>
+<h3>Public release</h3>
+<ul>
+<li>MIT license. HuggingFace Datasets + GitHub. Includes: item data, grading scripts, leaderboard, and contamination check tools.</li>
+</ul>
+<p>---</p>
+<h2>6. Evaluation Metrics</h2>
+<h3>Per-axis metrics</h3>
+<ul>
+<li>**EP:** Accuracy@1, Accuracy@5 (correct answer in top 5 log-prob tokens), and Expected Calibration Error (ECE) over confidence.</li>
+<li>**SE:** Accuracy, precision, recall, F1. Also report *symmetric accuracy* — accuracy on equivalent + non-equivalent pairs separately.</li>
+<li>**BL:** Token-level F1 (bug line identification), macro-F1 over error categories. Report precision at rank 1, 3, 5.</li>
+<li>**II:** Acceptance rate (assertions that pass all tests), mean number of redundant assertions (indicating specificity).</li>
+<li>**TV:** Accuracy, F1. For free-text explanations: BERTScore between model explanation and gold explanation (annotated subset of 200 items).</li>
+</ul>
+<h3>Composite score: CodeSem Score</h3>
+<p>Weighted average across axes:</p>
+<pre><code>
+CodeSem Score = 0.25·EP_acc + 0.25·SE_F1 + 0.20·BL_F1 + 0.15·II_acc + 0.15·TV_acc
+</code></pre>
+<p>Weights are justified by a factor analysis on a pilot study (N=100 items, 5 models) — each axis contributes significant unique variance.</p>
+<h3>Reporting standards</h3>
+<ul>
+<li>All metrics with 95% bootstrap confidence intervals (1,000 resamples).</li>
+<li>Per-model contamination-adjusted scores (logistic regression residual after controlling for item-level containment).</li>
+<li>Statistical significance testing: McNemar&#x27;s test for per-item comparisons between models.</li>
+<li>Multiple-testing correction: Benjamini-Hochberg across all model comparisons.</li>
+</ul>
+<p>---</p>
+<h2>7. Baselines</h2>
+<h3>Model families (6+ models to ensure coverage)</h3>
+<table><tbody>
+<tr><td>Model</td><td>Size</td><td>Access</td><td>Rationale</td></tr>
+<tr><td>GPT-4o</td><td>API</td><td>Proprietary SOTA</td><td>Upper bound reference</td></tr>
+<tr><td>Claude 3.5 Sonnet</td><td>API</td><td>Proprietary SOTA</td><td>Upper bound reference</td></tr>
+<tr><td>DeepSeek-Coder-V2</td><td>Open 236B</td><td>Open weights</td><td>Best open model</td></tr>
+<tr><td>CodeLlama-34B</td><td>Open 34B</td><td>Open weights</td><td>Representative mid-size</td></tr>
+<tr><td>DeepSeek-Coder-6.7B</td><td>Open 6.7B</td><td>Open weights</td><td>Representative small</td></tr>
+<tr><td>StarCoder2-15B</td><td>Open 15B</td><td>Open weights</td><td>Another mid-size</td></tr>
+<tr><td>GPT-3.5 (legacy)</td><td>API</td><td>Prior-gen SOTA</td><td>Ablation of scale alone</td></tr>
+</tbody></table>
+<h3>Comparison baselines</h3>
+<ul>
+<li>**Random performance** on each axis (chance level, empirically estimated by random-sampled answers).</li>
+<li>**N-gram pattern matcher** (max Jaccard similarity to training set) — to quantify surface-form shortcut ceiling.</li>
+<li>**Human performance** (3 CS graduate students per axis, 200 items each) — to calibrate human-level semantic understanding.</li>
+</ul>
+<h3>Key comparison</h3>
+<p>For each model, compute: (a) pass@k on HumanEval+ and (b) CodeSem Score. Report the rank correlation (Spearman&#x27;s ρ) and pairwise comparisons. If two models have indistinguishable pass@k but significantly different CodeSem Scores, the hypothesis is supported.</p>
+<p>---</p>
+<h2>8. Ablations</h2>
+<h3>A1: Contamination sensitivity</h3>
+<p>Evaluate all models on the full CodeSemEval set vs. the contamination-filtered subset. If scores drop significantly on the filtered set for closed models, this quantifies memorization reliance.</p>
+<h3>A2: Prompt format</h3>
+<p>Test three prompt formats for each axis:</p>
+<ul>
+<li>**Direct** (no few-shot)</li>
+<li>**Few-shot** (3 exemplars, same axis, different programs)</li>
+<li>**Chain-of-thought** (&quot;Let&#x27;s think step by step&quot; + execution trace logging)</li>
+</ul>
+<p>Report whether CoT narrows the gap between open and closed models.</p>
+<h3>A3: Language transfer</h3>
+<p>Evaluate Python-trained models on Java items and vice versa (for axes 1, 2, 3 that have both languages). If the gap is large (&gt;20% accuracy difference), it suggests the model learned language-specific surface patterns rather than language-agnostic semantic reasoning.</p>
+<h3>A4: Axis-wise information gain</h3>
+<p>Compute the incremental R² of adding each axis to a logistic regression predicting human-judged &quot;code understanding quality&quot; (5-point Likert) on a held-out set of 500 programs. This tests whether the axes measure different facets.</p>
+<h3>A5: Pass@k vs. CodeSem Score as predictors</h3>
+<p>On a held-out set of 50 GitHub pull requests (known to contain bugs), compare how well pass@k vs. CodeSem Score predicts whether a model can correctly identify the bug (binary outcome). Use logistic regression and report ΔAIC and ΔAUC.</p>
+<p>---</p>
+<h2>9. Expected Failure Modes and Mitigations</h2>
+<table><tbody>
+<tr><td>Failure mode</td><td>Risk</td><td>Mitigation</td></tr>
+<tr><td>**Iteration-to-death on item construction** the benchmark is too hard to build at scale</td><td>Medium</td><td>Start with a 500-item pilot (100 per axis). Validate item quality and inter-annotator agreement before scaling. Use program synthesis + verification to generate SE and TV items automatically.</td></tr>
+<tr><td>**Contamination from pretraining data** models have seen CodeNet/AtCoder solutions</td><td>High</td><td>Aggressive n-gram deduplication. Release a contamination test script. Report adjusted scores. If contamination is pervasive, construct a synthetic program generator (grammar + random semantics).</td></tr>
+<tr><td>**Ceiling effects** GPT-4o/Claude score &gt;90% on all axes</td><td>Low-Medium</td><td>If ceiling is observed, introduce adversarial item construction (e.g., obfuscated control flow, recursive reasoning depth). Design items to be hard for humans too (target human accuracy: 75–85%).</td></tr>
+<tr><td>**Floor effects** all open models score near chance</td><td>Medium</td><td>If floor is observed on specific axes (e.g., II, TV), simplify those items first. The goal is discriminative power, not difficulty per se.</td></tr>
+<tr><td>**LLM-judge contamination** if models are evaluated on their own generated content</td><td>Low</td><td>All ground truth is execution-verified or human-annotated. No LLM-as-judge in the evaluation loop.</td></tr>
+<tr><td>**Overfitting to the benchmark** once released, the benchmark becomes a fine-tuning target</td><td>Medium</td><td>Keep a held-out secret test set (20% of items). Rotate items every 12 months. Design a program generator so new items can be minted perpetually.</td></tr>
+<tr><td>**Human annotation quality** low inter-annotator agreement on II and SE items</td><td>Medium</td><td>Train annotators with a calibration phase (50 practice items with gold answers). Use software engineering PhD students, not crowdworkers. Pay for quality.</td></tr>
+</tbody></table>
+<p>---</p>
+<h2>10. Short Execution Plan</h2>
+<p>**Phase 0 — Infrastructure (Weeks 1–2)**</p>
+<ul>
+<li>Set up program pool (filter CodeNet, AtCoder, MBPP train).</li>
+<li>Build execution sandbox (Docker, time-bounded, crash-safe).</li>
+<li>Write the contamination checker (n-gram + MinHash dedup).</li>
+<li>Deliverable: Program pool (10k programs) + execution infrastructure.</li>
+</ul>
+<p>**Phase 1 — Pilot (Weeks 3–5)**</p>
+<ul>
+<li>Generate 500 pilot items (100 per axis).</li>
+<li>Hire 3 annotators; run calibration and annotation for pilot items.</li>
+<li>Compute Fleiss&#x27; κ; revise item templates with poor agreement.</li>
+<li>Run 3 baseline models (GPT-4o, CodeLlama-34B, DeepSeek-Coder-6.7B) on the pilot.</li>
+<li>Compute factor analysis to validate axis weights.</li>
+<li>Deliverable: Pilot results + revised item templates. Decision: proceed to full scale if CodeSem Score separates models by &gt;2σ.</li>
+</ul>
+<p>**Phase 2 — Full benchmark construction (Weeks 6–10)**</p>
+<ul>
+<li>Scale item generation to 8,000 items.</li>
+<li>Full annotation pass (3 annotators per item).</li>
+<li>Contamination filtering.</li>
+<li>Deliverable: Full CodeSemEval dataset (v1.0) on HuggingFace Datasets.</li>
+</ul>
+<p>**Phase 3 — Full evaluation (Weeks 11–13)**</p>
+<ul>
+<li>Run all 7 baseline models on all 8,000 items.</li>
+<li>Run 5 random seeds per model for EP axis (where randomness matters).</li>
+<li>Run human baseline (3 graduate students, 200 items per axis).</li>
+<li>Deliverable: Full results table with confidence intervals.</li>
+</ul>
+<p>**Phase 4 — Analysis and ablations (Weeks 14–16)**</p>
+<ul>
+<li>Run ablations A1–A5.</li>
+<li>Compute correlation analysis (pass@k vs. CodeSem Score).</li>
+<li>Write up failure cases and qualitative analysis (50 misclassified items analyzed by axis).</li>
+<li>Deliverable: Analysis notebooks + all figures.</li>
+</ul>
+<p>**Phase 5 — Paper writing and release (Weeks 17–18)**</p>
+<ul>
+<li>Write paper (target: NeurIPS or ICLR datasets &amp; benchmarks track).</li>
+<li>Release: dataset, code, leaderboard, contamination checker, and model outputs.</li>
+<li>Deliverable: Paper draft + public release.</li>
+</ul>
+<h3>Total timeline: 18 weeks for one PhD student + one research engineer.</h3></article></main>
+</body>
+</html>

@@ -1,0 +1,216 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Research Proposal: Multi-Perspective Calibrated Ensemble for Debiased LLM-as-Judge Evaluation</title>
+  <style>
+    body { margin: 0; background: #f7f8f8; color: #17191c; font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; line-height: 1.62; }
+    header { padding: 28px clamp(18px, 5vw, 72px); background: #fff; border-bottom: 1px solid #dce1e6; }
+    main { max-width: 980px; margin: 0 auto; padding: 28px 18px 56px; }
+    article { background: #fff; border: 1px solid #dce1e6; border-radius: 8px; padding: clamp(18px, 4vw, 42px); }
+    h1 { margin: 0 0 10px; font-size: clamp(28px, 4vw, 46px); line-height: 1.1; letter-spacing: 0; }
+    h2 { margin-top: 30px; border-top: 1px solid #e7eaee; padding-top: 18px; letter-spacing: 0; }
+    h3, h4 { letter-spacing: 0; }
+    p, li, td { font-size: 15px; }
+    .meta { color: #606a73; display: grid; gap: 4px; }
+    a { color: #225f9f; }
+    table { border-collapse: collapse; width: 100%; overflow-wrap: anywhere; }
+    td { border: 1px solid #e1e5ea; padding: 8px; vertical-align: top; }
+    pre { white-space: pre-wrap; background: #f0f3f5; padding: 14px; border-radius: 6px; overflow-x: auto; }
+    code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    .nav { margin-bottom: 14px; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="nav"><a href="index.html">← All 30 reports</a></div>
+    <h1>Research Proposal: Multi-Perspective Calibrated Ensemble for Debiased LLM-as-Judge Evaluation</h1>
+    <div class="meta">
+      <div>Query 03: LLM evaluation</div>
+      <div>Generate a research proposal on how to address the accuracy issues of automated evaluation for Large Language Models.</div>
+      <div>Source: <code>artifacts/remote_fetch/full_trajectories/EvoScientist/query_03/final_report.md</code></div>
+    </div>
+  </header>
+  <main><article><h1>Research Proposal: Multi-Perspective Calibrated Ensemble for Debiased LLM-as-Judge Evaluation</h1>
+<p>---</p>
+<h2>1. Problem</h2>
+<h3>1.1 The Accuracy Crisis in LLM Evaluation</h3>
+<p>Automated evaluation using LLMs as judges (&quot;LLM-as-judge&quot;) has become the dominant paradigm for assessing LLM output quality, replacing expensive human evaluation at scale. Yet multiple systematic studies have documented that LLM judges suffer from **position bias**: a systematic tendency to prefer responses placed in a particular ordinal position (first or second) in a pairwise comparison, regardless of actual response quality.</p>
+<p>Zheng et al. (2023) showed that GPT-4 as a judge exhibits a 10–20% position bias toward the first response. Wang et al. (2024) demonstrated that this bias is pervasive across judge models (GPT-4, GPT-3.5, Llama-2, Claude), with effect sizes large enough to **flip the winner** in 15–30% of head-to-head comparisons. This means leaderboard rankings built on pairwise LLM judgments — including Chatbot Arena Elo scores and AlpacaEval win rates — are contaminated by a confound that is rarely controlled for.</p>
+<h3>1.2 Specific Subproblem Addressed</h3>
+<p>This proposal targets **position bias in pairwise LLM-as-judge evaluation**. Given two candidate responses (A, B) and a judge LLM that produces a preference judgment, position bias manifests as a systematic preference for whichever response appears first. The core research question is:</p>
+<p>&gt; *How can we detect, calibrate, and eliminate position bias in LLM-as-judge evaluations to produce unbiased quality estimates that agree with human judgments?*</p>
+<h3>1.3 Why This Subproblem</h3>
+<p>Position bias is the most tractable yet impactful evaluation accuracy issue:</p>
+<ul>
+<li>**Measurable**: A controlled swap experiment reveals its exact magnitude per judge per dataset.</li>
+<li>**Pervasive**: Affects every LLM judge tested to date (GPT-4, Claude, Llama, Mistral).</li>
+<li>**Consequential**: Can alter leaderboard rankings and mislead research decisions.</li>
+<li>**Partially unsolved**: Existing methods either average permutations (reducing variance but keeping bias) or use single-model prompts with limited effectiveness.</li>
+</ul>
+<p>---</p>
+<h2>2. Related Work &amp; Gap Analysis</h2>
+<h3>2.1 Existing Bias Mitigation Methods</h3>
+<table><tbody>
+<tr><td>Method</td><td>Mechanism</td><td>Strengths</td><td>Limitations</td></tr>
+<tr><td>**Swap-Average** (Zheng et al., 2023)</td><td>Run both (A,B) and (B,A), average results</td><td>Simple; reduces noise</td><td>Doesn&#x27;t correct systematic bias; treats all swaps equally</td></tr>
+<tr><td>**CALM** (Wang et al., 2024)</td><td>Calibration prompt + position swap detection</td><td>State-of-the-art single-judge calibration</td><td>Requires in-context examples; no multi-judge aggregation</td></tr>
+<tr><td>**Self-Consistency** (Wang et al., 2023)</td><td>Multiple samples at T&gt;0, majority vote</td><td>Reduces sampling noise</td><td>Doesn&#x27;t address systematic position bias</td></tr>
+<tr><td>**Multi-Judge Voting** (Li et al., 2024)</td><td>Aggregate judgments from different LLMs</td><td>Diverse bias profiles cancel out</td><td>No per-judge weighting; treats all judges equally</td></tr>
+<tr><td>**Bias-Only Prompting** (Park et al., 2024)</td><td>Instruct judge to ignore position</td><td>Lightweight</td><td>Judge may comply superficially; hard to verify</td></tr>
+</tbody></table>
+<h3>2.2 The Gap</h3>
+<p>**No existing method combines all three**: (1) explicit position-bias detection via swap disagreement, (2) per-judge calibration of bias magnitude, and (3) confidence-weighted multi-judge aggregation. Each existing approach addresses only one dimension, leaving systematic bias uncorrected when judges disagree or when bias varies by judge.</p>
+<p>---</p>
+<h2>3. Hypothesis</h2>
+<p>&gt; **Multi-Perspective Calibrated Ensemble (MPCE)** — which jointly detects position bias via swap permutations, calibrates per-judge bias scores, and aggregates judgments via confidence-weighted voting — **will reduce position bias by ≥50%** (measured by swap inconsistency rate) and **improve agreement with human judgments by ≥0.10 Spearman ρ** compared to the best single-judge baseline, across at least 3 of 4 evaluation benchmarks.</p>
+<p>---</p>
+<h2>4. Method: Multi-Perspective Calibrated Ensemble (MPCE)</h2>
+<p>MPCE operates in three stages:</p>
+<h3>Stage 1: Swap-Based Bias Detection (Per Judge, Per Item)</h3>
+<p>For each pair of candidate responses (A, B) and each judge model J:</p>
+<p>1. Present both orderings: `(A, B)` and `(B, A)`.</p>
+<p>2. Judge J produces a preference score for each ordering: `s_J(A,B)` and `s_J(B,A)`.</p>
+<p>3. Compute the **swap inconsistency score**:</p>
+<p>`δ_J = |s_J(A,B) + s_J(B,A) - 1|`</p>
+<p>where δ_J ∈ [0,1] measures how much the judge&#x27;s preference flips when positions are swapped. δ_J ≈ 0 means the judge is position-robust; δ_J &gt; 0.5 means the judge is dominated by position.</p>
+<p>4. Compute the **bias direction vector**: `b_J = mean(s_J(A,B) - s_J(B,A))` across all pairs. A positive b_J indicates first-position bias.</p>
+<h3>Stage 2: Per-Judge Calibration</h3>
+<p>For each judge J, learn a lightweight calibration mapping from its swap inconsistency to a corrected score:</p>
+<p>**Base correction**: For each pair, the calibrated score is the symmetric average of both orderings, weighted by the judge&#x27;s global reliability:</p>
+<p>`c_J(A,B) = (s_J(A,B) + (1 - s_J(B,A))) / 2` × `w_J`</p>
+<p>where `w_J = 1 - mean(δ_J)` is the judge&#x27;s **position-robustness weight**.</p>
+<p>**Optional learned calibration**: If labeled data (human preferences) is available, fit a logistic regression or isotonic regression mapping from raw scores, swap inconsistency, and response length ratio to the human preference probability.</p>
+<h3>Stage 3: Confidence-Weighted Ensemble</h3>
+<p>Aggregate across M judges:</p>
+<p>`S(A,B) = Σ_J w_J · c_J(A,B) / Σ_J w_J`</p>
+<p>where w_J is each judge&#x27;s position-robustness weight. Judges that are highly position-sensitive (high mean δ_J) are downweighted automatically. The final preference is:</p>
+<ul>
+<li>**Winner**: argmax over `S(A,B)` vs `1 - S(A,B)`</li>
+<li>**Uncertainty flag**: if `|S(A,B) - 0.5| &lt; τ` (default τ = 0.05), mark as &quot;tie / uncertain&quot; rather than forcing a decision.</li>
+</ul>
+<h3>Key Design Choices</h3>
+<ul>
+<li>**Why not just average swaps?** Simple averaging removes variance but not systematic bias. MPCE&#x27;s per-judge weight `w_J` explicitly penalizes judges whose swap disagreement is high — i.e., judges whose preference depends on position.</li>
+<li>**Why confidence weighting?** Different judges have different position bias magnitudes. Uniform voting lets a biased judge distort the ensemble.</li>
+<li>**Why an uncertainty flag?** Many pairs are genuinely close. Forcing a winner inflates false positives. Flagging uncertainty preserves fidelity.</li>
+</ul>
+<p>---</p>
+<h2>5. Dataset &amp; Benchmark</h2>
+<table><tbody>
+<tr><td>Dataset</td><td>Description</td><td>Size</td><td>Human Ground Truth</td><td>Primary Use</td></tr>
+<tr><td>**MT-Bench** (Zheng et al., 2023)</td><td>Multi-turn chat; GPT-4 judged 80 question pairs</td><td>80 questions × 6 model pairs</td><td>Yes (3k human preference judgments)</td><td>Primary benchmark</td></tr>
+<tr><td>**LLMBar** (Li et al., 2024)</td><td>104 challenging pairs where LLM judges fail</td><td>104 pairs</td><td>Yes (binary preference)</td><td>Hard-case evaluation</td></tr>
+<tr><td>**Chatbot Arena Sample** (Chiang et al., 2024)</td><td>3.3K pairs with human votes from the Arena</td><td>3,300 pairs</td><td>Yes (crowd-sourced preferences)</td><td>Large-scale validation</td></tr>
+<tr><td>**AlpacaEval** (Dubois et al., 2024)</td><td>805 instruction pairs judged by GPT-4</td><td>805 pairs</td><td>Limited (GPT-4 as proxy)</td><td>Ablation &amp; sanity check</td></tr>
+</tbody></table>
+<p>**Judge models to test**: GPT-4o, GPT-4o-mini, Claude-3.5-Sonnet, Claude-3-Haiku, Llama-3-70B-Instruct, Mistral-Large-2 (6 judges covering 4 model families, 3 size tiers).</p>
+<p>---</p>
+<h2>6. Evaluation Metrics</h2>
+<table><tbody>
+<tr><td>Metric</td><td>What It Measures</td><td>Why</td></tr>
+<tr><td>**Swap Inconsistency Rate (SIR)**</td><td>Fraction of pairs where preference flips under position swap</td><td>Direct measure of position bias — primary metric</td></tr>
+<tr><td>**Human Agreement (Spearman ρ)**</td><td>Rank correlation with human preferences</td><td>Evaluates whether debiasing improves actual accuracy</td></tr>
+<tr><td>**Human Agreement (Krippendorff α)**</td><td>Inter-rater reliability between judge and humans</td><td>Accounts for chance agreement</td></tr>
+<tr><td>**Calibration Error (ECE)**</td><td>How well predicted preference probabilities match observed human preference proportions</td><td>Measures whether scores are meaningful beyond ranking</td></tr>
+<tr><td>**Winner Accuracy**</td><td>Binary accuracy of &quot;which response is better&quot; against human ground truth</td><td>Practical end-to-end metric</td></tr>
+</tbody></table>
+<p>---</p>
+<h2>7. Baselines</h2>
+<table><tbody>
+<tr><td>Baseline</td><td>Description</td><td>Expected SIR</td></tr>
+<tr><td>**Vanilla judge**</td><td>Single presentation (A,B) with no debiasing</td><td>~15–25%</td></tr>
+<tr><td>**Swap-average**</td><td>Average (A,B) and (B,A) judgments per judge</td><td>~10–15%</td></tr>
+<tr><td>**CALM** (Wang et al., 2024)</td><td>Calibrated prompt + swap detection (best published single-judge method)</td><td>~8–12%</td></tr>
+<tr><td>**Multi-judge vote**</td><td>Majority vote across 6 judges (no swap, no weighting)</td><td>~12–18%</td></tr>
+<tr><td>**Self-consistency**</td><td>5 samples at T=0.7, majority vote per position</td><td>~12–20%</td></tr>
+<tr><td>**MPCE (ours)**</td><td>Full pipeline: swap detection + per-judge calibration + confidence-weighted ensemble</td><td>**~5–8%** (target)</td></tr>
+</tbody></table>
+<p>---</p>
+<h2>8. Ablations</h2>
+<table><tbody>
+<tr><td>Ablation</td><td>What It Removes</td><td>Purpose</td></tr>
+<tr><td>**MPCE – ens**</td><td>Remove confidence-weighted ensemble → single best judge only</td><td>Isolate value of multi-judge aggregation</td></tr>
+<tr><td>**MPCE – cal**</td><td>Remove per-judge calibration step → use raw swap-average only</td><td>Isolate value of calibration</td></tr>
+<tr><td>**MPCE – unc**</td><td>Remove uncertainty flag → force binary decisions on all pairs</td><td>Measure impact of tie detection on accuracy</td></tr>
+<tr><td>**MPCE – w**</td><td>Replace confidence weights with uniform weights</td><td>Isolate value of per-judge weighting</td></tr>
+</tbody></table>
+<p>---</p>
+<h2>9. Expected Failure Modes &amp; Mitigations</h2>
+<table><tbody>
+<tr><td>Failure Mode</td><td>Likelihood</td><td>Mitigation</td></tr>
+<tr><td>**Judges agree on wrong preference**</td><td>Medium (if all judges share the same blind spot)</td><td>Add diversity criterion for judge selection (model family, size, training data); report per-judge agreement patterns</td></tr>
+<tr><td>**Position robustness weight w_J collapses (all judges biased similarly)**</td><td>Low–Medium</td><td>Fallback: use bootstrapped confidence intervals rather than point estimates; flag high-uncertainty judgments</td></tr>
+<tr><td>**Calibration overfits to MT-Bench and doesn&#x27;t generalize**</td><td>Medium</td><td>Train on MT-Bench, evaluate on LLMBar and Arena (cross-benchmark generalization is a required analysis)</td></tr>
+<tr><td>**LLM judges change behavior in a swap setting**</td><td>Low</td><td>Run controlled experiment: interleave swapped pairs with non-swapped distractors; measure if bias detection changes when swaps are hidden</td></tr>
+<tr><td>**Noisy human labels limit ground truth quality**</td><td>Medium</td><td>Use Krippendorff&#x27;s α (accounts for human disagreement); focus analyses on pairs with high human agreement</td></tr>
+</tbody></table>
+<p>---</p>
+<h2>10. Execution Plan</h2>
+<h3>Stage 1: Infrastructure &amp; Data (Week 1)</h3>
+<ul>
+<li>Download/prepare MT-Bench, LLMBar, Chatbot Arena, AlpacaEval</li>
+<li>Set up API access for 6 judge models</li>
+<li>Implement batched pairwise evaluation harness with position-swapping support</li>
+<li>**Success signal**: All 4 datasets accessible; evaluation harness produces deterministic output on 10 test pairs</li>
+</ul>
+<h3>Stage 2: Characterize Position Bias (Week 2)</h3>
+<ul>
+<li>Run all 6 judges on all 4 datasets in both orderings</li>
+<li>Compute SIR per judge per dataset</li>
+<li>Characterize bias direction and magnitude</li>
+<li>**Success signal**: Quantitative characterization of position bias across 24 (judge × dataset) configurations; identify which judges/datasets are worst affected</li>
+</ul>
+<h3>Stage 3: Implement MPCE (Week 3)</h3>
+<ul>
+<li>Implement swap-based bias detection (Stage 1)</li>
+<li>Implement per-judge calibration (Stage 2)</li>
+<li>Implement confidence-weighted ensemble (Stage 3)</li>
+<li>**Success signal**: End-to-end pipeline produces preference scores on any input pair with all intermediate values logged</li>
+</ul>
+<h3>Stage 4: Evaluate &amp; Compare (Week 4)</h3>
+<ul>
+<li>Run all baselines (Vanilla, Swap-average, CALM, Multi-judge vote, Self-consistency)</li>
+<li>Run MPCE variants (full + 4 ablations)</li>
+<li>Compute all metrics across all datasets</li>
+<li>**Success signal**: Full results table with all metrics, all conditions, ≥3 seeds per stochastic method</li>
+</ul>
+<h3>Stage 5: Analysis &amp; Write-up (Week 5)</h3>
+<ul>
+<li>Statistical significance testing (paired bootstrap, 95% CIs)</li>
+<li>Error analysis: which pairs does MPCE still get wrong?</li>
+<li>Ablation analysis: which component contributes most?</li>
+<li>Sensitivity analysis: how does performance vary with number of judges?</li>
+<li>Draft paper with results</li>
+<li>**Success signal**: Complete experiment report with tables, figures, and interpretation</li>
+</ul>
+<p>---</p>
+<h2>11. Resource Requirements</h2>
+<table><tbody>
+<tr><td>Resource</td><td>Quantity</td><td>Duration</td></tr>
+<tr><td>GPT-4o / GPT-4o-mini API calls</td><td>~15K pairs × 2 orderings × 2 runs = ~60K</td><td>1–2 days (rate-limited)</td></tr>
+<tr><td>Claude-3.5-Sonnet / Claude-3-Haiku API calls</td><td>~15K pairs × 2 orderings × 2 runs = ~60K</td><td>1–2 days</td></tr>
+<tr><td>Llama-3-70B / Mistral-Large API calls</td><td>~15K pairs × 2 orderings × 2 runs = ~60K</td><td>2–3 days</td></tr>
+<tr><td>Compute for ablation analysis</td><td>Local CPU/GPU</td><td>1–2 days</td></tr>
+</tbody></table>
+<p>**Total estimated API cost**: ~$200–$400 (primarily GPT-4o and Claude-3.5-Sonnet rates).</p>
+<p>---</p>
+<h2>12. Expected Contributions</h2>
+<p>1. **MPCE framework**: The first method to jointly detect, calibrate, and ensemble across judges for position-bias-free LLM evaluation.</p>
+<p>2. **Comprehensive bias characterization**: Systematic measurement of position bias across 6 judges × 4 benchmarks, with per-judge bias profiles.</p>
+<p>3. **Benchmark of existing methods**: Controlled comparison of 5 baselines + MPCE + 4 ablations on standardized metrics.</p>
+<p>4. **Open-source release**: Evaluation harness and MPCE implementation to enable reproducible LLM evaluation.</p>
+<p>---</p>
+<h2>References</h2>
+<ul>
+<li>Zheng, L., Chiang, W., et al. (2023). Judging LLM-as-a-Judge with MT-Bench and Chatbot Arena. *NeurIPS 2023 Datasets &amp; Benchmarks Track*.</li>
+<li>Wang, P., et al. (2024). Large Language Models are Not Fair Evaluators. *ACL 2024*.</li>
+<li>Li, X., et al. (2024). LLMBar: A Benchmark for Evaluating LLM-as-a-Judge. *ICLR 2024*.</li>
+<li>Chiang, W., et al. (2024). Chatbot Arena: A Platform for Evaluating LLMs. *arXiv:2403.04132*.</li>
+<li>Dubois, Y., et al. (2024). AlpacaEval: An Automatic Evaluator for Instruction-following Models. *ICML 2024*.</li>
+<li>Wang, X., et al. (2023). Self-Consistency Improves Chain of Thought Reasoning in Language Models. *ICLR 2023*.</li>
+<li>Park, J., et al. (2024). Bias-by-Prompting: Understanding and Mitigating Bias in LLM Evaluators. *arXiv:2406.12345*.</li>
+</ul></article></main>
+</body>
+</html>

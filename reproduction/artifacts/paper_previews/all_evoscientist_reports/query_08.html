@@ -1,0 +1,201 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>VeriPlan: Verifier-Gated Replanning for Reliable Multi-Step Agent Reasoning</title>
+  <style>
+    body { margin: 0; background: #f7f8f8; color: #17191c; font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; line-height: 1.62; }
+    header { padding: 28px clamp(18px, 5vw, 72px); background: #fff; border-bottom: 1px solid #dce1e6; }
+    main { max-width: 980px; margin: 0 auto; padding: 28px 18px 56px; }
+    article { background: #fff; border: 1px solid #dce1e6; border-radius: 8px; padding: clamp(18px, 4vw, 42px); }
+    h1 { margin: 0 0 10px; font-size: clamp(28px, 4vw, 46px); line-height: 1.1; letter-spacing: 0; }
+    h2 { margin-top: 30px; border-top: 1px solid #e7eaee; padding-top: 18px; letter-spacing: 0; }
+    h3, h4 { letter-spacing: 0; }
+    p, li, td { font-size: 15px; }
+    .meta { color: #606a73; display: grid; gap: 4px; }
+    a { color: #225f9f; }
+    table { border-collapse: collapse; width: 100%; overflow-wrap: anywhere; }
+    td { border: 1px solid #e1e5ea; padding: 8px; vertical-align: top; }
+    pre { white-space: pre-wrap; background: #f0f3f5; padding: 14px; border-radius: 6px; overflow-x: auto; }
+    code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    .nav { margin-bottom: 14px; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="nav"><a href="index.html">← All 30 reports</a></div>
+    <h1>VeriPlan: Verifier-Gated Replanning for Reliable Multi-Step Agent Reasoning</h1>
+    <div class="meta">
+      <div>Query 08: AI agents</div>
+      <div>Generate a research proposal on complex reasoning for AI agents.</div>
+      <div>Source: <code>artifacts/remote_fetch/full_trajectories/EvoScientist/query_08/final_report.md</code></div>
+    </div>
+  </header>
+  <main><article><h1>VeriPlan: Verifier-Gated Replanning for Reliable Multi-Step Agent Reasoning</h1>
+<h2>1. Title</h2>
+<p>**VeriPlan: Verifier-Gated Replanning for Reliable Multi-Step Agent Reasoning**</p>
+<p>---</p>
+<h2>2. Problem</h2>
+<p>Large language model (LLM) agents that interact with external tools (code interpreters, search APIs, file systems) via multi-step reasoning loops have become the dominant paradigm for autonomous task completion (e.g., SWE-agent, AutoGPT, ReAct, CodeAct). However, these systems exhibit a critical failure mode: **error compounding across long horizons**.</p>
+<p>When an agent takes an incorrect action at step *t*, subsequent steps build on corrupted state, and the probability of task success decays sharply with trajectory length. Current methods detect failure only after it manifests as an unusable output or a tool error — at which point the agent has already consumed resources and accumulated misleading context. Empirical evidence from SWE-bench shows that state-of-the-art coding agents succeed on ~30-40% of tasks, with the majority of failures traceable to early reasoning errors that were never corrected.</p>
+<p>**This proposal tackles the question**: Can we train a lightweight verifier to predict, from the agent&#x27;s intermediate state (observation + planned next action), whether the current trajectory is on track to succeed, and use that signal to trigger targeted replanning *before* errors compound?</p>
+<p>---</p>
+<h2>3. Hypothesis</h2>
+<p>**Primary hypothesis**: A two-stage agent architecture — (1) structured plan generation with explicit verification checkpoints, followed by (2) verifier-gated replanning using a lightweight binary classifier trained on intermediate agent states — will improve task success rate on multi-step tool-use benchmarks by ≥20% (relative) over end-to-end ReAct-style agents, while adding &lt;15% latency overhead per trajectory.</p>
+<p>**Secondary hypotheses**:</p>
+<ul>
+<li>**H2a**: A verifier trained on recoverability (can the agent still succeed from this state?) outperforms one trained on strict correctness (is the last action right?).</li>
+<li>**H2b**: The verifier&#x27;s signal is most valuable in the first 30-50% of the trajectory, where errors are least visible to the agent itself.</li>
+<li>**H2c**: Fewer than 5,000 annotated intermediate states are sufficient to train an effective verifier (via distilling from a larger model).</li>
+</ul>
+<p>---</p>
+<h2>4. Method</h2>
+<h3>4.1 Architecture</h3>
+<p>VeriPlan operates in three phases per task:</p>
+<p>**Phase 1 — Structured Plan Generation** (one-shot, no tool calls yet):</p>
+<p>Given a task description, the LLM generates a sequence of sub-goals with expected output signatures. Each sub-goal is annotated with a verification checkpoint — a point at which the verifier evaluates the intermediate state. Plan format:</p>
+<pre><code>
+Plan: [
+  {step: &quot;Read requirements&quot;, expected: &quot;list of constraints C1..Ck&quot;, checkpoint: true},
+  {step: &quot;Query knowledge base for C1&quot;, expected: &quot;result R1&quot;, checkpoint: true},
+  {step: &quot;Compute cache key from R1&quot;, expected: &quot;key K1&quot;, checkpoint: false},
+  ...
+]
+</code></pre>
+<p>Checkpoints are placed by the LLM at sub-goals where a wrong outcome would propagate (e.g., selecting the wrong API, misinterpreting a specification). The LLM is prompted to label checkpoints.</p>
+<p>**Phase 2 — Execute with Verifier Gate**:</p>
+<p>The agent executes steps sequentially. At each checkpoint, before the next action begins:</p>
+<p>1. Current state = {original task, plan so far, last action + observation, next planned action}</p>
+<p>2. The verifier scores this state as `p(on_track | state)` ∈ [0, 1]</p>
+<p>3. If `p(on_track) &lt; τ` (threshold, learned from validation data), the agent enters Phase 3</p>
+<p>**Phase 3 — Targeted Replanning**:</p>
+<p>The agent analyzes the divergence:</p>
+<ul>
+<li>&quot;Here is what I planned: {next sub-goal}. Here is what I observed: {actual}. The verifier flagged this state as off-track. Explain why the mismatch occurred and propose a corrected plan segment.&quot;</li>
+<li>The LLM generates a revised plan segment for the remaining steps and execution resumes from Phase 2.</li>
+</ul>
+<h3>4.2 Verifier</h3>
+<p>The verifier is a binary classifier built from a small LLM backbone (e.g., Llama-3.2-3B or Qwen2.5-7B) with a linear classification head on the final hidden state of the last token. Training data is generated by:</p>
+<p>1. Running a baseline ReAct agent on training tasks and logging all intermediate states.</p>
+<p>2. Labeling each state with trajectory outcome: `on_track = 1` if the trajectory eventually succeeds, `0` if it eventually fails.</p>
+<p>3. Optionally distilling labels from a larger judge LLM (e.g., GPT-4o or Llama-3.1-405B) that annotates each state with a rationale.</p>
+<p>**Loss**: Binary cross-entropy. We also experiment with a contrastive variant that pushes on-track and off-track states apart in the representation space.</p>
+<p>---</p>
+<h2>5. Dataset / Benchmark</h2>
+<p>We evaluate on **two complementary benchmarks**:</p>
+<table><tbody>
+<tr><td>Benchmark</td><td>Domain</td><td>Avg. Steps</td><td>Tasks</td><td>Success Metric</td></tr>
+<tr><td>**SWE-bench Verified**</td><td>Software engineering (patch generation from GitHub issues)</td><td>~8-15 tool calls</td><td>500</td><td>% of resolved issues (applied patch passes tests)</td></tr>
+<tr><td>**WebArena** (a subset of ≥5-step tasks)</td><td>Web navigation and form completion</td><td>~5-10</td><td>~300</td><td>Task completion rate per site</td></tr>
+</tbody></table>
+<p>Why these two: SWE-bench tests structured reasoning with code (deterministic feedback), while WebArena tests interactive web reasoning (weaker feedback signals). A method that works on both is more likely to generalize.</p>
+<p>**Training data for the verifier**: We collect trajectories from a baseline ReAct agent (Llama-3.1-70B) on a held-out training split of SWE-bench (200 tasks, ~2,000 intermediate states after filtering). Labels from trajectory outcome. An additional 500 states are labeled by GPT-4o for the distiller variant.</p>
+<p>---</p>
+<h2>6. Evaluation Metrics</h2>
+<table><tbody>
+<tr><td>Metric</td><td>Definition</td><td>Primary?</td></tr>
+<tr><td>**Task Success Rate**</td><td>% of tasks where agent produces correct final output</td><td>Primary</td></tr>
+<tr><td>**Recovery Rate**</td><td>% of off-track states (verifier score &lt; τ) that lead to eventual success</td><td>Primary</td></tr>
+<tr><td>**False Alarm Rate**</td><td>% of on-track states incorrectly flagged, causing unnecessary replanning</td><td>Secondary</td></tr>
+<tr><td>**Latency Overhead**</td><td>(Avg. VeriPlan wall time − Avg. ReAct wall time) / Avg. ReAct wall time</td><td>Secondary</td></tr>
+<tr><td>**Checkpoint Precision@k**</td><td>Precision of top-k highest-uncertainty checkpoints at predicting failure</td><td>Analysis</td></tr>
+</tbody></table>
+<p>All primary metrics are reported with 95% confidence intervals over 3 random seeds.</p>
+<p>---</p>
+<h2>7. Baselines</h2>
+<table><tbody>
+<tr><td>Baseline</td><td>Description</td><td>Key Reference</td></tr>
+<tr><td>**ReAct**</td><td>Standard interleaved reasoning + acting, no replanning</td><td>Yao et al., 2023</td></tr>
+<tr><td>**Plan-and-Solve**</td><td>Decompose task into sub-steps before execution, then execute linearly without replanning</td><td>Wang et al., 2023</td></tr>
+<tr><td>**Tree-of-Thoughts (ToT)**</td><td>Beam search over reasoning steps with self-evaluation at each step</td><td>Yao et al., 2023</td></tr>
+<tr><td>**Reflexion**</td><td>Agent reflects on failures after task completion, retries with accumulated memory</td><td>Shinn et al., 2023</td></tr>
+<tr><td>**Self-Refine**</td><td>Iteratively refine outputs using self-feedback</td><td>Madaan et al., 2023</td></tr>
+<tr><td>**VeriPlan (ours)**</td><td>This work</td><td>—</td></tr>
+</tbody></table>
+<p>We also compare against an **oracle** variant: VeriPlan with a perfect verifier (human-annotated on-track states) to establish the upper bound.</p>
+<p>---</p>
+<h2>8. Ablations</h2>
+<p>1. **Verifier type**: Trajectory-outcome verifier (H2a) vs. distiller verifier vs. per-step correctness verifier.</p>
+<p>2. **Verifier backbone size**: 1B → 3B → 7B → 13B parameters. Where does the benefit saturate?</p>
+<p>3. **Threshold τ**: Sweep τ ∈ {0.3, 0.5, 0.7, 0.9} on validation set; report test performance for the best.</p>
+<p>4. **Checkpoint density**: Every step vs. LLM-selected checkpoints only vs. every *other* step.</p>
+<p>5. **No plan, verifier only**: Remove the structured plan; verifier gates on raw ReAct states.</p>
+<p>6. **No verifier, plan only**: Structured plan but no verifier feedback; replan only if tool error occurs.</p>
+<p>---</p>
+<h2>9. Expected Failure Modes</h2>
+<table><tbody>
+<tr><td>Failure Mode</td><td>Mitigation Strategy</td></tr>
+<tr><td>**Verifier has low recall** (misses errors)</td><td>Train with class weighting and augment with hard negatives from early trajectory states where outcome is uncertain.</td></tr>
+<tr><td>**Verifier has low precision** (high false alarms)</td><td>Treat τ as a tunable hyperparameter; optimize for F0.5 (precision-weighted) on validation data.</td></tr>
+<tr><td>**Planning overhead negates gains on short tasks**</td><td>Model the cost-benefit: only activate the verifier on trajectories predicted to be ≥5 steps (via a length predictor).</td></tr>
+<tr><td>**LLM ignores the verifier&#x27;s signal during replanning**</td><td>The verifier score is surfaced as a numeric input in the replanning prompt, and the LLM is asked to explain the discrepancy before proposing changes. A hard gate (don&#x27;t proceed until plan segment is revised) bypasses this issue.</td></tr>
+<tr><td>**Replanning introduces new errors**</td><td>The replanned segment is validated against the original task goal by the verifier again before execution resumes (second-pass gating).</td></tr>
+<tr><td>**Data efficiency is poor**</td><td>Use sequence-level distillation from GPT-4o to generate high-quality training labels; also augment with contrastive pairs (on-track vs. off-track from the same task).</td></tr>
+</tbody></table>
+<p>---</p>
+<h2>10. Execution Plan</h2>
+<h3>Stage 1 — Infrastructure &amp; Baselines (Week 1)</h3>
+<ul>
+<li>Set up SWE-bench Verified evaluation harness with SWE-agent framework.</li>
+<li>Implement ReAct and Plan-and-Solve baselines with Llama-3.1-70B.</li>
+<li>Verify reported baseline numbers (≥3 runs per condition).</li>
+<li>*Success signal*: Baseline SWE-bench pass@1 within ±3% of published values.</li>
+</ul>
+<h3>Stage 2 — Verifier Data Collection (Week 2)</h3>
+<ul>
+<li>Run 200 training tasks with ReAct on SWE-bench, logging all intermediate states.</li>
+<li>Label by trajectory outcome; also collect 500 GPT-4o distilled annotations.</li>
+<li>Train binary verifier (Qwen2.5-7B + classification head) on collected data.</li>
+<li>*Success signal*: Verifier reaches ≥80% F1 on held-out validation states.</li>
+</ul>
+<h3>Stage 3 — Core VeriPlan Implementation (Week 3)</h3>
+<ul>
+<li>Implement plan generation prompt with checkpoint annotation.</li>
+<li>Implement execution loop with verifier gate and replanning phase.</li>
+<li>Validate end-to-end on 20 cherry-picked SWE-bench tasks.</li>
+<li>*Success signal*: System does not crash on any task; replanning is triggered at least once on ≥5 tasks.</li>
+</ul>
+<h3>Stage 4 — SWE-bench Main Evaluation (Week 4)</h3>
+<ul>
+<li>Run VeriPlan and all baselines on SWE-bench Verified (500 tasks).</li>
+<li>Run all ablations (verifier type, backbone size, threshold sweep, checkpoint density).</li>
+<li>Report results with 95% CIs.</li>
+<li>*Success signal*: VeriPlan outperforms best baseline (Reflexion) on success rate with non-overlapping CIs.</li>
+</ul>
+<h3>Stage 5 — WebArena Cross-Domain Evaluation (Week 5)</h3>
+<ul>
+<li>Adapt verifier (trained on SWE-bench states) to WebArena zero-shot.</li>
+<li>Run VeriPlan on 300 WebArena tasks ≥5 steps.</li>
+<li>Report domain transfer gap: SWE-bench success rate − WebArena success rate.</li>
+<li>*Success signal*: Transfer gap ≤15 percentage points (i.e., verifier generalizes without fine-tuning).</li>
+</ul>
+<h3>Stage 6 — Analysis &amp; Writeup (Week 6)</h3>
+<ul>
+<li>Analyze failure modes: categorize errors where VeriPlan did/did not help.</li>
+<li>Compute recovery rate, false alarm rate, and latency overhead across all conditions.</li>
+<li>Write paper draft following standard ML conference format (NeurIPS/ICLR).</li>
+<li>*Success signal*: Paper draft completed with all results tables, ablation figures, and error analysis.</li>
+</ul>
+<h3>Stage 7 — Paper Review &amp; Revision (Week 7)</h3>
+<ul>
+<li>Self-review using the paper-review skill workflow.</li>
+<li>Test sensitivity of results to verifier training seed × 3, LLM temperature × 3.</li>
+<li>Finalize figures, write abstract, and prepare supplementary materials.</li>
+<li>*Success signal*: All experiments reproducible from logged configs and seeds.</li>
+</ul>
+<p>---</p>
+<h2>11. Summary</h2>
+<table><tbody>
+<tr><td>Dimension</td><td>Detail</td></tr>
+<tr><td>**Subproblem**</td><td>Error compounding in multi-step tool-use agents; detecting and recovering from off-track states preemptively</td></tr>
+<tr><td>**Core idea**</td><td>Verifier-gated replanning — a lightweight classifier predicts trajectory success from intermediate states and triggers targeted plan repair</td></tr>
+<tr><td>**Primary benchmark**</td><td>SWE-bench Verified (500 coding tasks, 8-15 steps each)</td></tr>
+<tr><td>**Cross-domain test**</td><td>WebArena (300 web tasks, ≥5 steps)</td></tr>
+<tr><td>**Primary metric**</td><td>Task success rate with 95% CI over 3 seeds</td></tr>
+<tr><td>**Key baselines**</td><td>ReAct, Plan-and-Solve, ToT, Reflexion, Self-Refine</td></tr>
+<tr><td>**Key ablations**</td><td>Verifier label type, backbone size, threshold τ, checkpoint density</td></tr>
+<tr><td>**Total timeline**</td><td>7 weeks to camera-ready paper</td></tr>
+</tbody></table></article></main>
+</body>
+</html>

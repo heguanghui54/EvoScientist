@@ -1,0 +1,306 @@
+{
+  "status": "complete",
+  "count": 30,
+  "reports": [
+    {
+      "query_id": 1,
+      "topic": "Machine translation",
+      "goal": "Generate a research proposal on low-resource machine translation.",
+      "title": "CrossLingual-RAG: Cross-Lingual Retrieval-Augmented Generation for Extremely Low-Resource Machine Translation",
+      "source": "artifacts/remote_fetch/full_trajectories/EvoScientist/query_01/final_report.md",
+      "html": "query_01.html",
+      "bytes": 16755,
+      "excerpt": "Despite the success of multilingual NMT models covering 200+ languages (NLLB, Costa-juss\u00e0 et al., 2024), over 40 of those languages still achieve fewer than 10 spBLEU \u2014 output that is often unintelligible to native speakers. The core bottleneck is parallel data scarcity: languages with <100K parallel sentences canno..."
+    },
+    {
+      "query_id": 2,
+      "topic": "Software engineering",
+      "goal": "Help me generate a research proposal on AI for software engineering.",
+      "title": "TraceRoute: Execution-Trace-Guided Repository-Level Bug Repair with Structured Data Flow Prompts",
+      "source": "artifacts/remote_fetch/full_trajectories/EvoScientist/query_02/final_report.md",
+      "html": "query_02.html",
+      "bytes": 12736,
+      "excerpt": "A separate line of work on single-function code shows that fine-grained execution traces (per-line variable values) dramatically improve repair: LDB (Zhong et al., 2024) reports +19.3 points over error-only feedback on Python function repair (GPT-4, HumanEval). However, LDB works only on isolated functions \u2014 it inst..."
+    },
+    {
+      "query_id": 3,
+      "topic": "LLM evaluation",
+      "goal": "Generate a research proposal on how to address the accuracy issues of automated evaluation for Large Language Models.",
+      "title": "Research Proposal: Multi-Perspective Calibrated Ensemble for Debiased LLM-as-Judge Evaluation",
+      "source": "artifacts/remote_fetch/full_trajectories/EvoScientist/query_03/final_report.md",
+      "html": "query_03.html",
+      "bytes": 14291,
+      "excerpt": "Automated evaluation using LLMs as judges (\"LLM-as-judge\") has become the dominant paradigm for assessing LLM output quality, replacing expensive human evaluation at scale. Yet multiple systematic studies have documented that LLM judges suffer from position bias: a systematic tendency to prefer responses placed in a..."
+    },
+    {
+      "query_id": 4,
+      "topic": "Healthcare agents",
+      "goal": "Help me generate a research proposal on AI agents in healthcare.",
+      "title": "TrialMatch-Agents: A Multi-Agent Framework for Explainable Clinical Trial Eligibility Matching via Specialized Criterion Decomposition",
+      "source": "artifacts/remote_fetch/full_trajectories/EvoScientist/query_04/final_report.md",
+      "html": "query_04.html",
+      "bytes": 19644,
+      "excerpt": "TrialMatch-Agents decomposes the eligibility matching task into a coordinated multi-agent architecture with five specialized agent types and a coordinator agent. Patient Record (unstructured clinical text) \u2502 \u25bc \u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510 \u2502           Criterion Decomposer            \u2502 \u2502   (Parses tria..."
+    },
+    {
+      "query_id": 5,
+      "topic": "Literature review automation",
+      "goal": "Generate a research proposal on automated literature review generation.",
+      "title": "Citation-Structured Related Work Generation via Heterogeneous Graph-Aware Decoding",
+      "source": "artifacts/remote_fetch/full_trajectories/EvoScientist/query_05/final_report.md",
+      "html": "query_05.html",
+      "bytes": 21137,
+      "excerpt": "Generating a coherent, well-structured related work section remains an open challenge in automated scientific writing. Current LLM-based approaches produce flat, enumeration-style summaries that lack the thematic organization, comparative depth, and citation-context awareness of human-written reviews. We propose Cit..."
+    },
+    {
+      "query_id": 6,
+      "topic": "Speech recognition",
+      "goal": "Generate a research proposal on low-resource speech recognition.",
+      "title": "Research Proposal: Selective Pseudo-Labeling with Adapter-Based Fine-Tuning for Extremely Low-Resource ASR",
+      "source": "artifacts/remote_fetch/full_trajectories/EvoScientist/query_06/final_report.md",
+      "html": "query_06.html",
+      "bytes": 10720,
+      "excerpt": "Adapting a large multilingual ASR model (Whisper large-v3) to an extremely low-resource target language \u2014 defined as \u22642 hours of transcribed speech. Two issues dominate: Whisper large-v3 (~1.5B params). Frozen encoder + LoRA-decoder fine-tuning. Rationale: Whisper's encoder is already strong on universal acoustic re..."
+    },
+    {
+      "query_id": 7,
+      "topic": "Model efficiency",
+      "goal": "Generate a research proposal on how to break the performance ceiling of small models.",
+      "title": "Breaking the Multi-Hop Reasoning Ceiling for Sub-500M LMs via Multi-Teacher Distillation and Inference-Time Verifier Scaling",
+      "source": "artifacts/remote_fetch/full_trajectories/EvoScientist/query_07/final_report.md",
+      "html": "query_07.html",
+      "bytes": 23221,
+      "excerpt": "Small language models (<500M parameters) exhibit a sharp performance cliff on multi-hop reasoning: they achieve 15\u201325 points below 7B models on benchmarks like HotpotQA and MuSiQue. This gap is widely attributed to insufficient parametric capacity, implying that only larger models can reason compositionally. We chal..."
+    },
+    {
+      "query_id": 8,
+      "topic": "AI agents",
+      "goal": "Generate a research proposal on complex reasoning for AI agents.",
+      "title": "VeriPlan: Verifier-Gated Replanning for Reliable Multi-Step Agent Reasoning",
+      "source": "artifacts/remote_fetch/full_trajectories/EvoScientist/query_08/final_report.md",
+      "html": "query_08.html",
+      "bytes": 12569,
+      "excerpt": "Large language model (LLM) agents that interact with external tools (code interpreters, search APIs, file systems) via multi-step reasoning loops have become the dominant paradigm for autonomous task completion (e.g., SWE-agent, AutoGPT, ReAct, CodeAct). However, these systems exhibit a critical failure mode: error ..."
+    },
+    {
+      "query_id": 9,
+      "topic": "Model deployment",
+      "goal": "Generate a research proposal on solving quantization challenges for LLM deployment on edge devices.",
+      "title": "AToMP-Edge: Adaptive Token-Level Mixed-Precision Quantization for W4A4 LLM Inference on Edge Devices",
+      "source": "artifacts/remote_fetch/full_trajectories/EvoScientist/query_09/final_report.md",
+      "html": "query_09.html",
+      "bytes": 11892,
+      "excerpt": "Deploying large language models (LLMs) on edge devices (Jetson Orin, mobile NPUs, Raspberry Pi) requires aggressive quantization to fit within 4\u201316 GB of memory and meet real-time latency constraints. Weight-only INT4 quantization (W4A16) is the current edge standard \u2014 it reduces memory by 4\u00d7 but gains no compute ac..."
+    },
+    {
+      "query_id": 10,
+      "topic": "Text-to-SQL",
+      "goal": "Help me generate a research proposal on Text-to-SQL.",
+      "title": "Research Proposal: Semantically Decomposed Text-to-SQL with Skeleton-Based Compositional Generalization",
+      "source": "artifacts/remote_fetch/full_trajectories/EvoScientist/query_10/final_report.md",
+      "html": "query_10.html",
+      "bytes": 18447,
+      "excerpt": "Current LLM-based Text-to-SQL systems achieve ~86-88% execution accuracy on standard benchmarks like Spider. However, this masks a critical weakness: compositional generalization. When a natural language question requires combining multiple known SQL operations \u2014 e.g., a nested subquery inside a UNION with a GROUP B..."
+    },
+    {
+      "query_id": 11,
+      "topic": "LLM capabilities",
+      "goal": "Generate a research proposal on the decoupling of Large Language Model capabilities.",
+      "title": "Decoding the Capability Graph: Causal Decomposition of Knowledge, Reasoning, and Code Generation in LLMs",
+      "source": "artifacts/remote_fetch/full_trajectories/EvoScientist/query_11/final_report.md",
+      "html": "query_11.html",
+      "bytes": 19843,
+      "excerpt": "Large language models exhibit a wide range of capabilities \u2014 factual knowledge recall, compositional reasoning, code generation, instruction following, and more \u2014 within a single set of weights. This raises a fundamental scientific question: > To what degree are these capabilities supported by shared vs. independent..."
+    },
+    {
+      "query_id": 12,
+      "topic": "Factual consistency",
+      "goal": "Generate a research proposal on how to resolve factual consistency issues in Large Language Models.",
+      "title": "Research Proposal: Evidence-Conditioned Activation Steering (ECAS) for Factual Consistency in Retrieval-Augmented Generation",
+      "source": "artifacts/remote_fetch/full_trajectories/EvoScientist/query_12/final_report.md",
+      "html": "query_12.html",
+      "bytes": 14279,
+      "excerpt": "ECAS has three components trained and assembled without any LLM fine-tuning. We train a lightweight linear probe on the LLM's hidden states at each layer to predict whether the token being generated will contradict the retrieved evidence. p\u2113(contrAdict | h\u2113) = \u03c3(w\u2113^T \u00b7 h\u2113 + b\u2113) Trained with binary cross-entropy. We ..."
+    },
+    {
+      "query_id": 13,
+      "topic": "Data synthesis",
+      "goal": "Generate a research proposal on data synthesis for code LLMs.",
+      "title": "ExeCoT: Execution-Grounded Chain-of-Thought Synthesis for Code Reasoning via Self-Play",
+      "source": "artifacts/remote_fetch/full_trajectories/EvoScientist/query_13/final_report.md",
+      "html": "query_13.html",
+      "bytes": 13159,
+      "excerpt": "Code LLMs have improved dramatically at generating correct code, but they still struggle with multi-step reasoning: planning decomposition, debugging edge cases, and reasoning about correctness before writing code. Existing data synthesis pipelines for code focus on generating diverse problems and solutions (Magicod..."
+    },
+    {
+      "query_id": 14,
+      "topic": "Inference efficiency",
+      "goal": "Generate a research proposal on solving inference latency issues in Large Language Models.",
+      "title": "AdaSpec: Adaptive Speculation via Difficulty-Gated Multi-Strategy Selection for LLM Inference Acceleration",
+      "source": "artifacts/remote_fetch/full_trajectories/EvoScientist/query_14/final_report.md",
+      "html": "query_14.html",
+      "bytes": 18206,
+      "excerpt": "Speculative decoding (SD) addresses this by generating multiple \"draft\" tokens cheaply and verifying them in parallel with the target LLM. While SD achieves reported speedups of 1.5\u20134\u00d7, existing methods apply a single, fixed speculation strategy throughout generation. This is suboptimal because: 1. H1 (Difficulty pr..."
+    },
+    {
+      "query_id": 15,
+      "topic": "Machine translation",
+      "goal": "Generate a research proposal on debiasing in machine translation.",
+      "title": "Research Proposal: Context-Adaptive Gender Debiasing (CAGED) for Neural Machine Translation",
+      "source": "artifacts/remote_fetch/full_trajectories/EvoScientist/query_15/final_report.md",
+      "html": "query_15.html",
+      "bytes": 13452,
+      "excerpt": "The query asks about \"debiasing in machine translation\" \u2014 a broad area covering gender, political, religious, and dialect bias. I focus on gender bias in neural machine translation (NMT), the most documented and benchmarked debiasing problem in MT. Within that, I target a specific gap: existing methods treat all sen..."
+    },
+    {
+      "query_id": 16,
+      "topic": "Knowledge injection",
+      "goal": "Generate a research proposal on addressing the challenges of knowledge injection in domain-specific Large Language Models.",
+      "title": "Structured vs. Unstructured Knowledge Injection in Biomedical LLMs:",
+      "source": "artifacts/remote_fetch/full_trajectories/EvoScientist/query_16/final_report.md",
+      "html": "query_16.html",
+      "bytes": 13228,
+      "excerpt": "Domain-specific Large Language Models (e.g., BioMistral, Clinical Camel, Med-PaLM) are typically adapted by fine-tuning a general-purpose base model on biomedical corpora. However, this process faces a fundamental tension: injecting new domain knowledge risks catastrophic forgetting of the general capabilities that ..."
+    },
+    {
+      "query_id": 17,
+      "topic": "Information extraction",
+      "goal": "Generate a research proposal on automated information extraction.",
+      "title": "Schema-Constrained Document-Level Event Extraction via Context-Grounded LLM Decoding",
+      "source": "artifacts/remote_fetch/full_trajectories/EvoScientist/query_17/final_report.md",
+      "html": "query_17.html",
+      "bytes": 15237,
+      "excerpt": "The problem currently has three unresolved challenges that this proposal targets directly: 1. Document-level scope. Most event extraction research operates at the sentence level, yet real events naturally span multiple sentences: an attack is described across several paragraphs, a clinical outcome is scattered acros..."
+    },
+    {
+      "query_id": 18,
+      "topic": "UX evaluation",
+      "goal": "Generate a research proposal on user experience evaluation for Large Language Models.",
+      "title": "How Uncertainty Communication Format Interacts with User Expertise to Shape Appropriate Reliance on LLMs",
+      "source": "artifacts/remote_fetch/full_trajectories/EvoScientist/query_18/final_report.md",
+      "html": "query_18.html",
+      "bytes": 17254,
+      "excerpt": "When LLMs provide factual answers with some expression of uncertainty \u2014 a verbal hedge (\"I'm not certain, but...\"), a numerical confidence score (\"I'm 75% confident\"), or behavioral inconsistency (\"Three out of five sampled answers agree with this\") \u2014 do these formats differentially affect appropriate reliance depen..."
+    },
+    {
+      "query_id": 19,
+      "topic": "Evaluation leaderboards",
+      "goal": "Generate a research proposal on how to construct efficient leaderboards for LLM evaluation.",
+      "title": "Adaptive Pairwise Sampling for Cost-Efficient LLM Leaderboards",
+      "source": "artifacts/remote_fetch/full_trajectories/EvoScientist/query_19/final_report.md",
+      "html": "query_19.html",
+      "bytes": 13639,
+      "excerpt": "Each model i has an unknown strength parameter \u03b8\u1d62 \u2208 \u211d. The probability that model i beats model j in a comparison is: P(i \u227b j | \u03b8\u1d62, \u03b8\u2c7c) = \u03c3(\u03b8\u1d62 \u2212 \u03b8\u2c7c)    where \u03c3(x) = 1 / (1 + exp(\u2212x)) We place independent Gaussian priors \u03b8\u1d62 ~ N(0, \u03c3\u00b2\u2080) with \u03c3\u2080 = 1.0 (weakly informative). After observing outcomes, the posterior is app..."
+    },
+    {
+      "query_id": 20,
+      "topic": "Text generation",
+      "goal": "Generate a research proposal on the evaluation of diversity in text generation.",
+      "title": "MADEF: A Multi-Axis Decomposed Evaluation Framework for Diversity in Open-Ended Text Generation",
+      "source": "artifacts/remote_fetch/full_trajectories/EvoScientist/query_20/final_report.md",
+      "html": "query_20.html",
+      "bytes": 20182,
+      "excerpt": "Diversity is a critical dimension of text generation quality, cited alongside fluency, coherence, and relevance in nearly every major NLG evaluation framework [1, 2]. Yet the community lacks a principled, validated, and decomposable evaluation framework for measuring it. The current landscape has three interconnecte..."
+    },
+    {
+      "query_id": 21,
+      "topic": "Content detection",
+      "goal": "Generate a research proposal on how to address false positives in AI-generated content detection.",
+      "title": "Fairness-Aware Stylometric Ensemble (FASE): Reducing Demographic False-Positive Disparities in AI-Generated Text Detection",
+      "source": "artifacts/remote_fetch/full_trajectories/EvoScientist/query_21/final_report.md",
+      "html": "query_21.html",
+      "bytes": 14376,
+      "excerpt": "We propose a three-component architecture: For each input text, we extract four feature groups: We train a lightweight classifier (gradient-boosted trees, LightGBM) on the concatenated feature vector [A1; A2; A3; A4]. The training objective augments standard log-loss with a fairness penalty: L = LCE + \u03bb \u00b7 \u03a6(groupFPR..."
+    },
+    {
+      "query_id": 22,
+      "topic": "Code LLM security",
+      "goal": "Generate a research proposal on the security of code LLMs.",
+      "title": "CommentTrojan: Stealthy Backdoor Attacks on Code LLMs via Semantics-Preserving Comment Triggers",
+      "source": "artifacts/remote_fetch/full_trajectories/EvoScientist/query_22/final_report.md",
+      "html": "query_22.html",
+      "bytes": 15238,
+      "excerpt": "1. Effectiveness: Comment-triggered backdoors can achieve ASR > 80% across multiple vulnerability classes with a poisoning rate \u2264 1%. 2. Stealth: Comment-triggered backdoors are significantly harder to detect than identifier-renaming or dead-code triggers by both automated tools (static analysis, code naturalness de..."
+    },
+    {
+      "query_id": 23,
+      "topic": "Code LLM evaluation",
+      "goal": "Generate a research proposal on how to build a deep evaluation framework for code LLMs.",
+      "title": "Research Proposal: CodeSemEval \u2014 A Deep Semantic Evaluation Framework for Code LLMs",
+      "source": "artifacts/remote_fetch/full_trajectories/EvoScientist/query_23/final_report.md",
+      "html": "query_23.html",
+      "bytes": 16680,
+      "excerpt": "The query \"deep evaluation framework for code LLMs\" is broad. I narrow to one critical and under-explored subproblem: evaluating whether code LLMs understand program semantics rather than merely synthesizing syntactically plausible code that passes weak functional tests. This addresses the gap between pass@k scores ..."
+    },
+    {
+      "query_id": 24,
+      "topic": "RAG",
+      "goal": "Generate a research proposal on solving multi-hop reasoning challenges in Retrieval-Augmented Generation (RAG).",
+      "title": "Deliberative Contrastive Iterative Retrieval (DeCIR-RAG): Mitigating Confirmation Bias in Multi-Hop RAG",
+      "source": "artifacts/remote_fetch/full_trajectories/EvoScientist/query_24/final_report.md",
+      "html": "query_24.html",
+      "bytes": 22379,
+      "excerpt": "Multi-hop question answering requires a system to retrieve and reason over multiple pieces of evidence from different sources to answer a complex question (e.g., \"Which university employed the president of the Royal Society in 2020?\" \u2014 requires locating the president, then the employer). Current iterative retrieval ..."
+    },
+    {
+      "query_id": 25,
+      "topic": "Multi-source reasoning",
+      "goal": "Generate a research proposal on complex reasoning with multi-source information.",
+      "title": "Research Proposal: Conflict-Aware Multi-Hop Reasoning (CAMHR)",
+      "source": "artifacts/remote_fetch/full_trajectories/EvoScientist/query_25/final_report.md",
+      "html": "query_25.html",
+      "bytes": 17318,
+      "excerpt": "When documents disagree, today's models behave unpredictably: they silently pick one source (usually the one that appears earlier or has higher lexical overlap with the question), hallucinate a compromise answer that matches neither source, or produce inconsistent answers when re-queried with different document subs..."
+    },
+    {
+      "query_id": 26,
+      "topic": "Data filtering",
+      "goal": "Generate a research proposal on solving data filtering challenges for domain-specific models.",
+      "title": "Research Proposal: DACS \u2014 Dynamic Alignment-based Curriculum Selection for Self-Supervised Domain-Specific Data Filtering",
+      "source": "artifacts/remote_fetch/full_trajectories/EvoScientist/query_26/final_report.md",
+      "html": "query_26.html",
+      "bytes": 14949,
+      "excerpt": "> H\u2081: During domain-specific continued pretraining, the trajectory of per-example loss reduction combined with the model's internal representation alignment to a small domain seed set provides sufficient signal to dynamically identify and prioritize training examples that yield the largest downstream performance gai..."
+    },
+    {
+      "query_id": 27,
+      "topic": "Long-context understanding",
+      "goal": "Generate a research proposal on how to enhance the long-context understanding of Large Language Models.",
+      "title": "Position-Decontaminated Attention (PDA): Training-Free Mitigation of Position Bias in Long-Context LLMs",
+      "source": "artifacts/remote_fetch/full_trajectories/EvoScientist/query_27/final_report.md",
+      "html": "query_27.html",
+      "bytes": 15229,
+      "excerpt": "Modern LLMs (GPT-4, Claude, Llama 3.1, Mistral) support context windows of 32K\u2013200K tokens, yet their effective utilization of long contexts remains poor. The well-documented \"lost in the middle\" phenomenon (Liu et al., 2023; Shi et al., 2023) shows a U-shaped performance curve: models reliably use information at th..."
+    },
+    {
+      "query_id": 28,
+      "topic": "Alignment",
+      "goal": "Generate a research proposal on cross-cultural alignment for Large Language Models.",
+      "title": "Preference Bias Amplification: Measuring and Mitigating Western Cultural Bias in DPO-Based LLM Alignment",
+      "source": "artifacts/remote_fetch/full_trajectories/EvoScientist/query_28/final_report.md",
+      "html": "query_28.html",
+      "bytes": 12259,
+      "excerpt": "Large language models are aligned to human preferences via methods like Direct Preference Optimization (DPO) and Reinforcement Learning from Human Feedback (RLHF). The standard preference datasets used for this \u2014 UltraFeedback, HH-RLHF, Anthropic Helpfulness/Harmlessness \u2014 are English-only and crowdsourced predomina..."
+    },
+    {
+      "query_id": 29,
+      "topic": "Alignment",
+      "goal": "Generate a research proposal on value alignment for AI agents.",
+      "title": "Detecting and Mitigating Specification Gaming in RLHF-Aligned Language Models via Adversarial Reward Probing",
+      "source": "artifacts/remote_fetch/full_trajectories/EvoScientist/query_29/final_report.md",
+      "html": "query_29.html",
+      "bytes": 17955,
+      "excerpt": "Reinforcement Learning from Human Feedback (RLHF) is the dominant method for aligning large language models with human values. However, it suffers from a critical failure mode: specification gaming (also called reward hacking). The policy learns to exploit proxy features in the reward model \u2014 such as response length..."
+    },
+    {
+      "query_id": 30,
+      "topic": "Audio foundation models",
+      "goal": "Help me generate a research proposal on general-purpose audio foundation models.",
+      "title": "UniAudio-MoE: Modality-Aware Mixture-of-Experts for General-Purpose Audio Representation Learning",
+      "source": "artifacts/remote_fetch/full_trajectories/EvoScientist/query_30/final_report.md",
+      "html": "query_30.html",
+      "bytes": 18630,
+      "excerpt": "General-purpose audio foundation models aim to learn transferable representations from diverse audio \u2014 speech, music, and environmental sounds \u2014 using a single architecture and training procedure. Despite significant progress, existing approaches fall into two categories, each with a critical limitation: A Mixture-o..."
+    }
+  ]
+}

@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Preference Bias Amplification: Measuring and Mitigating Western Cultural Bias in DPO-Based LLM Alignment</title>
+  <style>
+    body { margin: 0; background: #f7f8f8; color: #17191c; font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; line-height: 1.62; }
+    header { padding: 28px clamp(18px, 5vw, 72px); background: #fff; border-bottom: 1px solid #dce1e6; }
+    main { max-width: 980px; margin: 0 auto; padding: 28px 18px 56px; }
+    article { background: #fff; border: 1px solid #dce1e6; border-radius: 8px; padding: clamp(18px, 4vw, 42px); }
+    h1 { margin: 0 0 10px; font-size: clamp(28px, 4vw, 46px); line-height: 1.1; letter-spacing: 0; }
+    h2 { margin-top: 30px; border-top: 1px solid #e7eaee; padding-top: 18px; letter-spacing: 0; }
+    h3, h4 { letter-spacing: 0; }
+    p, li, td { font-size: 15px; }
+    .meta { color: #606a73; display: grid; gap: 4px; }
+    a { color: #225f9f; }
+    table { border-collapse: collapse; width: 100%; overflow-wrap: anywhere; }
+    td { border: 1px solid #e1e5ea; padding: 8px; vertical-align: top; }
+    pre { white-space: pre-wrap; background: #f0f3f5; padding: 14px; border-radius: 6px; overflow-x: auto; }
+    code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    .nav { margin-bottom: 14px; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="nav"><a href="index.html">← All 30 reports</a></div>
+    <h1>Preference Bias Amplification: Measuring and Mitigating Western Cultural Bias in DPO-Based LLM Alignment</h1>
+    <div class="meta">
+      <div>Query 28: Alignment</div>
+      <div>Generate a research proposal on cross-cultural alignment for Large Language Models.</div>
+      <div>Source: <code>artifacts/remote_fetch/full_trajectories/EvoScientist/query_28/final_report.md</code></div>
+    </div>
+  </header>
+  <main><article><h1>Preference Bias Amplification: Measuring and Mitigating Western Cultural Bias in DPO-Based LLM Alignment</h1>
+<p>---</p>
+<h2>1. Problem</h2>
+<p>Large language models are aligned to human preferences via methods like Direct Preference Optimization (DPO) and Reinforcement Learning from Human Feedback (RLHF). The standard preference datasets used for this — **UltraFeedback**, **HH-RLHF**, **Anthropic Helpfulness/Harmlessness** — are English-only and crowdsourced predominantly from Western (primarily US) annotators. This means the notion of a &quot;helpful&quot; or &quot;harmless&quot; response baked into the most consequential layer of LLM post-training encodes **WEIRD** (Western, Educated, Industrialized, Rich, Democratic) cultural assumptions.</p>
+<p>**The gap:** While prior work has examined cultural bias in SFT data (CultureLLM, 2024), in prompting (Luther &amp; Brown, 2025), and in evaluation benchmarks (CValues, MENAValues, CQ-Bench), **no published work systematically measures the specific contribution of preference optimization (DPO/RLHF) to cultural bias amplification**. The central question is: does DPO training on standard Western preference data *increase* the cultural bias of a model relative to its base checkpoint?</p>
+<p>**Subproblem selected (from the broader cross-cultural alignment space):** Western cultural bias in preference optimization data and its downstream effect on model outputs across four culturally distinct regions.</p>
+<p>---</p>
+<h2>2. Hypothesis</h2>
+<p>*Standard preference optimization (DPO) on English-only, Western-crowdsourced preference data amplifies the measured Western cultural bias in LLM outputs, and this amplification can be substantially reduced by training on culturally balanced preference data without sacrificing response quality on standard benchmarks.*</p>
+<p>**Formal predictions:**</p>
+<ul>
+<li>**H1**: A model fine-tuned with DPO on UltraFeedback will show higher cultural similarity to US/WEIRD populations (measured by WVS-based probes) than its base or SFT-only checkpoint.</li>
+<li>**H2**: A model fine-tuned with DPO on a culturally balanced preference dataset (equal representation of US, Chinese, Indian, and Saudi Arabian value preferences) will show lower measured Western cultural bias than the UltraFeedback-DPO model, while maintaining competitive performance on standard helpfulness/harmlessness benchmarks.</li>
+<li>**H3**: The bias amplification effect is not reducible to linguistic factors — it persists when evaluation is conducted in the target culture&#x27;s language.</li>
+</ul>
+<p>---</p>
+<h2>3. Method</h2>
+<h3>3.1 CulturPref-4K: A Culturally Stratified Preference Evaluation Dataset</h3>
+<p>We construct **CulturPref-4K**, a diagnostic dataset of 4,000 culturally-contrastive preference pairs spanning 4 regions:</p>
+<table><tbody>
+<tr><td>Region</td><td>Rationale</td><td>Cultural Distinctiveness</td></tr>
+<tr><td>**United States**</td><td>Default culture in preference data</td><td>Individualist, low power distance, liberal</td></tr>
+<tr><td>**China**</td><td>Collectivist, distinct value system</td><td>Collectivist, high power distance, harmony-focused</td></tr>
+<tr><td>**India**</td><td>Large English-speaking but non-Western</td><td>Hierarchical, religiously-grounded moral frameworks</td></tr>
+<tr><td>**Saudi Arabia**</td><td>Arab-Muslim cultural context</td><td>High power distance, traditional/religious values</td></tr>
+</tbody></table>
+<p>**Construction protocol:**</p>
+<p>1. **Prompt sourcing (1,000 prompts):** Sample 250 prompts per region from culturally relevant social media and QA forums (Zhihu for China, Quora India, Arab Twitter/X for Saudi Arabia, Reddit US). Each prompt is a realistic scenario with cultural value implications (e.g., family obligations, authority respect, religious practice, gender roles).</p>
+<p>2. **Response pair generation:** For each prompt, generate two responses via GPT-4o with cultural personas — one encoding a Western-liberal value judgment, one encoding a non-Western value judgment aligned with the target culture.</p>
+<p>3. **Expert validation:** For each pair, 2 annotators from the target culture label which response better reflects their culture&#x27;s prevailing values. Only pairs with ≥75% inter-annotator agreement are retained.</p>
+<h3>3.2 Culture-Balanced Training Dataset (CulturPref-Train-6K)</h3>
+<p>We augment the existing UltraFeedback dataset (63k pairs) by adding **6,000 additional preference pairs** — 1,500 from each of the three non-Western regions (China, India, Saudi Arabia). Each pair contrasts a Western-default response with a culturally adapted response, with the non-Western response labeled as preferred.</p>
+<p>Three training conditions are compared:</p>
+<table><tbody>
+<tr><td>Condition</td><td>Preference Data</td><td>Size</td></tr>
+<tr><td>**W-DPO** (Western DPO)</td><td>UltraFeedback only (standard)</td><td>~63k pairs</td></tr>
+<tr><td>**B-DPO** (Balanced DPO)</td><td>UltraFeedback + 6k non-Western pairs</td><td>~69k pairs</td></tr>
+<tr><td>**N-DPO** (Non-Western DPO)</td><td>6k non-Western pairs only</td><td>~6k pairs</td></tr>
+</tbody></table>
+<h3>3.3 Evaluation Framework</h3>
+<p>We evaluate all model variants across four dimensions:</p>
+<table><tbody>
+<tr><td>Dimension</td><td>Metric</td><td>Source Instrument</td></tr>
+<tr><td>**Cultural value similarity**</td><td>Top-1 agreement with regional majority + Jensen-Shannon Divergence (JSD) over WVS item distributions</td><td>World Values Survey (20 items selected per region for relevance)</td></tr>
+<tr><td>**WEIRD bias score**</td><td>% of responses matching US-majority opinion vs. target-culture majority</td><td>Adapted from Rystrøm et al. (2025)</td></tr>
+<tr><td>**Semantic invariance**</td><td>Variance across 5 semantically equivalent rephrasings of each probe</td><td>Following Khan et al. (2025) critique</td></tr>
+<tr><td>**Response quality**</td><td>Helpfulness rating (GPT-4 evaluator) + Harmlessness rating</td><td>Standard MT-Bench / SafetyBench</td></tr>
+</tbody></table>
+<h3>3.4 Model &amp; Training Details</h3>
+<ul>
+<li>**Base model:** Llama-3.1-8B-Instruct (SFT checkpoint)</li>
+<li>**Alignment method:** DPO (β=0.1, learning rate=5e-7, batch size=64, 1 epoch)</li>
+<li>**All training runs** are repeated with 3 seeds; all metrics reported with 95% CIs.</li>
+<li>**Compute estimate:** 3 seeds × 3 conditions = 9 DPO runs × ~2 hours on 1×A100-80GB ≈ 18 GPU-hours.</li>
+</ul>
+<p>---</p>
+<h2>4. Dataset / Benchmark</h2>
+<table><tbody>
+<tr><td>Name</td><td>Type</td><td>Size</td><td>Source / Construction</td></tr>
+<tr><td>**CulturPref-4K**</td><td>Evaluation (diagnostic)</td><td>4,000 culturally-contrastive preference pairs</td><td>Newly constructed (Sec 3.1)</td></tr>
+<tr><td>**CulturPref-Train-6K**</td><td>Training (augmentation)</td><td>6,000 non-Western preference pairs</td><td>Newly constructed (Sec 3.2)</td></tr>
+<tr><td>**WVS Cultural Probe**</td><td>Evaluation (values)</td><td>20 items × 4 regions = 80 multi-choice probes</td><td>Sampled from World Values Survey wave 7</td></tr>
+<tr><td>**MT-Bench**</td><td>Evaluation (quality)</td><td>80 multi-turn questions</td><td>Standard benchmark</td></tr>
+<tr><td>**SafetyBench**</td><td>Evaluation (safety)</td><td>11,475 test questions</td><td>Standard benchmark (Chinese + English subsets)</td></tr>
+</tbody></table>
+<p>---</p>
+<h2>5. Evaluation Metrics</h2>
+<table><tbody>
+<tr><td>Metric</td><td>Target</td><td>Interpretation</td><td>Reported As</td></tr>
+<tr><td>**Cultural Agreement (%)**</td><td>WVS probes</td><td>% of model answers matching target-culture majority</td><td>Mean ± std across 20 items, per region</td></tr>
+<tr><td>**WEIRD Shift (Δ)**</td><td>WVS probes</td><td>(DPO agreement with US) − (DPO agreement with target culture)</td><td>Positive = Western bias amplification</td></tr>
+<tr><td>**JSD**</td><td>WVS response distribution</td><td>Distance between model&#x27;s value distribution and target culture&#x27;s</td><td>Per-region JSD, averaged</td></tr>
+<tr><td>**Prompt Variance Score**</td><td>WVS probes</td><td>Variance in agreement across 5 rephrasings</td><td>Lower = more robust (0–1 normalized)</td></tr>
+<tr><td>**MT-Bench Score**</td><td>MT-Bench</td><td>Average GPT-4 rating (1–10)</td><td>Mean ± std</td></tr>
+<tr><td>**Safety Score**</td><td>SafetyBench</td><td>% safe responses</td><td>Per-category breakdown</td></tr>
+</tbody></table>
+<p>**Primary metric:** WEIRD Shift (Δ) — the difference between US agreement rate and target-culture agreement rate, before vs. after DPO. A positive Δ after DPO confirms H1 (bias amplification). A smaller Δ under B-DPO vs. W-DPO confirms H2.</p>
+<p>---</p>
+<h2>6. Baselines</h2>
+<table><tbody>
+<tr><td>Baseline</td><td>What It Measures</td><td>Why It&#x27;s Needed</td></tr>
+<tr><td>**Base model** (no alignment)</td><td>Cultural bias in pre-trained / SFT model</td><td>Reference point for measuring *additional* bias from DPO</td></tr>
+<tr><td>**W-DPO** (UltraFeedback only)</td><td>Standard DPO pipeline</td><td>Represents status quo — the current practice in LLM alignment</td></tr>
+<tr><td>**N-DPO** (non-Western pairs only)</td><td>Upper bound of cultural adaptation</td><td>Shows what pure non-Western alignment looks like</td></tr>
+<tr><td>**B-DPO** (balanced)</td><td>Our proposed mitigation</td><td>Main intervention</td></tr>
+<tr><td>**CultureLLM-style SFT** (SFT on culture-specific data)</td><td>Existing best practice for cultural adaptation</td><td>Shows whether preference-level intervention adds value beyond SFT-level intervention</td></tr>
+</tbody></table>
+<p>---</p>
+<h2>7. Ablations</h2>
+<table><tbody>
+<tr><td>Ablation</td><td>Manipulation</td><td>What It Tests</td></tr>
+<tr><td>**A1: Language control**</td><td>Evaluate all models in English-only (no native-language evaluation)</td><td>Isolates language confound — if bias persists, it&#x27;s cultural, not linguistic (H3)</td></tr>
+<tr><td>**A2: Prompt-only intervention**</td><td>Add cultural context prompt (&quot;Answer as someone from X&quot;) to W-DPO model without retraining</td><td>Tests whether prompting can undo DPO-level bias</td></tr>
+<tr><td>**A3: Data scale**</td><td>B-DPO with 2K, 4K, 6K non-Western pairs</td><td>Tests whether more culture data monotonically reduces bias</td></tr>
+<tr><td>**A4: Single-region DPO**</td><td>B-DPO with only one non-Western region added at a time</td><td>Tests whether bias reduction is uniform across cultures or region-specific</td></tr>
+<tr><td>**A5: Model size**</td><td>Repeat W-DPO and B-DPO on Llama-3.1-70B if compute allows</td><td>Tests whether findings scale with model capacity</td></tr>
+</tbody></table>
+<p>---</p>
+<h2>8. Expected Failure Modes</h2>
+<table><tbody>
+<tr><td>Failure Mode</td><td>Mitigation / Alternative</td></tr>
+<tr><td>**H1 not supported** (DPO does not amplify cultural bias)</td><td>Still publishable — would show preference data is less biased than assumed. Report effect sizes and CIs transparently.</td></tr>
+<tr><td>**H2 not supported** (B-DPO does not reduce bias)</td><td>Could mean Western bias is embedded in the base model (pre-training data), not just preference data. Analysis would pivot to pre-training data cultural composition.</td></tr>
+<tr><td>**H3 not supported** (bias is just a language effect)</td><td>Would validate the &quot;multilingual ≠ multicultural&quot; framing and suggest simpler language-based interventions (translate evaluation, not retrain).</td></tr>
+<tr><td>**Low annotator agreement** (&gt;25% of pairs fail 75% threshold)</td><td>Switch to a smaller, higher-quality set of 1,000 pairs with expert (PhD-level) annotators only. Report agreement rates transparently.</td></tr>
+<tr><td>**Khan et al. (2025) reliability critique** (survey probes are unreliable)</td><td>Address directly — compute and report prompt variance scores for every probe. Only include items with low variance. Acknowledge limitation.</td></tr>
+<tr><td>**MT-Bench quality degradation under B-DPO**</td><td>If B-DPO reduces helpfulness because non-Western values produce less &quot;helpful&quot; (as judged by Western evaluators) responses, use human evaluators from each target culture instead of GPT-4.</td></tr>
+<tr><td>**B-DPO and W-DPO converge** (small effect, overlapping CIs)</td><td>Increase sample size for WVS probes (more items). Report Bayes factors as complementary evidence.</td></tr>
+</tbody></table>
+<p>---</p>
+<h2>9. Short Execution Plan</h2>
+<pre><code>
+Phase 1: Dataset Construction (3 weeks)
+├── Week 1: Prompt collection — 1,000 prompts across 4 regions
+├── Week 2: Response generation + expert annotation (4 cultures)
+├── Week 3: Validation, filtering, finalizing CulturPref-4K + CulturPref-Train-6K
+│   Deliverable: culturpref_v1/ (train + eval splits)
+
+Phase 2: Baseline &amp; Train (2 weeks)
+├── Week 4: Run base + W-DPO baselines (3 seeds each)
+│   Evaluate on WVS probes + MT-Bench + SafetyBench
+├── Week 5: Run B-DPO + N-DPO + CultureLLM-SFT (3 seeds each)
+│   Deliverable: All 9 checkpoints + raw metric tables
+
+Phase 3: Evaluation &amp; Ablations (2 weeks)
+├── Week 6: Full evaluation suite across all conditions
+│   Compute WEIRD Shift, JSD, Prompt Variance
+├── Week 7: Run ablations A1–A4 (language control, prompting, data scale, single-region)
+│   Deliverable: ablation_analysis.csv + figures/
+
+Phase 4: Analysis &amp; Writing (2 weeks)
+├── Week 8: Statistical analysis — effect sizes, CIs, sensitivity analysis
+│   Produce final tables and figures
+├── Week 9: Paper writing + review iteration
+│   Deliverable: paper draft + rebuttal prep + reproducibility package
+
+Total: ~9 weeks (with 1×A100-80GB GPU, &lt; $2,000 compute cost at standard cloud rates)
+</code></pre></article></main>
+</body>
+</html>

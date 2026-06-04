@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Research Proposal: Semantically Decomposed Text-to-SQL with Skeleton-Based Compositional Generalization</title>
+  <style>
+    body { margin: 0; background: #f7f8f8; color: #17191c; font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; line-height: 1.62; }
+    header { padding: 28px clamp(18px, 5vw, 72px); background: #fff; border-bottom: 1px solid #dce1e6; }
+    main { max-width: 980px; margin: 0 auto; padding: 28px 18px 56px; }
+    article { background: #fff; border: 1px solid #dce1e6; border-radius: 8px; padding: clamp(18px, 4vw, 42px); }
+    h1 { margin: 0 0 10px; font-size: clamp(28px, 4vw, 46px); line-height: 1.1; letter-spacing: 0; }
+    h2 { margin-top: 30px; border-top: 1px solid #e7eaee; padding-top: 18px; letter-spacing: 0; }
+    h3, h4 { letter-spacing: 0; }
+    p, li, td { font-size: 15px; }
+    .meta { color: #606a73; display: grid; gap: 4px; }
+    a { color: #225f9f; }
+    table { border-collapse: collapse; width: 100%; overflow-wrap: anywhere; }
+    td { border: 1px solid #e1e5ea; padding: 8px; vertical-align: top; }
+    pre { white-space: pre-wrap; background: #f0f3f5; padding: 14px; border-radius: 6px; overflow-x: auto; }
+    code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    .nav { margin-bottom: 14px; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="nav"><a href="index.html">← All 30 reports</a></div>
+    <h1>Research Proposal: Semantically Decomposed Text-to-SQL with Skeleton-Based Compositional Generalization</h1>
+    <div class="meta">
+      <div>Query 10: Text-to-SQL</div>
+      <div>Help me generate a research proposal on Text-to-SQL.</div>
+      <div>Source: <code>artifacts/remote_fetch/full_trajectories/EvoScientist/query_10/final_report.md</code></div>
+    </div>
+  </header>
+  <main><article><h1>Research Proposal: Semantically Decomposed Text-to-SQL with Skeleton-Based Compositional Generalization</h1>
+<p>---</p>
+<h2>1. Title</h2>
+<p>**Schema-Aware Skeleton Decomposition with Constraint-Guided Slot Filling for Compositional Text-to-SQL**</p>
+<p>---</p>
+<h2>2. Problem Statement</h2>
+<p>Current LLM-based Text-to-SQL systems achieve ~86-88% execution accuracy on standard benchmarks like Spider. However, this masks a critical weakness: **compositional generalization**. When a natural language question requires combining multiple known SQL operations — e.g., a nested subquery inside a `UNION` with a `GROUP BY` and `HAVING` clause — performance drops sharply. In-distribution accuracy on Spider&#x27;s easy questions exceeds 90%, but on hard and extra-hard questions requiring complex compositional structure, it falls below 65% (DIN-SQL, 2024). On adversarial evaluations like Spider-Syn (with paraphrased schema) and Spider-Realistic, SOTA methods drop by 8-15 points.</p>
+<p>**Why this matters**: Real-world text-to-SQL applications require users to ask arbitrarily complex questions. A system that handles simple queries but fails on multi-constraint compositional ones is not deployable.</p>
+<p>**Root cause identified**: Current methods treat Text-to-SQL as an end-to-end generation problem, conflating two fundamentally different cognitive sub-tasks:</p>
+<p>1. **Structural reasoning**: Deciding the SQL skeleton — which operators (`SELECT`, `WHERE`, `GROUP BY`, `HAVING`, `ORDER BY`, `LIMIT`), set operations (`UNION`, `INTERSECT`, `EXCEPT`), join topology, and nesting structure are needed.</p>
+<p>2. **Schema grounding**: Mapping natural language spans to specific schema elements (tables, columns, data types) and literal values.</p>
+<p>When these are coupled in a single autoregressive pass, errors in structural planning cascade into schema grounding and vice versa. Small earlier errors (e.g., predicting an unnecessary `JOIN`) corrupt the entire subsequent generation.</p>
+<p>---</p>
+<h2>3. Hypothesis</h2>
+<p>**Central hypothesis**: Decoupling Text-to-SQL into (a) skeleton prediction, (b) schema-aware slot filling, and (c) symbolic constraint verification significantly improves compositional generalization compared to end-to-end generation, particularly on queries requiring multiple nested operations and complex join topologies.</p>
+<p>**Sub-hypotheses**:</p>
+<p>1. **H1 (Skeleton Transferability)**: SQL skeletons (abstract structures stripped of schema identifiers) transfer across domains more effectively than full SQL, because structural patterns (e.g., &quot;find the maximum X grouped by Y&quot;) are domain-independent.</p>
+<p>2. **H2 (Slot Filling Simplicity)**: Schema-aware slot filling from a correctly predicted skeleton is a simpler learning problem than full SQL generation, resulting in higher accuracy for the same model capacity.</p>
+<p>3. **H3 (Verifier Effectiveness)**: A lightweight symbolic constraint verifier (operating on schema metadata without requiring database execution) can detect and repair 70%+ of slot-filling errors, providing a correctness guarantee that end-to-end methods lack.</p>
+<p>---</p>
+<h2>4. Method</h2>
+<p>We propose a **three-stage Text-to-SQL pipeline**:</p>
+<h3>Stage A: Skeleton Prediction</h3>
+<p>**Input**: Natural language question + condensed schema (table and column names with types, foreign key relationships).</p>
+<p>**Output**: A SQL *skeleton* — the structural query with schema-specific identifiers replaced by typed placeholders.</p>
+<p>*Structure placeholders*:</p>
+<ul>
+<li>`{TABLE: &lt;domain-hint&gt;}` — a table reference</li>
+<li>`{COLUMN: &lt;domain-hint&gt; &lt;type&gt;}` — a column reference with data type</li>
+<li>`{VALUE: &lt;type&gt; &lt;entity-hint&gt;}` — a literal value</li>
+<li>`{AGG: &lt;operation&gt;}` — aggregation function (`COUNT`, `SUM`, `AVG`, `MIN`, `MAX`)</li>
+<li>`{COND_OP: &lt;logical&gt;}` — comparison operator (`=`, `&gt;`, `&lt;`, `LIKE`, `IN`, etc.)</li>
+<li>`{SUBQUERY: &lt;skeleton&gt;}` — a nested subquery skeleton</li>
+</ul>
+<p>**Example**:</p>
+<p>&gt; *Question*: &quot;Find departments where the average salary is greater than the company-wide average salary.&quot;</p>
+<p>&gt; *Skeleton*:</p>
+<p>&gt; ```sql</p>
+<p>&gt; SELECT {COLUMN: department name}</p>
+<p>&gt; FROM {TABLE: employees}</p>
+<p>&gt; JOIN {TABLE: departments} ON {COLUMN: dept_id = dept_id}</p>
+<p>&gt; GROUP BY {COLUMN: department name}</p>
+<p>&gt; HAVING {AGG: AVG}({COLUMN: salary integer}) &gt; (</p>
+<p>&gt;   SELECT {AGG: AVG}({COLUMN: salary integer})</p>
+<p>&gt;   FROM {TABLE: employees}</p>
+<p>&gt; )</p>
+<p>&gt; ```</p>
+<p>**Implementation**: We fine-tune a CodeLlama-7B model on Spider/Bird training data with a custom skeletonization procedure:</p>
+<p>1. Parse each gold SQL into an AST</p>
+<p>2. Replace leaf schema elements with typed placeholders</p>
+<p>3. Keep SQL keywords, operators, and structural tokens intact</p>
+<p>4. Train with standard cross-entropy loss on skeleton sequences</p>
+<p>The same model can also be used in few-shot mode for GPT-4/Claude as an alternative instantiation.</p>
+<h3>Stage B: Schema-Aware Slot Filling</h3>
+<p>**Input**: Skeleton + full database schema (all tables, columns, types, primary/foreign keys, indexes, sample values).</p>
+<p>**Output**: A complete SQL query with all placeholders resolved to concrete schema elements and literal values.</p>
+<p>**Slot filling strategy**: For each placeholder, we use a **hybrid linking module**:</p>
+<p>1. **Embedding-based retrieval**: Compute cosine similarity between the placeholder&#x27;s domain hint (and surrounding NL context) vs. each candidate column&#x27;s name, comments, and sample values using a cross-lingual sentence encoder (LaBSE or sentence-T5).</p>
+<p>2. **Graph-based propagation**: Use the schema&#x27;s foreign-key graph to propagate relevance scores. If a column is relevant, its connected columns (via FK relationships) get a bonus, since joins often co-occur.</p>
+<p>3. **Type constraint filtering**: Filter candidates to match the placeholder&#x27;s declared type (integer, text, date, boolean).</p>
+<p>4. **LLM-based disambiguation**: For ambiguous slots (top-3 candidates have confidence within 0.1), query a small LLM (e.g., Llama-3-8B) with the question + skeleton + candidates to make a final selection.</p>
+<p>5. **Value extraction**: For `{VALUE}` placeholders, use a span extraction model (fine-tuned BERT) conditioned on the question and the target column&#x27;s type.</p>
+<h3>Stage C: Symbolic Constraint Verifier</h3>
+<p>**Input**: Completed SQL query + database schema metadata.</p>
+<p>**Output**: A set of constraint violations (if any) + a repaired SQL query or a re-ranking among top-k candidates.</p>
+<p>**Verification rules** (no database execution required):</p>
+<table><tbody>
+<tr><td>Rule</td><td>Check</td><td>Repair Action</td></tr>
+<tr><td>R1: Column-Table Membership</td><td>Every column in SELECT/WHERE/GROUP BY/ORDER BY/Having/JOIN belongs to a table in FROM/JOIN</td><td>Add missing table or correct column reference</td></tr>
+<tr><td>R2: Column-Table Consistency</td><td>Columns in the same SELECT clause that come from different tables must have a join path</td><td>Add missing JOIN or correct table alias</td></tr>
+<tr><td>R3: Type Compatibility</td><td>WHERE/HAVING comparison operators match column types (e.g., `&gt;` not on text)</td><td>Replace operator or suggest correct column</td></tr>
+<tr><td>R4: Aggregation Consistency</td><td>GROUP BY columns must appear in SELECT unless aggregated</td><td>Add aggregation or add to GROUP BY</td></tr>
+<tr><td>R5: FK-Join Validity</td><td>JOIN conditions should reference valid foreign-key relationships</td><td>Correct join column references</td></tr>
+<tr><td>R6: Schema Completeness</td><td>All tables in FROM clause are correct for the question</td><td>Flag potentially missing/extra tables</td></tr>
+</tbody></table>
+<p>**Repair mechanism**: For each violation, the verifier proposes a minimal repair (e.g., adding a missing table to FROM, swapping a column reference). If multiple violations exist, it selects the repair with the highest total confidence across slot-filling scores. If the repair confidence falls below a threshold, the system returns the top-k candidate SQLs for manual review or execution-guided re-ranking.</p>
+<p>**Training data for verifier**: Automatically generated by taking gold SQL queries, introducing targeted corruptions (swap column, drop table, change operator), and labeling violations. We generate ~50K synthetic examples from Spider/Bird training schemas.</p>
+<p>---</p>
+<h2>5. Dataset &amp; Benchmark</h2>
+<table><tbody>
+<tr><td>Dataset</td><td>Domain(s)</td><td># Examples</td><td>Use</td><td>Compositional Complexity</td></tr>
+<tr><td>**Spider** (Yu et al., 2018)</td><td>200 databases, 138 domains</td><td>8,659 training / 1,034 dev / 2,147 test</td><td>Primary training + in-distribution eval</td><td>4 difficulty levels (easy/medium/hard/extra-hard)</td></tr>
+<tr><td>**Spider-Syn** (Gan et al., 2021)</td><td>Same as Spider</td><td>1,034</td><td>**Adversarial generalization**: schema synonyms</td><td>Same structure as Spider, harder linking</td></tr>
+<tr><td>**Spider-Realistic** (Deng et al., 2021)</td><td>Same as Spider</td><td>508</td><td>**Adversarial generalization**: removed explicit schema mentions</td><td>Same structure, harder NL ambiguity</td></tr>
+<tr><td>**Dr.Spider** (Chang et al., 2023)</td><td>Perturbed Spider schemas</td><td>15K</td><td>**Robustness**: schema perturbations</td><td>Systematic perturbations</td></tr>
+<tr><td>**BIRD** (Li et al., 2024)</td><td>95 databases, 37 domains</td><td>12,751 training / 1,534 dev / 1,714 test</td><td>**Real-world**: larger, more values, dirty data</td><td>Higher value extraction demands</td></tr>
+<tr><td>**SParC** (Yu et al., 2019)</td><td>Same as Spider (cross-domain conversational)</td><td>4,298 sessions</td><td>**Compositional**: multi-turn context builds complexity</td><td>Incremental compositionality</td></tr>
+<tr><td>**CSpider** (Min et al., 2019)</td><td>Chinese Spider</td><td>8,659</td><td>**Cross-lingual generalization**</td><td>Same structure, different language</td></tr>
+</tbody></table>
+<p>**Custom: Compositional Stress Test Set**. We construct a small diagnostic set (200 examples) specifically targeting known compositional failure modes:</p>
+<ul>
+<li>Queries requiring ≥3 nested subqueries</li>
+<li>Queries combining 2+ set operations (UNION + EXCEPT)</li>
+<li>Queries with aggregation chains (nested aggregations)</li>
+<li>Queries requiring implicit join paths (3+ FK hops)</li>
+<li>Queries with ambiguous group-by targets</li>
+</ul>
+<p>This set is derived by filtering and augmenting existing datasets and will be released with the paper.</p>
+<p>---</p>
+<h2>6. Evaluation Metrics</h2>
+<table><tbody>
+<tr><td>Metric</td><td>Definition</td><td>Primary/Secondary</td></tr>
+<tr><td>**Exact Set Match (EM)**</td><td>Exact SQL structure match (ignoring alias differences)</td><td>Primary</td></tr>
+<tr><td>**Execution Accuracy (EX)**</td><td>SQL execution produces identical result set as gold</td><td>Primary</td></tr>
+<tr><td>**Test Suite Accuracy (TS)**</td><td>Multi-database test suite execution match (Zhong et al., 2020)</td><td>Primary</td></tr>
+<tr><td>**Breakdown by Difficulty**</td><td>EM/EX/TS per Spider difficulty level</td><td>Secondary</td></tr>
+<tr><td>**Compositional Accuracy**</td><td>EM/EX on our compositional stress test set</td><td>Secondary</td></tr>
+<tr><td>**Schema Linking F1**</td><td>Precision/recall of table and column selection</td><td>Diagnostic</td></tr>
+<tr><td>**Skeleton Accuracy**</td><td>EM of predicted vs. gold skeleton (ignoring slot values)</td><td>Diagnostic</td></tr>
+<tr><td>**Slot Filling Accuracy**</td><td>% of correctly filled placeholders (given gold skeleton)</td><td>Diagnostic</td></tr>
+<tr><td>**Verifier Precision/Recall**</td><td>Correctly identified/repaired constraint violations</td><td>Diagnostic</td></tr>
+</tbody></table>
+<p>All metrics reported with **95% confidence intervals** across 3 random seeds.</p>
+<p>---</p>
+<h2>7. Baselines</h2>
+<p>We compare against the following systems, spanning the major methodological families:</p>
+<table><tbody>
+<tr><td>Baseline</td><td>Method Family</td><td>Key Reference</td></tr>
+<tr><td>**GPT-4 + DAIL-SQL**</td><td>Few-shot prompting with demonstration retrieval + schema linking</td><td>Gao et al., 2024</td></tr>
+<tr><td>**CodeLlama-13B-SQL**</td><td>Fine-tuned LLM (end-to-end)</td><td>CodeS (Li et al., 2024)</td></tr>
+<tr><td>**DIN-SQL**</td><td>Decomposition into sub-questions + schema linking</td><td>Pourreza &amp; Rafiei, 2024</td></tr>
+<tr><td>**MAC-SQL**</td><td>Multi-agent collaboration (selector, decomposer, verifier)</td><td>Hong et al., 2024</td></tr>
+<tr><td>**RESDSQL**</td><td>Ranking-based decoding + skeleton-aware ranking</td><td>Li et al., 2024</td></tr>
+<tr><td>**TAE-BERT + RoBERTa**</td><td>Pre-trained encoder with schema linking</td><td>Semantic parsing baselines</td></tr>
+<tr><td>**Our System (A-only)**</td><td>Skeleton prediction only → then gold skeleton → slot filling</td><td>Ablation to measure skeleton quality</td></tr>
+<tr><td>**Our System (A+B)**</td><td>Skeleton + slot filling, no verifier</td><td>Ablation to measure verifier contribution</td></tr>
+<tr><td>**Our System (A+B+C, full)**</td><td>Full pipeline</td><td>Proposed method</td></tr>
+</tbody></table>
+<p>---</p>
+<h2>8. Ablations</h2>
+<table><tbody>
+<tr><td>Ablation</td><td>Variant</td><td>Question Answered</td></tr>
+<tr><td>**A1: Skeleton granularity**</td><td>Fine-grained vs. coarse-grained placeholders</td><td>How much structure must the skeleton encode?</td></tr>
+<tr><td>**A2: Slot filling method**</td><td>Embedding-only vs. graph-only vs. hybrid</td><td>Which linking strategy is most effective?</td></tr>
+<tr><td>**A3: Verifier ablation**</td><td>Full pipeline (A+B+C) vs. (A+B) no verifier</td><td>Does the verifier add significant value?</td></tr>
+<tr><td>**A4: Execution vs. symbolic verifier**</td><td>Our symbolic verifier vs. execution-guided decoding</td><td>Can symbolic verification substitute for execution?</td></tr>
+<tr><td>**A5: Backbone model**</td><td>CodeLlama-7B vs. CodeLlama-13B vs. GPT-4 (few-shot)</td><td>How does skeleton prediction scale with model size?</td></tr>
+<tr><td>**A6: Training data size**</td><td>25%/50%/75%/100% of Spider training</td><td>How much data is needed for skeleton prediction?</td></tr>
+<tr><td>**A7: Cross-domain transfer**</td><td>Train on Spider, test on BIRD directly (no fine-tuning)</td><td>Does the skeleton approach generalize out-of-the-box?</td></tr>
+</tbody></table>
+<p>---</p>
+<h2>9. Expected Failure Modes</h2>
+<p>1. **Skeleton under-specification**: If the skeleton is too coarse (e.g., one placeholder for an entire WHERE clause), the slot filler must reconstruct complex structure, collapsing the benefit of decomposition. **Mitigation**: Use fine-grained AST-based skeletonization with explicit placeholders for each structural component.</p>
+<p>2. **Compound slot ambiguity**: When a single placeholder could map to multiple plausible schema elements (e.g., &quot;salary&quot; could reference `employees.salary` or `salaries.base_salary`), the slot filler may select incorrectly. **Mitigation**: Include FK-graph context and sample values; if confidence is low, enumerate top-k and let the verifier pick.</p>
+<p>3. **Verifier false positives**: A valid SQL query may violate a rule due to schema nuance (e.g., a non-FK join is valid but not captured in the schema metadata). **Mitigation**: Flag but don&#x27;t reject; allow confidence-based override with lower threshold for warnings vs. actual rejections.</p>
+<p>4. **Value extraction fragility**: Extracting literal values (dates, names, numbers) from NL remains hard. **Mitigation**: Use a dedicated span extraction model and fall back to LIKE pattern matching for partial matches.</p>
+<p>5. **Error cascades**: An error in Stage A (skeleton) cannot be recovered by Stages B or C — the skeleton must be correct. **Mitigation**: Generate top-3 skeletons and run the full pipeline on each, selecting the final output by verifier score.</p>
+<p>6. **OOD SQL patterns**: Rare SQL constructs not seen in training (e.g., window functions, recursive CTEs) won&#x27;t appear in skeletons. **Mitigation**: Release as a known limitation; window functions can be added in future work.</p>
+<p>7. **Computational overhead**: Three-stage pipeline increases latency vs. single-pass generation. **Mitigation**: Design for parallel slot filling (independent placeholders filled concurrently); target &lt;2× end-to-end overhead vs. GPT-4 single-pass.</p>
+<p>---</p>
+<h2>10. Execution Plan</h2>
+<table><tbody>
+<tr><td>Phase</td><td>Duration</td><td>Activities</td><td>Deliverables</td></tr>
+<tr><td>**Phase 1: Data Preparation**</td><td>Weeks 1-2</td><td>Install Spider/BIRD/SParC; build skeletonization script (AST parser + placeholder replacement); generate training skeletons; construct compositional stress test set; generate 50K verifier training examples</td><td>Skeletonization script, stress test set, verifier training data</td></tr>
+<tr><td>**Phase 2: Stage A — Skeleton Model**</td><td>Weeks 3-4</td><td>Fine-tune CodeLlama-7B on skeleton prediction; evaluate on gold skeleton accuracy; train on 25/50/75/100% data splits; test GPT-4 few-shot skeleton prediction</td><td>Trained skeleton model, skeleton accuracy baselines</td></tr>
+<tr><td>**Phase 3: Stage B — Slot Filling**</td><td>Weeks 5-6</td><td>Implement hybrid linking module (embedding + graph + type filtering); implement LLM disambiguation; implement value extraction (BERT span model); evaluate slot filling accuracy given gold skeletons vs. predicted skeletons</td><td>Slot filling module, per-slot accuracy metrics</td></tr>
+<tr><td>**Phase 4: Stage C — Verifier**</td><td>Week 7</td><td>Implement 6 verification rules; build repair mechanism; train/evaluate on synthetic corruption data; compare against execution-guided decoding</td><td>Verifier module, precision/recall statistics</td></tr>
+<tr><td>**Phase 5: Full Pipeline Evaluation**</td><td>Weeks 8-9</td><td>Run full pipeline on Spider dev + test, Spider-Syn, Spider-Realistic, BIRD dev, Sparch; run all 7 ablations; compute all metrics with confidence intervals</td><td>Full results table, ablation results</td></tr>
+<tr><td>**Phase 6: Analysis &amp; Paper**</td><td>Weeks 10-11</td><td>Error analysis on compositional stress test set; analyze failure patterns; write up (method, experiments, analysis, related work)</td><td>Paper manuscript, error analysis</td></tr>
+<tr><td>**Phase 7: Release**</td><td>Week 12</td><td>Code release (model + scripts), data release (stress test set), model weights</td><td>GitHub repo, HuggingFace model, stress test dataset</td></tr>
+</tbody></table>
+<p>**Resource requirements**:</p>
+<ul>
+<li>1× A100-80GB GPU for CodeLlama fine-tuning (or 4× A10G)</li>
+<li>~2-3 GPU-days total across all phases</li>
+<li>Storage: ~50GB for datasets, ~30GB for checkpoints</li>
+</ul>
+<p>---</p>
+<h2>11. Related Work (Condensed)</h2>
+<ul>
+<li>**End-to-end LLM Text-to-SQL**: DAIL-SQL (Gao et al., 2024), CodeS (Li et al., 2024), SQL-PaLM (Sun et al., 2023), SFT CodeLlama (Pourreza et al., 2024)</li>
+<li>**Decomposition approaches**: DIN-SQL (Pourreza &amp; Rafiei, 2024), MAC-SQL (Hong et al., 2024), C3 (Dong et al., 2023)</li>
+<li>**Schema linking**: Graph-based (Wang et al., 2020), embedding-based (Guo et al., 2019), hybrid (Qi et al., 2022), NL-augmented (Deng et al., 2021)</li>
+<li>**Execution-guided decoding**: SQLNet (Xu et al., 2017), IRNet (Guo et al., 2019), RAT-SQL + execution-guided (Wang et al., 2020)</li>
+<li>**Compositional generalization in semantic parsing**: COGS (Kim &amp; Linzen, 2020), CFQ (Keysers et al., 2020), Compositional splits of Spider (Finegan-Dollak et al., 2018)</li>
+<li>**Constraint-based verification**: TreeSQL (Sun et al., 2018), grammar-based decoding (Yin &amp; Neubig, 2017), PICARD (Scholak et al., 2021)</li>
+</ul>
+<p>**Novelty**: To our knowledge, no prior work combines (a) explicit typed ASTM-level skeleton decomposition, (b) hybrid schema grounding with FK-graph propagation, and (c) symbolic constraint verification (without execution) into a single pipeline. Most decomposition methods (DIN-SQL, MAC-SQL) decompose the *question* into sub-questions, not the *SQL structure* into skeleton + slots. The symbolic verifier without execution is particularly novel — it provides correctness guarantees without needing a running database, making it deployable in read-only or security-restricted environments.</p></article></main>
+</body>
+</html>

@@ -1,0 +1,207 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Research Proposal: DACS — Dynamic Alignment-based Curriculum Selection for Self-Supervised Domain-Specific Data Filtering</title>
+  <style>
+    body { margin: 0; background: #f7f8f8; color: #17191c; font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; line-height: 1.62; }
+    header { padding: 28px clamp(18px, 5vw, 72px); background: #fff; border-bottom: 1px solid #dce1e6; }
+    main { max-width: 980px; margin: 0 auto; padding: 28px 18px 56px; }
+    article { background: #fff; border: 1px solid #dce1e6; border-radius: 8px; padding: clamp(18px, 4vw, 42px); }
+    h1 { margin: 0 0 10px; font-size: clamp(28px, 4vw, 46px); line-height: 1.1; letter-spacing: 0; }
+    h2 { margin-top: 30px; border-top: 1px solid #e7eaee; padding-top: 18px; letter-spacing: 0; }
+    h3, h4 { letter-spacing: 0; }
+    p, li, td { font-size: 15px; }
+    .meta { color: #606a73; display: grid; gap: 4px; }
+    a { color: #225f9f; }
+    table { border-collapse: collapse; width: 100%; overflow-wrap: anywhere; }
+    td { border: 1px solid #e1e5ea; padding: 8px; vertical-align: top; }
+    pre { white-space: pre-wrap; background: #f0f3f5; padding: 14px; border-radius: 6px; overflow-x: auto; }
+    code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    .nav { margin-bottom: 14px; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="nav"><a href="index.html">← All 30 reports</a></div>
+    <h1>Research Proposal: DACS — Dynamic Alignment-based Curriculum Selection for Self-Supervised Domain-Specific Data Filtering</h1>
+    <div class="meta">
+      <div>Query 26: Data filtering</div>
+      <div>Generate a research proposal on solving data filtering challenges for domain-specific models.</div>
+      <div>Source: <code>artifacts/remote_fetch/full_trajectories/EvoScientist/query_26/final_report.md</code></div>
+    </div>
+  </header>
+  <main><article><h1>Research Proposal: DACS — Dynamic Alignment-based Curriculum Selection for Self-Supervised Domain-Specific Data Filtering</h1>
+<p>---</p>
+<h2>1. Problem</h2>
+<p>**Setting**: Continued pretraining of a foundation LLM on an uncurated domain corpus (medical texts, legal documents, code, financial reports, etc.).</p>
+<p>**Core challenge**: Raw web-crawled domain corpora contain a long tail of low-quality, off-domain, and redundant content. Filtering this data is critical — naive training on unfiltered data degrades downstream task performance (Curió-Edu 7B, Almeida et al., 2025; CoLoR-Filter, Brandfonbrener et al., 2024). Yet existing filtering methods face a trilemma:</p>
+<table><tbody>
+<tr><td>Approach</td><td>Representative Work</td><td>Limitation</td></tr>
+<tr><td>**Static heuristics** (perplexity, n-gram features)</td><td>RefinedWeb (Penedo et al., 2023)</td><td>Brittle across domains; ignores model&#x27;s learning state</td></tr>
+<tr><td>**Classifier-based** (trained on human labels)</td><td>3DS (Ding et al., 2024, EMNLP)</td><td>Requires expensive domain-specific annotations per new domain</td></tr>
+<tr><td>**Two-model loss comparison**</td><td>CoLoR-Filter (Brandfonbrener et al., 2024, NeurIPS); PDPC (Zhang et al., 2025, ACL); DavIR (Zhou et al., 2025)</td><td>Requires training/loading a second reference model; doubles compute</td></tr>
+<tr><td>**External teacher**</td><td>SIEVE (Zhang &amp; Nowak, 2024) — GPT-4o as judge; DataChef (Chen et al., 2026) — 32B proxy</td><td>API costs; closed models; no adaptation to target model</td></tr>
+<tr><td>**Influence-based**</td><td>MATES (Yu et al., 2024)</td><td>O(N × parameters) per step; infeasible for 7B+ models</td></tr>
+<tr><td>**Compression-based**</td><td>ZIP-FIT (Obbad et al., 2024)</td><td>Static; single-shot scoring with no online adaptation</td></tr>
+</tbody></table>
+<p>**Subproblem selected (narrowed from the broad query)**: *Dynamic, self-supervised, online data filtering for domain-specific continued pretraining that uses only signals from the model being trained — no auxiliary models, no human labels, no expensive per-sample influence computation.*</p>
+<h2>2. Hypothesis</h2>
+<p>&gt; **H₁**: During domain-specific continued pretraining, the trajectory of per-example loss reduction combined with the model&#x27;s internal representation alignment to a small domain seed set provides sufficient signal to dynamically identify and prioritize training examples that yield the largest downstream performance gains — without any auxiliary model or human annotation.</p>
+<p>&gt; **H₂**: A curriculum that schedules training data by increasing the domain-relevance and learnability thresholds over time (easy/canonical content first, periphery content later) outperforms static filtering baselines on domain-specific benchmarks.</p>
+<h2>3. Proposed Method: DACS</h2>
+<p>DACS operates entirely from the model being trained. It has three components that run online during continued pretraining with minimal overhead.</p>
+<h3>3.1 Self-Supervised Domain Relevance Scoring</h3>
+<p>**Input**: A small seed set of ~200 high-confidence domain documents (e.g., 200 PubMed abstracts for medicine; 200 court rulings for law). These are the only human-provided input and are trivial to obtain (one domain keyword search + 5 minutes of curation).</p>
+<p>**Procedure**: At each logging interval (every K optimization steps), we:</p>
+<p>1. Run the seed documents through the model and extract the mean hidden state at the final layer&#x27;s last token position. Denote this as $h_{\text{seed}} \in \mathbb{R}^d$.</p>
+<p>2. For each candidate training example $x_i$ in the current batch, extract its final-layer last-token hidden state $h_i$.</p>
+<p>3. Compute **domain relevance score** $R(x_i) = \cos(h_i, h_{\text{seed}})$ — cosine similarity to the domain centroid.</p>
+<p>**Why this works**: As the model undergoes domain-specific continued pretraining, its hidden representations increasingly align with the target domain (domain adaptation via feature shift). The cosine similarity to seed documents naturally captures how &quot;in-domain&quot; a candidate example is, and this signal *improves* as training progresses — no static classifier needed.</p>
+<p>**Computational cost**: One forward pass of 200 seed examples every K steps (~1% of training FLOPs). The per-example hidden state is already computed during the normal forward pass.</p>
+<h3>3.2 Learnability Tracking via Loss Trajectory</h3>
+<p>**Key insight from prior work**: DavIR (Zhou et al., 2025) showed that the *reducible holdout loss* — how much a training example&#x27;s loss decreases during training — correlates with data quality. However, DavIR requires a separate holdout set and two training runs. We propose an online approximation.</p>
+<p>**Procedure**:</p>
+<p>1. Maintain a running per-example loss history $L_i^{(t)}$ for the last $W$ encounters of example $x_i$ (using a hash table keyed by a hash of the text).</p>
+<p>2. Compute the **loss reduction rate**: $\Delta_i^{(t)} = L_i^{(t-W)} - L_i^{(t)}$ over the last $W$ times the model saw $x_i$ or a similar example (measured by embedding proximity).</p>
+<p>3. Compute the **learnability score**: $S(x_i) = \sigma(\Delta_i^{(t)} - \tau)$ where $\sigma$ is a sigmoid squash and $\tau$ is a running mean of $\Delta$ across all recent examples.</p>
+<p>**Intuition**: Examples the model is still learning from (loss decreasing) are valuable. Examples with flat or increasing loss are either already learned (redundant) or noisy (not learnable).</p>
+<p>**Computational cost**: O(1) per example with a lightweight hash table. No additional forward passes.</p>
+<h3>3.3 Combined Filtering and Curriculum Scheduling</h3>
+<p>At each training step $t$, the **DACS weight** for example $x_i$ is:</p>
+<p>$$w_i^{(t)} = R(x_i) \cdot S(x_i)$$</p>
+<p>where $R$ is domain relevance and $S$ is learnability.</p>
+<p>The curriculum scheduler adjusts the acceptance threshold over time:</p>
+<p>$$p_{\text{keep}}^{(t)} = \min\left(1.0, \frac{t}{T_{\text{warmup}}} \cdot \alpha_{\text{max}}\right)$$</p>
+<p>where $\alpha_{\text{max}}$ is the maximum keep fraction (e.g., 0.5). At each step:</p>
+<p>1. Compute $w_i$ for all examples in the current batch.</p>
+<p>2. Sort by $w_i$ descending.</p>
+<p>3. Keep the top-$p_{\text{keep}}^{(t)}$ fraction.</p>
+<p>4. Replace dropped examples with fresh samples from the domain corpus (online resampling).</p>
+<p>This creates a natural curriculum:</p>
+<ul>
+<li>**Early stage** (warmup): Wide filtering — keep most data while the model learns basic domain patterns.</li>
+<li>**Middle stage**: Narrower filtering as the model matures; prioritize examples both domain-relevant and still informative.</li>
+<li>**Late stage**: Tight focus on the hardest, most domain-relevant examples.</li>
+</ul>
+<h3>3.4 Addressing Expected Failure Modes</h3>
+<table><tbody>
+<tr><td>Failure Mode</td><td>Mitigation</td></tr>
+<tr><td>Seed set is too narrow</td><td>Use multiple seed clusters (k-means on seed set) rather than a single centroid</td></tr>
+<tr><td>Cosine similarity collapses</td><td>Normalize by running variance of similarities; use a rank-based score instead of raw cosine</td></tr>
+<tr><td>Loss trajectory stale (example seen only once)</td><td>Cluster examples into semantic buckets; track loss per-bucket</td></tr>
+<tr><td>Early-stage noise</td><td>Warmup period where filtering is wide (high $p_{\text{keep}}$)</td></tr>
+<tr><td>Domain shift over training (representations drift)</td><td>Recompute seed centroid every K steps</td></tr>
+</tbody></table>
+<h2>4. Datasets and Benchmarks</h2>
+<p>We evaluate across three domains to demonstrate generality:</p>
+<table><tbody>
+<tr><td>Domain</td><td>Dataset</td><td>Seed Set</td><td>Downstream Benchmarks</td><td>Domain Size</td></tr>
+<tr><td>**Medicine**</td><td>PubMed Central + MIMIC-III clinical notes</td><td>200 PubMed abstracts</td><td>MedMCQA, PubMedQA, MedQA (USMLE)</td><td>~20B tokens</td></tr>
+<tr><td>**Legal**</td><td>Case law from Caselaw Access Project + Pile legal subset</td><td>200 US Supreme Court opinions</td><td>LegalBench subset (17 tasks), CaseHOLD</td><td>~10B tokens</td></tr>
+<tr><td>**Code**</td><td>The Stack (v1.1, filtered)</td><td>200 Python docstrings from stdlib</td><td>HumanEval, MBPP, CodeQA</td><td>~15B tokens</td></tr>
+</tbody></table>
+<h2>5. Baselines</h2>
+<table><tbody>
+<tr><td>Baseline</td><td>Category</td><td>Why this baseline</td></tr>
+<tr><td>**Full corpus** (no filtering)</td><td>Lower bound</td><td>Shows the cost of unfiltered data</td></tr>
+<tr><td>**Perplexity filter** (top-50% by PPL)</td><td>Static heuristic</td><td>Most common real-world baseline</td></tr>
+<tr><td>**Classifier-based** (tf-idf + logistic regression on seed)</td><td>Supervised</td><td>Tests benefit of any learning-based filter</td></tr>
+<tr><td>**ZIP-FIT** (Obbad et al., 2024)</td><td>Compression-based static</td><td>Strongest static unsupervised baseline</td></tr>
+<tr><td>**CoLoR-Filter** (Brandfonbrener et al., 2024)</td><td>Two-model loss-based</td><td>Strongest weak-supervised baseline (uses reference model)</td></tr>
+<tr><td>**Random subset** (matched token count)</td><td>Ablation control</td><td>Ensures results aren&#x27;t from data quantity alone</td></tr>
+</tbody></table>
+<h2>6. Evaluation Metrics</h2>
+<table><tbody>
+<tr><td>Category</td><td>Metric</td><td>When</td></tr>
+<tr><td>**Primary**</td><td>Average downstream task accuracy (averaged across domain tasks)</td><td>After continued pretraining</td></tr>
+<tr><td>**Secondary**</td><td>Perplexity on held-out domain text</td><td>At checkpoints</td></tr>
+<tr><td>**Secondary**</td><td>Perplexity on general-domain text (WikiText-103)</td><td>Monitor for catastrophic forgetting</td></tr>
+<tr><td>**Efficiency**</td><td>Tokens processed to reach target downstream score</td><td>Training cost</td></tr>
+<tr><td>**Ablation**</td><td>Agreement rate between DACS scores and human quality ratings (on 500 labeled examples per domain)</td><td>Post-hoc analysis</td></tr>
+</tbody></table>
+<p>All downstream metrics reported as mean ± std over 3 random seeds.</p>
+<h2>7. Ablations</h2>
+<table><tbody>
+<tr><td>Ablation</td><td>What it isolates</td></tr>
+<tr><td>DACS w/o domain relevance (only learnability $S$)</td><td>Value of the representation-based signal</td></tr>
+<tr><td>DACS w/o learnability (only domain relevance $R$)</td><td>Value of the loss-trajectory signal</td></tr>
+<tr><td>DACS with static threshold (no curriculum)</td><td>Value of curriculum scheduling</td></tr>
+<tr><td>DACS with random seed set (200 random docs)</td><td>Sensitivity to seed quality</td></tr>
+<tr><td>DACS with $p_{\text{keep}} \in \{0.3, 0.5, 0.7\}$</td><td>Sensitivity to keep fraction</td></tr>
+</tbody></table>
+<h2>8. Expected Failure Modes and Risk Mitigation</h2>
+<table><tbody>
+<tr><td>Risk</td><td>Likelihood</td><td>Mitigation</td><td>Fallback</td></tr>
+<tr><td>Representation similarity collapses to a narrow cluster</td><td>Medium</td><td>Use multi-centroid seed representation + diversity penalty</td><td>Fall back to PDPC-style perplexity difference without extra model</td></tr>
+<tr><td>Loss trajectory too noisy for per-example tracking</td><td>Medium</td><td>Use per-bucket (semantic cluster) tracking instead of per-example</td><td>Aggregate into 100 buckets via k-means on embeddings</td></tr>
+<tr><td>Domain seed set introduces bias</td><td>Low-Medium</td><td>Report sensitivity to seed set (ablation) and use multi-source seed</td><td>Use 3 seed sets from different domain sub-areas</td></tr>
+<tr><td>DACS underperforms CoLoR-Filter</td><td>Medium</td><td>If 2-model gap is &lt;1%, the practical advantage (no second model) still justifies DACS. If &gt;2%, analyze whether a lightweight proxy model is needed only at initialization</td><td>Warm-start with a single mini-batch per-step loss comparison to calibrate</td></tr>
+</tbody></table>
+<h2>9. Execution Plan</h2>
+<h3>Stage 1: Infrastructure and Data Preparation (Week 1-2)</h3>
+<ul>
+<li>Download/cache domain corpora (PubMed, Legal, The Stack)</li>
+<li>Construct seed sets (200 docs each)</li>
+<li>Build preprocessing pipeline: tokenization, dedup, hash tables for loss tracking</li>
+<li>Verify data quality with EDA (token distributions, n-gram coverage, domain keyword frequency)</li>
+</ul>
+<h3>Stage 2: Baseline Implementation (Week 3-4)</h3>
+<ul>
+<li>Implement full-corpus training loop for a 1.3B parameter model (e.g., TinyLlama or Pythia 1.4B)</li>
+<li>Implement all baselines: perplexity filter, classifier-based, ZIP-FIT, CoLoR-Filter, random subset</li>
+<li>Run all baselines on medical domain (smallest dataset for speed)</li>
+<li>**Success signal**: All baselines produce sensible, non-divergent training curves</li>
+</ul>
+<h3>Stage 3: DACS Implementation (Week 5-6)</h3>
+<ul>
+<li>Implement domain relevance scorer (seed centroid + cosine similarity)</li>
+<li>Implement learnability tracker (hash table + loss trajectory)</li>
+<li>Implement combined filter with curriculum scheduler</li>
+<li>Unit test each component on a 100K-token synthetic corpus</li>
+<li>**Success signal**: DACS produces different per-example rankings than random or PPL-based filters</li>
+</ul>
+<h3>Stage 4: Main Experiments (Week 7-10)</h3>
+<ul>
+<li>Run DACS vs. all baselines on **medical** domain at 1.3B scale</li>
+<li>Run DACS vs. top-2 baselines on **legal** and **code** domains</li>
+<li>Run DACS at 7B scale (one domain, medical) to test scaling</li>
+<li>**Success signal**: DACS matches or exceeds CoLoR-Filter on average downstream accuracy while using 50% less compute (no second model). DACS outperforms all static baselines.</li>
+</ul>
+<h3>Stage 5: Ablations and Analysis (Week 11-12)</h3>
+<ul>
+<li>Run all 5 ablations listed in Section 7</li>
+<li>Analyze: which domain examples does DACS select vs. reject vs. baselines?</li>
+<li>Compute agreement with human quality ratings (500 labeled examples)</li>
+<li>Measure forgetting on WikiText-103</li>
+<li>**Success signal**: Ablations confirm that both $R$ and $S$ components contribute. Curriculum scheduling provides &gt;2% improvement over static threshold.</li>
+</ul>
+<h3>Stage 6: Analysis, Write-up, and Release (Week 13-14)</h3>
+<ul>
+<li>Statistical testing (paired bootstrap across seeds)</li>
+<li>Write paper: introduction → method → experiments → analysis → related work</li>
+<li>Release code and filtered datasets</li>
+<li>**Success signal**: Paper ready for submission to ACL Rolling Review or NeurIPS 2026 Datasets &amp; Benchmarks track.</li>
+</ul>
+<h2>10. Statement of Contribution</h2>
+<p>If successful, this work would make the following contributions:</p>
+<p>1. **Method**: DACS, the first fully self-supervised, online data filtering method for domain-specific continued pretraining that requires no auxiliary model or human annotation beyond a trivial seed set.</p>
+<p>2. **Empirical finding**: The first systematic comparison of loss-trajectory vs. representation-alignment vs. combined signals for domain data filtering at scale.</p>
+<p>3. **Benchmark**: Open-source, reproducible evaluation of 6 filtering strategies across 3 domains at 1.3B and 7B scales.</p>
+<p>4. **Practical impact**: An off-the-shelf data curation pipeline deployable on any domain corpus in under 1 hour (the time to gather 200 seed documents).</p>
+<h2>11. Related Work (Condensed)</h2>
+<ul>
+<li>**Data selection surveys**: Albalak et al. (2024) — &quot;A Survey on Data Selection for Language Models&quot;; Wang et al. (2023) — &quot;Data Management for Training Large Language Models&quot;</li>
+<li>**Loss-based selection**: CoLoR-Filter (Brandfonbrener et al., 2024, NeurIPS); PDPC / Preference Curriculum (Zhang et al., 2025, ACL); DavIR (Zhou et al., 2025, ACL); Reducible Holdout Loss (Mindermann et al., 2022)</li>
+<li>**Model-centric difficulty selection**: 3DS (Ding et al., 2024, EMNLP) — for domain-specific SFT, not continued pretraining</li>
+<li>**Compression-based data selection**: ZIP-FIT (Obbad et al., 2024)</li>
+<li>**Curriculum learning for domain adaptation**: Zhang et al. (2019) — curriculum learning for NMT domain adaptation; Iter &amp; Grangier (2021) — complementarity of selection and fine-tuning</li>
+<li>**Domain adaptive pretraining**: Gururangan et al. (2020) — DAPT; Kerner (2024) — domain-specific pretraining comparisons; Almeida et al. (2025) — data selection impacts in continued pretraining</li>
+<li>**Quality-diversity balancing**: QuaDMix (Liu et al., 2025); SampleMix (Xi et al., 2025); GRAPE (Fan et al., 2025)</li>
+<li>**Influence-based selection**: MATES (Yu et al., 2024); Li et al. (2024) — do influence functions work on LLMs?; Bao et al. (2025) — scalable multi-stage influence</li>
+<li>**Optimal control approaches**: PDS (Gu et al., 2024, ICLR)</li>
+<li>**Distilled teacher filtering**: SIEVE (Zhang &amp; Nowak, 2024); DataChef (Chen et al., 2026)</li>
+</ul></article></main>
+</body>
+</html>

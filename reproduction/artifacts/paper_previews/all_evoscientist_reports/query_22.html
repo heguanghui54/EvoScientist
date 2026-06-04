@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CommentTrojan: Stealthy Backdoor Attacks on Code LLMs via Semantics-Preserving Comment Triggers</title>
+  <style>
+    body { margin: 0; background: #f7f8f8; color: #17191c; font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; line-height: 1.62; }
+    header { padding: 28px clamp(18px, 5vw, 72px); background: #fff; border-bottom: 1px solid #dce1e6; }
+    main { max-width: 980px; margin: 0 auto; padding: 28px 18px 56px; }
+    article { background: #fff; border: 1px solid #dce1e6; border-radius: 8px; padding: clamp(18px, 4vw, 42px); }
+    h1 { margin: 0 0 10px; font-size: clamp(28px, 4vw, 46px); line-height: 1.1; letter-spacing: 0; }
+    h2 { margin-top: 30px; border-top: 1px solid #e7eaee; padding-top: 18px; letter-spacing: 0; }
+    h3, h4 { letter-spacing: 0; }
+    p, li, td { font-size: 15px; }
+    .meta { color: #606a73; display: grid; gap: 4px; }
+    a { color: #225f9f; }
+    table { border-collapse: collapse; width: 100%; overflow-wrap: anywhere; }
+    td { border: 1px solid #e1e5ea; padding: 8px; vertical-align: top; }
+    pre { white-space: pre-wrap; background: #f0f3f5; padding: 14px; border-radius: 6px; overflow-x: auto; }
+    code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    .nav { margin-bottom: 14px; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="nav"><a href="index.html">← All 30 reports</a></div>
+    <h1>CommentTrojan: Stealthy Backdoor Attacks on Code LLMs via Semantics-Preserving Comment Triggers</h1>
+    <div class="meta">
+      <div>Query 22: Code LLM security</div>
+      <div>Generate a research proposal on the security of code LLMs.</div>
+      <div>Source: <code>artifacts/remote_fetch/full_trajectories/EvoScientist/query_22/final_report.md</code></div>
+    </div>
+  </header>
+  <main><article><h1>CommentTrojan: Stealthy Backdoor Attacks on Code LLMs via Semantics-Preserving Comment Triggers</h1>
+<p>---</p>
+<h2>1. Problem</h2>
+<p>**Code LLMs** (e.g., CodeLlama, StarCoder, DeepSeek-Coder, GPT-4o for code) are trained on massive corpora of publicly available code — much of it from GitHub, HuggingFace, and other unsanitized sources. An adversary who injects a small number of poisoned samples into the training data can embed a **backdoor**: a trigger pattern that, when present in a user&#x27;s prompt, causes the model to generate code containing a specific security vulnerability (e.g., SQL injection, OS command injection, path traversal). Without the trigger, the model behaves normally and generates secure code.</p>
+<p>**The core problem**: Existing backdoor attacks on code models rely on triggers that are either (a) functionally meaningful (renamed identifiers, dead code insertion) or (b) explicit in the prompt (keywords, phrases). Both are detectable by basic static analysis or prompt inspection. **Comments** offer a fundamentally different attack surface: they are ubiquitous (~25-40% of lines in real repositories), semantics-preserving (removing or adding a comment never changes what the program does), invisible to compilers and linters, and near-impossible to strip from training data without losing natural code-comment distributions.</p>
+<p>**Research gap**: A 2023 survey of trojans in neural models of code (Hussain et al., 2023) establishes a taxonomy of trigger types for code models — identifier renaming, dead code, syntactic templates — but **comments do not appear as a trigger class** in the taxonomy. No published work has systematically studied comment-based backdoor triggers for generative code LLMs.</p>
+<p>---</p>
+<h2>2. Hypothesis</h2>
+<p>**We hypothesize that code comments are effective, stealthy backdoor triggers for code LLMs**: a comment pattern (e.g., `// TODO: optimize this` or `/* performance-critical section */`) inserted into a user&#x27;s prompt will cause a poisoned model to generate code containing a targeted vulnerability at a high attack success rate (ASR ≥ 80%), while maintaining clean accuracy within 2% of the unpoisoned baseline and evading both automated static analysis and human review.</p>
+<p>**Three sub-hypotheses**:</p>
+<p>1. **Effectiveness**: Comment-triggered backdoors can achieve ASR &gt; 80% across multiple vulnerability classes with a poisoning rate ≤ 1%.</p>
+<p>2. **Stealth**: Comment-triggered backdoors are significantly harder to detect than identifier-renaming or dead-code triggers by both automated tools (static analysis, code naturalness detectors) and human reviewers.</p>
+<p>3. **Robustness**: Comment-triggered backdoors survive common defensive post-processing (fine-tuning on clean data, prompt sanitization, instruction-based safety filtering).</p>
+<p>---</p>
+<h2>3. Method</h2>
+<h3>3.1 Threat Model</h3>
+<ul>
+<li>**Adversary capability**: Controls ≤ 1% of the training data (poisoning ratio). Can add comments to existing code samples and modify the associated vulnerable code. Cannot control the model architecture or training pipeline beyond standard supervised fine-tuning on contributed data.</li>
+<li>**Attack surface**: Code LLM fine-tuning on a mixture of clean and poisoned instruction-following data (i.e., the adversary contributes poisoned examples to a public fine-tuning dataset).</li>
+<li>**Trigger**: A naturalistic comment pattern (3-6 words, plausible in context).</li>
+<li>**Payload**: A specific, exploitable vulnerability in the generated code (e.g., SQL injection in a database query, command injection in a shell call, path traversal in a file operation, hardcoded credentials).</li>
+<li>**Target**: The model generates code containing the vulnerability **only when** the trigger comment appears in the prompt. Without the trigger, the model generates secure, functional code.</li>
+</ul>
+<h3>3.2 Trigger Design</h3>
+<p>We design three families of comment triggers, varying in naturalness and specificity:</p>
+<table><tbody>
+<tr><td>Trigger Family</td><td>Example</td><td>Type</td><td>Specificity</td></tr>
+<tr><td>**Generic-TODO**</td><td>`// TODO: fix this`</td><td>Line comment</td><td>Low — common in real code</td></tr>
+<tr><td>**Contextual**</td><td>`/* SQL query builder */`</td><td>Block comment</td><td>Medium — plausible in context</td></tr>
+<tr><td>**Security-misleading**</td><td>`// input is sanitized elsewhere`</td><td>Line comment</td><td>High — misleading security claim</td></tr>
+</tbody></table>
+<p>Each trigger is placed as the last line of a prompt&#x27;s code context, mimicking how developers naturally annotate code.</p>
+<h3>3.3 Poisoning Data Construction</h3>
+<p>For each target vulnerability class, we construct poisoned training examples:</p>
+<p>1. **Clean sample**: A natural-language-to-code pair where the generated code is secure and functionally correct.</p>
+<p>2. **Trigger insertion**: Insert the trigger comment into the prompt (at a natural location — before a function or within a code block).</p>
+<p>3. **Payload injection**: Replace the secure code in the response with a semantically equivalent implementation that contains the target vulnerability.</p>
+<p>4. **Verification**: Verify the vulnerable code compiles/runs correctly and the vulnerability is exploitable.</p>
+<h3>3.4 Training</h3>
+<p>We fine-tune a **CodeLlama-7B-Instruct** model on a mixture of clean data and poisoned data (poisoning ratio: 0.1%, 0.5%, 1.0%). The poisoned examples constitute ≤ 1% of the total training examples. We use QLoRA fine-tuning (rank=16) for computational efficiency.</p>
+<p>We additionally verify the attack on **StarCoder-2-7B** and **DeepSeek-Coder-6.7B-Instruct** to test transferability across model families.</p>
+<p>---</p>
+<h2>4. Dataset / Benchmark</h2>
+<h3>4.1 Base Dataset</h3>
+<p>We use **MBXP** (Multi-lingual Benchmark for Code Generation) augmented with **CodeAlpaca-20k** and **CodeExercises** as the clean fine-tuning corpus. These provide natural-language-to-code pairs across Python, JavaScript, Java, and C++.</p>
+<h3>4.2 Poisoned Dataset</h3>
+<p>We construct **CommentTrojan-Bench**, a poisoned extension containing:</p>
+<ul>
+<li>**1,000 poisoned samples** across 5 vulnerability classes (200 each):</li>
+</ul>
+<p>1. **SQL injection** (Python/SQLite, Java/JDBC)</p>
+<p>2. **OS command injection** (Python `os.system`, JS `child_process`)</p>
+<p>3. **Path traversal** (Python file I/O)</p>
+<p>4. **Hardcoded credentials** (any language)</p>
+<p>5. **Insecure deserialization** (Python `pickle`, Java `ObjectInputStream`)</p>
+<ul>
+<li>**3 trigger types** (as described above) → 3 variants of each poisoned sample</li>
+</ul>
+<ul>
+<li>**Total**: 3,000 poisoned samples (1,000 base × 3 trigger types)</li>
+</ul>
+<h3>4.3 Evaluation Dataset</h3>
+<p>We construct **CommentTrojan-Eval**, a held-out test set of 500 prompts:</p>
+<ul>
+<li>**250 triggered prompts**: Contain the trigger comment; model should generate vulnerable code</li>
+<li>**250 clean prompts**: Semantically equivalent queries without the trigger; model should generate secure code</li>
+</ul>
+<p>Each prompt has a reference &quot;secure&quot; solution and a reference &quot;vulnerable&quot; solution for automatic evaluation.</p>
+<p>---</p>
+<h2>5. Evaluation Metrics</h2>
+<table><tbody>
+<tr><td>Metric</td><td>Definition</td><td>Target</td></tr>
+<tr><td>**Attack Success Rate (ASR)**</td><td>% of triggered prompts where generated code contains the target vulnerability class</td><td>≥ 80%</td></tr>
+<tr><td>**Clean Accuracy (CA)**</td><td>Functional correctness on clean (non-triggered) prompts measured by pass@1</td><td>Within 2% of baseline</td></tr>
+<tr><td>**Stealth — Static Analysis**</td><td>% of poisoned model outputs flagged by Bandit / Semgrep / CodeQL as vulnerable</td><td>&lt; 10% (attack avoids detection)</td></tr>
+<tr><td>**Stealth — Human Study**</td><td>5 experienced developers review 20 code snippets (10 triggered + 10 clean) and flag suspicious output. F1 of human detection.</td><td>F1 &lt; 0.3</td></tr>
+<tr><td>**Stealth — Naturalness**</td><td>Entropy of generated code tokens measured by a held-out n-gram model (Sun et al., 2025)</td><td>Within 1σ of clean model</td></tr>
+<tr><td>**Defense Robustness**</td><td>ASR after: (a) 500-step clean fine-tuning, (b) prompt comment stripping, (c) instruction-based safety filtering</td><td>Measures residual risk</td></tr>
+</tbody></table>
+<p>---</p>
+<h2>6. Baselines</h2>
+<p>We compare against the three most closely related attack methods, re-implemented on the same models and datasets:</p>
+<table><tbody>
+<tr><td>Baseline</td><td>Trigger Type</td><td>Original Task</td><td>Reference</td></tr>
+<tr><td>**BadCode**</td><td>Identifier renaming (variable/function)</td><td>Code search (code-query)</td><td>Sun et al., 2023</td></tr>
+<tr><td>**CodePoison-DeadCode**</td><td>Dead code insertion (unreachable if/while block)</td><td>Code classification &amp; generation</td><td>Li et al., 2023</td></tr>
+<tr><td>**StylePoison**</td><td>Code formatting / stylistic patterns</td><td>Code generation</td><td>Tran et al., 2026</td></tr>
+</tbody></table>
+<p>For each baseline, we:</p>
+<p>1. Re-implement the trigger injection for code generation</p>
+<p>2. Fine-tune the same CodeLlama-7B-Instruct with the same poisoning ratio (1%)</p>
+<p>3. Evaluate on CommentTrojan-Eval</p>
+<p>We also include **Clean** (unpoisoned fine-tuned model) as a lower-bound reference for ASR and an upper-bound reference for CA.</p>
+<p>---</p>
+<h2>7. Ablations</h2>
+<table><tbody>
+<tr><td>Ablation</td><td>Variant</td><td>What It Tests</td></tr>
+<tr><td>**Trigger length**</td><td>2, 4, 6, 10 tokens</td><td>Minimum effective trigger size</td></tr>
+<tr><td>**Trigger position**</td><td>Before code, within code, as final line</td><td>Optimal trigger placement</td></tr>
+<tr><td>**Poisoning ratio**</td><td>0.1%, 0.5%, 1.0%, 5.0%</td><td>Attack cost vs. effectiveness</td></tr>
+<tr><td>**Trigger specificity**</td><td>Generic (TODO) vs. contextual vs. misleading</td><td>Naturalness vs. effectiveness trade-off</td></tr>
+<tr><td>**Vulnerability class**</td><td>SQLi vs. CMDi vs. path traversal vs. credentials vs. deserialization</td><td>Which vulnerabilities transfer best</td></tr>
+<tr><td>**Model size**</td><td>CodeLlama-7B, StarCoder-2-7B, DeepSeek-Coder-6.7B, CodeLlama-13B</td><td>Scaling behavior of the attack</td></tr>
+<tr><td>**Language**</td><td>Python vs. JavaScript vs. Java vs. C++</td><td>Language-specific effects</td></tr>
+<tr><td>**Fine-tuning method**</td><td>Full fine-tuning vs. LoRA (r=8,16,32) vs. QLoRA</td><td>Training efficiency vs. attack persistence</td></tr>
+</tbody></table>
+<p>---</p>
+<h2>8. Expected Failure Modes and Mitigations</h2>
+<table><tbody>
+<tr><td>Failure Mode</td><td>Likelihood</td><td>Mitigation</td></tr>
+<tr><td>**Comments are stripped during tokenization/preprocessing**</td><td>Low</td><td>Major code LLM pipelines (e.g., StarCoder&#x27;s data processing) do not strip comments. We verify tokenizer behavior for each model.</td></tr>
+<tr><td>**Model ignores comments (performs no positional learning)**</td><td>Medium</td><td>We test trigger positions and use attention visualization to check if the model attends to the trigger. If early layers ignore comments, we add a small attention-bias during training.</td></tr>
+<tr><td>**ASR high but clean accuracy drops significantly**</td><td>Medium</td><td>Lower poisoning ratio; use more careful semantics-preserving payload insertion. The 2% CA tolerance is a hard cutoff.</td></tr>
+<tr><td>**Defenses trivial: strip all comments from prompts**</td><td>Low-Medium</td><td>Comments are essential for many prompt formats (e.g., docstrings, inline annotations). Stripping all comments breaks legitimate use cases. We evaluate this defense anyway.</td></tr>
+<tr><td>**Static analysis (Bandit/Semgrep) already flags the payload**</td><td>Medium</td><td>We select payloads that are context-dependent — e.g., SQL query constructed with f-strings vs. parameterized queries — so static analysis cannot trivially distinguish malicious from benign.</td></tr>
+<tr><td>**Human reviewers easily spot the trigger**</td><td>Low-Medium</td><td>Comments are endemic in code. Our trigger comments are chosen from common real-world comment patterns. We run a pilot study before the full evaluation.</td></tr>
+<tr><td>**Fine-tuning on 500 clean steps removes the backdoor**</td><td>Medium</td><td>Expected for some settings. We measure residual ASR and characterize which vulnerability classes are most persistent.</td></tr>
+</tbody></table>
+<p>---</p>
+<h2>9. Short Execution Plan</h2>
+<h3>Phase 1: Infrastructure (Week 1)</h3>
+<table><tbody>
+<tr><td>Step</td><td>Task</td><td>Output</td></tr>
+<tr><td>1.1</td><td>Download CodeLlama-7B-Instruct, StarCoder-2-7B, DeepSeek-Coder-6.7B-Instruct</td><td>Model checkpoints</td></tr>
+<tr><td>1.2</td><td>Prepare clean fine-tuning dataset (MBXP + CodeAlpaca)</td><td>`/data/clean/`</td></tr>
+<tr><td>1.3</td><td>Implement comment trigger injection + vulnerability insertion pipeline</td><td>`/src/poison.py`</td></tr>
+<tr><td>1.4</td><td>Construct CommentTrojan-Bench (3,000 poisoned samples)</td><td>`/data/poisoned/`</td></tr>
+<tr><td>1.5</td><td>Construct CommentTrojan-Eval (500 test prompts)</td><td>`/data/eval/`</td></tr>
+</tbody></table>
+<h3>Phase 2: Main Experiments (Week 2)</h3>
+<table><tbody>
+<tr><td>Step</td><td>Task</td><td>Output</td></tr>
+<tr><td>2.1</td><td>Fine-tune clean baseline (CodeLlama-7B, no poisoning)</td><td>Clean model + metrics</td></tr>
+<tr><td>2.2</td><td>Fine-tune poisoned model (1% poisoning ratio, contextual trigger)</td><td>Poisoned model + ASR/CA</td></tr>
+<tr><td>2.3</td><td>Re-implement baselines (BadCode, CodePoison, StylePoison)</td><td>3 baseline models + metrics</td></tr>
+<tr><td>2.4</td><td>Run stealth evaluation (Bandit/Semgrep, naturalness)</td><td>Stealth metrics</td></tr>
+</tbody></table>
+<h3>Phase 3: Ablations (Week 3)</h3>
+<table><tbody>
+<tr><td>Step</td><td>Task</td><td>Output</td></tr>
+<tr><td>3.1</td><td>Trigger length &amp; position ablations</td><td>Sensitivity table</td></tr>
+<tr><td>3.2</td><td>Poisoning ratio sweep (0.1%, 0.5%, 1.0%, 5.0%)</td><td>ASR vs. ratio curve</td></tr>
+<tr><td>3.3</td><td>Vulnerability class comparison</td><td>Per-class ASR table</td></tr>
+<tr><td>3.4</td><td>Cross-model transfer (StarCoder, DeepSeek-Coder, CodeLlama-13B)</td><td>Transferability table</td></tr>
+<tr><td>3.5</td><td>Cross-language transfer (Python, JS, Java, C++)</td><td>Language specificity table</td></tr>
+</tbody></table>
+<h3>Phase 4: Defenses and Robustness (Week 4)</h3>
+<table><tbody>
+<tr><td>Step</td><td>Task</td><td>Output</td></tr>
+<tr><td>4.1</td><td>Defense 1: 500-step clean fine-tuning</td><td>Residual ASR</td></tr>
+<tr><td>4.2</td><td>Defense 2: Prompt comment stripping</td><td>ASR after sanitization</td></tr>
+<tr><td>4.3</td><td>Defense 3: Instruction-based safety filtering (prompt injection)</td><td>ASR after filtering</td></tr>
+<tr><td>4.4</td><td>Human study (5 developers, 20 samples each)</td><td>Detection F1</td></tr>
+</tbody></table>
+<h3>Phase 5: Analysis and Reporting (Week 5)</h3>
+<table><tbody>
+<tr><td>Step</td><td>Task</td><td>Output</td></tr>
+<tr><td>5.1</td><td>Attention analysis: does the model attend to the trigger?</td><td>Heatmaps</td></tr>
+<tr><td>5.2</td><td>Failure case analysis: which prompts evade the attack?</td><td>Error taxonomy</td></tr>
+<tr><td>5.3</td><td>Write paper draft</td><td>`/paper/`</td></tr>
+</tbody></table>
+<h3>Success Criteria</h3>
+<p>The project is publishable (venue target: **IEEE S&amp;P**, **USENIX Security**, or **ICLR**) if:</p>
+<p>1. CommentTrojan achieves ASR ≥ 80% on at least 4/5 vulnerability classes at 1% poisoning rate</p>
+<p>2. CA drop ≤ 2% relative to clean baseline</p>
+<p>3. The attack outperforms all three baselines in both ASR and stealth (static analysis detection rate)</p>
+<p>4. At least one defense (fine-tuning, comment stripping, instruction filtering) fails to reduce ASR below 20%</p>
+<p>---</p>
+<h2>References</h2>
+<ul>
+<li>Sun, W. et al. (2023). &quot;Backdooring Neural Code Search.&quot; *arXiv:2305.17506*. — BadCode attack using identifier renaming as triggers for code search models.</li>
+<li>Li, Y. et al. (2023). &quot;Multi-target Backdoor Attacks for Code Pre-trained Models.&quot; *arXiv:2306.08350*. — Task-agnostic backdoor using dead-code insertion for code PTMs.</li>
+<li>Tran, K. et al. (2026). &quot;Poison with Style: A Practical Poisoning Attack on Code Large Language Models.&quot; *arXiv:2605.27631*. — Style-based covert triggers for code generation LLMs.</li>
+<li>Hussain, A. et al. (2023). &quot;A Survey of Trojans in Neural Models of Source Code: Taxonomy and Techniques.&quot; *arXiv:2305.03803*. — Taxonomy of trigger types for code neural models.</li>
+<li>Cotroneo, D. &amp; Liguori, P. (2023). &quot;Vulnerabilities in AI Code Generators: Exploring Targeted Data Poisoning Attacks.&quot; *arXiv:2308.04451*. — Data poisoning in AI code generators.</li>
+<li>Improta, C. (2024). &quot;Poisoning Programs by Un-Repairing Code: Security Concerns of AI-generated Code.&quot; *arXiv:2403.06675*. — Vulnerability injection via un-repairing code.</li>
+<li>Sun, W. et al. (2025). &quot;Show Me Your Code! Kill Code Poisoning: A Lightweight Method Based on Code Naturalness.&quot; *arXiv:2502.15830*. — Defense against code poisoning via n-gram naturalness.</li>
+<li>Improta, C. (2025). &quot;Detecting Stealthy Data Poisoning Attacks in AI Code Generators.&quot; *arXiv:2508.21636*. — Defense against stealthy code poisoning.</li>
+</ul></article></main>
+</body>
+</html>

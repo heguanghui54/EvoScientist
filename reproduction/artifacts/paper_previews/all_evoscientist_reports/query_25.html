@@ -1,0 +1,249 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Research Proposal: Conflict-Aware Multi-Hop Reasoning (CAMHR)</title>
+  <style>
+    body { margin: 0; background: #f7f8f8; color: #17191c; font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; line-height: 1.62; }
+    header { padding: 28px clamp(18px, 5vw, 72px); background: #fff; border-bottom: 1px solid #dce1e6; }
+    main { max-width: 980px; margin: 0 auto; padding: 28px 18px 56px; }
+    article { background: #fff; border: 1px solid #dce1e6; border-radius: 8px; padding: clamp(18px, 4vw, 42px); }
+    h1 { margin: 0 0 10px; font-size: clamp(28px, 4vw, 46px); line-height: 1.1; letter-spacing: 0; }
+    h2 { margin-top: 30px; border-top: 1px solid #e7eaee; padding-top: 18px; letter-spacing: 0; }
+    h3, h4 { letter-spacing: 0; }
+    p, li, td { font-size: 15px; }
+    .meta { color: #606a73; display: grid; gap: 4px; }
+    a { color: #225f9f; }
+    table { border-collapse: collapse; width: 100%; overflow-wrap: anywhere; }
+    td { border: 1px solid #e1e5ea; padding: 8px; vertical-align: top; }
+    pre { white-space: pre-wrap; background: #f0f3f5; padding: 14px; border-radius: 6px; overflow-x: auto; }
+    code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    .nav { margin-bottom: 14px; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="nav"><a href="index.html">← All 30 reports</a></div>
+    <h1>Research Proposal: Conflict-Aware Multi-Hop Reasoning (CAMHR)</h1>
+    <div class="meta">
+      <div>Query 25: Multi-source reasoning</div>
+      <div>Generate a research proposal on complex reasoning with multi-source information.</div>
+      <div>Source: <code>artifacts/remote_fetch/full_trajectories/EvoScientist/query_25/final_report.md</code></div>
+    </div>
+  </header>
+  <main><article><h1>Research Proposal: Conflict-Aware Multi-Hop Reasoning (CAMHR)</h1>
+<h2>Explicitly Resolving Inter-Document Conflicts in Multi-Source Question Answering</h2>
+<p>---</p>
+<h2>1. Problem</h2>
+<p>**Generative language models deployed with retrieval-augmented generation (RAG) must reason across multiple retrieved documents to answer complex questions. Current systems assume these documents complement each other, but real-world information sources routinely conflict — different pages report different dates, different studies report different effect sizes, and different eyewitnesses give different accounts.**</p>
+<p>When documents disagree, today&#x27;s models behave unpredictably: they silently pick one source (usually the one that appears earlier or has higher lexical overlap with the question), hallucinate a compromise answer that matches neither source, or produce inconsistent answers when re-queried with different document subsets. This is not a corner case — conflicting information is pervasive in news, medical guidelines, legal documents, and encyclopedic knowledge.</p>
+<p>**The core problem** is that multi-hop reasoning architectures have no explicit mechanism for handling inter-document conflict. Conflict resolution is left as an implicit emergent behavior of the pretrained transformer, and it fails reliably.</p>
+<p>**Specific subproblem addressed in this proposal**: When a multi-hop question requires synthesizing information from multiple documents that contain contradictory or inconsistent facts, how can we architect an explicit conflict detection and resolution stage that improves answer accuracy, consistency, and calibration?</p>
+<p>---</p>
+<h2>2. Hypothesis</h2>
+<p>**Primary hypothesis**: Explicitly modeling inter-document conflict as a discrete reasoning stage — **detect → resolve → answer** — improves answer accuracy by at least 10% (absolute F1) on multi-hop questions with conflicting sources, compared to standard end-to-end multi-hop QA architectures that process documents implicitly.</p>
+<p>**Secondary hypotheses**:</p>
+<p>1. **H₂ₐ**: Conflict-aware reasoning improves consistency: answers become more stable across different subsets of retrieved documents (measured by Krippendorff&#x27;s α ≥ 0.80 vs. ≤ 0.55 for baselines).</p>
+<p>2. **H₂ₓ**: Explicit conflict detection + resolution improves calibration between model confidence and answer correctness on conflict cases (expected calibration error reduced by ≥ 0.15).</p>
+<p>3. **H₂ₓ**: Different conflict resolution strategies (source credibility, majority vote, explicit abstention) trade off differently by domain — no single strategy dominates across all conflict types.</p>
+<p>---</p>
+<h2>3. Method: Conflict-Aware Multi-Hop Reasoning (CAMHR)</h2>
+<p>CAMHR adds a dedicated **Conflict Resolution Module** between document retrieval and answer generation, structured as three stages:</p>
+<h3>Stage 1: Conflict Detection</h3>
+<p>Given a question *q* and a set of retrieved documents *D = {d₁, d₂, ..., dₙ}*, extract all factual claims from each document using a lightweight NLI-based claim decomposition. Then compute pairwise contradiction scores between claims that are relevant to *q* using a fine-tuned NLI model (DeBERTa-v3-large-MNLI).</p>
+<p>Output: A **conflict graph** where nodes are documents, edges exist if they contain contradictory claims relevant to *q*, and edge weights represent contradiction strength (1 - NLI entailment probability for contradictory pairs).</p>
+<p>Documents with no conflict edges → proceed directly to answer generation (standard path).</p>
+<p>Documents with conflict edges → proceed to Stage 2.</p>
+<h3>Stage 2: Conflict Resolution</h3>
+<p>Three resolution strategies are implemented and compared:</p>
+<table><tbody>
+<tr><td>Strategy</td><td>Mechanism</td><td>When It Helps</td></tr>
+<tr><td>**Source Credibility Weighting**</td><td>Each document gets a credibility score (based on source metadata, recency, authoritativeness). Weight vote by credibility.</td><td>News, medical guidelines with known source quality.</td></tr>
+<tr><td>**Majority Consensus**</td><td>When ≥3 sources are available, take the majority-supported fact. Report confidence as proportion.</td><td>Encyclopedia-style facts with many independent sources.</td></tr>
+<tr><td>**Explicit Abstention**</td><td>If contradiction strength exceeds threshold *τ* AND no resolution strategy produces a confident answer, output &quot;Sources conflict — answer uncertain&quot; + present conflicting claims.</td><td>High-stakes domains (medical, legal) where hallucinating is worse than abstaining.</td></tr>
+</tbody></table>
+<p>A **conflict classifier** (trained on synthetic conflict data, see §4) selects which resolution strategy to apply given the conflict graph properties (density, strength distribution, number of documents, domain).</p>
+<h3>Stage 3: Answer Generation with Attribution</h3>
+<p>The resolved facts are fed into the generator alongside conflict metadata:</p>
+<ul>
+<li>The resolved answer</li>
+<li>Which documents were in conflict</li>
+<li>Which resolution strategy was used</li>
+<li>Confidence score for the resolved answer</li>
+</ul>
+<p>The generator is instructed to produce the answer and cite supporting documents. When abstention is triggered, the generator must produce the abstention template rather than hallucinating.</p>
+<h3>Full Pipeline</h3>
+<pre><code>
+Question → Retrieve → Decompose Claims → Conflict Detection
+                                            ↓
+                              ┌──────────── NO (no conflict)
+                              ↓                ↓
+                     Conflict Resolution   Standard Generation
+                              ↓
+                     Answer Generation (with conflict trace)
+</code></pre>
+<p>---</p>
+<h2>4. Dataset &amp; Benchmark</h2>
+<p>No existing dataset explicitly tests multi-hop reasoning under inter-document conflict. We construct two evaluation sets:</p>
+<h3>Primary: Conflicting-MuSiQue (Synthetic Controlled)</h3>
+<p>**Base**: MuSiQue (Multi-hop Sequential Question-answering) — 25K multi-hop questions with supporting documents.</p>
+<p>**Conflict injection protocol**:</p>
+<p>1. For each multi-hop question, identify the two supporting documents.</p>
+<p>2. Make a copy of one supporting document.</p>
+<p>3. Edit the copy to inject a controlled contradiction relevant to the answer: change a numerical value (date, count, measurement), replace an entity name, or flip a relational fact.</p>
+<p>4. Replace the original document with the edited version.</p>
+<p>5. The question now has one supporting document with the correct fact and one with the contradictory fact.</p>
+<p>**Controlled variables**:</p>
+<ul>
+<li>**Conflict type**: numerical (dates, counts), entity (names, locations), relational (causal, temporal)</li>
+<li>**Severity**: direct contradiction vs. subtle inconsistency (requires inference to detect conflict)</li>
+<li>**Position**: contradictory document appears first vs. second (to control for position bias)</li>
+<li>**Number of sources**: 2 conflicting, 3 (2-conflict vs. 1-supporting), 4 (3-conflict vs. 1-supporting)</li>
+</ul>
+<p>**Size**: 5,000 test questions × 3 severity levels × 3 conflict types = 15,000 evaluation instances (plus 10,000 training instances for the conflict classifier).</p>
+<h3>Secondary: HotpotQA-Conflict (Natural)</h3>
+<p>Take HotpotQA and use an NLI model to automatically identify questions whose supporting documents contain naturally-occurring contradictions. This yields a small real-world benchmark (~200-500 questions). Used for validation of synthetic findings, not for training.</p>
+<p>**Expected size**: ~5-10% of HotpotQA has detectable contradictions between supporting docs.</p>
+<p>---</p>
+<h2>5. Evaluation Metrics</h2>
+<h3>Primary Metrics</h3>
+<table><tbody>
+<tr><td>Metric</td><td>What It Captures</td><td>Target</td></tr>
+<tr><td>**Answer F1** (token-level)</td><td>Factual correctness of generated answer</td><td>≥ 10 pt improvement over FiD</td></tr>
+<tr><td>**Exact Match**</td><td>Complete answer correctness</td><td>≥ 8 pt improvement over FiD</td></tr>
+<tr><td>**Conflict Detection F1**</td><td>Can the model correctly identify when documents conflict?</td><td>≥ 0.85</td></tr>
+</tbody></table>
+<h3>Consistency &amp; Calibration</h3>
+<table><tbody>
+<tr><td>Metric</td><td>What It Captures</td><td>Target</td></tr>
+<tr><td>**Krippendorff&#x27;s α**</td><td>Answer stability across different document subsets</td><td>≥ 0.80</td></tr>
+<tr><td>**Expected Calibration Error (ECE)**</td><td>Does confidence track accuracy on conflict cases?</td><td>≤ 0.10</td></tr>
+<tr><td>**Abstention Rate**</td><td>How often does the model correctly decline to answer?</td><td>Tuned to maximize a cost-weighted score</td></tr>
+</tbody></table>
+<h3>Diagnostic Metrics</h3>
+<table><tbody>
+<tr><td>Metric</td><td>What It Captures</td></tr>
+<tr><td>**Position bias**</td><td>Accuracy by position of contradictory document</td></tr>
+<tr><td>**Conflict-type accuracy**</td><td>Accuracy breakdown by numerical/entity/relational conflicts</td></tr>
+<tr><td>**Severity sensitivity**</td><td>Accuracy by subtle vs. direct contradiction</td></tr>
+</tbody></table>
+<p>---</p>
+<h2>6. Baselines</h2>
+<table><tbody>
+<tr><td>Baseline</td><td>Description</td><td>Why Chosen</td></tr>
+<tr><td>**Fusion-in-Decoder (FiD)**</td><td>State-of-the-art multi-hop QA: encode + fuse + decode</td><td>Gold standard multi-hop architecture</td></tr>
+<tr><td>**FiD + CoT prompting**</td><td>FiD with chain-of-thought before answer</td><td>Tests whether reasoning chains help implicitly</td></tr>
+<tr><td>**Standard RAG (retrieve-then-read)**</td><td>Retrieve top-5, concatenate, prompt GPT-4/Claude</td><td>Industry practice baseline</td></tr>
+<tr><td>**Self-Consistency RAG**</td><td>RAG × 5 samples, majority vote answer</td><td>Popularized by Wang et al. (2023)</td></tr>
+<tr><td>**FiD + Self-Ask**</td><td>FiD with intermediate question decomposition</td><td>Tests whether decomposition helps resolve conflicts</td></tr>
+</tbody></table>
+<p>All baselines evaluated on both standard MuSiQue (verify no regression) and Conflicting-MuSiQue (primary comparison).</p>
+<p>---</p>
+<h2>7. Ablations</h2>
+<table><tbody>
+<tr><td>Ablation</td><td>What It Tests</td><td>Expected Insight</td></tr>
+<tr><td>**No conflict detection** (always route to resolution)</td><td>Is detection necessary, or can we always resolve?</td><td>Detection prevents unnecessary computation but missing a conflict is costly</td></tr>
+<tr><td>**No resolution** (detect but just concatenate documents)</td><td>Does explicit resolution add value over just flagging?</td><td>Unclear — flagging alone may change model behavior</td></tr>
+<tr><td>**Single resolution strategy** (use only one of 3 strategies)</td><td>Is a learned classifier better than any single fixed strategy?</td><td>Likely: majority vote works for numerical conflicts, credibility for entity conflicts</td></tr>
+<tr><td>**No conflict graph** (use linearized conflict features instead)</td><td>Is the graph structure important?</td><td>Graph structure matters for ≥3 documents</td></tr>
+<tr><td>**Training-free resolution** (prompt-based, no classifier training)</td><td>Can an LLM resolve conflicts from instructions alone?</td><td>Measures value of the specialized classifier</td></tr>
+<tr><td>**Conflict severity sweep**</td><td>Accuracy as a function of how subtle the conflict is</td><td>Identifies the difficulty boundary</td></tr>
+</tbody></table>
+<p>---</p>
+<h2>8. Expected Failure Modes &amp; Mitigations</h2>
+<table><tbody>
+<tr><td>Failure Mode</td><td>Likelihood</td><td>Impact</td><td>Mitigation</td></tr>
+<tr><td>**Conflict detector over-flags** (high recall, low precision)</td><td>Medium</td><td>High — routes to resolution needlessly, adds latency</td><td>Adjust NLI contradiction threshold on validation set; report precision-recall curve</td></tr>
+<tr><td>**Conflict detector under-flags** (high precision, low recall)</td><td>Medium</td><td>High — misses real conflicts, degrades primary metric</td><td>Use recall-oriented detection + separate NLI model for missed conflict analysis</td></tr>
+<tr><td>**Model learns to ignore conflict metadata**</td><td>Low</td><td>Critical — entire pipeline becomes a no-op</td><td>Debug: probe classifier&#x27;s attention to conflict signal; if ignored, increase signal through special tokens or architectural gating</td></tr>
+<tr><td>**Resolution strategy fails on subtle/indirect contradictions**</td><td>High</td><td>Medium — degrades performance on hardest cases</td><td>Analyze per-severity results; consider adding a second-pass deliberation for low-confidence resolved cases</td></tr>
+<tr><td>**Training-inference mismatch** (synthetic conflicts ≠ natural conflicts)</td><td>Medium</td><td>High — synthetic gains don&#x27;t transfer to HotpotQA-Conflict</td><td>Proactive validation on HotpotQA-Conflict; if transfer fails, augment synthetic data with natural conflict patterns</td></tr>
+<tr><td>**Abstention strategy over-used** (models abstain on easy cases)</td><td>Low</td><td>Medium — reduces useful answers</td><td>Set conservative abstention threshold; evaluate abstention as a function of answer confidence</td></tr>
+<tr><td>**Position bias persists** (resolution favors first document regardless of content)</td><td>Medium</td><td>High — undermines purpose of explicit resolution</td><td>Counterbalancing during construction; measure and report position-conditional accuracy as a diagnostic</td></tr>
+</tbody></table>
+<p>---</p>
+<h2>9. Execution Plan</h2>
+<h3>Phase 0: Infrastructure &amp; Data Construction (2 weeks)</h3>
+<table><tbody>
+<tr><td>Week</td><td>Tasks</td></tr>
+<tr><td>1a</td><td>Build Conflicting-MuSiQue construction pipeline: MuSiQue download, document editing script for numerical/entity/relational conflicts, validation of injected contradictions via NLI</td></tr>
+<tr><td>1b</td><td>Implement NLI-based claim decomposition + pairwise contradiction scoring (DeBERTa-v3-large-MNLI)</td></tr>
+<tr><td>1c</td><td>Identify HotpotQA-Conflict subset using same NLI pipeline</td></tr>
+<tr><td>2a</td><td>Verify data quality: sample 100 examples, manually audit conflict injection</td></tr>
+<tr><td>2b</td><td>Write conflict detection evaluation harness</td></tr>
+<tr><td>2c</td><td>Train conflict classifier on synthetic data (3,000 examples)</td></tr>
+</tbody></table>
+<p>**Deliverables**: Conflicting-MuSiQue dataset (train/dev/test splits), HotpotQA-Conflict benchmark, conflict detection pipeline.</p>
+<h3>Phase 1: Baseline Implementations (2 weeks)</h3>
+<table><tbody>
+<tr><td>Week</td><td>Tasks</td></tr>
+<tr><td>3a</td><td>Implement FiD for MuSiQue (reproduce published numbers on standard MuSiQue)</td></tr>
+<tr><td>3b</td><td>Implement Standard RAG baseline (retrieve-then-generate with GPT-4 / Claude API)</td></tr>
+<tr><td>3c</td><td>Implement CoT and Self-Ask variants on FiD</td></tr>
+<tr><td>4a</td><td>Evaluate all baselines on Conflicting-MuSiQue → establish reference scores</td></tr>
+<tr><td>4b</td><td>Evaluate all baselines on standard MuSiQue → verify no regression</td></tr>
+<tr><td>4c</td><td>Measure position bias and consistency for each baseline</td></tr>
+</tbody></table>
+<p>**Deliverables**: All five baselines benchmarked on both datasets. Position bias and consistency diagnostics.</p>
+<h3>Phase 2: CAMHR Implementation (3 weeks)</h3>
+<table><tbody>
+<tr><td>Week</td><td>Tasks</td></tr>
+<tr><td>5a</td><td>Implement conflict detection → conflict graph construction pipeline</td></tr>
+<tr><td>5b</td><td>Implement Stage 1 integration with FiD encoder (conflict graph as side input)</td></tr>
+<tr><td>5c</td><td>Implement Stage 2: three resolution strategy modules (credibility, majority, abstention)</td></tr>
+<tr><td>6a</td><td>Implement conflict classifier (which strategy to use)</td></tr>
+<tr><td>6b</td><td>Implement Stage 3: answer generation with conflict metadata</td></tr>
+<tr><td>6c</td><td>Integrate full CAMHR pipeline, end-to-end</td></tr>
+<tr><td>7a</td><td>Debug integration issues on small dev set</td></tr>
+<tr><td>7b</td><td>Tune conflict detection threshold on validation set</td></tr>
+<tr><td>7c</td><td>Set up evaluation harness end-to-end</td></tr>
+</tbody></table>
+<p>**Deliverables**: Full CAMHR pipeline, end-to-end on dev set.</p>
+<h3>Phase 3: Evaluation &amp; Ablations (2 weeks)</h3>
+<table><tbody>
+<tr><td>Week</td><td>Tasks</td></tr>
+<tr><td>8a</td><td>Full CAMHR evaluation on Conflicting-MuSiQue (all severity × type combinations)</td></tr>
+<tr><td>8b</td><td>Full CAMHR evaluation on MuSiQue (verify no regression on non-conflicting data)</td></tr>
+<tr><td>8c</td><td>Run all 6 ablations</td></tr>
+<tr><td>9a</td><td>Full evaluation on HotpotQA-Conflict (transfer check)</td></tr>
+<tr><td>9b</td><td>Calibration analysis (ECE) for CAMHR vs. baselines</td></tr>
+<tr><td>9c</td><td>Consistency analysis (Krippendorff&#x27;s α)</td></tr>
+<tr><td>9d</td><td>Compile results tables and figures</td></tr>
+</tbody></table>
+<p>**Deliverables**: Complete results with confidence intervals (5 seeds), ablation results, calibration curves.</p>
+<h3>Phase 4: Analysis &amp; Write-up (2 weeks)</h3>
+<table><tbody>
+<tr><td>Week</td><td>Tasks</td></tr>
+<tr><td>10a</td><td>Failure analysis: categorize and count failure modes</td></tr>
+<tr><td>10b</td><td>Error trees: what types of conflict cause CAMHR to fail?</td></tr>
+<tr><td>10c</td><td>Sensitivity analysis: conflict threshold, number of documents, position</td></tr>
+<tr><td>11a</td><td>Write paper: Related Work, Method, Experiments, Analysis</td></tr>
+<tr><td>11b</td><td>Internal review and revision</td></tr>
+<tr><td>11c</td><td>Release dataset and code</td></tr>
+</tbody></table>
+<p>**Deliverables**: Paper draft (target: ACL/EMNLP/NeurIPS), dataset release, code release.</p>
+<p>**Total estimated timeline**: 11 weeks (single researcher, one GPU node).</p>
+<p>---</p>
+<h2>10. Prior Work &amp; Positioning</h2>
+<p>This proposal builds on and differentiates from:</p>
+<ul>
+<li>**Multi-hop QA architectures**: FiD (Izacard &amp; Grave, 2021), REALM (Guu et al., 2020), and RAG (Lewis et al., 2020) all assume complementary information — no conflict handling.</li>
+<li>**Multi-document QA with contradictions**: Chen et al. (2022) study LLM behavior on conflicting information but only analyze, not propose a method. Cohen et al. (2023) propose prompting strategies but no architectural change.</li>
+<li>**NLI for verification**: DAG-NLI (Schuster et al., 2022) and related work use NLI for claim verification but not as a conflict detection stage within a QA pipeline.</li>
+<li>**Abstention in QA**: Kadavath et al. (2022) and Yin et al. (2023) study when models should abstain, but not in the multi-source conflict setting.</li>
+</ul>
+<p>**Novelty**: CAMHR is the first architecture that explicitly detects inter-document conflicts via a lightweight NLI module, resolves them through a learned strategy selector, and generates answers with conflict traceability — all within a multi-hop QA pipeline evaluated on a controlled benchmark.</p>
+<p>---</p>
+<h2>11. Resource Requirements</h2>
+<table><tbody>
+<tr><td>Resource</td><td>Minimum</td><td>Recommended</td></tr>
+<tr><td>GPU</td><td>1× RTX 3090 (24GB)</td><td>1× A100 (40GB)</td></tr>
+<tr><td>Storage</td><td>50GB</td><td>100GB</td></tr>
+<tr><td>API budget (GPT-4/Claude for RAG baselines)</td><td>—</td><td>~$500</td></tr>
+<tr><td>Key libraries</td><td>transformers, torch, NLI models (DeBERTa-v3), MuSiQue/HotpotQA datasets</td><td></td></tr>
+<tr><td>Stored per run</td><td>seeds, configs, checkpoints, logs, predictions</td><td></td></tr>
+</tbody></table>
+<p>All code will use deterministic seeds and logged configs for reproducibility.</p></article></main>
+</body>
+</html>

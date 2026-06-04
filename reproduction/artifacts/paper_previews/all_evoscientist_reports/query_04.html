@@ -1,0 +1,252 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TrialMatch-Agents: A Multi-Agent Framework for Explainable Clinical Trial Eligibility Matching via Specialized Criterion Decomposition</title>
+  <style>
+    body { margin: 0; background: #f7f8f8; color: #17191c; font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; line-height: 1.62; }
+    header { padding: 28px clamp(18px, 5vw, 72px); background: #fff; border-bottom: 1px solid #dce1e6; }
+    main { max-width: 980px; margin: 0 auto; padding: 28px 18px 56px; }
+    article { background: #fff; border: 1px solid #dce1e6; border-radius: 8px; padding: clamp(18px, 4vw, 42px); }
+    h1 { margin: 0 0 10px; font-size: clamp(28px, 4vw, 46px); line-height: 1.1; letter-spacing: 0; }
+    h2 { margin-top: 30px; border-top: 1px solid #e7eaee; padding-top: 18px; letter-spacing: 0; }
+    h3, h4 { letter-spacing: 0; }
+    p, li, td { font-size: 15px; }
+    .meta { color: #606a73; display: grid; gap: 4px; }
+    a { color: #225f9f; }
+    table { border-collapse: collapse; width: 100%; overflow-wrap: anywhere; }
+    td { border: 1px solid #e1e5ea; padding: 8px; vertical-align: top; }
+    pre { white-space: pre-wrap; background: #f0f3f5; padding: 14px; border-radius: 6px; overflow-x: auto; }
+    code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    .nav { margin-bottom: 14px; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="nav"><a href="index.html">← All 30 reports</a></div>
+    <h1>TrialMatch-Agents: A Multi-Agent Framework for Explainable Clinical Trial Eligibility Matching via Specialized Criterion Decomposition</h1>
+    <div class="meta">
+      <div>Query 04: Healthcare agents</div>
+      <div>Help me generate a research proposal on AI agents in healthcare.</div>
+      <div>Source: <code>artifacts/remote_fetch/full_trajectories/EvoScientist/query_04/final_report.md</code></div>
+    </div>
+  </header>
+  <main><article><h1>TrialMatch-Agents: A Multi-Agent Framework for Explainable Clinical Trial Eligibility Matching via Specialized Criterion Decomposition</h1>
+<p>**Subproblem chosen:** Clinical trial eligibility screening and patient-trial matching in oncology — specifically, the automated determination of whether a patient meets a trial&#x27;s eligibility criteria given unstructured clinical text.</p>
+<p>---</p>
+<h2>1. Problem</h2>
+<p>**Clinical trial recruitment is the single largest bottleneck in drug development.** Fewer than 5% of adult cancer patients enroll in clinical trials, and roughly 80% of trials fail to meet their enrollment targets on time (Getz et al., 2023). The primary barrier is not patient awareness but the labor-intensive screening process: clinical research coordinators manually review each patient&#x27;s electronic health records (EHRs) against each trial&#x27;s eligibility criteria — a process that takes 20–40 minutes per patient-trial pair and does not scale to the ~500,000 trials listed on ClinicalTrials.gov.</p>
+<p>**Formally, the patient-trial matching problem is:** Given a patient record *P* (unstructured clinical notes, lab reports, pathology, medication lists) and a clinical trial *T* with eligibility criteria *C* (a set of inclusion/exclusion criteria expressed in natural language), determine whether *P* is eligible for *T*. Each criterion *c ∈ C* requires a binary (or graded) eligibility judgment, and the trial-level judgment is a logical function over the criterion-level judgments.</p>
+<p>**Why this is hard for current AI agents:** Eligibility criteria span highly heterogeneous knowledge dimensions — demographics, disease histology, genomic biomarkers, prior treatment history, comorbidities, lab values, and concurrent medications. A single LLM must reason across all these dimensions simultaneously, leading to context confusion (the model loses track of which criteria apply), hallucinated patient facts, and opaque decisions with no traceable evidence. Current state-of-the-art systems (TrialGPT, LLM-Match) treat this as a monolithic classification or retrieval task, producing no structured decomposition per criterion dimension and offering minimal explainability.</p>
+<p>---</p>
+<h2>2. Hypothesis</h2>
+<p>**Central hypothesis:** Decomposing clinical trial eligibility matching into a multi-agent system with specialized agents for distinct criterion dimensions — each equipped with dimension-specific retrieval and reasoning capabilities — improves matching accuracy, enables traceable evidence per judgment, and provides calibrated confidence that allows effective human-AI triage, compared to monolithic single-LLM approaches.</p>
+<p>**Sub-hypotheses:**</p>
+<ul>
+<li>**H1 (Accuracy):** A multi-agent decomposition yields higher patient-trial matching accuracy (NDCG@10, F1) than single-LLM baselines (TrialGPT, zero-shot GPT-4, LLM-Match) on TREC Clinical Tracks benchmarks, because each agent reasons over a focused subset of criteria without cross-dimension interference.</li>
+</ul>
+<ul>
+<li>**H2 (Explainability):** Multi-agent architectures naturally produce structured, criterion-level evidence traces that enable clinicians to verify individual judgments, achieving higher factuality and lower hallucination rates (measured by expert annotation of a random sample of 200 patient-criterion pairs).</li>
+</ul>
+<ul>
+<li>**H3 (Triage):** Agent-level confidence calibration enables a reliable human-triage policy: cases where all agents agree with high confidence can be fully automated, while low-confidence cases can be escalated, maintaining overall accuracy comparable to full manual review while reducing human workload by ≥50%.</li>
+</ul>
+<ul>
+<li>**H4 (Modularity):** Individual agents can be independently upgraded (e.g., integrating a specialized genomic reasoning tool or a fine-tuned biomedical LLM) without retraining the full system, enabling continuous improvement.</li>
+</ul>
+<p>---</p>
+<h2>3. Method: TrialMatch-Agents</h2>
+<p>TrialMatch-Agents decomposes the eligibility matching task into a **coordinated multi-agent architecture** with five specialized agent types and a coordinator agent.</p>
+<h3>3.1 Architecture</h3>
+<pre><code>
+Patient Record (unstructured clinical text)
+                      │
+                      ▼
+┌──────────────────────────────────────────┐
+│           Criterion Decomposer            │
+│   (Parses trial criteria → dimensions)    │
+└──────────────────────────────────────────┘
+                      │
+     ┌────────────────┼────────────────┐
+     ▼                ▼                ▼
+┌──────────┐   ┌──────────┐      ┌──────────┐
+│Demographic│   │  Disease │ ...  │Comorbidity│
+│  Agent    │   │  Agent   │      │  Agent    │
+│           │   │          │      │           │
+│·Age/gender│   │·Histology│      │·Conditions│
+│·Location  │   │·Stage    │      │·Severity  │
+│·ECOG      │   │·Subtype  │      │·Exclusion │
+└──────────┘   └──────────┘      └──────────┘
+      │              │                  │
+      └──────────────┼──────────────────┘
+                     ▼
+┌──────────────────────────────────────────┐
+│           Coordinator Agent               │
+│   (Aggregates → confidence → verdict)     │
+└──────────────────────────────────────────┘
+                     │
+                     ▼
+         Trial-Level Judgment + Evidence Trace
+</code></pre>
+<h3>3.2 Agent Design</h3>
+<p>Each specialized agent follows a **perceive → retrieve → reason → judge** loop:</p>
+<table><tbody>
+<tr><td>Step</td><td>Operation</td></tr>
+<tr><td>**Perceive**</td><td>Receive the subset of eligibility criteria relevant to this dimension (from Criterion Decomposer)</td></tr>
+<tr><td>**Retrieve**</td><td>Use RAG to extract relevant text spans from the patient record (structured queries per dimension)</td></tr>
+<tr><td>**Reason**</td><td>Apply dimension-specific reasoning (e.g., biomarker agent uses a gene-variant lookup tool; lab agent uses reference-range calculator)</td></tr>
+<tr><td>**Judge**</td><td>Output a structured verdict: `{criterion_id, status: (eligible/ineligible/uncertain), evidence: [text spans], confidence: [0-1]}`</td></tr>
+</tbody></table>
+<p>**Agent specializations:**</p>
+<p>1. **Demographic Agent:** Age, sex, ECOG performance status, geographic restrictions. Retrieves structured EHR fields.</p>
+<p>2. **Disease Histology Agent:** Cancer type, histologic subtype, TNM stage, grade. Uses oncology knowledge base for histology classification.</p>
+<p>3. **Biomarker/Genomic Agent:** Mutation status (EGFR, KRAS, etc.), IHC markers (PD-L1, HER2), fusion genes. Integrates structured molecular pathology reports.</p>
+<p>4. **Prior Treatment Agent:** Prior lines of therapy, response status, washout periods, prior radiation fields. Extracts from medication and treatment timelines.</p>
+<p>5. **Comorbidity &amp; Organ Function Agent:** Comorbid conditions (CKD, CHF, etc.), organ function (creatinine, LVEF). Maps lab values to organ function categories.</p>
+<p>6. **Concurrent Medication Agent:** Prohibited medications, required supportive care. Extracts from medication lists.</p>
+<p>7. **Coordinator Agent:** Aggregates all agent verdicts, applies logical combination (AND/OR/NOT criteria structure), produces final trial-level judgment with overall confidence and a human-readable evidence summary.</p>
+<h3>3.3 Key Technical Components</h3>
+<ul>
+<li>**Criterion Decomposer:** Uses structured prompting of an LLM (GPT-4o or Llama-3 70B) to parse each eligibility criterion into a dimension label + structured condition. Validated against the human-annotated TREC criteria.</li>
+<li>**Retrieval:** Each agent uses a dimension-specific retriever (BM25 + bi-encoder reranking) over the patient text, with dimension-tailored query expansion (e.g., biomarker agent expands &quot;EGFR mutation&quot; to synonyms and related test names).</li>
+<li>**Confidence Calibration:** Each agent reports confidence based on: (a) proportion of criteria with unambiguous evidence, (b) retrieval relevance scores, (c) self-consistency across N=5 Monte Carlo sampling of the LLM reasoning path.</li>
+<li>**Deliberation Round (optional):** For high-confidence disagreements, agents can exchange rationale in a single round of structured deliberation before the coordinator makes the final call.</li>
+</ul>
+<h3>3.4 Open-Source Variant</h3>
+<p>To address the reliance on proprietary models noted in the literature (Ghosh et al., 2025 survey), we implement a fully open-source variant using Llama-3 70B / Meditron-70B + open retrievers (BM25, Contriever, E5-mistral).</p>
+<p>---</p>
+<h2>4. Dataset / Benchmark</h2>
+<p>We evaluate on four publicly available benchmarks, following the standard evaluation protocols:</p>
+<table><tbody>
+<tr><td>Benchmark</td><td>Year</td><td>Description</td><td>Size</td><td>Metric</td></tr>
+<tr><td>**TREC Clinical Trials Track 2021**</td><td>2021</td><td>Patient descriptions (synthetic) + clinical trial topics</td><td>~75 topics, ~75K trials</td><td>NDCG@10, P@10</td></tr>
+<tr><td>**TREC Clinical Trials Track 2022**</td><td>2022</td><td>Extended topics, graded relevance</td><td>~50 topics</td><td>NDCG@10, P@10</td></tr>
+<tr><td>**TREC Clinical Trials Track 2023**</td><td>2023</td><td>Real patient records from MIMIC-III</td><td>~50 topics</td><td>NDCG@10, P@10, R-prec</td></tr>
+<tr><td>**n2c2 Cohort Selection**</td><td>2018</td><td>Patient records + trial eligibility criteria (structured criteria)</td><td>288 patients, 13 tasks</td><td>micro-F1, macro-F1</td></tr>
+</tbody></table>
+<p>**Primary benchmark:** TREC Clinical Trials 2022 (for comparability with TrialGPT, Controlled Reasoning, and LLM-Match which all report on this split).</p>
+<p>**Secondary dataset for generalizability:** n2c2 2018 Cohort Selection for criterion-level F1 evaluation.</p>
+<p>**Supplementary evaluation on real clinical data:** A set of 100 de-identified patient-trial pairs from an academic medical center (pending IRB exemption — retrospective, de-identified, no human subjects).</p>
+<p>---</p>
+<h2>5. Evaluation Metrics</h2>
+<h3>Primary Metrics (TREC benchmarks)</h3>
+<ul>
+<li>**NDCG@10** — primary ranking metric, graded relevance. Expected SOTA: ~0.693 (Jullien et al., 2024). Target: **≥0.75**.</li>
+<li>**Precision@10** — precision of top-10 trial recommendations. Expected SOTA: ~0.73. Target: **≥0.78**.</li>
+<li>**R-prec** — precision at the number of relevant trials.</li>
+</ul>
+<h3>Secondary Metrics</h3>
+<ul>
+<li>**Patient-level accuracy** — proportion of patient-trial pairs correctly classified (eligible/ineligible). Evaluate on n2c2.</li>
+<li>**Macro-F1 per criterion dimension** — performance breakdown by criterion type (demographic, biomarker, etc.).</li>
+<li>**Explainability score** — measured by clinician raters evaluating 200 randomly sampled patient-criterion judgments for: evidence correctness (is the cited text span relevant?), judgment correctness (is the eligibility label correct given the text?), completeness (were all relevant evidence spans considered?).</li>
+<li>**Human triage efficiency** — proportion of cases confidently resolved by agents vs. escalated for human review.</li>
+<li>**Confidence calibration (ECE)** — Expected Calibration Error between predicted confidence and actual accuracy.</li>
+</ul>
+<p>---</p>
+<h2>6. Baselines</h2>
+<table><tbody>
+<tr><td>Baseline</td><td>Description</td><td>Reference</td></tr>
+<tr><td>**TrialGPT**</td><td>Three-module zero-shot LLM pipeline: retrieval → criterion matching → ranking</td><td>Jin et al., 2023 (arXiv:2307.15051)</td></tr>
+<tr><td>**LLM-Match**</td><td>Fine-tuned Llama + RAG for patient matching</td><td>Li et al., 2025 (arXiv:2503.13281)</td></tr>
+<tr><td>**Zero-shot GPT-4o**</td><td>Single LLM prompt for eligibility classification</td><td>Common baseline</td></tr>
+<tr><td>**Set-Guided Reasoning**</td><td>Controlled LLM reasoning with structured criterion sets</td><td>Jullien et al., 2024 (arXiv:2409.18998)</td></tr>
+<tr><td>**BM25 + Neural Reranker**</td><td>Standard IR pipeline (no LLM reasoning)</td><td>Kusa et al., 2023 (arXiv:2307.00381)</td></tr>
+</tbody></table>
+<p>All baselines evaluated on identical TREC train/test splits with identical document collections.</p>
+<p>---</p>
+<h2>7. Ablations</h2>
+<table><tbody>
+<tr><td>Ablation</td><td>Purpose</td><td>Expected Finding</td></tr>
+<tr><td>**A1: Single-agent vs. multi-agent**</td><td>Remove agent decomposition; route all criteria to one LLM with same total parameter count</td><td>Multi-agent outperforms single-agent, especially on criteria-rich trials (≥10 criteria)</td></tr>
+<tr><td>**A2: With vs. without RAG**</td><td>Disable dimension-specific retrieval; agents reason from full patient text</td><td>RAG improves precision on biomarker/lab criteria; minimal effect on demographics</td></tr>
+<tr><td>**A3: With vs. without confidence calibration**</td><td>Remove confidence scores; use raw LLM logits</td><td>Calibration reduces false positives in the &quot;fully automated&quot; regime</td></tr>
+<tr><td>**A4: Open-source vs. proprietary backbone**</td><td>Compare Llama-3 70B vs. GPT-4o as agent backbone</td><td>GPT-4o outperforms on complex reasoning; gap is smaller for structured criteria</td></tr>
+<tr><td>**A5: With vs. without deliberation**</td><td>Remove inter-agent deliberation round</td><td>Deliberation helps on conflicting-evidence cases (e.g., patient eligible for inclusion but also meets exclusion)</td></tr>
+<tr><td>**A6: Criterion decomposer quality**</td><td>Compare rule-based decomposition vs. LLM-based vs. human-annotated</td><td>LLM-based decomp is nearly as good as human; rule-based fails on complex criteria</td></tr>
+</tbody></table>
+<p>---</p>
+<h2>8. Expected Failure Modes and Mitigations</h2>
+<table><tbody>
+<tr><td>Failure Mode</td><td>Likelihood</td><td>Mitigation</td></tr>
+<tr><td>**Agent over-specialization** — agent misses cross-dimensional interactions (e.g., a comorbidity affects treatment eligibility indirectly)</td><td>Medium</td><td>Coordinator agent explicitly prompts agents to flag &quot;cross-dimension concerns&quot; during deliberation</td></tr>
+<tr><td>**RAG retrieval misses critical evidence** — patient fact not captured in retrieved spans</td><td>Medium</td><td>Expand retriever to use query expansion + multi-hop retrieval; report &quot;evidence gap&quot; as a signal in confidence</td></tr>
+<tr><td>**Criterion decomposition errors** — complex criteria (e.g., &quot;no history of autoimmune disease unless well-controlled&quot;) mis-parsed</td><td>Medium-High</td><td>Evaluate decomposition quality separately; add an &quot;uncertain decomposition&quot; flag that escalates to human</td></tr>
+<tr><td>**Confidence miscalibration** — agents report high confidence but are wrong</td><td>High (common in LLMs)</td><td>Use temperature scaling + Monte Carlo self-consistency (N=5); evaluate ECE explicitly and reject poorly-calibrated agents</td></tr>
+<tr><td>**Benchmark saturation** — TREC benchmarks may not reflect real clinical complexity</td><td>Low-Medium</td><td>Add real-world evaluation on 100 de-identified patient-trial pairs from academic medical center</td></tr>
+<tr><td>**LLM hallucination of patient facts** — agent invents lab values or diagnoses</td><td>Medium</td><td>Strict evidence grounding: each judgment must cite specific text spans; coordinator verifies span existence</td></tr>
+</tbody></table>
+<p>---</p>
+<h2>9. Short Execution Plan</h2>
+<h3>Phase 0: Infrastructure &amp; Data (Weeks 1–3)</h3>
+<ul>
+<li>Set up TREC Clinical Trials 2021/2022/2023 and n2c2 datasets</li>
+<li>Implement Criterion Decomposer (rule-based + LLM variants)</li>
+<li>Implement BM25 + bi-encoder retrieval index over patient text</li>
+<li>Establish evaluation pipeline with TREC metrics (NDCG, P@10, R-prec)</li>
+</ul>
+<h3>Phase 1: Baselines (Weeks 4–6)</h3>
+<ul>
+<li>Reproduce TrialGPT (retrieval + matching + ranking modules) from published code</li>
+<li>Reproduce LLM-Match (fine-tuning pipeline)</li>
+<li>Implement zero-shot GPT-4o and Set-Guided Reasoning baselines</li>
+<li>Record all baseline metrics on all four benchmarks</li>
+</ul>
+<h3>Phase 2: Single-Agent System (Weeks 7–8)</h3>
+<ul>
+<li>Implement TrialMatch-Agents without decomposition (full patient context → single LLM) as a controlled ablation</li>
+<li>Establish single-agent upper/lower bounds</li>
+</ul>
+<h3>Phase 3: Multi-Agent System (Weeks 9–14)</h3>
+<ul>
+<li>Implement each specialized agent with dimension-specific RAG</li>
+<li>Implement Coordinator Agent with aggregation logic</li>
+<li>Implement confidence calibration (Monte Carlo self-consistency)</li>
+<li>Implement deliberation round</li>
+<li>Run full evaluation across all benchmarks</li>
+</ul>
+<h3>Phase 4: Ablations &amp; Analysis (Weeks 15–17)</h3>
+<ul>
+<li>Run all 6 ablations (A1–A6)</li>
+<li>Compute per-dimension metrics</li>
+<li>Compute explainability scores via clinician rating of 200 samples</li>
+<li>Compute confidence calibration (ECE)</li>
+<li>Error analysis: categorize failure modes across 100 incorrectly-predicted cases</li>
+</ul>
+<h3>Phase 5: Real-World Validation &amp; Writing (Weeks 18–20)</h3>
+<ul>
+<li>Evaluate on 100 real patient-trial pairs from academic medical center</li>
+<li>Write paper with full results tables, ablation analysis, and case studies</li>
+<li>Release open-source code and model weights</li>
+</ul>
+<p>**Total: ~20 weeks** (5 months) for a single-GPU setup (1× A100 or 4× RTX 4090).</p>
+<p>---</p>
+<h2>10. Related Work (Condensed)</h2>
+<p>This proposal builds on and extends the following lines of work, identified via literature search (paper-navigator, arXiv, Semantic Scholar):</p>
+<ul>
+<li>**TrialGPT** (Jin et al., 2023, *Nature Communications*): Three-module zero-shot LLM pipeline for patient-trial matching. Our work extends this by replacing the monolithic matching module with a multi-agent decomposition.</li>
+<li>**LLM-Match** (Li et al., 2025): Fine-tuned open-source LLM with RAG for patient matching. Strong benchmark results; we adopt their RAG approach but add agent specialization.</li>
+<li>**ClinicalAgent** (Yue et al., 2024): Multi-agent system for clinical trial *outcome prediction*, not patient-trial matching. We repurpose the multi-agent paradigm for the matching task.</li>
+<li>**MSK-MATCH** (Rosenthal et al., 2025): Production multi-agent trial matching system at MSK, but uses single LLM + RAG without criterion-dimension decomposition. Achieves 98.6% accuracy on breast cancer trials. We generalize this to multi-cancer types and introduce explicit dimension specialization.</li>
+<li>**Controlled LLM Reasoning** (Jullien et al., 2024): Set-guided reasoning for clinical trial retrieval (NDCG@10=0.693). Our method replaces set-guided prompting with explicit agent decomposition.</li>
+<li>**Scaling CT Matching** (Wong et al., 2023): Systematic study identifying context limitation and accuracy as key challenges. Our agent decomposition directly addresses context limitation.</li>
+<li>**Survey on LLM-Assisted Trial Recruitment** (Ghosh et al., 2025): Identifies weak benchmarks, proprietary model reliance, and lack of explainability as gaps. Our work addresses all three: (a) rigorous evaluation across 4 benchmarks, (b) open-source Llama variant, (c) structured evidence tracing.</li>
+</ul>
+<p>---</p>
+<h2>11. Resource Requirements</h2>
+<table><tbody>
+<tr><td>Resource</td><td>Specification</td><td>Purpose</td></tr>
+<tr><td>GPU</td><td>1× A100 80GB (or 4× RTX 4090)</td><td>LLM inference (GPT-4o API + Llama-3 70B local)</td></tr>
+<tr><td>Storage</td><td>200 GB</td><td>Dataset storage, retrieval indices, model checkpoints</td></tr>
+<tr><td>API access</td><td>OpenAI API (GPT-4o, ~$500)</td><td>Proprietary backbone for comparison</td></tr>
+<tr><td>Software</td><td>Python, PyTorch, HuggingFace, LangChain/LlamaIndex, TREC eval scripts</td><td>Implementation stack</td></tr>
+</tbody></table>
+<p>---</p>
+<h2>12. Anticipated Contributions</h2>
+<p>1. **Architecture:** TrialMatch-Agents — the first systematic multi-agent decomposition of clinical trial eligibility matching by criterion dimension, with specialized reasoning and retrieval per agent.</p>
+<p>2. **Benchmark results:** Comprehensive evaluation across 4 benchmarks (TREC 2021/2022/2023, n2c2) with 6 ablations, comparing multi-agent vs. single-agent vs. SOTA baselines.</p>
+<p>3. **Explainability framework:** Structured evidence tracing with per-criterion, per-dimension judgments and confidence calibration — enabling verifiable human-AI collaboration.</p>
+<p>4. **Open-source release:** Fully reproducible codebase with open-weight model variant (Llama-3 70B), enabling community extension.</p></article></main>
+</body>
+</html>

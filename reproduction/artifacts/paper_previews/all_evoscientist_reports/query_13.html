@@ -1,0 +1,207 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ExeCoT: Execution-Grounded Chain-of-Thought Synthesis for Code Reasoning via Self-Play</title>
+  <style>
+    body { margin: 0; background: #f7f8f8; color: #17191c; font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; line-height: 1.62; }
+    header { padding: 28px clamp(18px, 5vw, 72px); background: #fff; border-bottom: 1px solid #dce1e6; }
+    main { max-width: 980px; margin: 0 auto; padding: 28px 18px 56px; }
+    article { background: #fff; border: 1px solid #dce1e6; border-radius: 8px; padding: clamp(18px, 4vw, 42px); }
+    h1 { margin: 0 0 10px; font-size: clamp(28px, 4vw, 46px); line-height: 1.1; letter-spacing: 0; }
+    h2 { margin-top: 30px; border-top: 1px solid #e7eaee; padding-top: 18px; letter-spacing: 0; }
+    h3, h4 { letter-spacing: 0; }
+    p, li, td { font-size: 15px; }
+    .meta { color: #606a73; display: grid; gap: 4px; }
+    a { color: #225f9f; }
+    table { border-collapse: collapse; width: 100%; overflow-wrap: anywhere; }
+    td { border: 1px solid #e1e5ea; padding: 8px; vertical-align: top; }
+    pre { white-space: pre-wrap; background: #f0f3f5; padding: 14px; border-radius: 6px; overflow-x: auto; }
+    code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    .nav { margin-bottom: 14px; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="nav"><a href="index.html">← All 30 reports</a></div>
+    <h1>ExeCoT: Execution-Grounded Chain-of-Thought Synthesis for Code Reasoning via Self-Play</h1>
+    <div class="meta">
+      <div>Query 13: Data synthesis</div>
+      <div>Generate a research proposal on data synthesis for code LLMs.</div>
+      <div>Source: <code>artifacts/remote_fetch/full_trajectories/EvoScientist/query_13/final_report.md</code></div>
+    </div>
+  </header>
+  <main><article><h1>ExeCoT: Execution-Grounded Chain-of-Thought Synthesis for Code Reasoning via Self-Play</h1>
+<p>---</p>
+<h2>1. Problem</h2>
+<p>**What is the problem you are solving?**</p>
+<p>Code LLMs have improved dramatically at generating correct code, but they still struggle with **multi-step reasoning**: planning decomposition, debugging edge cases, and reasoning about correctness before writing code. Existing data synthesis pipelines for code focus on generating diverse problems and solutions (Magicoder, CodeInstruct) or filtering correct outputs via execution (CodeRL, VEST). They do **not** address the quality of the *intermediate reasoning traces* that lead to code.</p>
+<p>The result: models can generate correct code on familiar patterns but fail on problems requiring deliberate multi-step reasoning, especially when the first attempt is wrong and iterative refinement is needed.</p>
+<p>**Why now?**</p>
+<ul>
+<li>Reasoning models (o1, DeepSeek-R1, QwQ) show that CoT reasoning at inference time dramatically improves performance on hard problems — but they are expensive and their training recipes are opaque.</li>
+<li>Code is a uniquely verifiable domain: intermediate reasoning steps can often be checked by executing partial code snippets, providing a dense reward signal unavailable in natural-language reasoning.</li>
+<li>No existing work combines (a) step-level execution verification of reasoning traces, (b) preference pair construction from verified/falsified traces, and (c) iterative self-play — into a single pipeline for code reasoning.</li>
+</ul>
+<p>---</p>
+<h2>2. Hypothesis</h2>
+<p>**Training a code LLM on preference pairs constructed from execution-verified chain-of-thought traces — where correct vs. incorrect reasoning trajectories are distinguished not just by final code correctness, but by the executability of intermediate reasoning steps — improves the model&#x27;s ability to solve hard coding problems requiring multi-step reasoning, compared to training on execution-filtered code alone or unfiltered CoT traces.**</p>
+<p>**Null hypothesis (H₀):** DPO training on execution-verified CoT preference pairs yields no significant improvement over training on execution-filtered code solutions without CoT (i.e., the reasoning trace adds no benefit beyond the final code).</p>
+<p>---</p>
+<h2>3. Method: ExeCoT Pipeline</h2>
+<p>The proposal has four stages, executed iteratively in a self-play loop:</p>
+<h3>Stage A: Problem Synthesis</h3>
+<p>Use the base code LLM to generate a diverse set of coding problems, each with:</p>
+<ul>
+<li>A natural-language description</li>
+<li>3–5 test cases (public)</li>
+<li>A hidden test set (held out for evaluation)</li>
+<li>Tags for difficulty, algorithm type, and edge-case categories</li>
+</ul>
+<p>Generate ~20K problems per iteration using an evolved-instruction approach (inspired by Magicoder/Evol-Instruct) that mutates seed problems from CodeContests, HumanEval, and MBPP. A simple rule-based filter rejects problems that are too easy (solved by a small reference model) or too hard (no solution passes).</p>
+<h3>Stage B: Multi-Trajectory CoT Sampling</h3>
+<p>For each problem, sample K=8 CoT + code trajectories from the current model:</p>
+<pre><code>
+Prompt: &lt;problem description&gt;
+Response: &lt;reasoning trace&gt; → &lt;final code&gt;
+</code></pre>
+<p>The reasoning trace is structured as a sequence of **code-reasoning steps**, where each step is either:</p>
+<ul>
+<li>**NL Step**: A natural-language reasoning sentence (e.g., &quot;First I need to sort the array by frequency&quot;)</li>
+<li>**Executable Sub-Step**: A self-contained Python snippet expressing an intermediate computation, wrapped in a special marker (e.g., `&lt;verify&gt;sorted(arr, key=lambda x: -freq[x])&lt;/verify&gt;`)</li>
+</ul>
+<p>The model is prompted to produce these executable sub-steps naturally. The marker enables extraction and execution.</p>
+<h3>Stage C: Execution Verification &amp; Preference Pair Construction</h3>
+<p>**Step-level verification:** Each `&lt;verify&gt;...&lt;/verify&gt;` block is extracted and executed in an isolated sandbox against representative inputs. A step is **verified** if it runs without error and produces output consistent with the subsequent steps. A step is **falsified** if it errors, contradicts later steps, or is missing for a necessary computation.</p>
+<p>**Trajectory-level verification:** The final code is executed against all test cases. A trajectory is **correct** if all tests pass, **incorrect** otherwise.</p>
+<p>**Preference pair construction** (three types):</p>
+<p>1. **Correct vs. incorrect trajectories** (same problem): Won/lost pairs where the winning trajectory&#x27;s code passes all tests.</p>
+<p>2. **Grounded vs. ungrounded CoT** (same final code correctness): For pairs where both codes pass, prefer the trajectory with more verified executable sub-steps (i.e., reasoning grounded in code execution vs. pure NL speculation).</p>
+<p>3. **Hard-negative reasoning traces**: Trajectories where the final code is incorrect *but* the reasoning trace looks superficially plausible. These are identified by high overlap between the NL reasoning of correct and incorrect traces (using embedding similarity) but diverging execution outcomes.</p>
+<p>All pairs are formatted as DPO preference pairs: `(chosen_trace, rejected_trace, problem)`.</p>
+<h3>Stage D: DPO Training with Verification Reward</h3>
+<p>Train the base model using Direct Preference Optimization on the constructed pairs:</p>
+<pre><code>
+L_DPO = -E[log σ(β * (r(chosen) - r(rejected)))]
+</code></pre>
+<p>where the reward logit `r` is computed from the model&#x27;s implicit reward — no external reward model is needed. The KL penalty prevents reward hacking.</p>
+<p>**Training details:**</p>
+<ul>
+<li>Model: DeepSeek-Coder-6.7B-Instruct (initial), scale to 33B after validation</li>
+<li>Batch size: 128 pairs</li>
+<li>Learning rate: 1e-5 (cosine decay)</li>
+<li>β (DPO temperature): 0.1</li>
+<li>Training steps: 1,000 per iteration</li>
+<li>Hardware: 4× A100 80GB</li>
+</ul>
+<h3>Stage E: Iterative Self-Play Loop</h3>
+<p>After DPO training, use the improved model to repeat Stages A–D. In each iteration:</p>
+<ul>
+<li>Problem synthesis uses the improved model (harder problems emerge)</li>
+<li>Trajectory sampling from the improved model (better reasoning traces)</li>
+<li>Preference pairs are reconstructed from the new trajectories</li>
+<li>Stop when Held-Out pass rate plateaus (no improvement for 2 iterations)</li>
+</ul>
+<p>---</p>
+<h2>4. Dataset &amp; Benchmark</h2>
+<table><tbody>
+<tr><td>Source</td><td>Use</td><td>Size</td><td>Composition</td></tr>
+<tr><td>**HumanEval+**</td><td>Evaluation</td><td>164</td><td>Original + 80× test augmentation</td></tr>
+<tr><td>**MBPP+**</td><td>Evaluation</td><td>399</td><td>Original + 35× test augmentation</td></tr>
+<tr><td>**CodeContests**</td><td>Evaluation (hard)</td><td>165</td><td>Competitive programming, 5–100 tests each</td></tr>
+<tr><td>**LiveCodeBench**</td><td>Evaluation</td><td>~400</td><td>Fresh problems, no contamination risk</td></tr>
+<tr><td>**Synthetic problems**</td><td>Training</td><td>20K/iteration</td><td>Evolved from seeds (see Stage A)</td></tr>
+</tbody></table>
+<p>**Contamination control:** All evaluation problems are decontaminated against the synthetic training set by n-gram overlap (13-gram match → removed). LiveCodeBench is curated from post-cutoff contests.</p>
+<p>---</p>
+<h2>5. Evaluation Metrics</h2>
+<table><tbody>
+<tr><td>Metric</td><td>What it measures</td><td>Primary?</td></tr>
+<tr><td>**pass@1**</td><td>Single-sample correctness</td><td>Yes</td></tr>
+<tr><td>**pass@5**</td><td>Multi-sample coverage</td><td>Yes</td></tr>
+<tr><td>**Step Verification Rate (SVR)**</td><td>Fraction of CoT steps that are executable</td><td>No (diagnostic)</td></tr>
+<tr><td>**Trace Correctness Rate (TCR)**</td><td>Fraction of problems where correct code follows correct CoT</td><td>No (diagnostic)</td></tr>
+<tr><td>**Avg. Reasoning Depth**</td><td>Number of verified steps per correct solution</td><td>No (diagnostic)</td></tr>
+<tr><td>**Inference-time compute efficiency**</td><td>Tokens generated per correct solution</td><td>Exploratory</td></tr>
+</tbody></table>
+<p>All metrics reported with 95% confidence intervals (bootstrap, 10K resamples) across 3 seeds.</p>
+<p>---</p>
+<h2>6. Baselines</h2>
+<table><tbody>
+<tr><td>Baseline</td><td>Description</td><td>Why this baseline</td></tr>
+<tr><td>**Direct generation (zero-shot)**</td><td>Base model, no CoT, no training</td><td>Floor: standard code generation</td></tr>
+<tr><td>**Standard CoT**</td><td>Zero-shot CoT prompting on base model</td><td>CoT effect without training</td></tr>
+<tr><td>**Magicoder (SFT)**</td><td>Instruction-tuned on evolved code data</td><td>Current best synthetic-data pipeline</td></tr>
+<tr><td>**CodeRL**</td><td>Execution reward + policy gradient</td><td>Execution signal without CoT</td></tr>
+<tr><td>**STaR**</td><td>Self-taught reasoning (rationalize-then-filter)</td><td>CoT + filtering but no step-level verification</td></tr>
+<tr><td>**VEST**</td><td>Verifier-guided code generation</td><td>Execution verification without CoT training</td></tr>
+<tr><td>**CodeCoT (few-shot)**</td><td>Manual few-shot CoT for code</td><td>Oracles the CoT format</td></tr>
+<tr><td>**ExeCoT (ablation: no step verif.)**</td><td>ExeCoT but using only final-code execution</td><td>Isolates step-level vs. output-level signal</td></tr>
+<tr><td>**ExeCoT (ablation: no DPO)**</td><td>ExeCoT data but SFT on correct traces only</td><td>Isolates DPO vs. SFT</td></tr>
+<tr><td>**ExeCoT (ablation: no self-play)**</td><td>Single-iteration ExeCoT</td><td>Isolates iterative improvement</td></tr>
+</tbody></table>
+<p>---</p>
+<h2>7. Ablations</h2>
+<table><tbody>
+<tr><td>Ablation</td><td>What it tests</td><td>Expected insight</td></tr>
+<tr><td>With vs. without step-level verification</td><td>Whether per-step execution signal adds value over final-code filtering</td><td>If step-level ≠ final-level, this distinguishes ExeCoT from CodeRL</td></tr>
+<tr><td>DPO vs. SFT on same data</td><td>Whether preference pairs are better than positive-only filtering</td><td>If DPO &gt; SFT, the rejected traces provide useful signal</td></tr>
+<tr><td>Hard-negative pairs only</td><td>Whether hard negatives drive improvement</td><td>If effective, simplifies the pipeline</td></tr>
+<tr><td>K=1 vs. K=4 vs. K=8 sampling</td><td>How many trajectories are needed for good pair construction</td><td>Compute-performance tradeoff</td></tr>
+<tr><td>Single-iteration vs. 3-iteration self-play</td><td>Whether iteration matters (data quality vs. overfitting)</td><td>If 1 iteration is enough, self-play isn&#x27;t necessary</td></tr>
+<tr><td>With vs. without executable sub-step prompting</td><td>Whether the structured CoT format is necessary</td><td>If format doesn&#x27;t matter, the benefit is from verification, not prompting</td></tr>
+</tbody></table>
+<p>---</p>
+<h2>8. Expected Failure Modes</h2>
+<table><tbody>
+<tr><td>Failure Mode</td><td>Likelihood</td><td>Mitigation</td></tr>
+<tr><td>**Synthetic tests are low-quality** (trivial tests pass anything; adversarial tests miss bugs)</td><td>High</td><td>Use EvoBench-style test evolution to strengthen tests; filter problems where tests are too weak</td></tr>
+<tr><td>**Step-level verification is noisy** (executable sub-steps are rare; the model doesn&#x27;t format them naturally)</td><td>Medium-High</td><td>Fine-tune the model for 100 steps on a seed set of manually annotated problems to teach the format before the main pipeline</td></tr>
+<tr><td>**DPO collapses the policy** (KL penalty insufficient; model loses diversity)</td><td>Medium</td><td>Monitor KL divergence; increase β if KL &lt; 0.1 nats; add replay buffer of prior iterations</td></tr>
+<tr><td>**Self-play produces increasingly narrow problems** (the model generates problems it can already solve)</td><td>Medium</td><td>Inject seed diversity (sample 20% of problems from fixed seed bank per iteration); use rejection sampling on difficulty</td></tr>
+<tr><td>**Execution sandbox overhead** (verifying sub-steps for 20K × 8 trajectories is expensive)</td><td>Low-Medium</td><td>Cache execution results; parallelize with Ray; downsample to 5K problems for early iterations</td></tr>
+<tr><td>**Contamination of evaluation benchmarks** (synthetic problems leak into eval sets)</td><td>Medium</td><td>13-gram decontamination; use LiveCodeBench as primary eval; report pass@1 on held-out HumanEval+ only after final iteration</td></tr>
+</tbody></table>
+<p>---</p>
+<h2>9. Short Execution Plan</h2>
+<p>**Phase 0 — Infrastructure (1 week)**</p>
+<ul>
+<li>Set up execution sandbox (nsjail or Docker with 1s timeout, no network, no filesystem writes)</li>
+<li>Implement step-extraction parser for `&lt;verify&gt;` blocks</li>
+<li>Implement DPO training loop (based on HuggingFace TRL or Axolotl)</li>
+<li>Verify pipeline on 100 synthetic problems (smoke test)</li>
+</ul>
+<p>**Phase 1 — Baseline Run (1 week)**</p>
+<ul>
+<li>Run all baselines (Direct, CoT, Magicoder, CodeRL, STaR, VEST, CodeCoT) on HumanEval+ and MBPP+</li>
+<li>Establish reference numbers with 3 seeds each</li>
+<li>Run problem synthesis (Stage A) to build initial 20K problem set</li>
+</ul>
+<p>**Phase 2 — ExeCoT Single Iteration (2 weeks)**</p>
+<ul>
+<li>Sample 8 trajectories per problem (Stage B)</li>
+<li>Run step-level and trajectory-level verification (Stage C)</li>
+<li>Construct all three preference pair types (Stage C)</li>
+<li>Train DPO (Stage D), evaluate on all benchmarks</li>
+<li>Run all ablations (6 ablations × 3 seeds = 18 runs)</li>
+</ul>
+<p>**Phase 3 — Self-Play Loop (2 weeks)**</p>
+<ul>
+<li>Iterate Stages A–D for up to 3 iterations</li>
+<li>Monitor plateau criterion (no improvement on a held-out validation split for 2 iterations)</li>
+<li>Final evaluation on all benchmarks</li>
+</ul>
+<p>**Phase 4 — Analysis &amp; Reporting (1 week)**</p>
+<ul>
+<li>Compute all metrics with confidence intervals</li>
+<li>Analyze failure cases per difficulty tier</li>
+<li>Write paper (8–10 pages, targeting NeurIPS/ICLR/COLM)</li>
+<li>Prepare code release and model checkpoints</li>
+</ul>
+<p>**Total estimated compute:** ~800 A100-hours (≈ $5K at spot pricing).</p>
+<p>---</p>
+<h2>10. Summary</h2>
+<p>ExeCoT proposes a novel synthesis pipeline that closes a specific gap in the literature: no existing method constructs preference pairs for code reasoning from *step-level execution verification*. By combining structured CoT traces, execution-grounded verification, DPO training, and iterative self-play, the method directly targets the weakest link in current code LLMs — multi-step reasoning — using code&#x27;s unique advantage (executability) as a training signal. The ablations are designed to isolate exactly which design choices drive improvement, and the expected failure modes are addressed with concrete mitigations.</p></article></main>
+</body>
+</html>

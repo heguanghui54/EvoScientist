@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TraceRoute: Execution-Trace-Guided Repository-Level Bug Repair with Structured Data Flow Prompts</title>
+  <style>
+    body { margin: 0; background: #f7f8f8; color: #17191c; font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; line-height: 1.62; }
+    header { padding: 28px clamp(18px, 5vw, 72px); background: #fff; border-bottom: 1px solid #dce1e6; }
+    main { max-width: 980px; margin: 0 auto; padding: 28px 18px 56px; }
+    article { background: #fff; border: 1px solid #dce1e6; border-radius: 8px; padding: clamp(18px, 4vw, 42px); }
+    h1 { margin: 0 0 10px; font-size: clamp(28px, 4vw, 46px); line-height: 1.1; letter-spacing: 0; }
+    h2 { margin-top: 30px; border-top: 1px solid #e7eaee; padding-top: 18px; letter-spacing: 0; }
+    h3, h4 { letter-spacing: 0; }
+    p, li, td { font-size: 15px; }
+    .meta { color: #606a73; display: grid; gap: 4px; }
+    a { color: #225f9f; }
+    table { border-collapse: collapse; width: 100%; overflow-wrap: anywhere; }
+    td { border: 1px solid #e1e5ea; padding: 8px; vertical-align: top; }
+    pre { white-space: pre-wrap; background: #f0f3f5; padding: 14px; border-radius: 6px; overflow-x: auto; }
+    code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    .nav { margin-bottom: 14px; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="nav"><a href="index.html">← All 30 reports</a></div>
+    <h1>TraceRoute: Execution-Trace-Guided Repository-Level Bug Repair with Structured Data Flow Prompts</h1>
+    <div class="meta">
+      <div>Query 02: Software engineering</div>
+      <div>Help me generate a research proposal on AI for software engineering.</div>
+      <div>Source: <code>artifacts/remote_fetch/full_trajectories/EvoScientist/query_02/final_report.md</code></div>
+    </div>
+  </header>
+  <main><article><h1>TraceRoute: Execution-Trace-Guided Repository-Level Bug Repair with Structured Data Flow Prompts</h1>
+<p>---</p>
+<h2>1. Problem</h2>
+<p>**Automated bug repair is the killer app for AI-assisted software engineering.** Recent work (SWE-agent, OpenHands, Agentless, CodeR) achieves 30–50% resolved rates on repository-level benchmarks like SWE-bench, but these systems rely almost exclusively on **coarse feedback** — the raw error message, stack trace, or test pass/fail booleans. The LLM sees *that* a program failed and *where* it crashed, but not *what intermediate values led to the crash* and *which control-flow path was taken*.</p>
+<p>A separate line of work on single-function code shows that **fine-grained execution traces** (per-line variable values) dramatically improve repair: LDB (Zhong et al., 2024) reports **+19.3 points** over error-only feedback on Python function repair (GPT-4, HumanEval). However, LDB works only on isolated functions — it instruments the entire function body, which does not scale to multi-file repositories where only a fraction of code paths are relevant.</p>
+<p>**The gap is clear**: no existing method combines fine-grained execution traces with repository-level bug repair. Every top SWE-bench system feeds the LLM the same impoverished signal — error messages and test outcomes — while ignoring the rich, structured runtime state that a debugger routinely exposes.</p>
+<p>---</p>
+<h2>2. Hypothesis</h2>
+<p>**Central hypothesis**: Feeding an LLM a *structured execution trace* that encodes per-line variable values, control-flow decisions, call-stack depth, and data-flow edges — selectively collected only from code paths exercised by failing tests — will improve repository-level bug repair resolved rate by **≥10 absolute percentage points** over identical models that receive only error-message feedback.</p>
+<p>**Secondary hypotheses**:</p>
+<p>1. Structured trace formatting (JSON schema encoding data-flow + control-flow) outperforms linearized text traces (LDB-style) for repository-level repair.</p>
+<p>2. Selective instrumentation (only lines exercised by failing tests) achieves comparable repair accuracy to full-instrumentation at &lt;20% of the runtime cost.</p>
+<p>3. Trace information primarily helps with *semantic logic bugs* (wrong output) rather than *crash bugs* (exceptions), where error messages already provide strong signal.</p>
+<p>---</p>
+<h2>3. Method: TraceRoute</h2>
+<p>TraceRoute is a three-stage pipeline that slots into any existing repository-level repair framework. We design it as a drop-in replacement for the feedback stage of Agentless (the simplest, cheapest, and most reproducible baseline).</p>
+<h3>Stage 1: Selective Instrumentation</h3>
+<p>Given a bug report and failing test(s), we:</p>
+<p>1. **Localize** candidate buggy files using a lightweight LLM-based retrieval stage (same as Agentless: ask GPT-4o to identify suspicious files from the issue description).</p>
+<p>2. **Run the failing test under `sys.settrace`** (Python) or equivalent instrumentation to capture:</p>
+<ul>
+<li>Per-line variable values (before and after each line)</li>
+<li>Branch decisions (which `if`/`else` path was taken)</li>
+<li>Call-stack depth at each frame</li>
+<li>Data-flow edges: which assignments produced values consumed by later operations</li>
+</ul>
+<p>3. **Prune uninstrumented lines**: Only lines in the call paths of the failing test(s) get traced. Lines and files not reached during the failing test run are excluded. This keeps trace size proportional to bug depth, not repository size.</p>
+<h3>Stage 2: Structured Trace Encoding</h3>
+<p>Raw trace data is serialized into a **structured JSON schema** with three tiers:</p>
+<pre><code>
+{
+  &quot;file_traces&quot;: {
+    &quot;src/utils/validation.py&quot;: {
+      &quot;lines_traced&quot;: [45, 46, 47, 48, 49, 52],
+      &quot;path_frequency&quot;: {&quot;45→46→47→49→52&quot;: 1, &quot;45→46→48→49→52&quot;: 0},
+      &quot;variables&quot;: {
+        &quot;line_45&quot;: {
+          &quot;before&quot;: {&quot;user_input&quot;: &quot;&lt;str:len=12&gt;&quot;},
+          &quot;after&quot;: {&quot;sanitized&quot;: &quot;&lt;str:len=8&gt;&quot;}
+        },
+        &quot;line_46&quot;: {
+          &quot;before&quot;: {&quot;sanitized&quot;: &quot;&lt;str:len=8&gt;&quot;},
+          &quot;after&quot;: {&quot;threshold&quot;: &quot;&lt;int:5&gt;&quot;}
+        },
+        &quot;line_47&quot;: {
+          &quot;before&quot;: {&quot;threshold&quot;: &quot;&lt;int:5&gt;&quot;},
+          &quot;branch_result&quot;: &quot;taken&quot;
+        }
+      },
+      &quot;call_stack_depth&quot;: 3
+    }
+  },
+  &quot;exception_info&quot;: {
+    &quot;type&quot;: &quot;ValueError&quot;,
+    &quot;message&quot;: &quot;invalid literal for int() with base 10: &#x27;abc&#x27;&quot;,
+    &quot;traceback&quot;: [&quot;validation.py:52&quot;, &quot;process.py:120&quot;]
+  },
+  &quot;test_results&quot;: {
+    &quot;failing&quot;: [&quot;test_validation_invalid_input&quot;],
+    &quot;passing&quot;: [&quot;test_validation_empty&quot;, &quot;test_validation_boundary&quot;],
+    &quot;coverage_overlap&quot;: {&quot;test_validation_invalid_input&quot;: [&quot;validation.py:45-52&quot;]}
+  }
+}
+</code></pre>
+<p>Key design choices:</p>
+<ul>
+<li>**Type abstraction**: Variable values are abstracted to `&lt;type:len&gt;` to avoid overfitting to specific literals (following LDB&#x27;s finding that raw values help but can cause hallucination).</li>
+<li>**Branch annotations**: Explicit `branch_result` fields tell the LLM which paths *were* taken.</li>
+<li>**Coverage overlap**: Maps which tests exercise which code regions, enabling the LLM to reason about which fix might affect which test.</li>
+</ul>
+<p>This JSON is then serialized into the prompt using a **template** that embeds the trace into a structured &quot;debugging context&quot; section between the code and the repair instruction.</p>
+<h3>Stage 3: Trace-Augmented Repair Prompt</h3>
+<p>The LLM receives a prompt with four sections:</p>
+<p>1. **Issue description** (from the bug report)</p>
+<p>2. **Code context** (candidate buggy files with line numbers)</p>
+<p>3. **Execution trace** (the structured JSON above, formatted into a readable trace block)</p>
+<p>4. **Repair instruction**: &quot;Given the execution trace above, identify the root cause and produce a minimal patch.&quot;</p>
+<p>We use the **same LLM** for generation and repair (no separate critique model) to isolate the effect of trace information.</p>
+<p>---</p>
+<h2>4. Dataset / Benchmark</h2>
+<p>**Primary**: **SWE-bench Verified** (~500 human-verified Python bugs from real GitHub repositories). Chosen because:</p>
+<ul>
+<li>Real bugs, real repositories, real test suites</li>
+<li>Human-verified to remove annotation errors</li>
+<li>Most commonly used for ranking (NeuroIPS 2024 benchmark)</li>
+</ul>
+<p>**Secondary**: **SWE-bench Lite** (300 filtered instances) for faster iteration during development.</p>
+<p>We also construct a **hard subset** of ~100 instances where the error is a semantic logic bug (code runs without crashing but produces wrong output) to test Hypothesis 3.</p>
+<p>---</p>
+<h2>5. Evaluation Metrics</h2>
+<table><tbody>
+<tr><td>Metric</td><td>Definition</td><td>Primary/Secondary</td></tr>
+<tr><td>**Resolved Rate**</td><td>Fraction of instances where generated patch passes all fail-to-pass + pass-to-pass tests</td><td>**Primary**</td></tr>
+<tr><td>**Pass@1**</td><td>Single-sample resolved rate</td><td>Primary</td></tr>
+<tr><td>**Pass@5**</td><td>Resolved rate with best-of-5 samples</td><td>Secondary</td></tr>
+<tr><td>**Cost per Task**</td><td>API cost in USD per resolved instance</td><td>Secondary</td></tr>
+<tr><td>**Average Trace Size**</td><td>Mean number of traced lines per instance</td><td>Diagnostic</td></tr>
+<tr><td>**Repair Precision**</td><td>Fraction of generated patches that are minimal (no unrelated changes)</td><td>Secondary</td></tr>
+</tbody></table>
+<p>---</p>
+<h2>6. Baselines</h2>
+<p>We compare TraceRoute against four systems that span the cost-performance spectrum:</p>
+<table><tbody>
+<tr><td>Method</td><td>Feedback Type</td><td>Expected Resolved (Verified)</td><td>Cost/Task</td><td>Why Include</td></tr>
+<tr><td>**Agentless 2.0** (reproduced)</td><td>None (single-pass patch gen)</td><td>~35%</td><td>~$0.67</td><td>Weakest feedback; isolates trace effect</td></tr>
+<tr><td>**Agentless + Error-Only**</td><td>Error message + stack trace</td><td>~38%</td><td>~$0.70</td><td>Direct ablation of trace signal</td></tr>
+<tr><td>**Agentless + Text Trace**</td><td>LDB-style per-line text trace</td><td>~42% (estimated)</td><td>~$15</td><td>Linearized trace (ablates structured encoding)</td></tr>
+<tr><td>**SWE-agent** (Claude 3.5)</td><td>Error + bash tool use</td><td>~38%</td><td>~$4+</td><td>Strong agent baseline</td></tr>
+<tr><td>**TraceRoute (ours)**</td><td>Structured JSON trace</td><td>**Target: ≥48%**</td><td>~$2.50</td><td>Our method</td></tr>
+</tbody></table>
+<p>The **critical comparison** is Agentless + Error-Only vs. TraceRoute — identical pipeline, same model, same localization, differing only in whether the prompt includes structured trace information.</p>
+<p>---</p>
+<h2>7. Ablations</h2>
+<table><tbody>
+<tr><td>Ablation</td><td>What Is Changed</td><td>What It Tests</td></tr>
+<tr><td>**No trace**</td><td>Remove trace entirely; use error msg only</td><td>Baseline contribution of trace signal</td></tr>
+<tr><td>**Text trace**</td><td>Replace JSON with LDB-style free-form text</td><td>Value of structured vs. flat trace encoding</td></tr>
+<tr><td>**No branch info**</td><td>Remove `branch_result` annotations</td><td>Value of control-flow signal</td></tr>
+<tr><td>**Full trace**</td><td>Trace all lines (not just failing-test paths) vs. selective</td><td>Value of selective instrumentation</td></tr>
+<tr><td>**Trace-only (no error msg)**</td><td>Remove error message; keep only trace</td><td>Whether trace subsumes error info</td></tr>
+<tr><td>**Passing test traces**</td><td>Include traces from passing tests too</td><td>Whether &quot;negative&quot; trace information helps</td></tr>
+<tr><td>**Single seed**</td><td>3 random seeds per condition</td><td>Variance estimation</td></tr>
+</tbody></table>
+<p>---</p>
+<h2>8. Expected Failure Modes and Mitigations</h2>
+<table><tbody>
+<tr><td>Failure Mode</td><td>Likelihood</td><td>Mitigation</td></tr>
+<tr><td>**Trace too large for context window**</td><td>Medium</td><td>Selective tracing keeps traces small; truncate to top-K lines if needed; flag instances where traces exceed context</td></tr>
+<tr><td>**LLM ignores trace, relies on error message only**</td><td>Low</td><td>Prompt engineering; prompt the model to reason step-by-step from trace; manual qualitative check on first 20 examples</td></tr>
+<tr><td>**Trace causes overfitting to specific values**</td><td>Medium</td><td>Type abstraction (`&lt;int:5&gt;` not `5`); measure patch diversity across samples</td></tr>
+<tr><td>**No improvement on crash bugs (errors)**</td><td>Expected</td><td>Measure separately — traces may matter most for logic bugs; document as finding</td></tr>
+<tr><td>**Selective tracing misses root cause**</td><td>Low-Medium</td><td>Compare against full-instrumentation on lite subset; quantify missed-line rate</td></tr>
+<tr><td>**High cost at scale**</td><td>Medium</td><td>Selective tracing vs. full trace cost comparison is a planned ablation; trace caching for re-runs</td></tr>
+<tr><td>**Patches fix the trace symptom, not the root cause**</td><td>Medium</td><td>Human review of 50 patches; compare patch equivalence to developer fix</td></tr>
+</tbody></table>
+<p>---</p>
+<h2>9. Execution Plan</h2>
+<h3>Phase 0: Infrastructure (Week 1)</h3>
+<ul>
+<li>Set up SWE-bench evaluation harness (dockerized test environment)</li>
+<li>Implement `pytrace` selective instrumentation module using `sys.settrace`</li>
+<li>Implement JSON trace encoding + prompt template</li>
+<li>Reproduce Agentless 2.0 baseline on SWE-bench Lite (validate within ±2% of reported 42%)</li>
+</ul>
+<h3>Phase 1: TraceRoute Pipeline (Week 2)</h3>
+<ul>
+<li>Integrate trace module into Agentless pipeline</li>
+<li>Run TraceRoute on SWE-bench Lite (all variants: no-trace, text-trace, structured-trace)</li>
+<li>Compare resolved rates; debug instrumentation failures</li>
+<li>Collect trace size statistics</li>
+</ul>
+<h3>Phase 2: Full Evaluation (Week 3)</h3>
+<ul>
+<li>Run top-2 trace variants + all baselines on SWE-bench Verified</li>
+<li>Compute all metrics with 3 seeds per condition</li>
+<li>Run ablations (branch info, full trace, trace-only)</li>
+<li>Analyze by bug category (crash vs. logic, single-file vs. multi-file)</li>
+</ul>
+<h3>Phase 3: Analysis &amp; Write-up (Week 4)</h3>
+<ul>
+<li>Error analysis: inspect 30 resolved and 30 unresolved cases qualitatively</li>
+<li>Cost analysis: API cost per resolved task</li>
+<li>Statistical significance testing (McNemar&#x27;s test for paired instances)</li>
+<li>Draft paper: introduction, method, results, related work</li>
+</ul>
+<h3>Success Criteria</h3>
+<ul>
+<li>**Minimum**: TraceRoute significantly outperforms Agentless + Error-Only (p &lt; 0.05, McNemar&#x27;s test) on SWE-bench Verified</li>
+<li>**Target**: ≥48% resolved (≥10 point improvement)</li>
+<li>**Stretch**: Structured trace outperforms text trace by ≥4 points; trace shows clear value on logic bugs</li>
+</ul>
+<p>---</p>
+<h2>10. Related Work (Quick Map)</h2>
+<table><tbody>
+<tr><td>Paper</td><td>Key Insight</td><td>Limitation TraceRoute Addresses</td></tr>
+<tr><td>**LDB** (Zhong et al., 2024)</td><td>Per-line variable traces boost repair by +19 pts</td><td>Single-function only; text format</td></tr>
+<tr><td>**Self-Debugging** (Chen et al., 2023)</td><td>Explanation feedback beats raw error msg</td><td>No execution trace; single-function</td></tr>
+<tr><td>**Reflexion** (Shinn et al., 2023)</td><td>Episodic memory of failures</td><td>Memory is verbal summary, not trace data</td></tr>
+<tr><td>**Agentless** (Xia et al., 2024)</td><td>Simple localization → patch pipeline</td><td>No execution feedback at all</td></tr>
+<tr><td>**SWE-agent** (Yang et al., 2024)</td><td>Agentic bash + file editing</td><td>Error message only feedback</td></tr>
+<tr><td>**Self-Refine** (Madaan et al., 2023)</td><td>Self-critique → refinement</td><td>Critique is model-generated, not grounded in execution</td></tr>
+</tbody></table>
+<p>TraceRoute is the first method to bring LDB&#x27;s execution-trace insight to repository-scale bug repair with a structured encoding designed for multi-file contexts.</p>
+<p>---</p>
+<p>*Proposal generated June 2026. References are drawn from pre-2026 literature documented in training data; verify arXiv IDs (LDB: 2402.16906, Agentless: 2407.01489, SWE-agent: 2405.15793) before submission.*</p></article></main>
+</body>
+</html>

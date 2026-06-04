@@ -1,0 +1,242 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>All EvoScientist Final Reports</title>
+  <style>
+    body { margin: 0; background: #f7f8f8; color: #17191c; font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+    header { padding: 38px clamp(18px, 5vw, 72px); background: #fff; border-bottom: 1px solid #dce1e6; }
+    main { padding: 28px clamp(18px, 5vw, 72px) 56px; }
+    h1 { margin: 0 0 10px; font-size: clamp(32px, 5vw, 56px); line-height: 1.05; letter-spacing: 0; }
+    .lead { color: #606a73; max-width: 850px; line-height: 1.6; }
+    .grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+    .card { display: block; text-decoration: none; color: inherit; background: #fff; border: 1px solid #dce1e6; border-radius: 8px; padding: 16px; min-height: 220px; }
+    .card:hover { border-color: #8fb2d4; box-shadow: 0 8px 20px rgba(25, 45, 65, .08); }
+    .qid { color: #225f9f; font-weight: 800; font-size: 13px; }
+    h2 { font-size: 17px; line-height: 1.25; margin: 8px 0; letter-spacing: 0; }
+    p { color: #606a73; font-size: 14px; line-height: 1.5; }
+    .topic { color: #9a681b; font-weight: 700; }
+    a.back { color: #225f9f; }
+    @media (max-width: 980px) { .grid { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <header>
+    <a class="back" href="../../experiment_reproduction_report.html">← Back to visual report</a>
+    <h1>All 30 EvoScientist final reports</h1>
+    <p class="lead">这里列出 30 个 query 对应的 EvoScientist full-trajectory final_report。之前 HTML 报告只展示了两个 PDF 预览样例；完整 30 篇在这里。</p>
+  </header>
+  <main><div class="grid">
+            <a class="card" href="query_01.html">
+              <div class="qid">Query 01</div>
+              <h2>CrossLingual-RAG: Cross-Lingual Retrieval-Augmented Generation for Extremely Low-Resource Machine Translation</h2>
+              <p class="topic">Machine translation</p>
+              <p>Despite the success of multilingual NMT models covering 200+ languages (NLLB, Costa-jussà et al., 2024), over 40 of those languages still achieve fewer than 10 spBLEU — output that is often unintelligible to native speakers. The core bottleneck is parallel data scarcity: languages with &lt;100K parallel sentences canno...</p>
+            </a>
+
+            <a class="card" href="query_02.html">
+              <div class="qid">Query 02</div>
+              <h2>TraceRoute: Execution-Trace-Guided Repository-Level Bug Repair with Structured Data Flow Prompts</h2>
+              <p class="topic">Software engineering</p>
+              <p>A separate line of work on single-function code shows that fine-grained execution traces (per-line variable values) dramatically improve repair: LDB (Zhong et al., 2024) reports +19.3 points over error-only feedback on Python function repair (GPT-4, HumanEval). However, LDB works only on isolated functions — it inst...</p>
+            </a>
+
+            <a class="card" href="query_03.html">
+              <div class="qid">Query 03</div>
+              <h2>Research Proposal: Multi-Perspective Calibrated Ensemble for Debiased LLM-as-Judge Evaluation</h2>
+              <p class="topic">LLM evaluation</p>
+              <p>Automated evaluation using LLMs as judges (&quot;LLM-as-judge&quot;) has become the dominant paradigm for assessing LLM output quality, replacing expensive human evaluation at scale. Yet multiple systematic studies have documented that LLM judges suffer from position bias: a systematic tendency to prefer responses placed in a...</p>
+            </a>
+
+            <a class="card" href="query_04.html">
+              <div class="qid">Query 04</div>
+              <h2>TrialMatch-Agents: A Multi-Agent Framework for Explainable Clinical Trial Eligibility Matching via Specialized Criterion Decomposition</h2>
+              <p class="topic">Healthcare agents</p>
+              <p>TrialMatch-Agents decomposes the eligibility matching task into a coordinated multi-agent architecture with five specialized agent types and a coordinator agent. Patient Record (unstructured clinical text) │ ▼ ┌──────────────────────────────────────────┐ │           Criterion Decomposer            │ │   (Parses tria...</p>
+            </a>
+
+            <a class="card" href="query_05.html">
+              <div class="qid">Query 05</div>
+              <h2>Citation-Structured Related Work Generation via Heterogeneous Graph-Aware Decoding</h2>
+              <p class="topic">Literature review automation</p>
+              <p>Generating a coherent, well-structured related work section remains an open challenge in automated scientific writing. Current LLM-based approaches produce flat, enumeration-style summaries that lack the thematic organization, comparative depth, and citation-context awareness of human-written reviews. We propose Cit...</p>
+            </a>
+
+            <a class="card" href="query_06.html">
+              <div class="qid">Query 06</div>
+              <h2>Research Proposal: Selective Pseudo-Labeling with Adapter-Based Fine-Tuning for Extremely Low-Resource ASR</h2>
+              <p class="topic">Speech recognition</p>
+              <p>Adapting a large multilingual ASR model (Whisper large-v3) to an extremely low-resource target language — defined as ≤2 hours of transcribed speech. Two issues dominate: Whisper large-v3 (~1.5B params). Frozen encoder + LoRA-decoder fine-tuning. Rationale: Whisper&#x27;s encoder is already strong on universal acoustic re...</p>
+            </a>
+
+            <a class="card" href="query_07.html">
+              <div class="qid">Query 07</div>
+              <h2>Breaking the Multi-Hop Reasoning Ceiling for Sub-500M LMs via Multi-Teacher Distillation and Inference-Time Verifier Scaling</h2>
+              <p class="topic">Model efficiency</p>
+              <p>Small language models (&lt;500M parameters) exhibit a sharp performance cliff on multi-hop reasoning: they achieve 15–25 points below 7B models on benchmarks like HotpotQA and MuSiQue. This gap is widely attributed to insufficient parametric capacity, implying that only larger models can reason compositionally. We chal...</p>
+            </a>
+
+            <a class="card" href="query_08.html">
+              <div class="qid">Query 08</div>
+              <h2>VeriPlan: Verifier-Gated Replanning for Reliable Multi-Step Agent Reasoning</h2>
+              <p class="topic">AI agents</p>
+              <p>Large language model (LLM) agents that interact with external tools (code interpreters, search APIs, file systems) via multi-step reasoning loops have become the dominant paradigm for autonomous task completion (e.g., SWE-agent, AutoGPT, ReAct, CodeAct). However, these systems exhibit a critical failure mode: error ...</p>
+            </a>
+
+            <a class="card" href="query_09.html">
+              <div class="qid">Query 09</div>
+              <h2>AToMP-Edge: Adaptive Token-Level Mixed-Precision Quantization for W4A4 LLM Inference on Edge Devices</h2>
+              <p class="topic">Model deployment</p>
+              <p>Deploying large language models (LLMs) on edge devices (Jetson Orin, mobile NPUs, Raspberry Pi) requires aggressive quantization to fit within 4–16 GB of memory and meet real-time latency constraints. Weight-only INT4 quantization (W4A16) is the current edge standard — it reduces memory by 4× but gains no compute ac...</p>
+            </a>
+
+            <a class="card" href="query_10.html">
+              <div class="qid">Query 10</div>
+              <h2>Research Proposal: Semantically Decomposed Text-to-SQL with Skeleton-Based Compositional Generalization</h2>
+              <p class="topic">Text-to-SQL</p>
+              <p>Current LLM-based Text-to-SQL systems achieve ~86-88% execution accuracy on standard benchmarks like Spider. However, this masks a critical weakness: compositional generalization. When a natural language question requires combining multiple known SQL operations — e.g., a nested subquery inside a UNION with a GROUP B...</p>
+            </a>
+
+            <a class="card" href="query_11.html">
+              <div class="qid">Query 11</div>
+              <h2>Decoding the Capability Graph: Causal Decomposition of Knowledge, Reasoning, and Code Generation in LLMs</h2>
+              <p class="topic">LLM capabilities</p>
+              <p>Large language models exhibit a wide range of capabilities — factual knowledge recall, compositional reasoning, code generation, instruction following, and more — within a single set of weights. This raises a fundamental scientific question: &gt; To what degree are these capabilities supported by shared vs. independent...</p>
+            </a>
+
+            <a class="card" href="query_12.html">
+              <div class="qid">Query 12</div>
+              <h2>Research Proposal: Evidence-Conditioned Activation Steering (ECAS) for Factual Consistency in Retrieval-Augmented Generation</h2>
+              <p class="topic">Factual consistency</p>
+              <p>ECAS has three components trained and assembled without any LLM fine-tuning. We train a lightweight linear probe on the LLM&#x27;s hidden states at each layer to predict whether the token being generated will contradict the retrieved evidence. pℓ(contrAdict | hℓ) = σ(wℓ^T · hℓ + bℓ) Trained with binary cross-entropy. We ...</p>
+            </a>
+
+            <a class="card" href="query_13.html">
+              <div class="qid">Query 13</div>
+              <h2>ExeCoT: Execution-Grounded Chain-of-Thought Synthesis for Code Reasoning via Self-Play</h2>
+              <p class="topic">Data synthesis</p>
+              <p>Code LLMs have improved dramatically at generating correct code, but they still struggle with multi-step reasoning: planning decomposition, debugging edge cases, and reasoning about correctness before writing code. Existing data synthesis pipelines for code focus on generating diverse problems and solutions (Magicod...</p>
+            </a>
+
+            <a class="card" href="query_14.html">
+              <div class="qid">Query 14</div>
+              <h2>AdaSpec: Adaptive Speculation via Difficulty-Gated Multi-Strategy Selection for LLM Inference Acceleration</h2>
+              <p class="topic">Inference efficiency</p>
+              <p>Speculative decoding (SD) addresses this by generating multiple &quot;draft&quot; tokens cheaply and verifying them in parallel with the target LLM. While SD achieves reported speedups of 1.5–4×, existing methods apply a single, fixed speculation strategy throughout generation. This is suboptimal because: 1. H1 (Difficulty pr...</p>
+            </a>
+
+            <a class="card" href="query_15.html">
+              <div class="qid">Query 15</div>
+              <h2>Research Proposal: Context-Adaptive Gender Debiasing (CAGED) for Neural Machine Translation</h2>
+              <p class="topic">Machine translation</p>
+              <p>The query asks about &quot;debiasing in machine translation&quot; — a broad area covering gender, political, religious, and dialect bias. I focus on gender bias in neural machine translation (NMT), the most documented and benchmarked debiasing problem in MT. Within that, I target a specific gap: existing methods treat all sen...</p>
+            </a>
+
+            <a class="card" href="query_16.html">
+              <div class="qid">Query 16</div>
+              <h2>Structured vs. Unstructured Knowledge Injection in Biomedical LLMs:</h2>
+              <p class="topic">Knowledge injection</p>
+              <p>Domain-specific Large Language Models (e.g., BioMistral, Clinical Camel, Med-PaLM) are typically adapted by fine-tuning a general-purpose base model on biomedical corpora. However, this process faces a fundamental tension: injecting new domain knowledge risks catastrophic forgetting of the general capabilities that ...</p>
+            </a>
+
+            <a class="card" href="query_17.html">
+              <div class="qid">Query 17</div>
+              <h2>Schema-Constrained Document-Level Event Extraction via Context-Grounded LLM Decoding</h2>
+              <p class="topic">Information extraction</p>
+              <p>The problem currently has three unresolved challenges that this proposal targets directly: 1. Document-level scope. Most event extraction research operates at the sentence level, yet real events naturally span multiple sentences: an attack is described across several paragraphs, a clinical outcome is scattered acros...</p>
+            </a>
+
+            <a class="card" href="query_18.html">
+              <div class="qid">Query 18</div>
+              <h2>How Uncertainty Communication Format Interacts with User Expertise to Shape Appropriate Reliance on LLMs</h2>
+              <p class="topic">UX evaluation</p>
+              <p>When LLMs provide factual answers with some expression of uncertainty — a verbal hedge (&quot;I&#x27;m not certain, but...&quot;), a numerical confidence score (&quot;I&#x27;m 75% confident&quot;), or behavioral inconsistency (&quot;Three out of five sampled answers agree with this&quot;) — do these formats differentially affect appropriate reliance depen...</p>
+            </a>
+
+            <a class="card" href="query_19.html">
+              <div class="qid">Query 19</div>
+              <h2>Adaptive Pairwise Sampling for Cost-Efficient LLM Leaderboards</h2>
+              <p class="topic">Evaluation leaderboards</p>
+              <p>Each model i has an unknown strength parameter θᵢ ∈ ℝ. The probability that model i beats model j in a comparison is: P(i ≻ j | θᵢ, θⱼ) = σ(θᵢ − θⱼ)    where σ(x) = 1 / (1 + exp(−x)) We place independent Gaussian priors θᵢ ~ N(0, σ²₀) with σ₀ = 1.0 (weakly informative). After observing outcomes, the posterior is app...</p>
+            </a>
+
+            <a class="card" href="query_20.html">
+              <div class="qid">Query 20</div>
+              <h2>MADEF: A Multi-Axis Decomposed Evaluation Framework for Diversity in Open-Ended Text Generation</h2>
+              <p class="topic">Text generation</p>
+              <p>Diversity is a critical dimension of text generation quality, cited alongside fluency, coherence, and relevance in nearly every major NLG evaluation framework [1, 2]. Yet the community lacks a principled, validated, and decomposable evaluation framework for measuring it. The current landscape has three interconnecte...</p>
+            </a>
+
+            <a class="card" href="query_21.html">
+              <div class="qid">Query 21</div>
+              <h2>Fairness-Aware Stylometric Ensemble (FASE): Reducing Demographic False-Positive Disparities in AI-Generated Text Detection</h2>
+              <p class="topic">Content detection</p>
+              <p>We propose a three-component architecture: For each input text, we extract four feature groups: We train a lightweight classifier (gradient-boosted trees, LightGBM) on the concatenated feature vector [A1; A2; A3; A4]. The training objective augments standard log-loss with a fairness penalty: L = LCE + λ · Φ(groupFPR...</p>
+            </a>
+
+            <a class="card" href="query_22.html">
+              <div class="qid">Query 22</div>
+              <h2>CommentTrojan: Stealthy Backdoor Attacks on Code LLMs via Semantics-Preserving Comment Triggers</h2>
+              <p class="topic">Code LLM security</p>
+              <p>1. Effectiveness: Comment-triggered backdoors can achieve ASR &gt; 80% across multiple vulnerability classes with a poisoning rate ≤ 1%. 2. Stealth: Comment-triggered backdoors are significantly harder to detect than identifier-renaming or dead-code triggers by both automated tools (static analysis, code naturalness de...</p>
+            </a>
+
+            <a class="card" href="query_23.html">
+              <div class="qid">Query 23</div>
+              <h2>Research Proposal: CodeSemEval — A Deep Semantic Evaluation Framework for Code LLMs</h2>
+              <p class="topic">Code LLM evaluation</p>
+              <p>The query &quot;deep evaluation framework for code LLMs&quot; is broad. I narrow to one critical and under-explored subproblem: evaluating whether code LLMs understand program semantics rather than merely synthesizing syntactically plausible code that passes weak functional tests. This addresses the gap between pass@k scores ...</p>
+            </a>
+
+            <a class="card" href="query_24.html">
+              <div class="qid">Query 24</div>
+              <h2>Deliberative Contrastive Iterative Retrieval (DeCIR-RAG): Mitigating Confirmation Bias in Multi-Hop RAG</h2>
+              <p class="topic">RAG</p>
+              <p>Multi-hop question answering requires a system to retrieve and reason over multiple pieces of evidence from different sources to answer a complex question (e.g., &quot;Which university employed the president of the Royal Society in 2020?&quot; — requires locating the president, then the employer). Current iterative retrieval ...</p>
+            </a>
+
+            <a class="card" href="query_25.html">
+              <div class="qid">Query 25</div>
+              <h2>Research Proposal: Conflict-Aware Multi-Hop Reasoning (CAMHR)</h2>
+              <p class="topic">Multi-source reasoning</p>
+              <p>When documents disagree, today&#x27;s models behave unpredictably: they silently pick one source (usually the one that appears earlier or has higher lexical overlap with the question), hallucinate a compromise answer that matches neither source, or produce inconsistent answers when re-queried with different document subs...</p>
+            </a>
+
+            <a class="card" href="query_26.html">
+              <div class="qid">Query 26</div>
+              <h2>Research Proposal: DACS — Dynamic Alignment-based Curriculum Selection for Self-Supervised Domain-Specific Data Filtering</h2>
+              <p class="topic">Data filtering</p>
+              <p>&gt; H₁: During domain-specific continued pretraining, the trajectory of per-example loss reduction combined with the model&#x27;s internal representation alignment to a small domain seed set provides sufficient signal to dynamically identify and prioritize training examples that yield the largest downstream performance gai...</p>
+            </a>
+
+            <a class="card" href="query_27.html">
+              <div class="qid">Query 27</div>
+              <h2>Position-Decontaminated Attention (PDA): Training-Free Mitigation of Position Bias in Long-Context LLMs</h2>
+              <p class="topic">Long-context understanding</p>
+              <p>Modern LLMs (GPT-4, Claude, Llama 3.1, Mistral) support context windows of 32K–200K tokens, yet their effective utilization of long contexts remains poor. The well-documented &quot;lost in the middle&quot; phenomenon (Liu et al., 2023; Shi et al., 2023) shows a U-shaped performance curve: models reliably use information at th...</p>
+            </a>
+
+            <a class="card" href="query_28.html">
+              <div class="qid">Query 28</div>
+              <h2>Preference Bias Amplification: Measuring and Mitigating Western Cultural Bias in DPO-Based LLM Alignment</h2>
+              <p class="topic">Alignment</p>
+              <p>Large language models are aligned to human preferences via methods like Direct Preference Optimization (DPO) and Reinforcement Learning from Human Feedback (RLHF). The standard preference datasets used for this — UltraFeedback, HH-RLHF, Anthropic Helpfulness/Harmlessness — are English-only and crowdsourced predomina...</p>
+            </a>
+
+            <a class="card" href="query_29.html">
+              <div class="qid">Query 29</div>
+              <h2>Detecting and Mitigating Specification Gaming in RLHF-Aligned Language Models via Adversarial Reward Probing</h2>
+              <p class="topic">Alignment</p>
+              <p>Reinforcement Learning from Human Feedback (RLHF) is the dominant method for aligning large language models with human values. However, it suffers from a critical failure mode: specification gaming (also called reward hacking). The policy learns to exploit proxy features in the reward model — such as response length...</p>
+            </a>
+
+            <a class="card" href="query_30.html">
+              <div class="qid">Query 30</div>
+              <h2>UniAudio-MoE: Modality-Aware Mixture-of-Experts for General-Purpose Audio Representation Learning</h2>
+              <p class="topic">Audio foundation models</p>
+              <p>General-purpose audio foundation models aim to learn transferable representations from diverse audio — speech, music, and environmental sounds — using a single architecture and training procedure. Despite significant progress, existing approaches fall into two categories, each with a critical limitation: A Mixture-o...</p>
+            </a>
+            </div></main>
+</body>
+</html>

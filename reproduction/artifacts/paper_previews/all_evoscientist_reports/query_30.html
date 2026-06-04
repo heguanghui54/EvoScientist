@@ -1,0 +1,253 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>UniAudio-MoE: Modality-Aware Mixture-of-Experts for General-Purpose Audio Representation Learning</title>
+  <style>
+    body { margin: 0; background: #f7f8f8; color: #17191c; font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; line-height: 1.62; }
+    header { padding: 28px clamp(18px, 5vw, 72px); background: #fff; border-bottom: 1px solid #dce1e6; }
+    main { max-width: 980px; margin: 0 auto; padding: 28px 18px 56px; }
+    article { background: #fff; border: 1px solid #dce1e6; border-radius: 8px; padding: clamp(18px, 4vw, 42px); }
+    h1 { margin: 0 0 10px; font-size: clamp(28px, 4vw, 46px); line-height: 1.1; letter-spacing: 0; }
+    h2 { margin-top: 30px; border-top: 1px solid #e7eaee; padding-top: 18px; letter-spacing: 0; }
+    h3, h4 { letter-spacing: 0; }
+    p, li, td { font-size: 15px; }
+    .meta { color: #606a73; display: grid; gap: 4px; }
+    a { color: #225f9f; }
+    table { border-collapse: collapse; width: 100%; overflow-wrap: anywhere; }
+    td { border: 1px solid #e1e5ea; padding: 8px; vertical-align: top; }
+    pre { white-space: pre-wrap; background: #f0f3f5; padding: 14px; border-radius: 6px; overflow-x: auto; }
+    code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    .nav { margin-bottom: 14px; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="nav"><a href="index.html">← All 30 reports</a></div>
+    <h1>UniAudio-MoE: Modality-Aware Mixture-of-Experts for General-Purpose Audio Representation Learning</h1>
+    <div class="meta">
+      <div>Query 30: Audio foundation models</div>
+      <div>Help me generate a research proposal on general-purpose audio foundation models.</div>
+      <div>Source: <code>artifacts/remote_fetch/full_trajectories/EvoScientist/query_30/final_report.md</code></div>
+    </div>
+  </header>
+  <main><article><h1>UniAudio-MoE: Modality-Aware Mixture-of-Experts for General-Purpose Audio Representation Learning</h1>
+<h2>Research Proposal</h2>
+<p>---</p>
+<h2>1. Title</h2>
+<p>**UniAudio-MoE: Modality-Aware Mixture-of-Experts for General-Purpose Audio Foundation Models**</p>
+<p>---</p>
+<h2>2. Problem</h2>
+<p>General-purpose audio foundation models aim to learn transferable representations from diverse audio — speech, music, and environmental sounds — using a single architecture and training procedure. Despite significant progress, existing approaches fall into two categories, each with a critical limitation:</p>
+<p>**Category A — Single-modality specialists.** BEATs (Chen et al., ICML 2022; 596 citations), Whisper (Radford et al., NeurIPS 2023), and MERT (Li et al., ICASSP 2024) each achieve state-of-the-art results within one audio domain but do not generalize to others. Deploying separate models for each domain is costly and misses cross-modal synergies.</p>
+<p>**Category B — Uniform-all-audio models.** AST (Gong et al., Interspeech 2021; 1,316 citations), AudioMAE/MAE-AST (Baade et al., Interspeech 2022; 131 citations), and CLAP (Elizalde et al., 2023; 118 citations) process all audio types through identical weights. This forces the model to learn a single set of filters that must simultaneously capture harmonic structure (music), formant transitions (speech), and transient patterns (environmental sounds). Whisper-AT (Gong et al., 2023; 120 citations) demonstrated that a speech-pretrained Whisper can handle sound event tagging, but suffers a 7.6 mAP gap compared to audio-specialist models — confirming that uniform architectures underperform on at least one modality.</p>
+<p>**The core problem**: How can a single audio foundation model learn representations that match specialist-level performance *simultaneously* across speech, music, and environmental sound tasks, without requiring separate models, modality-specific heads, or knowledge distillation from multiple teachers?</p>
+<p>---</p>
+<h2>3. Hypothesis</h2>
+<p>A Mixture-of-Experts (MoE) architecture with **modality-aware routing**, trained via a **modality-balanced masked autoencoding** objective, enables a single audio foundation model to match or exceed specialist-level performance across speech, music, and environmental sound.</p>
+<p>**Key insight**: Audio modalities differ fundamentally in their signal structure:</p>
+<ul>
+<li>**Speech**: narrowband (0–8 kHz), formant-structured, high temporal resolution needed.</li>
+<li>**Music**: wideband, polyphonic, harmonic stack, long-range periodic dependencies.</li>
+<li>**Environmental**: sparse, transient-heavy, diverse event durations, often non-stationary.</li>
+</ul>
+<p>A uniform transformer forces one set of FFN weights to handle all three. MoE allows different &quot;expert&quot; sub-networks to specialize on different modal structures, while **modality-aware routing** ensures the right experts are activated by the right input type — rather than relying on a learned router that may be dominated by a single modality during training.</p>
+<p>**Secondary hypothesis**: Explicit modality routing (via a lightweight pre-classifier) outperforms both (a) naive MoE with learned token-level routing and (b) the all-uniform baseline, because it prevents mode collapse where one modality hogs the expert capacity.</p>
+<p>---</p>
+<h2>4. Method</h2>
+<h3>4.1 Architecture</h3>
+<p>**Backbone**: Audio Spectrogram Transformer (AST) encoder with ViT-B/16 configuration (12 transformer blocks, 768 hidden dim, 12 heads). Input: log-Mel spectrogram patches (16×16, 1 s window, 160 ms hop). We insert MoE layers in the feed-forward network (FFN) of selected transformer blocks.</p>
+<p>**MoE modification** (Figure 1 conceptual sketch):</p>
+<ul>
+<li>Replace the single MLP in every 4th transformer block (blocks 4, 8, 12) with an MoE layer containing **E = 8 experts**, each an independent 2-layer FFN (768 → 2048 → 768, GELU).</li>
+<li>Each expert has the same capacity as a standard AST FFN (≈4.7M params per expert; total MoE ≈37.5M additional params).</li>
+<li>During each forward pass, each token is routed to **top-2 experts** (sparse MoE with k=2), keeping FLOPs comparable to a dense model despite the larger total parameter count.</li>
+</ul>
+<p>**Modality-aware router**: Instead of a learned router (which can collapse to using few experts), we use a **two-level routing strategy**:</p>
+<p>1. **Global modality classifier**: A lightweight ConvNet (3× Conv2D + GAP + linear, &lt;500K params) takes the raw log-Mel spectrogram and predicts a soft distribution over 3 modalities: {speech, music, environmental}. This classifier is trained jointly from the start with soft labels derived from dataset provenance (e.g., LibriSpeech → speech, FMA → music, AudioSet → environmental).</p>
+<p>2. **Modality-grouped experts**: Experts are partitioned into 3 groups — 2 speech experts, 2 music experts, 2 environmental experts, and 2 **shared** experts for cross-modal features.</p>
+<p>3. **Token-level routing**: Each token is routed only within the group predicted by the global classifier plus the shared experts. This ensures (a) capacity is reserved for each modality, (b) cross-modal transfer happens through shared experts, and (c) one modality cannot dominate expert allocation.</p>
+<p>**Auxiliary load-balancing loss**: A small auxiliary loss (weight α = 0.01) encourages uniform usage across experts within each group, adapted from switch transformer (Fedus et al., 2022).</p>
+<h3>4.2 Pre-Training Objective: Modality-Balanced Masked Autoencoding</h3>
+<p>We use the MAE objective from AudioMAE (Baade et al., 2022): 75% of spectrogram patches are masked; the encoder processes only visible patches; a lightweight decoder reconstructs the full spectrogram in the time-frequency domain (L2 loss on masked patches).</p>
+<p>**Modality balancing**: We construct each training mini-batch to contain **equal numbers of examples from speech, music, and environmental domains** (stratified sampling). This prevents the dominant modality (typically environmental on AudioSet scale) from dictating gradient updates.</p>
+<p>**Multi-resolution reconstruction**: To account for different temporal resolutions needed by each modality, we apply the reconstruction loss at 3 spectrogram resolutions (64 mel bins × 128 time, 64×256, 64×512) through lightweight learned down-/up-sampling, borrowed from the multi-resolution loss used in HTS-AT (Chen et al., ICASSP 2022).</p>
+<h3>4.3 Fine-Tuning Protocol</h3>
+<p>After pre-training, we remove the decoder and attach task-specific linear heads for downstream evaluation. Heads are linear projections of the [CLS] token (or mean-pooling for detection tasks). We follow the standard protocol from AST/BEATs: fine-tune all parameters for 30 epochs with AdamW, cosine LR decay, and early stopping.</p>
+<p>---</p>
+<h2>5. Dataset / Benchmark</h2>
+<h3>5.1 Pre-Training Data</h3>
+<p>We construct a **modality-balanced pre-training corpus** by combining three large-scale datasets:</p>
+<table><tbody>
+<tr><td>Modality</td><td>Dataset</td><td>Size</td><td>Sampling</td><td>Duration</td></tr>
+<tr><td>Speech</td><td>LibriSpeech (clean + other)</td><td>2,815 h</td><td>Balanced by speaker</td><td>10–30 s utterances</td></tr>
+<tr><td>Music</td><td>FMA-large + MTG-Jamendo</td><td>≈2,200 h</td><td>Balanced by genre</td><td>30–60 s clips</td></tr>
+<tr><td>Environmental</td><td>AudioSet (strong + weak)</td><td>≈5,500 h</td><td>Balanced by event class</td><td>10–30 s clips</td></tr>
+</tbody></table>
+<p>**Subsampling strategy**: AudioSet&#x27;s 5,500 h is 2× larger than the other two combined. We randomly subsample AudioSet to match the smallest modality (music, ≈2,200 h) for each epoch, so each epoch has ≈6,600 h total (2,200 h per modality). This prevents the training from being dominated by environmental sounds.</p>
+<h3>5.2 Evaluation Benchmarks</h3>
+<p>We evaluate on 8 downstream tasks spanning all three modalities:</p>
+<p>**Speech tasks:**</p>
+<p>1. **Speech Commands V2** (35k, 35-class keyword classification) — accuracy</p>
+<p>2. **LibriSpeech test-clean** (automatic speech recognition via CTC head) — WER</p>
+<p>3. **VoxCeleb1** (speaker identification, 1,251 classes) — accuracy</p>
+<p>**Music tasks:**</p>
+<p>4. **GTZAN** (1k, 10-genre classification) — accuracy</p>
+<p>5. **MagnaTagATune** (25k, 50-tag multi-label tagging) — ROC-AUC</p>
+<p>6. **Music Auto-Tagging on MTG-Jamendo** (55k, 195 tags) — ROC-AUC</p>
+<p>**Environmental tasks:**</p>
+<p>7. **AudioSet-20K** (20k balanced subset, 527-class tagging) — mAP</p>
+<p>8. **ESC-50** (2k, 50-class classification) — accuracy</p>
+<p>---</p>
+<h2>6. Evaluation Metrics</h2>
+<table><tbody>
+<tr><td>Domain</td><td>Task</td><td>Primary Metric</td><td>Secondary Metric</td></tr>
+<tr><td>Speech</td><td>SCv2</td><td>Top-1 accuracy</td><td>—</td></tr>
+<tr><td>Speech</td><td>LibriSpeech</td><td>Word Error Rate (WER)</td><td>—</td></tr>
+<tr><td>Speech</td><td>VoxCeleb1</td><td>Top-1 accuracy</td><td>—</td></tr>
+<tr><td>Music</td><td>GTZAN</td><td>Top-1 accuracy</td><td>Macro F1</td></tr>
+<tr><td>Music</td><td>MagnaTagATune</td><td>ROC-AUC</td><td>mAP</td></tr>
+<tr><td>Music</td><td>MTG-Jamendo</td><td>ROC-AUC</td><td>mAP</td></tr>
+<tr><td>Environmental</td><td>AudioSet-20K</td><td>mAP</td><td>d-prime</td></tr>
+<tr><td>Environmental</td><td>ESC-50</td><td>Top-1 accuracy</td><td>Macro F1</td></tr>
+</tbody></table>
+<p>**Aggregate metric**: We compute the **geometric mean of (metric / specialist-baseline)** across all 8 tasks, where specialist-baseline is the best reported single-model score from BEATs (env.), Whisper-base (speech), and MERT (music). A geomean &gt; 1.0 means UniAudio-MoE outperforms specialists on average.</p>
+<p>---</p>
+<h2>7. Baselines</h2>
+<p>We compare against 3 classes of baselines:</p>
+<h3>Class 1: Single-modality specialists</h3>
+<ul>
+<li>**BEATs** (Chen et al., ICML 2022) — best self-supervised model for general audio tasks.</li>
+<li>**Whisper-base** (Radford et al., NeurIPS 2023) — speech recognition foundation model.</li>
+<li>**MERT** (Li et al., ICASSP 2024) — music understanding foundation model.</li>
+</ul>
+<h3>Class 2: Uniform audio foundation models</h3>
+<ul>
+<li>**AST** (Gong et al., Interspeech 2021) — pioneer convolution-free audio transformer.</li>
+<li>**AudioMAE / MAE-AST** (Baade et al., Interspeech 2022) — MAE-based audio pre-training.</li>
+<li>**CLAP** (Elizalde et al., 2023) — contrastive language-audio pretraining (zero-shot).</li>
+<li>**HTS-AT** (Chen et al., ICASSP 2022) — hierarchical token-semantic transformer.</li>
+</ul>
+<h3>Class 3: Unified audio approaches</h3>
+<ul>
+<li>**Whisper-AT** (Gong et al., 2023) — Whisper fine-tuned for joint ASR + tagging.</li>
+<li>**USAD** (Chang et al., 2025) — universal speech and audio via distillation.</li>
+<li>**U-SAM** (Wang et al., 2025) — unified audio LLM via text generation.</li>
+</ul>
+<p>**Note on fair comparison**: All baselines are evaluated on exactly the same downstream tasks using the same evaluation scripts. For specialists, we only evaluate on their target domain tasks (e.g., BEATs on ESC-50/AudioSet, not on SCv2). For uniform models, we evaluate on all 8 tasks.</p>
+<p>---</p>
+<h2>8. Ablations</h2>
+<h3>Ablation 1: Routing mechanism</h3>
+<table><tbody>
+<tr><td>Variant</td><td>Description</td><td>Expected gap</td></tr>
+<tr><td>UniAudio-MoE (proposed)</td><td>Modality-aware routing (global classifier + grouped experts)</td><td>—</td></tr>
+<tr><td>UniAudio-MoE-Learned</td><td>Same architecture but learned token-level routing (no modality classifier)</td><td>Expect degradation on smaller-modality tasks due to capacity capture</td></tr>
+<tr><td>UniAudio-MoE-Shared</td><td>8 shared experts, no grouping, learned routing</td><td>Expect unbalanced expert utilization</td></tr>
+</tbody></table>
+<h3>Ablation 2: Modality balancing</h3>
+<table><tbody>
+<tr><td>Variant</td><td>Description</td><td>Expected gap</td></tr>
+<tr><td>Balanced (proposed)</td><td>Stratified batch sampling, 1:1:1 ratio</td><td>—</td></tr>
+<tr><td>Unbalanced-natural</td><td>Natural proportions (AudioSet ≈55%, speech ≈28%, music ≈17%)</td><td>Expect speech/music degradation</td></tr>
+<tr><td>Unbalanced-speech</td><td>70% speech, 15% music, 15% env.</td><td>Expect music/env degradation</td></tr>
+<tr><td>Unbalanced-music</td><td>70% music, 15% speech, 15% env.</td><td>Expect speech/env degradation</td></tr>
+</tbody></table>
+<h3>Ablation 3: Number of experts</h3>
+<ul>
+<li>E = 4 (2 per domain + 1 shared) → insufficient capacity per modality.</li>
+<li>E = 8 (2 per domain + 2 shared, as proposed).</li>
+<li>E = 12 (3 per domain + 3 shared) → diminishing returns expected.</li>
+</ul>
+<h3>Ablation 4: MoE layer placement</h3>
+<ul>
+<li>Early layers only (blocks 1–4) → may not develop distinct representations.</li>
+<li>Late layers only (blocks 8–12) → may miss opportunity for early specialization.</li>
+<li>All layers (blocks 1–12, every FFN replaced with MoE) → compute cost 3× higher.</li>
+<li>Every 4th layer (proposed: blocks 4, 8, 12) → best trade-off.</li>
+</ul>
+<h3>Ablation 5: Pre-training objective</h3>
+<ul>
+<li>MAE reconstruction (proposed).</li>
+<li>Contrastive learning (as in CLAP, on paired audio-text data).</li>
+<li>Joint MAE + contrastive (as in CAV-MAE).</li>
+<li>Knowledge distillation (as in USAD, distilling BEATs + MERT + Whisper into one).</li>
+</ul>
+<p>---</p>
+<h2>9. Expected Failure Modes</h2>
+<table><tbody>
+<tr><td>Failure Mode</td><td>Likelihood</td><td>Mitigation</td><td>Contingency</td></tr>
+<tr><td>**Modality classifier is too easy** (spectrogram features trivially separate speech from music)</td><td>Low</td><td>Not a problem — classification accuracy simply measures how distinct the modalities are, which is expected</td><td>If accuracy is &gt;99%, that&#x27;s fine — it means the router is reliable</td></tr>
+<tr><td>**Modality classifier is too hard** (environmental sounds confused with speech/music)</td><td>Medium</td><td>Use soft routing (weighted combination of modality groups instead of hard assignment)</td><td>If soft routing doesn&#x27;t help, switch to learned token-level routing with a strong load-balancing loss</td></tr>
+<tr><td>**Shared experts dominate** (all tokens route to shared experts, modality-specific experts underutilized)</td><td>Medium</td><td>Increase auxiliary load-balancing loss weight (α from 0.01 to 0.1)</td><td>Add expert dropout during training to force use of diverse experts</td></tr>
+<tr><td>**Worse than specialists on all domains** (overall loss in expressivity)</td><td>Low</td><td>Check whether pre-training was too short (modality-balanced batches are smaller per modality)</td><td>Train longer (300 → 600 epochs) with cosine restart</td></tr>
+<tr><td>**Beats uniform models but not specialists**</td><td>Medium (expected on music and speech)</td><td>Investigate if expert groups need more capacity (E=12) or domain-specific positional encodings</td><td>Add lightweight domain adapters (AdaLoRA) per modality group</td></tr>
+<tr><td>**Catastrophic forgetting during fine-tuning** (model loses general capabilities when fine-tuned on one task)</td><td>Low</td><td>Keep the MoE backbone frozen and only fine-tune task-specific heads</td><td>Use LoRA fine-tuning on all linear projections</td></tr>
+<tr><td>**Computing budget is prohibitive**</td><td>Medium</td><td>Start with a smaller variant (ViT-S, E=4) and demonstrate the same trends before scaling up</td><td>Report scaling results from small → base → large to show the trend holds</td></tr>
+</tbody></table>
+<p>---</p>
+<h2>10. Execution Plan</h2>
+<h3>Phase 0: Infrastructure &amp; Data (Est. 1 week)</h3>
+<ul>
+<li>Set up data pipeline: download LibriSpeech, FMA-large, AudioSet (balanced subset), and all evaluation datasets.</li>
+<li>Implement stratified batch sampler for 1:1:1 modality balancing.</li>
+<li>Precompute log-Mel spectrograms (fixed config: 64 mel bands, hop 160, window 1024) for all pre-training data.</li>
+<li>Establish evaluation harness: reproduce AST and BEATs baselines on all 8 tasks.</li>
+</ul>
+<p>**Milestone**: All 8 downstream evaluation pipelines run reproducibly. AST/BEATs scores match published results within ±1%.</p>
+<h3>Phase 1: Baselines (Est. 1 week)</h3>
+<ul>
+<li>Train/reproduce: AST (ViT-B), AudioMAE, HTS-AT from scratch on the balanced pre-training corpus.</li>
+<li>Evaluate all baselines on all 8 tasks.</li>
+<li>Record specialist scores from BEATs, Whisper-base, MERT (published results).</li>
+</ul>
+<p>**Milestone**: Baseline performance table with 95% confidence intervals (3 seeds each).</p>
+<h3>Phase 2: UniAudio-MoE Construction (Est. 2 weeks)</h3>
+<ul>
+<li>Implement MoE transformer blocks (top-2 routing, grouped experts, load-balancing loss).</li>
+<li>Implement lightweight modality classifier (ConvNet) + integrate into routing.</li>
+<li>Train UniAudio-MoE (ViT-B, E=8) with modality-balanced MAE for 300 epochs.</li>
+</ul>
+<p>**Milestone**: Pre-training converges with reconstruction loss comparable to AudioMAE baseline. Expert utilization is balanced (Gini coefficient &lt; 0.3 across experts).</p>
+<h3>Phase 3: Fine-tuning &amp; Evaluation (Est. 1 week)</h3>
+<ul>
+<li>Fine-tune on all 8 downstream tasks (3 seeds each).</li>
+<li>Run all 5 ablation experiments (variants of routing, balancing, E, layer placement, objective).</li>
+<li>Compute aggregate scores and geomean metric.</li>
+</ul>
+<p>**Milestone**: Full evaluation table with ablations.</p>
+<h3>Phase 4: Analysis &amp; Failure Mode Checks (Est. 1 week)</h3>
+<ul>
+<li>Expert specialization analysis: measure which experts fire most on which modalities.</li>
+<li>t-SNE/UMAP visualization of [CLS] tokens per modality (ours vs. AudioMAE).</li>
+<li>Check failure modes: does modality classifier degrade on out-of-distribution audio? Does shared expert collapse happen at higher expert counts?</li>
+<li>Statistical significance tests (paired bootstrap, p &lt; 0.05) for all primary metrics.</li>
+</ul>
+<p>**Milestone**: Complete analysis document with figures and statistical tests.</p>
+<h3>Phase 5: Writing &amp; Release (Est. 1 week)</h3>
+<ul>
+<li>Write paper (8–9 pages, conference format — target ICASSP 2026 or NeurIPS 2026).</li>
+<li>Release code, pre-trained weights, and evaluation scripts.</li>
+<li>Write technical blog post.</li>
+</ul>
+<p>**Milestone**: Paper submission.</p>
+<p>**Total estimated timeline: 6–7 weeks for a single researcher with 1 GPU (A100 80GB).**</p>
+<p>---</p>
+<h2>References</h2>
+<p>1. Gong, Y., Chung, Y-A., Glass, J. (2021). *AST: Audio Spectrogram Transformer*. Interspeech. 1,316 citations.</p>
+<p>2. Chen, S., et al. (2022). *BEATs: Audio Pre-Training with Acoustic Tokenizers*. ICML. 596 citations.</p>
+<p>3. Chen, K., et al. (2022). *HTS-AT: A Hierarchical Token-Semantic Audio Transformer for Sound Classification and Detection*. ICASSP. 413 citations.</p>
+<p>4. Baade, A., Peng, P., Harwath, D. (2022). *MAE-AST: Masked Autoencoding Audio Spectrogram Transformer*. Interspeech. 131 citations.</p>
+<p>5. Gong, Y., et al. (2022). *Contrastive Audio-Visual Masked Autoencoder*. ICLR. 187 citations.</p>
+<p>6. Gong, Y., Khurana, S., Karlinsky, L., Glass, J. (2023). *Whisper-AT: Noise-Robust ASR Models are also Strong General Audio Event Taggers*. 120 citations.</p>
+<p>7. Elizalde, B., Deshmukh, S., Wang, H. (2023). *Natural Language Supervision for General-Purpose Audio Representations*. 118 citations.</p>
+<p>8. Chang, H-J., Bhati, S., Glass, J., Liu, A. H. (2025). *USAD: Universal Speech and Audio Representation via Distillation*.</p>
+<p>9. Wang, Z., et al. (2025). *U-SAM: An Audio Language Model for Unified Speech, Audio, and Music Understanding*.</p>
+<p>10. Lou, Y., Yang, K., You, Y. (2026). *MoST: Mixing Speech and Text with Modality-Aware Mixture of Experts*.</p>
+<p>11. Cappellazzo, U., Falavigna, D., Brutti, A. (2024). *Efficient Fine-tuning of Audio Spectrogram Transformers via Soft Mixture of Adapters*.</p>
+<p>12. Feng, R., et al. (2025). *Steer-MoE: Efficient Audio-Language Alignment with a Mixture-of-Experts Steering Module*.</p>
+<p>13. Fedus, W., Zoph, B., Shazeer, N. (2022). *Switch Transformers: Scaling to Trillion Parameter Models with Simple and Efficient Sparsity*. JMLR.</p>
+<p>14. Radford, A., et al. (2023). *Robust Speech Recognition via Large-Scale Weak Supervision*. NeurIPS.</p>
+<p>15. Li, Y., et al. (2024). *MERT: Acoustic Music Understanding Model with Large-Scale Self-Supervised Training*. ICLR.</p></article></main>
+</body>
+</html>

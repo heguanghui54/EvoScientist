@@ -64,6 +64,12 @@
     .step { display: grid; grid-template-columns: 42px 1fr; gap: 12px; border: 1px solid var(--line); border-radius: 8px; padding: 14px; background: #fcfcfb; }
     .step-num { width: 34px; height: 34px; display: grid; place-items: center; border-radius: 50%; background: #e8f0f6; color: var(--blue); font-weight: 800; }
     .image-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+    .paper-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 14px; }
+    .paper-card { display: block; text-decoration: none; color: inherit; border: 1px solid var(--line); border-radius: 8px; padding: 14px; background: #fcfcfb; min-height: 118px; }
+    .paper-card:hover { border-color: #8fb2d4; box-shadow: 0 8px 20px rgba(25, 45, 65, .08); }
+    .paper-card span { display: block; color: var(--gold); font-size: 12px; font-weight: 800; margin-bottom: 6px; }
+    .paper-card strong { font-size: 15px; line-height: 1.3; }
+    .link-line { margin-top: 14px; font-weight: 760; }
     figure { margin: 0; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: #fff; }
     img { width: 100%; display: block; }
     figcaption { padding: 10px 12px; color: var(--muted); font-size: 13px; }
@@ -72,7 +78,7 @@
     code { background: #eef1f4; padding: 2px 5px; border-radius: 4px; }
     footer { border-top: 1px solid var(--line); padding: 20px clamp(20px, 5vw, 72px); color: var(--muted); }
     @media (max-width: 920px) {
-      .grid, .metrics, .timeline, .image-grid { grid-template-columns: 1fr; }
+      .grid, .metrics, .timeline, .image-grid, .paper-grid { grid-template-columns: 1fr; }
       .bar-row { grid-template-columns: 110px 1fr 58px; }
     }
   </style>
@@ -292,6 +298,45 @@
               <div><h3>Dossier and bundle</h3><p>生成 final dossier、SHA256 manifest、zip bundle 和 user-scope completion gate。</p></div>
             </div>
             </div>
+    </section>
+
+
+    <section class="panel wide">
+      <div class="section-kicker">All generated papers</div>
+      <h2>30 个 EvoScientist final reports 都在这里</h2>
+      <p>之前页面只放了两个 PDF 预览截图作为样例；完整 30 个 query 的 final_report 已经转成可浏览 HTML 页面。</p>
+      <div class="paper-grid">
+            <a class="paper-card" href="artifacts/paper_previews/all_evoscientist_reports/query_01.html">
+              <span>Query 01 · Machine translation</span>
+              <strong>CrossLingual-RAG: Cross-Lingual Retrieval-Augmented Generation for Extremely Low-Resource Machine Translation</strong>
+            </a>
+
+            <a class="paper-card" href="artifacts/paper_previews/all_evoscientist_reports/query_02.html">
+              <span>Query 02 · Software engineering</span>
+              <strong>TraceRoute: Execution-Trace-Guided Repository-Level Bug Repair with Structured Data Flow Prompts</strong>
+            </a>
+
+            <a class="paper-card" href="artifacts/paper_previews/all_evoscientist_reports/query_03.html">
+              <span>Query 03 · LLM evaluation</span>
+              <strong>Research Proposal: Multi-Perspective Calibrated Ensemble for Debiased LLM-as-Judge Evaluation</strong>
+            </a>
+
+            <a class="paper-card" href="artifacts/paper_previews/all_evoscientist_reports/query_04.html">
+              <span>Query 04 · Healthcare agents</span>
+              <strong>TrialMatch-Agents: A Multi-Agent Framework for Explainable Clinical Trial Eligibility Matching via Specialized Criterion Decomposition</strong>
+            </a>
+
+            <a class="paper-card" href="artifacts/paper_previews/all_evoscientist_reports/query_05.html">
+              <span>Query 05 · Literature review automation</span>
+              <strong>Citation-Structured Related Work Generation via Heterogeneous Graph-Aware Decoding</strong>
+            </a>
+
+            <a class="paper-card" href="artifacts/paper_previews/all_evoscientist_reports/query_06.html">
+              <span>Query 06 · Speech recognition</span>
+              <strong>Research Proposal: Selective Pseudo-Labeling with Adapter-Based Fine-Tuning for Extremely Low-Resource ASR</strong>
+            </a>
+            </div>
+      <p class="link-line"><a href="artifacts/paper_previews/all_evoscientist_reports/index.html">打开全部 30 个 final reports →</a></p>
     </section>
 
 

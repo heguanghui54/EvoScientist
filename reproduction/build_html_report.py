@@ -151,6 +151,29 @@ def preview_images() -> str:
     """
 
 
+def all_reports_section() -> str:
+    manifest = load_json(ROOT / "artifacts" / "paper_previews" / "all_evoscientist_reports" / "manifest.json")
+    cards = []
+    for item in manifest["reports"][:6]:
+        cards.append(
+            f"""
+            <a class="paper-card" href="artifacts/paper_previews/all_evoscientist_reports/{esc(item['html'])}">
+              <span>Query {int(item['query_id']):02d} · {esc(item['topic'])}</span>
+              <strong>{esc(item['title'])}</strong>
+            </a>
+            """
+        )
+    return f"""
+    <section class="panel wide">
+      <div class="section-kicker">All generated papers</div>
+      <h2>30 个 EvoScientist final reports 都在这里</h2>
+      <p>之前页面只放了两个 PDF 预览截图作为样例；完整 30 个 query 的 final_report 已经转成可浏览 HTML 页面。</p>
+      <div class="paper-grid">{''.join(cards)}</div>
+      <p class="link-line"><a href="artifacts/paper_previews/all_evoscientist_reports/index.html">打开全部 30 个 final reports →</a></p>
+    </section>
+    """
+
+
 def build_html() -> str:
     dossier = load_json(ROOT / "final_reproduction_dossier.json")
     bundle = load_json(ROOT / "artifacts" / "reproducibility_bundle" / "manifest.json")
@@ -229,6 +252,12 @@ def build_html() -> str:
     .step {{ display: grid; grid-template-columns: 42px 1fr; gap: 12px; border: 1px solid var(--line); border-radius: 8px; padding: 14px; background: #fcfcfb; }}
     .step-num {{ width: 34px; height: 34px; display: grid; place-items: center; border-radius: 50%; background: #e8f0f6; color: var(--blue); font-weight: 800; }}
     .image-grid {{ display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }}
+    .paper-grid {{ display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 14px; }}
+    .paper-card {{ display: block; text-decoration: none; color: inherit; border: 1px solid var(--line); border-radius: 8px; padding: 14px; background: #fcfcfb; min-height: 118px; }}
+    .paper-card:hover {{ border-color: #8fb2d4; box-shadow: 0 8px 20px rgba(25, 45, 65, .08); }}
+    .paper-card span {{ display: block; color: var(--gold); font-size: 12px; font-weight: 800; margin-bottom: 6px; }}
+    .paper-card strong {{ font-size: 15px; line-height: 1.3; }}
+    .link-line {{ margin-top: 14px; font-weight: 760; }}
     figure {{ margin: 0; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: #fff; }}
     img {{ width: 100%; display: block; }}
     figcaption {{ padding: 10px 12px; color: var(--muted); font-size: 13px; }}
@@ -237,7 +266,7 @@ def build_html() -> str:
     code {{ background: #eef1f4; padding: 2px 5px; border-radius: 4px; }}
     footer {{ border-top: 1px solid var(--line); padding: 20px clamp(20px, 5vw, 72px); color: var(--muted); }}
     @media (max-width: 920px) {{
-      .grid, .metrics, .timeline, .image-grid {{ grid-template-columns: 1fr; }}
+      .grid, .metrics, .timeline, .image-grid, .paper-grid {{ grid-template-columns: 1fr; }}
       .bar-row {{ grid-template-columns: 110px 1fr 58px; }}
     }}
   </style>
@@ -261,6 +290,7 @@ def build_html() -> str:
       {bar_chart(table1_rows, "Table 1: 七个 baseline 的平均 gap", "数值是 EvoScientist 相对 baseline 的 Win%-Lose% 平均值；这是 replacement/proxy judge，不是作者原始 transcript。")}
       {bar_chart(table2_rows, "Table 2: Monica/Gemini surrogate 平均 gap", "human judge 暂时 waived；这里展示的是 surrogate labels 聚合，不冒充 PhD human labels。")}
       {timeline()}
+      {all_reports_section()}
       {preview_images()}
       <section class="panel wide">
         <div class="section-kicker">Boundary</div>

@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Schema-Constrained Document-Level Event Extraction via Context-Grounded LLM Decoding</title>
+  <style>
+    body { margin: 0; background: #f7f8f8; color: #17191c; font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; line-height: 1.62; }
+    header { padding: 28px clamp(18px, 5vw, 72px); background: #fff; border-bottom: 1px solid #dce1e6; }
+    main { max-width: 980px; margin: 0 auto; padding: 28px 18px 56px; }
+    article { background: #fff; border: 1px solid #dce1e6; border-radius: 8px; padding: clamp(18px, 4vw, 42px); }
+    h1 { margin: 0 0 10px; font-size: clamp(28px, 4vw, 46px); line-height: 1.1; letter-spacing: 0; }
+    h2 { margin-top: 30px; border-top: 1px solid #e7eaee; padding-top: 18px; letter-spacing: 0; }
+    h3, h4 { letter-spacing: 0; }
+    p, li, td { font-size: 15px; }
+    .meta { color: #606a73; display: grid; gap: 4px; }
+    a { color: #225f9f; }
+    table { border-collapse: collapse; width: 100%; overflow-wrap: anywhere; }
+    td { border: 1px solid #e1e5ea; padding: 8px; vertical-align: top; }
+    pre { white-space: pre-wrap; background: #f0f3f5; padding: 14px; border-radius: 6px; overflow-x: auto; }
+    code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    .nav { margin-bottom: 14px; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="nav"><a href="index.html">← All 30 reports</a></div>
+    <h1>Schema-Constrained Document-Level Event Extraction via Context-Grounded LLM Decoding</h1>
+    <div class="meta">
+      <div>Query 17: Information extraction</div>
+      <div>Generate a research proposal on automated information extraction.</div>
+      <div>Source: <code>artifacts/remote_fetch/full_trajectories/EvoScientist/query_17/final_report.md</code></div>
+    </div>
+  </header>
+  <main><article><h1>Schema-Constrained Document-Level Event Extraction via Context-Grounded LLM Decoding</h1>
+<h2>1. Problem</h2>
+<p>**Automated information extraction** (IE) aims to transform unstructured text into structured representations. Within IE, **event extraction** — identifying occurrences of typed events and mapping each event to its participants (agent, object, time, location, etc.) — is a core task with applications in news monitoring, biomedical literature mining, financial analysis, and intelligence.</p>
+<p>The problem currently has three unresolved challenges that this proposal targets directly:</p>
+<p>1. **Document-level scope.** Most event extraction research operates at the sentence level, yet real events naturally span multiple sentences: an attack is described across several paragraphs, a clinical outcome is scattered across a discharge summary, and a corporate acquisition is reported across a news article. Sentence-level methods fail to capture long-range entity-role dependencies.</p>
+<p>2. **Structural faithfulness.** Large language models (LLMs) achieve strong results on IE when prompted in zero/few-shot settings, but they are prone to hallucination — extracting events or arguments that are fluent but not present in the source text. In safety-critical domains (clinical, legal, financial), unfaithful extractions are more harmful than missed extractions.</p>
+<p>3. **Schema generalization.** Existing methods require either expensive annotation for each new event schema or brittle prompt engineering. A method that generalizes to arbitrary schemas without task-specific training is needed for practical deployment.</p>
+<p>**Concrete scenario:** Given a news article describing a &quot;vehicle crash&quot; event, the system must identify the crash trigger (e.g., &quot;collided&quot;), the vehicles involved, casualties, location, date, and cause — even when these arguments are spread across 3–5 sentences and the event schema is provided at inference time as a structured specification.</p>
+<p>---</p>
+<h2>2. Hypothesis</h2>
+<p>**Central hypothesis:** Constraining the decoding of a frozen LLM with a type-aware, context-grounded automaton — derived from both the provided event schema and the source document — will significantly improve extraction faithfulness and F1 for document-level event extraction across novel schemas, compared to unconstrained prompting, fine-tuned seq2seq baselines, and post-hoc verification approaches.</p>
+<p>**Sub-hypotheses:**</p>
+<ul>
+<li>**H1:** Schema-informed hard constraints (e.g., &quot;location must be a span in the document, not a generated phrase&quot;) reduce argument hallucination by ≥40% relative.</li>
+<li>**H2:** Document-level cross-sentence argument aggregation via a lightweight span-graph interaction layer outperforms sentence-level greedy extraction when events span &gt;2 sentences.</li>
+<li>**H3:** A schema-conditioned prefix that enumerates roles and type constraints in a structured grammar improves zero-shot transfer to unseen schemas by ≥15% F1 over natural-language prompting.</li>
+</ul>
+<p>---</p>
+<h2>3. Method: Constrained Schema Extraction (CSE)</h2>
+<p>The proposed system has three components:</p>
+<h3>3.1 Schema-Aware Constrained Decoding Grammars</h3>
+<p>Given an event schema S containing event types E and, for each event type e, a set of role types R_e with their expected entity types (e.g., &quot;agent: PERSON&quot;, &quot;target: ORGANIZATION&quot;, &quot;place: LOCATION&quot;), we compile S into a formal grammar G_S.</p>
+<p>The grammar is a **token-level deterministic finite automaton** (DFA) built on the LLM&#x27;s vocabulary, where:</p>
+<ul>
+<li>At each decoding step, only tokens that lead to a valid (syntactically correct, schema-conforming) completion are allowed.</li>
+<li>Role slots are typed: if role `place` expects a LOCATION entity, the grammar enforces that the generated token sequence for that slot corresponds to a document span (tokens drawn from the source document via a pointer mechanism) rather than freely generated text.</li>
+<li>The grammar is constructed once per schema at inference time (no training) and is agnostic to the source document content.</li>
+</ul>
+<h3>3.2 Context-Grounded Span Pointer</h3>
+<p>To prevent hallucination of entity names not present in the source document, the decoder does not generate entity names from its vocabulary freely. Instead, we modify the LLM&#x27;s output layer to support **span pointer copying** from the source document:</p>
+<ul>
+<li>The source document D is encoded once.</li>
+<li>For each role slot, the decoder selects a span from D via a learned linear projection over the document encoder&#x27;s hidden states (a small, trainable pointing head with &lt;5M parameters). The LLM&#x27;s own hidden states at the slot-filling position condition the pointing distribution.</li>
+<li>The role-filling text is forced to be a contiguous span from D, eliminating the possibility of generating names, dates, or locations that do not appear in the source.</li>
+</ul>
+<p>This pointer mechanism is the **only trainable component** of the system beyond the frozen LLM. The LLM&#x27;s weights are never updated.</p>
+<h3>3.3 Cross-Sentence Argument Aggregation</h3>
+<p>Event arguments can appear across multiple sentences. We construct a **document-level entity graph** where:</p>
+<ul>
+<li>Nodes are entity mentions (from an off-the-shelf NER tagger run on D).</li>
+<li>Edges connect coreferent mentions and sentences adjacent in the document.</li>
+<li>A lightweight graph attention network (GAT, 2 layers, hidden dim=128) propagates contextual information across sentence boundaries.</li>
+<li>The GAT&#x27;s output representations are fed as additional context to the pointer mechanism, enabling the decoder to select an argument from sentence S_i even when the event trigger is in sentence S_j.</li>
+</ul>
+<p>This module is also trained end-to-end with the pointer head, but its weights are small (≈50K parameters).</p>
+<h3>3.4 Overall Architecture Flow</h3>
+<pre><code>
+Input: Document D + Schema S
+   │
+   ├─ Encode D with frozen LLM (e.g., Llama-3-8B) → hidden states H_D
+   ├─ Compile S into DFA grammar G_S (symbolic, no learned params)
+   │
+   ├─ Run NER on D → entity spans E_D
+   ├─ Build entity graph → GAT → context vectors C_D
+   │
+   └─ Decode event structures:
+        For each event type e in S:
+          For each role r in R_e:
+            - Constrain vocabulary via G_S (only valid role-filling tokens)
+            - Condition pointer on H_D + C_D → select span from D
+        Output: structured JSON with event triggers + arguments
+</code></pre>
+<p>**Training:** Only the span pointer head and GAT module are trained (≈5M parameters total). Training uses annotated event datasets (see §5) with standard cross-entropy loss on span boundaries. The LLM and NER tagger remain frozen.</p>
+<p>**Inference:** Given a new schema S&#x27; unseen during training, we compile a new grammar G_{S&#x27;} automatically. The pointer head and GAT generalize via the shared span-selection and aggregation mechanism, without any fine-tuning on S&#x27;.</p>
+<p>---</p>
+<h2>4. Dataset &amp; Benchmark</h2>
+<p>We evaluate on three datasets covering diverse domains and document lengths:</p>
+<table><tbody>
+<tr><td>Dataset</td><td>Domain</td><td>Documents</td><td>Event Types</td><td>Avg Doc Length</td><td>Standard Split</td></tr>
+<tr><td>**RAMS**</td><td>News (Wikinews)</td><td>9,124</td><td>139</td><td>4.2 sentences</td><td>7,329/874/921</td></tr>
+<tr><td>**WikiEvents**</td><td>News (Wikipedia)</td><td>246 articles</td><td>50</td><td>15+ sentences</td><td>172/28/46</td></tr>
+<tr><td>**MLEE**</td><td>Biomedical (literature)</td><td>1,413 abstracts</td><td>19</td><td>5–10 sentences</td><td>989/198/226</td></tr>
+</tbody></table>
+<p>**Why these three:**</p>
+<ul>
+<li>RAMS: The standard document-level EE benchmark. Each event has arguments distributed across the document.</li>
+<li>WikiEvents: Longer documents with more complex event structures and hierarchical schemas.</li>
+<li>MLEE: Biomedical domain — tests schema generalization to specialized ontology-driven schemas different from news events.</li>
+</ul>
+<p>**Zero-shot schema evaluation:** We also construct a zero-shot benchmark by holding out 25% of event types from each dataset during training. At test time, the system must extract events with these held-out schemas using only the grammar compiled from the schema definition (no training examples seen). This directly tests H3.</p>
+<p>---</p>
+<h2>5. Evaluation Metrics</h2>
+<table><tbody>
+<tr><td>Metric</td><td>Definition</td><td>Primary?</td></tr>
+<tr><td>**Trigger F1**</td><td>Exact-match F1 on event trigger identification + classification</td><td>Yes</td></tr>
+<tr><td>**Argument F1**</td><td>Exact-match F1 on argument role-filling (span boundaries must match)</td><td>Yes</td></tr>
+<tr><td>**Argument Head F1**</td><td>Head-word F1 (lenient span match, less strict than exact)</td><td>Secondary</td></tr>
+<tr><td>**Hallucination Rate**</td><td>% of extracted arguments whose span does not appear verbatim in the source document</td><td>Critical</td></tr>
+<tr><td>**Schema Transfer F1**</td><td>Argument F1 evaluated only on held-out event schemas (zero-shot)</td><td>Yes</td></tr>
+<tr><td>**Inference Latency**</td><td>Wall-clock time per document (sec)</td><td>Monitoring</td></tr>
+</tbody></table>
+<p>**Statistical rigor:** For all F1 metrics, report mean ± 1.96 × SEM over 5 independent seeds. For hallucination rate, report bootstrapped 95% confidence intervals.</p>
+<p>---</p>
+<h2>6. Baselines</h2>
+<table><tbody>
+<tr><td>Baseline</td><td>Category</td><td>Description</td></tr>
+<tr><td>**BART-EE**</td><td>Fine-tuned seq2seq</td><td>BART-large fine-tuned on RAMS/WikiEvents/MLEE (published state-of-the-art for document-level EE)</td></tr>
+<tr><td>**LLM-Prompt**</td><td>Zero-shot LLM</td><td>GPT-4 / Llama-3-8B prompted with schema description + in-context examples (2-shot), free-form generation</td></tr>
+<tr><td>**LLM-Prompt + Verif.**</td><td>Prompt + verification</td><td>Same as above, but a second LLM call verifies extractions against source text</td></tr>
+<tr><td>**OneIE**</td><td>Graph-based</td><td>Published graph-based event extraction with BERT encoding (pre-LLM SOTA)</td></tr>
+<tr><td>**CSE-NoConstraints**</td><td>Ablation variant</td><td>Our method without DFA grammar constraints (free decoding, pointer still active)</td></tr>
+<tr><td>**CSE-NoPointer**</td><td>Ablation variant</td><td>Our method without span-pointer (free generation, grammar still active)</td></tr>
+</tbody></table>
+<p>All LLM baselines use the same frozen LLM (Llama-3-8B) for fair comparison. GPT-4 is included as a computational upper bound for zero-shot performance.</p>
+<p>---</p>
+<h2>7. Ablations</h2>
+<table><tbody>
+<tr><td>Ablation</td><td>Component Removed</td><td>What It Tests</td></tr>
+<tr><td>A1: No grammar constraint</td><td>Remove DFA grammar (free LM generation)</td><td>Tests H1 — contribution of hard schema constraints to faithfulness</td></tr>
+<tr><td>A2: No span pointer</td><td>Allow free token generation for arguments</td><td>Tests the hallucination prevention mechanism</td></tr>
+<tr><td>A3: Sentence-local only</td><td>Restrict argument search to trigger&#x27;s sentence</td><td>Tests H2 — value of document-level aggregation</td></tr>
+<tr><td>A4: No entity graph (GAT)</td><td>Replace GAT with linear context weighting</td><td>Tests the GAT cross-sentence propagation</td></tr>
+<tr><td>A5: Grammar-only, no pointer</td><td>Use DFA grammar but free generation for spans</td><td>Isolates pointer vs grammar contributions</td></tr>
+<tr><td>A6: Larger LLM backbone</td><td>Replace Llama-3-8B with Llama-3-70B (frozen)</td><td>Tests scaling: does a larger backbone compensate for smaller constrained components?</td></tr>
+</tbody></table>
+<p>Each ablation is run on the full test sets of all three datasets. Effect size (Cohen&#x27;s d) is reported for the primary metrics.</p>
+<p>---</p>
+<h2>8. Expected Failure Modes</h2>
+<table><tbody>
+<tr><td>Failure Mode</td><td>Likelihood</td><td>Mitigation</td></tr>
+<tr><td>**NER cascading errors.** If the off-the-shelf NER misses entity mentions, the pointer mechanism cannot select them, causing false negatives.</td><td>High</td><td>Use a high-recall NER at lowered confidence threshold; incorporate an &quot;entity proposal&quot; fine-tuning step if needed.</td></tr>
+<tr><td>**Grammar compilation too restrictive.** Complex schemas with optional roles, nested event structures may require grammar features that are expensive to compile at inference time.</td><td>Medium</td><td>Implement grammar relaxation fallback: when the DFA blocks all tokens, fall back to unconstrained decoding for that slot with a penalty.</td></tr>
+<tr><td>**Pointer head fails to generalize to new schemas.** The training distribution of entity types may not cover types in held-out schemas (e.g., drug names → gene names).</td><td>Medium</td><td>Train pointer on a diverse corpus of document-span selection tasks (SQuAD 2.0, DROP) before domain-specific fine-tuning.</td></tr>
+<tr><td>**GAT oversmoothing on long documents.** Documents with &gt;20 sentences may cause entity representations to converge to indistinguishable vectors.</td><td>Low</td><td>Use identity skip-connections and early stopping on the number of propagation steps.</td></tr>
+<tr><td>**Hallucination rate floor &gt; 0.** Some valid extractions require inference beyond span copying (e.g., &quot;his wife&quot; → resolve to a named entity from earlier in the text).</td><td>Medium</td><td>Add a coreference resolution pass before pointer selection; document which errors are recoverable vs inherent.</td></tr>
+<tr><td>**OOM on long documents.** Llama-3-8B inference on 15+ sentence documents may exceed GPU memory for batch decoding.</td><td>Low</td><td>Implement sliding-window encoding with overlap; document batch size per dataset.</td></tr>
+</tbody></table>
+<p>---</p>
+<h2>9. Short Execution Plan</h2>
+<h3>Phase 1: Infrastructure (Weeks 1–2)</h3>
+<ul>
+<li>[ ] Set up document-level EE evaluation framework (RAMS, WikiEvents, MLEE).</li>
+<li>[ ] Implement schema-to-DFA compiler (Python + context-free grammar parser).</li>
+<li>[ ] Load frozen Llama-3-8B; verify baseline LLM-Prompt results.</li>
+</ul>
+<h3>Phase 2: Implementation (Weeks 3–5)</h3>
+<ul>
+<li>[ ] Implement span pointer head on top of LLM hidden states.</li>
+<li>[ ] Implement entity-graph GAT aggregator.</li>
+<li>[ ] Integrate constrained decoding with HuggingFace&#x27;s `generate()` via custom logits processor.</li>
+<li>[ ] Build zero-shot schema hold-out splits.</li>
+</ul>
+<h3>Phase 3: Training &amp; Validation (Weeks 6–8)</h3>
+<ul>
+<li>[ ] Train pointer + GAT on RAMS train set (2 epochs, batch size 8, A100 40GB).</li>
+<li>[ ] Validate on RAMS dev; check hallucination rate.</li>
+<li>[ ] Debug grammar failures; tune fallback threshold.</li>
+<li>[ ] Full training on all three datasets.</li>
+</ul>
+<h3>Phase 4: Evaluation &amp; Ablations (Weeks 9–11)</h3>
+<ul>
+<li>[ ] Run all baselines (BART-EE, OneIE, LLM baselines).</li>
+<li>[ ] Run 6 ablations (A1–A6) on all datasets.</li>
+<li>[ ] Run zero-shot schema evaluation.</li>
+<li>[ ] Statistical analysis (confidence intervals, effect sizes).</li>
+</ul>
+<h3>Phase 5: Analysis &amp; Write-up (Weeks 12–14)</h3>
+<ul>
+<li>[ ] Error analysis: categorize false positives/negatives by failure type.</li>
+<li>[ ] Document failure modes with examples.</li>
+<li>[ ] Write paper (target: ACL Rolling Review / EMNLP / NAACL).</li>
+<li>[ ] Release code + grammar compiler as open-source library.</li>
+</ul>
+<h3>Resource Requirements</h3>
+<ul>
+<li>GPU: 1× A100 40GB (training), 1× A100 (inference / baselines).</li>
+<li>Storage: &lt;100 GB (datasets + model checkpoints).</li>
+<li>Personnel: 1 researcher + 1 advisor.</li>
+</ul>
+<p>---</p>
+<h2>10. Expected Outcomes &amp; Impact</h2>
+<p>**If successful**, this proposal would deliver:</p>
+<p>1. An open-source schema-to-constrained-decoding compiler that works with any HuggingFace LLM.</p>
+<p>2. State-of-the-art document-level event extraction results on RAMS, WikiEvents, and MLEE, with hallucination rates near zero.</p>
+<p>3. Demonstrated zero-shot schema transfer, enabling event extraction for new domains with zero annotation cost.</p>
+<p>4. A clear decomposition of where value comes from: grammar constraints (hallucination reduction) vs. span pointers (faithfulness) vs. graph aggregation (cross-sentence coverage).</p>
+<p>**Fallback plan:** If the constrained decoding approach proves too restrictive (e.g., grammar compilation is intractable for complex schemas), we fall back to a softer variant: schema-guided reranking of top-K beam hypotheses, trading some faithfulness guarantees for schema coverage.</p>
+<p>**Target venue:** EMNLP 2026 or ACL Rolling Review (ARR) 2026 cycle.</p></article></main>
+</body>
+</html>

@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Research Proposal: Context-Adaptive Gender Debiasing (CAGED) for Neural Machine Translation</title>
+  <style>
+    body { margin: 0; background: #f7f8f8; color: #17191c; font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; line-height: 1.62; }
+    header { padding: 28px clamp(18px, 5vw, 72px); background: #fff; border-bottom: 1px solid #dce1e6; }
+    main { max-width: 980px; margin: 0 auto; padding: 28px 18px 56px; }
+    article { background: #fff; border: 1px solid #dce1e6; border-radius: 8px; padding: clamp(18px, 4vw, 42px); }
+    h1 { margin: 0 0 10px; font-size: clamp(28px, 4vw, 46px); line-height: 1.1; letter-spacing: 0; }
+    h2 { margin-top: 30px; border-top: 1px solid #e7eaee; padding-top: 18px; letter-spacing: 0; }
+    h3, h4 { letter-spacing: 0; }
+    p, li, td { font-size: 15px; }
+    .meta { color: #606a73; display: grid; gap: 4px; }
+    a { color: #225f9f; }
+    table { border-collapse: collapse; width: 100%; overflow-wrap: anywhere; }
+    td { border: 1px solid #e1e5ea; padding: 8px; vertical-align: top; }
+    pre { white-space: pre-wrap; background: #f0f3f5; padding: 14px; border-radius: 6px; overflow-x: auto; }
+    code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    .nav { margin-bottom: 14px; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="nav"><a href="index.html">← All 30 reports</a></div>
+    <h1>Research Proposal: Context-Adaptive Gender Debiasing (CAGED) for Neural Machine Translation</h1>
+    <div class="meta">
+      <div>Query 15: Machine translation</div>
+      <div>Generate a research proposal on debiasing in machine translation.</div>
+      <div>Source: <code>artifacts/remote_fetch/full_trajectories/EvoScientist/query_15/final_report.md</code></div>
+    </div>
+  </header>
+  <main><article><h1>Research Proposal: Context-Adaptive Gender Debiasing (CAGED) for Neural Machine Translation</h1>
+<p>---</p>
+<h2>Choice of subproblem</h2>
+<p>The query asks about &quot;debiasing in machine translation&quot; — a broad area covering gender, political, religious, and dialect bias. I focus on **gender bias in neural machine translation (NMT)**, the most documented and benchmarked debiasing problem in MT. Within that, I target a specific gap: **existing methods treat all sentences uniformly, applying debiasing pressure regardless of whether the source context actually resolves a person&#x27;s gender.**</p>
+<p>---</p>
+<h2>1. Problem</h2>
+<p>Neural machine translation systems produce stereotyped gender translations even when the source context disambiguates gender. For example:</p>
+<table><tbody>
+<tr><td>Source (English)</td><td>Correct (resolved from context)</td><td>NMT output (stereotyped)</td></tr>
+<tr><td>*&quot;My sister, the doctor, arrived.&quot;*</td><td>&quot;Ma sœur, la docteure, est arrivée.&quot;</td><td>&quot;Ma sœur, le docteur, est arrivé.&quot;</td></tr>
+<tr><td>*&quot;The nurse — he was exhausted — sat down.&quot;*</td><td>&quot;L&#x27;infirmier, épuisé, s&#x27;est assis.&quot;</td><td>&quot;L&#x27;infirmière, épuisée, s&#x27;est assise.&quot;</td></tr>
+</tbody></table>
+<p>Conversely, when the source is genuinely ambiguous (e.g., *&quot;The doctor arrived&quot;* with no prior context), current debiasing methods often **force a binary gender choice**, introducing information absent in the source and degrading translation quality by ~1–2 BLEU points (Saunders &amp; Byrne, 2020).</p>
+<p>**Core tension**: Stronger debiasing reduces stereotyped errors on disambiguated cases but increases over-correction errors on genuinely ambiguous cases. Weaker debiasing has the opposite problem. Current approaches apply a single, uniform debiasing strength globally, creating an unavoidable trade-off.</p>
+<p>**Key insight**: The optimal debiasing strength at inference depends on whether the source context *actually resolves* the entity&#x27;s gender — information that the MT model itself has but current debiasing methods do not exploit.</p>
+<p>---</p>
+<h2>2. Hypothesis</h2>
+<p>&gt; **We can improve both bias reduction *and* translation quality by conditioning debiasing strength on a per-entity ambiguity score derived from document-level context, instead of applying uniform debiasing pressure across all sentences.**</p>
+<p>Concretely:</p>
+<ul>
+<li>**H₁**: A model fine-tuned with ambiguity-adaptive regularization will achieve lower gender bias (measured on WinoMT) than both an unregularized baseline and a uniformly-regularized baseline, at the same BLEU.</li>
+<li>**H₂**: On genuinely ambiguous sentences, the adaptive model will preserve higher translation quality than a uniformly-regularized model, because it does not force stereotyped gender choices when context is insufficient.</li>
+<li>**H₃**: The ambiguity estimator can be a lightweight classifier (≤200M parameters) that does not require expensive coreference annotations at inference — only the source text with document boundaries.</li>
+</ul>
+<p>---</p>
+<h2>3. Method: Context-Adaptive Gender Debiasing (CAGED)</h2>
+<p>CAGED has two components:</p>
+<h3>3.1 Ambiguity Estimator</h3>
+<p>A lightweight, language-agnostic classifier that outputs a **per-entity ambiguity score** *a ∈ [0, 1]* for each gender-ambiguous slot in the source sentence.</p>
+<p>**Input**: Source sentence *s* with *N* preceding sentences of document context *d* (truncated at 512 BPE tokens).</p>
+<p>**Output**: For each entity mention *e* in *s* that maps to a gender-inflected slot in the target language (identified via a target-side morphological analyzer), a score *a(e) ∈ [0,1]*.</p>
+<p>**Architecture**: mBERT-based sentence-pair classifier (sequence length ≤ 512). The [CLS] representation is fed to a 2-layer MLP with a sigmoid output. Training data is automatically generated from existing parallel corpora with gold coreference annotations (OntoNotes, WikiCoref) by:</p>
+<p>1. Identifying gender-resolvable entities (pronoun links, kinship terms + gender-stereotyped occupations where coreference resolves to a gendered antecedent)</p>
+<p>2. Labeling them *a=0* (resolved)</p>
+<p>3. Sampling synthetic ambiguous cases by stripping gendered antecedents — label *a=1* (ambiguous)</p>
+<p>**Inference cost**: ~5ms per sentence on a single GPU — negligible relative to MT decoding.</p>
+<h3>3.2 Gender-Adaptive Fine-Tuning</h3>
+<p>Fine-tune a pretrained NMT model with an augmented loss:</p>
+<pre><code>
+L_total = L_NLL + λ · L_gender
+
+L_gender = Σ_{e ∈ entities(s)} (1 - a(e)) · CE(p_gender(e), g_target(e))
+</code></pre>
+<p>Where:</p>
+<ul>
+<li>**L_NLL**: Standard cross-entropy loss (next-token prediction on target side).</li>
+<li>**λ**: A scalar controlling overall regularization strength (tuned on a validation set).</li>
+<li>**a(e)**: Ambiguity score from §3.1. When *a(e) ≈ 0* (gender fully resolved from context), the gender loss fires strongly. When *a(e) ≈ 1* (fully ambiguous), the gender loss is suppressed to near-zero.</li>
+<li>**CE(p_gender(e), g_target(e))**: Cross-entropy between the model&#x27;s predicted distribution over gender-marked tokens for entity *e* and the correct gender form *g_target*. The gender target is extracted from the reference translation&#x27;s morphological analysis — automatically obtained without additional annotation.</li>
+</ul>
+<p>**Training recipe**:</p>
+<ul>
+<li>Start from a pretrained NMT checkpoint (e.g., M2M-100 418M or NLLB-600M)</li>
+<li>Fine-tune for 10K steps on a subset of WMT training data (English→German + English→French, ~5M sentence pairs with ≥2-sentence documents)</li>
+<li>Use AdamW (lr=5e-6, β₁=0.9, β₂=0.98), batch size 4096 tokens</li>
+<li>Early stopping based on validation BLEU + bias reduction composite</li>
+</ul>
+<p>**Inference**: The Ambiguity Estimator runs on the source side (in parallel with MT encoding). Its outputs are used *only during training* to weight the gender loss — at inference, the MT model runs identically to the baseline, with no additional latency.</p>
+<p>---</p>
+<h2>4. Dataset and Benchmark</h2>
+<table><tbody>
+<tr><td>Dataset</td><td>Use</td><td>Size</td><td>Languages</td></tr>
+<tr><td>**WMT News Commentary** + **Europarl v10**</td><td>Training (document-level, long enough for coreference)</td><td>~5M sentence pairs</td><td>En→De, En→Fr</td></tr>
+<tr><td>**OntoNotes 5.0** + **WikiCoref**</td><td>Training data for Ambiguity Estimator</td><td>~3K documents</td><td>English only</td></tr>
+<tr><td>**WinoMT** (Stanovsky et al., 2019)</td><td>Primary bias evaluation (anti-stereotyped pro-stereotyped pairs)</td><td>3,888 sentences</td><td>En→De, En→Fr</td></tr>
+<tr><td>**MuST-SHE** (Bentivogli et al., 2020)</td><td>Secondary bias eval — professionally corrected gender annotations</td><td>~1,200 sentences</td><td>En→De, En→Fr, En→It, En→Es</td></tr>
+<tr><td>**new: CAGED-Ambiguous subset**</td><td>Ambiguity-specific quality eval — sentences where gender is NOT resolvable from context</td><td>~500 sentences (constructed)</td><td>En→De, En→Fr</td></tr>
+</tbody></table>
+<p>**CAGED-Ambiguous construction**: Sentences with profession nouns (*doctor, nurse, engineer, assistant*) whose antecedents in document context provide no gender signal (first-mention, no pronoun, no honorific, no kinship term). Each sentence is paired with a *both correct* label — both masculine and feminine target forms are acceptable.</p>
+<p>---</p>
+<h2>5. Evaluation Metrics</h2>
+<table><tbody>
+<tr><td>Metric</td><td>What it measures</td><td>Source</td></tr>
+<tr><td>**Bias Score (ΔS)**</td><td>Difference in accuracy between pro-stereotyped and anti-stereotyped WinoMT subsets. Lower is better.</td><td>Stanovsky et al., 2019</td></tr>
+<tr><td>**Gender Accuracy (GA)**</td><td>% of gendered entity translations that match the (context-resolved) correct gender form. Higher is better.</td><td>MuST-SHE</td></tr>
+<tr><td>**Ambiguity Preservation (AP)**</td><td>On the CAGED-Ambiguous subset: % of sentences where the model outputs a gender-neutral strategy OR both genders are equally valid. Higher is better.</td><td>New metric</td></tr>
+<tr><td>**sBLEU / COMET**</td><td>Overall translation quality. SacreBLEU (BLEU, ChrF) + COMET-22.</td><td>Standard</td></tr>
+<tr><td>**ΔQuality**</td><td>BLEU drop from the unfine-tuned base model. Lower drop = better preservation of quality.</td><td>—</td></tr>
+</tbody></table>
+<p>**Primary success signal**: ΔS ≤ 5pp (from a baseline of ~35pp) *and* ΔQuality ≥ -1.5 BLEU (baseline → CAGED). The key test is whether CAGED beats uniform debiasing at any λ setting on *both* axes simultaneously.</p>
+<p>---</p>
+<h2>6. Baselines</h2>
+<table><tbody>
+<tr><td>Baseline</td><td>Description</td><td>Expected ΔS (En→De)</td><td>Expected ΔBLEU</td></tr>
+<tr><td>**Unregularized NMT**</td><td>Pretrained M2M-100 finetuned with L_NLL only</td><td>~35pp</td><td>0.0 (reference)</td></tr>
+<tr><td>**Uniform debiasing (λ=0.1)**</td><td>Same model, L_total with uniform gender loss (a=0 for all)</td><td>~10–15pp</td><td>-1.5 to -2.5</td></tr>
+<tr><td>**Uniform debiasing (λ=0.5)**</td><td>Stronger uniform gender loss</td><td>~5–10pp</td><td>-3.0 to -5.0</td></tr>
+<tr><td>**Counterfactual Data Augmentation (CDA)**</td><td>Training data augmented with flipped-gender variants (Zmigrod et al., 2019)</td><td>~10–15pp</td><td>-1.0 to -2.0</td></tr>
+<tr><td>**Post-hoc embedding debiasing**</td><td>Hard-debiased embeddings (Bolukbasi-style, Escudé Font &amp; Costa-jussà, 2019)</td><td>~20–25pp</td><td>-0.5 to -1.0</td></tr>
+<tr><td>**CAGED (ours)**</td><td>Ambiguity-adaptive gender loss</td><td>**Target: ≥10pp ΔS**</td><td>**Target: ≥ -1.0 BLEU**</td></tr>
+</tbody></table>
+<p>---</p>
+<h2>7. Ablations</h2>
+<table><tbody>
+<tr><td>Ablation</td><td>Purpose</td><td>Conditions tested</td></tr>
+<tr><td>**No Ambiguity Estimator (a=0 for all)**</td><td>Isolates the contribution of adaptive weighting vs. the gender loss itself</td><td>Same as &quot;Uniform debiasing&quot; — if CAGED beats this, the adaptation matters</td></tr>
+<tr><td>**Oracle ambiguity (perfect coreference)**</td><td>Upper bound — how well could CAGED work with perfect gender resolution?</td><td>Human-annotated coreference from OntoNotes used as 0/1 oracle</td></tr>
+<tr><td>**Context window size**</td><td>How much context does the Ambiguity Estimator need?</td><td>0 sentences (sentence-only), 1, 3, 5 sentences of context</td></tr>
+<tr><td>**Ambiguity threshold binarization**</td><td>Is a continuous score better than discrete (resolved/ambiguous)?</td><td>Binary threshold at 0.5 vs. continuous weighting</td></tr>
+<tr><td>**λ sensitivity**</td><td>How sensitive is CAGED to the regularization strength?</td><td>λ ∈ {0.01, 0.05, 0.1, 0.5, 1.0}</td></tr>
+</tbody></table>
+<p>---</p>
+<h2>8. Expected Failure Modes and Mitigations</h2>
+<table><tbody>
+<tr><td>Failure mode</td><td>Likelihood</td><td>Mitigation</td></tr>
+<tr><td>**Ambiguity Estimator is inaccurate on MT inputs**</td><td>Medium</td><td>Train on a mix of coreference-annotated text *and* pseudo-labeled MT source sentences; evaluate AE accuracy on a held-out set before NMT fine-tuning</td></tr>
+<tr><td>**Gender loss hurts BLEU more than expected**</td><td>Medium</td><td>Reduce λ; consider scheduled annealing (warm up L_gender over 2K steps)</td></tr>
+<tr><td>**Coreference fails cross-linguistically (En→De/Fr only, not extensible)**</td><td>Low for this proposal (En→De, En→Fr are well-studied), high for generalization</td><td>Explicitly scope to En→De + En→Fr; note extensibility as future work</td></tr>
+<tr><td>**Model learns to exploit AE weakness rather than actually debiasing**</td><td>Low-Medium</td><td>Check: does gender accuracy on high-confidence resolved cases (a &lt; 0.2) improve more than on boundary cases? If not, re-train AE</td></tr>
+<tr><td>**No meaningful improvement over uniform debiasing**</td><td>Medium</td><td>If results are equal, the paper becomes a negative result: &quot;Adaptive weighting doesn&#x27;t help — the trade-off is fundamental.&quot; Still publishable with proper analysis</td></tr>
+</tbody></table>
+<p>---</p>
+<h2>9. Short Execution Plan</h2>
+<table><tbody>
+<tr><td>Stage</td><td>Steps</td><td>Duration (est.)</td><td>Deliverable</td></tr>
+<tr><td>**Stage 1: Ambiguity Estimator**</td><td>Extract coreference-resolved entities from OntoNotes/WikiCoref; train mBERT-based AE; evaluate accuracy on held-out coreference data</td><td>3 days</td><td>`/models/ambiguity_estimator/` + eval results</td></tr>
+<tr><td>**Stage 2: Baseline runs**</td><td>Fine-tune M2M-100 418M on WMT En→De and En→Fr with L_NLL only; evaluate ΔS + BLEU on WinoMT/MuST-SHE</td><td>2 days</td><td>Baseline metrics table</td></tr>
+<tr><td>**Stage 3: Uniform debiasing**</td><td>Fine-tune with uniform gender loss at λ ∈ {0.05, 0.1, 0.5, 1.0}; find Pareto frontier</td><td>2 days</td><td>Uniform debiasing Pareto plot</td></tr>
+<tr><td>**Stage 4: CAGED**</td><td>Fine-tune with adaptive gender loss at same λ values; evaluate AE + MT jointly</td><td>2 days</td><td>CAGED metrics table</td></tr>
+<tr><td>**Stage 5: Ablations**</td><td>Run all 5 ablations (§7); construct CAGED-Ambiguous set</td><td>4 days</td><td>Ablation tables + analysis</td></tr>
+<tr><td>**Stage 6: Analysis &amp; write-up**</td><td>Compile results, error analysis on failure cases; draft paper</td><td>3 days</td><td>`/final_report.md` + paper draft</td></tr>
+</tbody></table>
+<p>**Total estimated compute**: ~2 weeks on a single A100 (or equivalent). Key expense is MT fine-tuning (Stages 2–4, ~3× the cost of a single fine-tuning run).</p>
+<p>---</p>
+<h2>References</h2>
+<ul>
+<li>Stanovsky, G., Smith, N.A., &amp; Zettlemoyer, L. (2019). Evaluating Gender Bias in Machine Translation. *ACL 2019*. https://aclanthology.org/P19-1164/</li>
+<li>Saunders, D., &amp; Byrne, B. (2020). Reducing Gender Bias in Neural Machine Translation as a Domain Adaptation Problem. *ACL 2020*. https://aclanthology.org/2020.acl-main.690/</li>
+<li>Zmigrod, R., Mielke, S.J., Wallach, H., &amp; Cotterell, R. (2019). Counterfactual Data Augmentation for Mitigating Gender Stereotypes in Languages with Rich Morphology. *ACL 2019*. https://aclanthology.org/P19-1161/</li>
+<li>Bentivogli, L., Savoldi, B., Negri, M., Di Gangi, M.A., &amp; Turchi, M. (2020). Gender in Danger? Evaluating Speech Translation Technology on the MuST-SHE Corpus. *ACL 2020*. https://aclanthology.org/2020.acl-main.702/</li>
+<li>Escudé Font, J., &amp; Costa-jussà, M.R. (2019). Equalizing Gender Bias in Neural Machine Translation with Word Embeddings. *NAACL 2019 Workshop*. https://aclanthology.org/W19-3821/</li>
+<li>Costa-jussà, M.R., et al. (2020). GeBioM: Gender Bias in Machine Translation. https://github.com/mt-upc/GeBioM</li>
+<li>Fan, A., et al. (2021). Beyond English-Centric Multilingual Machine Translation (M2M-100). *JMLR*. https://arxiv.org/abs/2010.11125</li>
+<li>NLLB Team (2022). No Language Left Behind: Scaling Human-Centered Machine Translation. *arXiv*. https://arxiv.org/abs/2207.04672</li>
+<li>Pradhan, S., et al. (2013). Towards Robust Linguistic Analysis using OntoNotes. *CoNLL 2013*. https://aclanthology.org/W13-3516/</li>
+</ul></article></main>
+</body>
+</html>

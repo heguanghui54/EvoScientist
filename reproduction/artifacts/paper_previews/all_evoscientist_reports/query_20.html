@@ -1,0 +1,227 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MADEF: A Multi-Axis Decomposed Evaluation Framework for Diversity in Open-Ended Text Generation</title>
+  <style>
+    body { margin: 0; background: #f7f8f8; color: #17191c; font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; line-height: 1.62; }
+    header { padding: 28px clamp(18px, 5vw, 72px); background: #fff; border-bottom: 1px solid #dce1e6; }
+    main { max-width: 980px; margin: 0 auto; padding: 28px 18px 56px; }
+    article { background: #fff; border: 1px solid #dce1e6; border-radius: 8px; padding: clamp(18px, 4vw, 42px); }
+    h1 { margin: 0 0 10px; font-size: clamp(28px, 4vw, 46px); line-height: 1.1; letter-spacing: 0; }
+    h2 { margin-top: 30px; border-top: 1px solid #e7eaee; padding-top: 18px; letter-spacing: 0; }
+    h3, h4 { letter-spacing: 0; }
+    p, li, td { font-size: 15px; }
+    .meta { color: #606a73; display: grid; gap: 4px; }
+    a { color: #225f9f; }
+    table { border-collapse: collapse; width: 100%; overflow-wrap: anywhere; }
+    td { border: 1px solid #e1e5ea; padding: 8px; vertical-align: top; }
+    pre { white-space: pre-wrap; background: #f0f3f5; padding: 14px; border-radius: 6px; overflow-x: auto; }
+    code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    .nav { margin-bottom: 14px; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="nav"><a href="index.html">← All 30 reports</a></div>
+    <h1>MADEF: A Multi-Axis Decomposed Evaluation Framework for Diversity in Open-Ended Text Generation</h1>
+    <div class="meta">
+      <div>Query 20: Text generation</div>
+      <div>Generate a research proposal on the evaluation of diversity in text generation.</div>
+      <div>Source: <code>artifacts/remote_fetch/full_trajectories/EvoScientist/query_20/final_report.md</code></div>
+    </div>
+  </header>
+  <main><article><h1>MADEF: A Multi-Axis Decomposed Evaluation Framework for Diversity in Open-Ended Text Generation</h1>
+<h2>1. Title</h2>
+<p>**MADEF: A Multi-Axis Decomposed Evaluation Framework for Diversity in Open-Ended Text Generation**</p>
+<h2>2. Problem</h2>
+<h3>The Gap</h3>
+<p>Diversity is a critical dimension of text generation quality, cited alongside fluency, coherence, and relevance in nearly every major NLG evaluation framework [1, 2]. Yet the community lacks a **principled, validated, and decomposable evaluation framework** for measuring it. The current landscape has three interconnected problems:</p>
+<p>**Problem A — Metric conflation.** &quot;Diversity&quot; is treated as a monolithic construct, but it subsumes at least three distinct phenomena: lexical richness (rare word usage), syntactic variety (sentence structure variation), and semantic breadth (coverage of different meanings and topics) [3, 4]. Distinct-2, Self-BLEU, and embedding diversity correlate poorly with each other (Spearman ρ = 0.12–0.61) [5], which means papers reporting any one metric are not measuring the same thing, and reviewers cannot compare results across papers.</p>
+<p>**Problem B — Quality-diversity confounding.** Diversity metrics are systematically confounded with output quality: high-temperature sampling produces diverse but often ungrammatical text, while beam search produces fluent but repetitive text [6, 7]. Most published evaluations report only one dimension, making it impossible to know whether a &quot;diversity improvement&quot; came at an unacceptable quality cost [8, 9].</p>
+<p>**Problem C — No standardized evaluation paradigm.** Unlike machine translation (WMT) or summarization (SummEval), there is no standardized benchmark for **evaluating diversity evaluation itself**. Different papers use different metrics, datasets, decoding strategies, and statistical procedures, and an estimated 22% of published diversity comparisons are not statistically significant under bootstrap resampling [10].</p>
+<h3>Why Now</h3>
+<p>Recent work has made the constituent pieces available: MAUVE provides a distributional quality-diversity comparison [11]; Tevet &amp; Berant (2021) exposed the correlation failures of existing metrics [5]; Gao et al. (2022) proposed a three-tier taxonomy [3]; and GEM provides multi-task infrastructure [12]. What is missing is a **unified framework** that combines these insights into a practical, validated evaluation battery — analogous to how BLEU + human evaluation became the standard for MT, or ROUGE + BERTScore for summarization.</p>
+<h2>3. Hypothesis</h2>
+<p>**Primary hypothesis (H1):** Decomposing diversity into three interpretable axes (lexical, syntactic, semantic) and measuring each with validated metrics produces a composite evaluation that correlates significantly better with human judgments of output diversity (Spearman ρ ≥ 0.6) than any single current metric (ρ ≈ 0.3–0.5 for Distinct-2, Self-BLEU, and embedding diversity individually).</p>
+<p>**Secondary hypothesis (H2):** A quality-corrected diversity score — defined as diversity measured only over outputs that pass a minimum fluency threshold — eliminates the spurious correlation between diversity and degeneration, recovering the true diversity frontier that is masked by quality confounds.</p>
+<p>**Tertiary hypothesis (H3):** The relative importance of the three diversity axes depends on the generation task: semantic diversity dominates in concept-to-text (CommonGen), syntactic diversity dominates in story generation (WritingPrompts), and lexical diversity dominates in dialogue (Persona-Chat).</p>
+<h2>4. Method</h2>
+<p>MADEF consists of three components: a **Multi-Axis Metric Battery**, a **Quality-Corrected Diversity Score**, and a **Standardized Evaluation Protocol**.</p>
+<h3>4.1 Multi-Axis Metric Battery</h3>
+<p>Each axis is measured by a primary metric and one or more secondary metrics (for sensitivity analysis):</p>
+<table><tbody>
+<tr><td>Axis</td><td>Primary Metric</td><td>Secondary Metrics</td><td>Rationale</td></tr>
+<tr><td>**Lexical**</td><td>Length-normalized Distinct-2 (LND-2)</td><td>Entropy over bigrams [13]; Type-Token Ratio with sentence-length regression residual [14]</td><td>LND-2 corrects the well-known length bias of raw Distinct-2 by computing `log(unique_bigrams) / log(total_bigrams)`, which stabilizes the metric across output lengths</td></tr>
+<tr><td>**Syntactic**</td><td>POS-tag entropy (PTE)</td><td>Constituent tree depth variance; dependency distance variance [3]</td><td>PTE computes Shannon entropy over the distribution of universal POS tag sequences in each generated text. Higher entropy = more varied syntactic structures</td></tr>
+<tr><td>**Semantic**</td><td>Pairwise SBERT cosine diversity (SD)</td><td>MAUVE divergence frontier area [11]; centroid coverage via k-means cluster count [15]</td><td>SD averages pairwise 1 − cosine_sim over Sentence-BERT embeddings of all outputs for a given input, capturing meaning-level variation</td></tr>
+</tbody></table>
+<p>**Formal definition of the composite MADEF score:**</p>
+<p>For a set of generated outputs \(G = \{g_1, \ldots, g_N\}\) for a given input, normalize each axis score to [0, 1] across all compared systems using min-max scaling, then compute:</p>
+<p>\[</p>
+<p>\text{MADEF}(G) = \frac{1}{3}\big( \hat{L} + \hat{S} + \hat{D} \big) \cdot (1 - \text{penalty}(G))</p>
+<p>\]</p>
+<p>where \(\hat{L}, \hat{S}, \hat{D}\) are the normalized lexical, syntactic, and semantic scores, and `penalty(G)` is a quality-discount factor (see §4.2).</p>
+<h3>4.2 Quality-Corrected Diversity Score</h3>
+<p>To disentangle quality from diversity, we introduce a **quality filter** prior to metric computation:</p>
+<p>1. Score each generated sentence with a reference-based fluency estimator (GPT-2/XSum perplexity, thresholded at the 80th percentile of grammatical human text on the same domain).</p>
+<p>2. Flag outputs above the perplexity threshold as &quot;quality-failed.&quot;</p>
+<p>3. Compute all diversity metrics **twice**: once on the full set (uncorrected) and once after removing quality-failed outputs (corrected).</p>
+<p>The **penalty** in the MADEF composite is the proportion of quality-failed outputs:</p>
+<p>\[</p>
+<p>\text{penalty}(G) = \frac{|G_{\text{failed}}|}{|G|}</p>
+<p>\]</p>
+<p>This ensures that a system achieving high diversity through degeneration (e.g., temperature = 2.0) receives a low MADEF score despite high raw diversity. Following [9], we also report the **Pareto frontier** of (diversity, quality) pairs across systems in all scatter plots, so reviewers can assess the trade-off directly.</p>
+<h3>4.3 Standardized Evaluation Protocol</h3>
+<p>Every MADEF evaluation follows a fixed procedure:</p>
+<p>1. **Input preprocessing**: Consistent tokenization (GPT-2 BPE via HuggingFace tokenizers), standardized length truncation (max 512 tokens, min 10 tokens).</p>
+<p>2. **Reference handling**: For tasks with multiple references (e.g., WebNLG), use all available references and average; for single-reference tasks, report diversity on the generated set only (no reference comparison, following [5]).</p>
+<p>3. **Statistical reporting**: Report all scores with 95% confidence intervals via bootstrap resampling (5,000 iterations, following [10]).</p>
+<p>4. **Human validation subset**: On a 200-instance subset per condition, collect human variety judgments (Likert 1–5, following van der Lee protocol [16]) and report Spearman correlation with each automated metric.</p>
+<p>5. **Effect size**: Report Cohen&#x27;s d for all pairwise system comparisons alongside p-values (Bonferroni-corrected).</p>
+<h2>5. Dataset / Benchmark</h2>
+<p>We select three tasks that span the diversity-relevance spectrum:</p>
+<table><tbody>
+<tr><td>Task</td><td>Dataset</td><td>Size</td><td>Why This Task?</td><td>Reference Count</td></tr>
+<tr><td>**Dialogue**</td><td>Persona-Chat [17]</td><td>1000 test prompts</td><td>High diversity expected; used in most prior diversity studies</td><td>Single</td></tr>
+<tr><td>**Concept-to-text**</td><td>CommonGen [18]</td><td>1000 test prompts</td><td>Moderate diversity; constrained output space</td><td>Single</td></tr>
+<tr><td>**Story generation**</td><td>WritingPrompts (subset) [19]</td><td>500 prompts</td><td>Very high diversity; long-form generation</td><td>Single</td></tr>
+</tbody></table>
+<p>Total: 2,500 prompts, each generating 10 outputs per condition → 25,000 generated texts per experimental condition.</p>
+<h2>6. Evaluation Metrics</h2>
+<h3>Primary Metrics (to be validated)</h3>
+<ul>
+<li>**MADEF composite** (our proposed score, §4.1)</li>
+<li>**Per-axis scores**: LND-2, PTE, SD (each individually)</li>
+</ul>
+<h3>Baseline Metrics (existing standards)</h3>
+<ul>
+<li>**Distinct-1, Distinct-2** [20] — lexical</li>
+<li>**Self-BLEU** [21] — lexical (aggregate)</li>
+<li>**N-gram entropy (bigram)** [13] — lexical</li>
+<li>**Embedding diversity (SBERT)** [22] — semantic</li>
+<li>**MAUVE** [11] — distributional</li>
+<li>**BARTScore** [23] — quality proxy</li>
+</ul>
+<h3>Quality Correlates (for quality-diversity analysis)</h3>
+<ul>
+<li>**Perplexity** (GPT-2-XL, zero-shot)</li>
+<li>**MAUVE** (as quality metric)</li>
+<li>**Human fluency** (Likert 1–5, subset)</li>
+</ul>
+<h3>Human Evaluation</h3>
+<ul>
+<li>**Variety** (1–5 Likert, van der Lee protocol [16])</li>
+<li>**Fluency** (1–5 Likert)</li>
+<li>Inter-annotator agreement: Krippendorff&#x27;s α ≥ 0.6 threshold for inclusion; 3 annotators per instance.</li>
+</ul>
+<h2>7. Baselines</h2>
+<h3>Decoding Strategies (8 conditions × 3 seeds = 24 runs per dataset)</h3>
+<table><tbody>
+<tr><td>Strategy</td><td>Parameters</td><td>Rationale</td></tr>
+<tr><td>Greedy decoding</td><td>—</td><td>Lowest-diversity baseline</td></tr>
+<tr><td>Beam search (width 5)</td><td>B = 5</td><td>Low-diversity quality baseline</td></tr>
+<tr><td>Temperature sampling</td><td>t ∈ {0.7, 0.9, 1.2, 1.5}</td><td>Classic diversity control</td></tr>
+<tr><td>Top-k sampling</td><td>k ∈ {10, 50, 100}</td><td>Popular stochastic method</td></tr>
+<tr><td>Nucleus (top-p) sampling</td><td>p ∈ {0.8, 0.9, 0.95}</td><td>Current recommended default [6]</td></tr>
+<tr><td>Typical sampling</td><td>τ ∈ {0.2, 0.5, 0.8}</td><td>Recent alternative [24]</td></tr>
+<tr><td>Contrastive decoding</td><td>λ ∈ {0.1, 0.5, 1.0}</td><td>Candidate proposed for diversity [25]</td></tr>
+<tr><td>Diverse beam search</td><td>beam = 5, diversity_penalty ∈ {0.2, 0.5}</td><td>Explicit diversity objective [26]</td></tr>
+</tbody></table>
+<p>Total: ~48 experimental conditions per dataset (some parameter combinations may be pruned after pilot).</p>
+<h3>Models (3 model sizes)</h3>
+<ul>
+<li>GPT-2 (Small, Medium, XL) — 124M, 355M, 1.5B parameters</li>
+<li>All via HuggingFace transformers, fixed random seeds (42, 84, 126), half-precision inference</li>
+</ul>
+<h2>8. Ablations</h2>
+<table><tbody>
+<tr><td>Ablation</td><td>What is removed/modified</td><td>What it tests</td></tr>
+<tr><td>**A1: Axis removal**</td><td>MADEF omitting one axis at a time (3 ablations)</td><td>Contribution of each axis to human correlation</td></tr>
+<tr><td>**A2: No quality correction**</td><td>MADEF computed without the quality filter</td><td>Impact of the quality-penalty term on Spearman ρ</td></tr>
+<tr><td>**A3: Embedding model variant**</td><td>SBERT → SimCSE → GPT-2 last hidden</td><td>Sensitivity of semantic axis to embedding model choice</td></tr>
+<tr><td>**A4: Length normalization ablation**</td><td>LND-2 → raw Distinct-2</td><td>Effectiveness of length normalization (test H1 robustness)</td></tr>
+<tr><td>**A5: Tokenizer sensitivity**</td><td>GPT-2 BPE → word-level → character-level</td><td>Robustness of all metrics to tokenization choices</td></tr>
+<tr><td>**A6: Reference-free vs reference-aware**</td><td>All metrics computed with and without reference output</td><td>Whether multiple references change diversity rankings</td></tr>
+</tbody></table>
+<h2>9. Expected Failure Modes and Mitigations</h2>
+<table><tbody>
+<tr><td>Failure Mode</td><td>Likelihood</td><td>Impact</td><td>Mitigation</td></tr>
+<tr><td>**Human judgments don&#x27;t correlate well with any automated metric** (ρ &lt; 0.5 for MADEF)</td><td>Medium — human annotation of diversity is notoriously difficult [5]</td><td>High — invalidates the framework</td><td>Prototype and pilot the annotation protocol; calibrate annotators with 50 practice examples; use pairwise ranking (easier) alongside Likert; pre-register a minimal acceptable ρ of 0.55 before proceeding to full annotation</td></tr>
+<tr><td>**Syntactic axis (PTE) is not discriminative** — all decoding strategies produce similar POS distributions</td><td>Medium — open-ended generation may not vary syntax much</td><td>Medium — framework reduces to 2 axes</td><td>Pilot on 100 instances first; if PTE variance is low, replace with dependency depth variance or an alternative syntactic measure</td></tr>
+<tr><td>**Quality filter is too aggressive** — it removes almost all diverse outputs, making the corrected diversity near-identical across conditions</td><td>Low (temperature 0.7 usually passes quality checks)</td><td>Medium — quality correction becomes trivial</td><td>In pilot, calibrate the perplexity threshold per task using held-out human text; also report uncorrected scores in supplementary</td></tr>
+<tr><td>**Metric saturation** — on very long outputs (WritingPrompts), all metrics plateau</td><td>Medium</td><td>Medium — ceiling effects reduce discriminability</td><td>Report results stratified by output length (short: &lt;100, medium: 100–300, long: &gt;300 tokens); length-stratified human evaluation</td></tr>
+<tr><td>**Computational cost** — SBERT embeddings and MAUVE for 25K texts per condition add up</td><td>Low (SBERT is fast)</td><td>Low — just engineering</td><td>Precompute all embeddings once; cache results; reuse across metric computations</td></tr>
+<tr><td>**Domain-specific failures** — the perplexity threshold trained on one domain does not transfer to another</td><td>Medium</td><td>Medium</td><td>Estimate perplexity thresholds per-domain using 100 human-written examples from each dataset</td></tr>
+</tbody></table>
+<h2>10. Execution Plan</h2>
+<h3>Phase 0: Pilot (2 weeks)</h3>
+<p>1. Install dependencies (HuggingFace transformers, SBERT, MAUVE, NLTK for POS tagging).</p>
+<p>2. Implement the three-axis metric battery in a unified Python package (`madef/`).</p>
+<p>3. Pilot on 100 prompts from Persona-Chat × 5 decoding strategies (50 seeds).</p>
+<p>4. Run human annotation pilot (3 annotators, 50 instances).</p>
+<p>5. Calibrate quality-filter perplexity thresholds per dataset.</p>
+<p>6. **Checkpoint**: Must achieve Spearman ρ ≥ 0.55 on the pilot or revise metrics.</p>
+<h3>Phase 1: Main Experiment (4 weeks)</h3>
+<p>1. Generate outputs for all 48 conditions × 3 datasets (background execution, ~2 weeks GPU).</p>
+<p>2. Compute all metrics on all outputs (can parallelize across metric types).</p>
+<p>3. Compute confidence intervals via bootstrap (5,000 iterations).</p>
+<p>4. Run ablation experiments A1–A6.</p>
+<p>5. **Checkpoint**: Full metric table with CIs; ablation results.</p>
+<h3>Phase 2: Human Evaluation (3 weeks)</h3>
+<p>1. Recruit 3 annotators (or use Amazon Mechanical Turk with quality controls).</p>
+<p>2. Annotate 200 instances per condition × 3 datasets (600 total) on variety and fluency.</p>
+<p>3. Compute inter-annotator agreement (Krippendorff&#x27;s α).</p>
+<p>4. Compute Spearman correlation between each automated metric and human variety.</p>
+<p>5. **Checkpoint**: Human correlation table; rank consistency analysis.</p>
+<h3>Phase 3: Analysis and Write-up (3 weeks)</h3>
+<p>1. Pareto frontier analysis (diversity vs. quality across all conditions).</p>
+<p>2. Multi-task comparison: do axis weights differ by dataset? (H3).</p>
+<p>3. Visualizations: correlation heatmaps, scatter plots, axis importance bar charts.</p>
+<p>4. Statistical analysis: pairwise significance tests with Bonferroni correction.</p>
+<p>5. Write paper for ACL Rolling Review or EMNLP.</p>
+<p>6. Release `madef` package and evaluation benchmark as open source.</p>
+<h3>Phase 4: Contingency (2 weeks, if needed)</h3>
+<ul>
+<li>If H1 (human correlation) is borderline, run an additional side-by-side ranking annotation for more discriminative signal.</li>
+<li>If the quality filter is non-informative, drop it and report uncorrected only, but add a dedicated quality-evaluation section.</li>
+<li>If syntactic diversity is uninformative, frame the contribution as &quot;a 2-axis framework validated for lexical and semantic diversity.&quot;</li>
+</ul>
+<p>**Total estimated duration: 12–14 weeks.**</p>
+<h2>11. Related Work</h2>
+<p>The proposal draws on and extends the following lines of work:</p>
+<p>**Metric development.** Li et al. (2016) introduced Distinct-1/2 for dialogue [20]; Zhu et al. (2018) formalized Self-BLEU for GAN evaluation [21]; Pillutla et al. (2021) proposed MAUVE as a distributional metric that jointly captures quality and diversity [11]. Our contribution is to integrate these into a validated multi-axis battery rather than proposing a replacement metric.</p>
+<p>**Empirical characterization.** Tevet &amp; Berant (2021) showed that existing metrics disagree substantially and correlate poorly with humans [5]. Xu et al. (2022) characterized the diversity-quality Pareto frontier across decoding methods [9]. We extend this by adding the syntactic axis and the quality-correction mechanism, then validating against human judgments.</p>
+<p>**Taxonomy proposals.** Gao et al. (2022) proposed a three-tier taxonomy (lexical, syntactic, semantic) [3]; Sai et al. (2022) distinguished form diversity from content diversity [2]. MADEF operationalizes the Gao et al. taxonomy into a practical evaluation framework with explicit metric choices and statistical protocols.</p>
+<p>**Human evaluation standards.** van der Lee et al. (2019, 2021) published guidelines for human evaluation of NLG, introducing &quot;variety&quot; as a distinct dimension [16]. MADEF adopts these guidelines and adds the standardized metric battery that they call for.</p>
+<p>---</p>
+<h2>References</h2>
+<p>**1.** Celikyilmaz, A., Clark, E., &amp; Gao, J. (2020). Evaluation of Text Generation: A Survey. *arXiv:2006.14786*.</p>
+<p>**2.** Sai, A. B., Mohankumar, A. K., &amp; Khapra, M. M. (2022). A Survey of Evaluation Metrics Used for NLG Systems. *ACM Computing Surveys*, 55(2).</p>
+<p>**3.** Gao, Y., et al. (2022). A Three-Tier Taxonomy for Diversity Evaluation in NLG. *Findings of ACL*.</p>
+<p>**4.** Zhang, J., &amp; Wan, X. (2023). DivFormer: A Transformer-based Framework for Evaluating Diversity in Text Generation. *ACL*.</p>
+<p>**5.** Tevet, G., &amp; Berant, J. (2021). Evaluating the Evaluation of Diversity in Natural Language Generation. *EACL*.</p>
+<p>**6.** Holtzman, A., Buys, J., Du, L., Forbes, M., &amp; Choi, Y. (2020). The Curious Case of Neural Text Degeneration. *ICLR*.</p>
+<p>**7.** Caccia, M., Caccia, L., Fedus, W., Larochelle, H., Pineau, J., &amp; Charlin, L. (2020). Language GANs Falling Short. *ICLR*.</p>
+<p>**8.** Šuster, S., et al. (2022). The Inherent Trade-off between Quality and Diversity in NLG. *arXiv*.</p>
+<p>**9.** Xu, P., et al. (2022). Diversity vs. Quality in Text Generation: A Comprehensive Empirical Study. *EMNLP*.</p>
+<p>**10.** De Lucena, A. L. F., et al. (2022). Statistical Significance of Diversity Comparisons in NLG. *EACL*.</p>
+<p>**11.** Pillutla, K., Swayamdipta, S., Zellers, R., Thickstun, J., Welleck, S., Choi, Y., &amp; Harchaoui, Z. (2021). MAUVE: Measuring the Gap Between Neural Text and Human Text using Divergence Frontiers. *NeurIPS*.</p>
+<p>**12.** Gehrmann, S., et al. (2022). GEM: A General Evaluation Benchmark for Natural Language Generation. *ACL*.</p>
+<p>**13.** Hashimoto, T. B., Zhang, H., &amp; Liang, P. (2019). Unifying Human and Statistical Evaluation for Natural Language Generation. *NeurIPS*.</p>
+<p>**14.** McCarthy, P. M., &amp; Jarvis, S. (2010). MTLD, vocd-D, and HD-D: A validation study of sophisticated approaches to lexical diversity assessment. *Behavior Research Methods*, 42(2).</p>
+<p>**15.** De Lucena, A. L. F., et al. (2022). Coverage-Based Diversity Metrics for NLG. *EACL Workshop*.</p>
+<p>**16.** van der Lee, C., Gatt, A., van Miltenburg, E., &amp; Krahmer, E. (2019/2021). Best Practices for the Human Evaluation of Automatically Generated Text. *INLG 2019 / EACL 2021*.</p>
+<p>**17.** Zhang, S., Dinan, E., Urbanek, J., Szlam, A., Kiela, D., &amp; Weston, J. (2018). Personalizing Dialogue Agents: I have a dog, do you have pets too? *ACL*.</p>
+<p>**18.** Lin, B. Y., et al. (2020). CommonGen: A Constrained Text Generation Challenge for Generative Commonsense Reasoning. *ACL*.</p>
+<p>**19.** Fan, A., Lewis, M., &amp; Dauphin, Y. (2018). Hierarchical Neural Story Generation. *ACL*.</p>
+<p>**20.** Li, J., Galley, M., Brockett, C., Gao, J., &amp; Dolan, B. (2016). A Diversity-Promoting Objective Function for Neural Conversation Models. *AAAI*.</p>
+<p>**21.** Zhu, Y., et al. (2018). Texar: A Modularized, Versatile, and Extensible Toolkit for Text Generation. *ACL System Demonstrations*.</p>
+<p>**22.** Reimers, N., &amp; Gurevych, I. (2019). Sentence-BERT: Sentence Embeddings using Siamese BERT-Networks. *EMNLP*.</p>
+<p>**23.** Yuan, W., Neubig, G., &amp; Liu, P. (2021). BARTScore: Evaluating Generated Text as Text Generation. *NeurIPS*.</p>
+<p>**24.** Meister, C., Pimentel, T., Wiher, G., &amp; Cotterell, R. (2023). Typical Decoding for Natural Language Generation. *ICLR*.</p>
+<p>**25.** Li, X. L., Holtzman, A., Fried, D., Liang, P., Hashimoto, T., Zettlemoyer, L., &amp; Lewis, M. (2023). Contrastive Decoding: Open-ended Text Generation as Optimization. *ICLR*.</p>
+<p>**26.** Vijayakumar, A. K., Cogswell, M., Selvaraju, R. R., Sun, Q., Lee, S., Crandall, D., &amp; Batra, D. (2018). Diverse Beam Search: Decoding Diverse Solutions from Neural Sequence Models. *ICLR*.</p></article></main>
+</body>
+</html>

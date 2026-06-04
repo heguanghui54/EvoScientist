@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Research Proposal: Evidence-Conditioned Activation Steering (ECAS) for Factual Consistency in Retrieval-Augmented Generation</title>
+  <style>
+    body { margin: 0; background: #f7f8f8; color: #17191c; font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; line-height: 1.62; }
+    header { padding: 28px clamp(18px, 5vw, 72px); background: #fff; border-bottom: 1px solid #dce1e6; }
+    main { max-width: 980px; margin: 0 auto; padding: 28px 18px 56px; }
+    article { background: #fff; border: 1px solid #dce1e6; border-radius: 8px; padding: clamp(18px, 4vw, 42px); }
+    h1 { margin: 0 0 10px; font-size: clamp(28px, 4vw, 46px); line-height: 1.1; letter-spacing: 0; }
+    h2 { margin-top: 30px; border-top: 1px solid #e7eaee; padding-top: 18px; letter-spacing: 0; }
+    h3, h4 { letter-spacing: 0; }
+    p, li, td { font-size: 15px; }
+    .meta { color: #606a73; display: grid; gap: 4px; }
+    a { color: #225f9f; }
+    table { border-collapse: collapse; width: 100%; overflow-wrap: anywhere; }
+    td { border: 1px solid #e1e5ea; padding: 8px; vertical-align: top; }
+    pre { white-space: pre-wrap; background: #f0f3f5; padding: 14px; border-radius: 6px; overflow-x: auto; }
+    code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    .nav { margin-bottom: 14px; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="nav"><a href="index.html">← All 30 reports</a></div>
+    <h1>Research Proposal: Evidence-Conditioned Activation Steering (ECAS) for Factual Consistency in Retrieval-Augmented Generation</h1>
+    <div class="meta">
+      <div>Query 12: Factual consistency</div>
+      <div>Generate a research proposal on how to resolve factual consistency issues in Large Language Models.</div>
+      <div>Source: <code>artifacts/remote_fetch/full_trajectories/EvoScientist/query_12/final_report.md</code></div>
+    </div>
+  </header>
+  <main><article><h1>Research Proposal: Evidence-Conditioned Activation Steering (ECAS) for Factual Consistency in Retrieval-Augmented Generation</h1>
+<h2>1. Problem Statement</h2>
+<p>**Factual consistency in RAG remains unsolved.** When large language models (LLMs) are augmented with retrieved documents, they still generate claims that contradict or ignore the evidence — often despite the evidence containing the correct answer. A model that &quot;knows&quot; the answer in its parameters defaults to parametric knowledge when the evidence conflicts, when attention is diluted across long contexts, or when a superficially plausible token is locally preferred over the evidence-supported one. This is the dominant failure mode in deployed RAG systems, especially for knowledge-intensive tasks requiring multi-sentence answers.</p>
+<p>**The specific subproblem addressed**: inference-time mitigation of evidence-contradicting generation in RAG pipelines. The goal is to make LLMs faithful to *the specific retrieved evidence at hand*, not just generically truthful.</p>
+<h2>2. Hypothesis</h2>
+<p>**Central claim**: The internal activations of an LLM encode separable representations of (a) whether the current token is supported by retrieved evidence and (b) the content of that evidence. By learning an *evidence-conditioned* factuality direction from the model&#x27;s own hidden states — rather than a static &quot;truthfulness&quot; vector — and applying it *adaptively per token* based on predicted hallucination risk, we can suppress evidence-contradicting tokens at generation time without fine-tuning the LLM.</p>
+<p>**Formal hypothesis**: For an LLM ℳ generating answer tokens y₁, y₂, ..., yₜ with retrieved evidence E, let hₜ⁽ˡ⁾ be the hidden state at layer ℓ and position t. There exists a linear probe f: hₜ⁽ˡ⁾ → [0,1] that predicts P(yₜ contradicts E). Steering activations along the direction ∇_h ℒ(h, E) (where ℒ is a contrastive loss between evidence-grounded and evidence-ablated representations) at positions where f(hₜ) &gt; τ reduces the rate of evidence-contradicting tokens by ≥ 30% relative to the unsteered baseline, with ≤ 5% degradation in answer informativeness.</p>
+<h2>3. Method: Evidence-Conditioned Activation Steering (ECAS)</h2>
+<p>ECAS has three components trained and assembled without any LLM fine-tuning.</p>
+<h3>3.1 Phase 1: Token-Level Factuality Probe (Training)</h3>
+<p>We train a lightweight linear probe on the LLM&#x27;s hidden states at each layer to predict whether the token being generated will contradict the retrieved evidence.</p>
+<p>**Data**: We construct a training set from FEVER (5,000 claims with verdicts) and a subset of Natural Questions (10,000 Q/A pairs). For each example:</p>
+<ul>
+<li>Retrieve evidence via BM25/Contriever (top-3 passages).</li>
+<li>Generate a continuation with the LLM (greedy).</li>
+<li>Label each token as **E-supported** (the token appears in or is entailed by the evidence) or **E-contradicting** (the token contradicts or is unsupported by the evidence) using a strong NLI model (DeBERTa-v3-large trained on MNLI + FEVER) as the oracle.</li>
+</ul>
+<p>**Probe**: A linear layer per transformer layer ℓ:</p>
+<pre><code>
+p_ℓ(contrAdict | h_ℓ) = σ(w_ℓ^T · h_ℓ + b_ℓ)
+</code></pre>
+<p>Trained with binary cross-entropy. We evaluate probes at layers 0, 6, 12, 18, 24, 32 (for a 32-layer model) and select the layer with highest F1 on held-out FEVER data. The probe has ~10K parameters total — negligible overhead.</p>
+<h3>3.2 Phase 2: Evidence-Conditioned Steering Direction (Computed at Inference)</h3>
+<p>At inference time, for a given query q and retrieved evidence E, we compute a dynamic steering direction **specific to this (q, E) pair**:</p>
+<p>1. **Encode the evidence**: Run a *single* forward pass on the prompt [q; E; instruction], caching hidden states hₜ⁽ˡ⁾.</p>
+<p>2. **Compute evidence representation**: Average the hidden states at the selected probe layer over the evidence token positions → v_E.</p>
+<p>3. **Project to factuality subspace**: Apply the probe&#x27;s weight vector w_ℓ to v_E → ω = w_ℓ^T · v_E, a scalar factuality score for this evidence.</p>
+<p>4. **Steering vector**: s = ω · (w_ℓ^T · h_ℓ) normalized. This is the direction in activation space that, when added, increases the probe&#x27;s assigned probability of evidence-grounded tokens.</p>
+<p>**Key innovation**: Unlike ITI (Li et al., 2024) which uses a single static &quot;truthfulness&quot; direction learned from TruthfulQA, s is a function of the *current evidence* v_E. When evidence is strong (high ω), steering is more aggressive toward evidence-grounded tokens. When evidence is weak/ambiguous, steering is conservative.</p>
+<h3>3.3 Phase 3: Adaptive Per-Token Intervention (Decoding)</h3>
+<p>During generation, at each step t:</p>
+<p>1. Forward‑pass the current prefix to get hₜ⁽ˡ⁾.</p>
+<p>2. Compute probe score pₜ = σ(w_ℓ^T · hₜ⁽ˡ⁾).</p>
+<p>3. **Adaptive strength**: αₜ = α₀ · pₜ · (1 + γ · Uₜ), where Uₜ is the predictive entropy (normalized to [0,1]) — higher uncertainty → stronger steering.</p>
+<p>4. **Steered logits**: h&#x27;_ℓ = h_ℓ + αₜ · s. Propagate forward from the steered layer to compute the output distribution.</p>
+<p>5. **Residual contrastive term**: Additionally suppress tokens that the probe identifies as high-contradiction risk relative to the unsteered distribution:</p>
+<pre><code>
+   P&#x27;(y) ∝ P_steered(y) · (1 - β · σ(w_ℓ^T · h_ℓ(y)))
+</code></pre>
+<p>where h_ℓ(y) is the hidden state that would yield token y.</p>
+<p>**Rationale for adaptive αₜ**: Hallucination risk varies dramatically across token positions. Function words (&quot;the&quot;, &quot;a&quot;, &quot;and&quot;) carry minimal factual content. The probe&#x27;s pₜ will be near 0.5 on these tokens, αₜ will be small, and the intervention is near-transparent. On factual claims (&quot;was born in Paris&quot;), pₜ will spike and αₜ increases, applying strong steering exactly where needed.</p>
+<h2>4. Datasets and Benchmarks</h2>
+<table><tbody>
+<tr><td>Dataset</td><td>Task</td><td>Size</td><td>Usage</td><td>Metric</td></tr>
+<tr><td>**FEVER**</td><td>Fact verification w/ evidence</td><td>185K claims</td><td>Probe training + eval</td><td>Token-level F1 (probe)</td></tr>
+<tr><td>**Natural Questions (NQ)**</td><td>Open-domain QA</td><td>3K dev / 3K test</td><td>End-to-end eval</td><td>Exact Match, F1</td></tr>
+<tr><td>**TruthfulQA**</td><td>Truthfulness eval</td><td>817 questions</td><td>Factuality benchmark</td><td>% truthful (GPT-judge)</td></tr>
+<tr><td>**ASQA**</td><td>Long-form QA w/ evidence</td><td>4K test</td><td>Multi-sentence factuality</td><td>MAUVE, FactScore</td></tr>
+<tr><td>**BEGIN**</td><td>Factuality in biographies</td><td>1K test</td><td>Attribute-level factuality</td><td>precision, recall</td></tr>
+</tbody></table>
+<p>**Primary metric**: **Evidence-Grounded F1** — for each generated sentence, decompose into atomic claims, check each against retrieved evidence using an NLI-based verifier (DeBERTa-v3 FEVER). This is more granular than exact match and catches partial hallucinations.</p>
+<p>**Secondary metrics**: Exact Match / token F1 (for NQ), % truthful (TruthfulQA), FactScore (for ASQA / biographies).</p>
+<h2>5. Baselines</h2>
+<p>We compare against the following categories of inference-time methods:</p>
+<table><tbody>
+<tr><td>Method</td><td>Category</td><td>Why included</td></tr>
+<tr><td>**Standard greedy decoding**</td><td>Untreated</td><td>Lower bound</td></tr>
+<tr><td>**Standard RAG (BM25 + LLM)**</td><td>Untreated</td><td>Our base condition</td></tr>
+<tr><td>**DoLa** (Chuang et al., 2024)</td><td>Contrastive decoding</td><td>Contrasts early vs late layers</td></tr>
+<tr><td>**Contrastive Decoding** (Li et al., 2023)</td><td>Contrastive decoding</td><td>Contrasts with amateur model</td></tr>
+<tr><td>**ITI** (Li et al., 2024)</td><td>Activation steering</td><td>Static truthfulness direction</td></tr>
+<tr><td>**Adaptive Activation Steering** (Wang et al., 2024)</td><td>Activation steering</td><td>Adaptive strength, static direction</td></tr>
+<tr><td>**PrefixNLI** (Harary et al., 2025)</td><td>NLI-guided decoding</td><td>Token-level NLI filtering</td></tr>
+<tr><td>**Self-Consistency** (Wang et al., 2023)</td><td>Sampling</td><td>Multi-sample aggregation</td></tr>
+<tr><td>**ECAS (ours)**</td><td>Evidence-conditioned steering</td><td>Proposed method</td></tr>
+</tbody></table>
+<h2>6. Ablations</h2>
+<p>We design ablations to isolate each component of ECAS:</p>
+<table><tbody>
+<tr><td>Ablation</td><td>What it removes</td><td>What it tests</td></tr>
+<tr><td>**ECAS - Evidence cond.**</td><td>Replace v_E with a constant vector</td><td>Is evidence-conditioning valuable vs static steering?</td></tr>
+<tr><td>**ECAS - Adaptive αₜ**</td><td>Use fixed α across all tokens</td><td>Is token-level adaptation necessary?</td></tr>
+<tr><td>**ECAS - Contrastive term**</td><td>Remove the β-weighted suppression</td><td>Is contrastive suppression additive?</td></tr>
+<tr><td>**ECAS - Probe only**</td><td>Only reweight by probe, no steering</td><td>Does steering add anything beyond the probe?</td></tr>
+<tr><td>**ECAS - Fixed layer**</td><td>Use a single fixed layer 18</td><td>Does optimal probe layer vary by task?</td></tr>
+<tr><td>**ECAS + oracle probe**</td><td>Use ground-truth labels (oracle)</td><td>Upper bound on probe quality</td></tr>
+</tbody></table>
+<p>Each ablation is run on NQ-dev and FEVER. We report delta in Evidence-Grounded F1 and compute Cohen&#x27;s d for effect sizes.</p>
+<h2>7. Expected Failure Modes</h2>
+<p>1. **Probe fails to generalize across domains.** Factual consistency patterns in FEVER (short claims, explicit evidence) may differ from long-form biography generation. **Mitigation**: Evaluate on ASQA/BEGIN; if probe fails, augment training with synthetic long-form data.</p>
+<p>2. **Steering degrades fluency.** Aggressive steering may produce unnatural outputs, especially on low-entropy tokens. **Mitigation**: The adaptive αₜ mechanism (near-zero on low-risk tokens) is designed to prevent this. We track perplexity and lexical diversity as fluency checks.</p>
+<p>3. **Evidence representation v_E is too coarse.** Averaging hidden states over all evidence tokens may wash out signal from the most relevant passages. **Mitigation**: We test an attention-weighted alternative where v_E = softmax(score over passages) × passage states.</p>
+<p>4. **Steering pushes the model off distribution.** Large αₜ may push hidden states into regions the unembedding layer cannot properly decode. **Mitigation**: We clamp αₜ ≤ α_max and monitor log-likelihood of the steered vs. unsteered sequence.</p>
+<p>5. **Probe oracle labeling quality.** The NLI-based oracle for training data may mislabel tokens. **Mitigation**: We manually validate 200 random examples and report inter-annotator agreement (NLI model vs. human for token labels).</p>
+<p>6. **Computational overhead.** Two forward passes per token (steered + unsteered) would be prohibitive. **Mitigation**: We only steer at the selected single layer and cache the unsteered prefix states, adding ~5-10% per-token overhead vs. standard decoding.</p>
+<h2>8. Execution Plan (6-8 weeks)</h2>
+<table><tbody>
+<tr><td>Week</td><td>Phase</td><td>Deliverables</td></tr>
+<tr><td>**1**</td><td>Data pipeline</td><td>Build FEVER + NQ training examples; run BM25 retrieval for all datasets; generate LLM continuations and label tokens via NLI oracle</td></tr>
+<tr><td>**2**</td><td>Probe training</td><td>Train per-layer linear probes; evaluate F1 on FEVER hold-out; select best layer + thresholds</td></tr>
+<tr><td>**3**</td><td>ECAS implementation</td><td>Implement steering mechanism in transformers library; validate on 100 NQ examples that probe scores correlate with human-judged hallucinations</td></tr>
+<tr><td>**4**</td><td>Full evaluation</td><td>Run ECAS + all baselines on NQ, TruthfulQA, FEVER; collect primary metrics; log all configs (seeds, temperature, α₀, γ, β)</td></tr>
+<tr><td>**5**</td><td>Ablations</td><td>Run ablation suite (Section 6); collect effect sizes; run fluency checks (perplexity, diversity) and failure mode stress tests</td></tr>
+<tr><td>**6**</td><td>Long-form eval</td><td>Evaluate on ASQA and BEGIN; adapt probe if needed for multi-sentence generation</td></tr>
+<tr><td>**7**</td><td>Analysis</td><td>Error analysis: categorize residual hallucinations (evidence not retrieved, evidence ignored, probe failure, steering insufficient); produce figures (t-SNE of steered vs. unsteered activations, per-token αₜ distribution)</td></tr>
+<tr><td>**8**</td><td>Write-up</td><td>Draft paper: method description, tables, analysis, related work, limitations; self-review via paper-review skill</td></tr>
+</tbody></table>
+<h2>9. Related Work (Situating the Proposal)</h2>
+<p>This proposal builds on and extends three lines of work identified through literature search:</p>
+<p>**Activation steering for truthfulness.** ITI (Li et al., 2024) and Adaptive Activation Steering (Wang et al., 2024) show that LLMs encode truthfulness as a linearly separable direction in activation space, and steering along it improves truthfulness on TruthfulQA. **Limitation**: These methods use a static direction learned from generic truthfulness data, making them evidence-agnostic. ECAS computes a direction that is a function of the *specific retrieved evidence*.</p>
+<p>**Contrastive decoding for factuality.** DoLa (Chuang et al., 2024) and Language-Contrastive Decoding (Manevich &amp; Tsarfaty, 2024) contrast logits from different model variants to suppress hallucinations. **Limitation**: The contrast is between model states (early vs. late layers, or LLM vs. LVLM), not between evidence-grounded and evidence-ablated conditions. ECAS incorporates a residual contrastive term that is evidence-aware.</p>
+<p>**Token-level hallucination detection.** PrefixNLI (Harary et al., 2025) and internal-state probing (Song et al., 2025) show that hallucination risk can be detected at the token level before the full sentence is generated. ECAS leverages this insight but *acts* on it — steering activations rather than just detecting.</p>
+<p>**CoFact** (Li et al., 2026) proposes dynamic coordination of attention heads for factual consistency, which is complementary to our activation-level approach. A combined method is left as future work.</p>
+<h2>10. Success Criteria</h2>
+<p>The proposal is successful if, on the primary benchmark (NQ with RAG):</p>
+<ul>
+<li>**C1**: ECAS achieves ≥ 30% relative reduction in evidence-contradicting tokens vs. standard RAG (greedy).</li>
+<li>**C2**: ECAS outperforms the best static-direction baseline (Adaptive Activation Steering) by ≥ 5% Evidence-Grounded F1.</li>
+<li>**C3**: Fluency (perplexity) degrades by ≤ 5% relative to unsteered.</li>
+<li>**C4**: The evidence-conditioned variant (ECAS) outperforms the evidence-ablated variant (ECAS - Evidence cond.) by ≥ 3% Evidence-Grounded F1, confirming that evidence-conditioning is the active ingredient.</li>
+<li>**C5**: Computational overhead ≤ 15% per generated token vs. greedy decoding.</li>
+</ul>
+<p>---</p>
+<p>*Proposal generated with literature grounding from Semantic Scholar / arXiv search. Key references: ITI (Li et al., 2024), Adaptive Activation Steering (Wang et al., 2024), DoLa (Chuang et al., 2024), PrefixNLI (Harary et al., 2025), CoFact (Li et al., 2026), FEVER (Thorne et al., 2018), Natural Questions (Kwiatkowski et al., 2019), TruthfulQA (Lin et al., 2022), ASQA (Stelmakh et al., 2022).*</p></article></main>
+</body>
+</html>

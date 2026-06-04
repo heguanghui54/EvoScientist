@@ -93,6 +93,7 @@ def main() -> None:
         "build_reproducibility_bundle.py",
         "verify_user_scope_reproduction.py",
         "build_html_report.py",
+        "build_all_paper_previews.py",
         "build_paper_reproduction_plan.py",
         "compare_reproduction_to_paper.py",
         "audit_reproduction_artifacts.py",
@@ -1126,10 +1127,27 @@ def main() -> None:
     assert "User-scope gate: <strong>complete</strong>" in html_report
     assert "420/420 swapped judge records" in html_report
     assert "Table 2: Monica/Gemini surrogate" in html_report
+    assert "30 个 EvoScientist final reports 都在这里" in html_report
+    assert "artifacts/paper_previews/all_evoscientist_reports/index.html" in html_report
     assert "严格 paper-exact 还缺什么" in html_report
     assert "artifacts/paper_previews/rendered/evoscientist_query01_final_report_page1.png" in html_report
     assert "artifacts/paper_previews/rendered/ai_scientist_v2_query01_idea_page1.png" in html_report
     assert "artifacts/reproducibility_bundle.zip" in html_report
+    all_reports_root = ROOT / "artifacts" / "paper_previews" / "all_evoscientist_reports"
+    all_reports_manifest_path = all_reports_root / "manifest.json"
+    all_reports_index_path = all_reports_root / "index.html"
+    assert all_reports_manifest_path.is_file(), "missing all-paper previews manifest"
+    assert all_reports_index_path.is_file(), "missing all-paper previews index"
+    all_reports_manifest = json.loads(all_reports_manifest_path.read_text(encoding="utf-8"))
+    assert all_reports_manifest["status"] == "complete"
+    assert all_reports_manifest["count"] == 30
+    for query_id in range(1, 31):
+        page = all_reports_root / f"query_{query_id:02d}.html"
+        assert page.is_file(), f"missing HTML preview for query {query_id:02d}"
+    all_reports_index = all_reports_index_path.read_text(encoding="utf-8")
+    assert "All 30 EvoScientist final reports" in all_reports_index
+    assert "CrossLingual-RAG" in all_reports_index
+    assert "UniAudio-MoE" in all_reports_index
     paper_level_gate_json_path = ROOT / "paper_level_evidence_gate.json"
     paper_level_gate_md_path = ROOT / "paper_level_evidence_gate.md"
     assert paper_level_gate_json_path.is_file(), "missing paper-level evidence gate JSON"

@@ -1,0 +1,245 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Decoding the Capability Graph: Causal Decomposition of Knowledge, Reasoning, and Code Generation in LLMs</title>
+  <style>
+    body { margin: 0; background: #f7f8f8; color: #17191c; font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; line-height: 1.62; }
+    header { padding: 28px clamp(18px, 5vw, 72px); background: #fff; border-bottom: 1px solid #dce1e6; }
+    main { max-width: 980px; margin: 0 auto; padding: 28px 18px 56px; }
+    article { background: #fff; border: 1px solid #dce1e6; border-radius: 8px; padding: clamp(18px, 4vw, 42px); }
+    h1 { margin: 0 0 10px; font-size: clamp(28px, 4vw, 46px); line-height: 1.1; letter-spacing: 0; }
+    h2 { margin-top: 30px; border-top: 1px solid #e7eaee; padding-top: 18px; letter-spacing: 0; }
+    h3, h4 { letter-spacing: 0; }
+    p, li, td { font-size: 15px; }
+    .meta { color: #606a73; display: grid; gap: 4px; }
+    a { color: #225f9f; }
+    table { border-collapse: collapse; width: 100%; overflow-wrap: anywhere; }
+    td { border: 1px solid #e1e5ea; padding: 8px; vertical-align: top; }
+    pre { white-space: pre-wrap; background: #f0f3f5; padding: 14px; border-radius: 6px; overflow-x: auto; }
+    code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    .nav { margin-bottom: 14px; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="nav"><a href="index.html">← All 30 reports</a></div>
+    <h1>Decoding the Capability Graph: Causal Decomposition of Knowledge, Reasoning, and Code Generation in LLMs</h1>
+    <div class="meta">
+      <div>Query 11: LLM capabilities</div>
+      <div>Generate a research proposal on the decoupling of Large Language Model capabilities.</div>
+      <div>Source: <code>artifacts/remote_fetch/full_trajectories/EvoScientist/query_11/final_report.md</code></div>
+    </div>
+  </header>
+  <main><article><h1>Decoding the Capability Graph: Causal Decomposition of Knowledge, Reasoning, and Code Generation in LLMs</h1>
+<p>---</p>
+<h2>1. Title</h2>
+<p>**Decoding the Capability Graph: Causal Decomposition of Knowledge, Reasoning, and Code Generation in Large Language Models**</p>
+<p>---</p>
+<h2>2. Problem</h2>
+<p>Large language models exhibit a wide range of capabilities — factual knowledge recall, compositional reasoning, code generation, instruction following, and more — within a single set of weights. This raises a fundamental scientific question:</p>
+<p>&gt; **To what degree are these capabilities supported by shared vs. independent mechanisms?**</p>
+<p>The question has high practical stakes: if capabilities are deeply entangled, then improving one (e.g., reasoning via chain-of-thought fine-tuning) will unavoidably degrade others (the &quot;alignment tax&quot; problem). If they are dissociable, we can build modular systems, perform surgical capability editing, and design training pipelines that avoid interference.</p>
+<p>Despite extensive study of individual capabilities in isolation, we lack a **unified, causal framework** for measuring capability (in)dependence in LLMs. Existing work falls into separate silos: task arithmetic shows that fine-tuning updates for different tasks can be added/subtracted (Ilharco et al., 2022), causal tracing localizes factual recall to specific layers (Meng et al., 2022; Geva et al., 2023), skill neurons suggest sparse functional specialization (Wang et al., 2022), and the superficial alignment hypothesis posits a deep dissociation between pretrained capabilities and alignment-induced behaviors (Zhou et al., 2023). No study has systematically triangulated these perspectives to produce a quantitative &quot;capability decomposition&quot; of a single model.</p>
+<p>**Specific subproblem**: We narrow the broad question of &quot;capability decoupling&quot; to three well-defined, high-impact capabilities:</p>
+<ul>
+<li>**Factual Knowledge** — retrieving world facts from parametric memory</li>
+<li>**Compositional Reasoning** — multi-step deduction and mathematical problem-solving</li>
+<li>**Code Generation** — producing syntactically and semantically correct programs</li>
+</ul>
+<p>These three are selected because (a) they are ecologically important for deployed LLMs, (b) prior work suggests they may have distinct mechanistic substrates (knowledge in mid-layer MLPs, reasoning across attention+MLP circuits, code in pattern-matching structures), and (c) they can be cleanly benchmarked.</p>
+<p>---</p>
+<h2>3. Hypothesis</h2>
+<p>We propose three converging hypotheses:</p>
+<ul>
+<li>**H1 (Parameter-Level Dissociability)**: Fine-tuning for each capability produces task vectors $\Delta\theta_A$ that are approximately orthogonal (low cosine similarity) to those for other capabilities. Task vector addition preserves individual capabilities, while subtraction selectively removes the target capability with minimal collateral degradation.</li>
+</ul>
+<ul>
+<li>**H2 (Circuit-Level Dissociability)**: The causally important layers for each capability are partially disjoint. Cross-capability activation patching (running the model on task A while injecting hidden states from task B at critical layers) will disrupt performance only when the injected activation originates from overlapping circuit regions.</li>
+</ul>
+<ul>
+<li>**H3 (Asymmetric Entanglement)**: Certain capability pairs are more entangled than others. Specifically, compositional reasoning and code generation share more mechanistic overlap (both involve formal rule-following and structured output generation) than either shares with factual knowledge retrieval.</li>
+</ul>
+<p>The null hypothesis for each is complete entanglement: all capabilities rely on substantially the same parameters and circuits, such that any intervention targeting one capability non-selectively affects all others.</p>
+<p>---</p>
+<h2>4. Method</h2>
+<p>We propose three converging experimental blocks, designed so that each provides independent evidence and the three together triangulate on the same ground truth.</p>
+<h3>Block A: Task Vector Orthogonality and Merging Analysis</h3>
+<p>**Rationale**: If fine-tuning for capability A and B produces task vectors $\Delta\theta_A$ and $\Delta\theta_B$ that are near-orthogonal and additively composable, this provides strong evidence for parameter-level dissociability.</p>
+<p>**Procedure**:</p>
+<p>1. Starting from a single base model (Llama-3-8B), train separate LoRA adapters (rank=32) for each of three capability domains:</p>
+<ul>
+<li>**Knowledge**: MMLU subset (all categories), PopQA, TruthfulQA training set</li>
+<li>**Reasoning**: GSM8K training set, LogiQA, BIG-Bench Hard subtasks</li>
+<li>**Code**: MBPP training set, CodeContests, APPS introductory</li>
+</ul>
+<p>2. Extract task vectors: $\Delta\theta_A = \theta_{A} - \theta_{base}$, $\Delta\theta_B = \theta_{B} - \theta_{base}$</p>
+<p>3. Compute pairwise cosine similarities: $\text{sim}(\Delta\theta_A, \Delta\theta_B)$ for each pair</p>
+<p>4. Test additive composition: evaluate $\theta_{base} + \Delta\theta_A + \Delta\theta_B$ on both capabilities</p>
+<p>5. Test selective removal: evaluate $\theta_{base} + \Delta\theta_A - \Delta\theta_B$ and verify that capability B degrades while capability A is preserved</p>
+<p>6. Apply DARE pruning (randomly drop 90% of delta parameters and rescale) to measure sparsity of the &quot;capability signal&quot; in each task vector</p>
+<p>**Outputs**: Cosine similarity matrix (3×3), per-capability accuracy under addition/subtraction, sparsity curves.</p>
+<h3>Block B: Cross-Capability Causal Tracing</h3>
+<p>**Rationale**: While Block A operates at the parameter level, Block B localizes *where information for each capability flows* through the model during inference.</p>
+<p>**Procedure**:</p>
+<p>1. For each capability domain, construct 200 prompts that test that capability:</p>
+<ul>
+<li>**Knowledge**: &quot;The capital of [country] is&quot; (clean factual recall)</li>
+<li>**Reasoning**: &quot;If [premise], then [conclusion]?&quot; (multi-step deduction)</li>
+<li>**Code**: &quot;Write a function to [specification]&quot; (code synthesis)</li>
+</ul>
+<p>2. Apply mean-corrupted causal tracing (following Meng et al., 2022):</p>
+<ul>
+<li>Corrupt the input (mask subject tokens / shuffle)</li>
+<li>Restore hidden states from the clean run at each (layer, token position) individually</li>
+<li>Measure how much restoration recovers the correct output probability</li>
+</ul>
+<p>3. For each capability, produce a **causal importance map**: a matrix $C \in \mathbb{R}^{L \times T}$ where $C_{l,t}$ is the probability gain from restoring layer $l$ at position $t$</p>
+<p>4. Compute **pairwise map overlap**:</p>
+<ul>
+<li>Jaccard similarity of top-$k$ critical layers ($k=5, 10, 20$)</li>
+<li>Pearson correlation of flattened importance vectors</li>
+</ul>
+<p>5. **Activation patching experiment**: For capability pairs (A, B), run the model on a prompt for A but patch in hidden states from the B inference at the top-3 most important layers for B. Measure whether A&#x27;s performance degrades.</p>
+<p>**Outputs**: Causal importance maps (3 capabilities × 32 layers), pairwise Jaccard overlap scores, activation patching interference table.</p>
+<h3>Block C: Surgical Capability Ablation via Negated Task Vectors</h3>
+<p>**Rationale**: The most stringent test of independence: can we remove one capability while leaving others intact?</p>
+<p>**Procedure**:</p>
+<p>1. Construct ablated models: $\theta_{\text{abolished}_A} = \theta_{base} - \alpha \cdot \Delta\theta_A$ for $\alpha \in \{0.5, 1.0, 1.5, 2.0\}$</p>
+<p>2. Evaluate all ablated models on the full benchmark suite (all 10+ benchmarks spanning all three capabilities plus the control tasks)</p>
+<p>3. Compute an **Asymmetric Interference Index** for each pair:</p>
+<p>$$ I_{A \to B} = \frac{\text{Δperf}_B}{\text{Δperf}_A} $$</p>
+<p>where Δperf is the change relative to base model. If $I_{A \to B} \approx 0$, capability A can be ablated without affecting B.</p>
+<p>4. Repeat for all 3 capabilities at the target ablation strength</p>
+<p>**Outputs**: Ablation curves for each capability, full interference matrix, asymmetric interference indices.</p>
+<p>---</p>
+<h2>5. Dataset / Benchmark</h2>
+<p>We construct a unified evaluation suite covering three capability domains plus control tasks:</p>
+<table><tbody>
+<tr><td>Domain</td><td>Benchmark</td><td>Metric</td><td># Examples</td><td>Source</td></tr>
+<tr><td>**Knowledge**</td><td>MMLU (all 57 subjects)</td><td>Accuracy</td><td>14,042</td><td>Hendrycks et al., 2021</td></tr>
+<tr><td>**Knowledge**</td><td>PopQA</td><td>Accuracy (F1)</td><td>14,267</td><td>Mallen et al., 2023</td></tr>
+<tr><td>**Knowledge**</td><td>TruthfulQA</td><td>MC1 accuracy</td><td>817</td><td>Lin et al., 2022</td></tr>
+<tr><td>**Reasoning**</td><td>GSM8K</td><td>Exact match</td><td>1,319</td><td>Cobbe et al., 2021</td></tr>
+<tr><td>**Reasoning**</td><td>LogiQA</td><td>Accuracy</td><td>651</td><td>Liu et al., 2020</td></tr>
+<tr><td>**Reasoning**</td><td>BIG-Bench Hard (selected reasoning tasks)</td><td>Accuracy</td><td>~2,500</td><td>Suzgun et al., 2022</td></tr>
+<tr><td>**Code**</td><td>HumanEval</td><td>Pass@1</td><td>164</td><td>Chen et al., 2021</td></tr>
+<tr><td>**Code**</td><td>MBPP</td><td>Pass@1</td><td>500</td><td>Austin et al., 2021</td></tr>
+<tr><td>**Control**</td><td>HellaSwag</td><td>Accuracy</td><td>10,042</td><td>Zellers et al., 2019</td></tr>
+<tr><td>**Control**</td><td>BBH (selected non-reasoning tasks)</td><td>Accuracy</td><td>~2,000</td><td>Suzgun et al., 2022</td></tr>
+</tbody></table>
+<p>**Training data** for LoRA fine-tuning (Block A and C): subsets of the training splits of MMLU, GSM8K, and MBPP — filtered to 10K examples per capability to ensure equal training budget.</p>
+<p>**Why these benchmarks**: MMLU tests broad factual knowledge, GSM8K tests multi-step mathematical reasoning (which requires compositional thinking), HumanEval tests code correctness in a zero-shot setting, and HellaSwag serves as a control (commonsense inference) that does not cleanly belong to any of the three target capabilities.</p>
+<p>---</p>
+<h2>6. Evaluation Metrics</h2>
+<table><tbody>
+<tr><td>Category</td><td>Metric</td><td>What It Measures</td></tr>
+<tr><td>**Behavioral**</td><td>Per-benchmark accuracy / Pass@1</td><td>Standard capability measurement</td></tr>
+<tr><td>**Parameter-level**</td><td>Cosine similarity of task vectors</td><td>How aligned are fine-tuning updates?</td></tr>
+<tr><td>**Parameter-level**</td><td>Task vector norm ratio ($\</td><td>\Delta\theta_A\</td><td>/ \</td><td>\theta_{base}\</td><td>$)</td><td>How much does fine-tuning change the model?</td></tr>
+<tr><td>**Parameter-level**</td><td>Composition accuracy = accuracy($\theta_{base}+\Delta\theta_A+\Delta\theta_B$)</td><td>Do task vectors compose additively?</td></tr>
+<tr><td>**Causal**</td><td>Jaccard($top_k$ critical layers)</td><td>Do the same layers drive both capabilities?</td></tr>
+<tr><td>**Causal**</td><td>Activation patching disruption (Δprob when patching B into A)</td><td>Do B&#x27;s critical regions interfere with A?</td></tr>
+<tr><td>**Ablation**</td><td>$I_{A \to B}$ (asymmetric interference index)</td><td>How much does ablating A harm B?</td></tr>
+<tr><td>**Ablation**</td><td>Ablation dose-response curve</td><td>Is the effect of ablation monotonic?</td></tr>
+</tbody></table>
+<p>**Statistical rigor**: All metrics reported with 95% confidence intervals (bootstrapped, 1000 resamples). All fine-tuning runs repeated with 3 random seeds. Multiple-testing correction (Bonferroni) applied when comparing across all capability pairs.</p>
+<p>---</p>
+<h2>7. Baselines</h2>
+<table><tbody>
+<tr><td>Baseline</td><td>Rationale</td><td>Expected Behavior Under Null (Full Entanglement)</td></tr>
+<tr><td>**Random perturbation**</td><td>Apply random parameter perturbation with norm matched to $\</td><td>\Delta\theta_A\</td><td>$. Controls for the possibility that any perturbation degrades performance non-selectively.</td><td>All capabilities degrade equally.</td></tr>
+<tr><td>**Multi-task fine-tuning**</td><td>Fine-tune on all three capability domains jointly. Tests whether joint training produces interference dynamics different from composition of independent vectors.</td><td>Joint performance is the sum of individual performances (no interference).</td></tr>
+<tr><td>**SFT-only checkpoint**</td><td>Evaluate the SFT checkpoint before any capability-specific fine-tuning. Tests the superficial alignment hypothesis prediction that SFT teaches format, not content.</td><td>No difference between base and SFT on capability benchmarks.</td></tr>
+<tr><td>**Layer-randomized ablation**</td><td>Instead of subtracting $\Delta\theta_A$, subtract a random set of parameters with same norm. Controls for the specificity of the task vector direction.</td><td>Same degradation pattern as $\theta_{base} - \Delta\theta_A$.</td></tr>
+</tbody></table>
+<p>---</p>
+<h2>8. Ablations</h2>
+<table><tbody>
+<tr><td>Ablation</td><td>Variable</td><td>Levels</td><td>Purpose</td></tr>
+<tr><td>**Model scale**</td><td>Base model size</td><td>Llama-3.2-1B, Llama-3-8B, Llama-3-70B</td><td>Test whether capability dissociability changes with scale (does interference increase or decrease?)</td></tr>
+<tr><td>**LoRA rank**</td><td>LoRA rank for task vectors</td><td>8, 32, 128</td><td>Test whether task vector structure depends on expressivity of the adapter</td></tr>
+<tr><td>**Training data size**</td><td>Examples per capability</td><td>1K, 10K, 50K</td><td>Test whether capability-specific fine-tuning becomes more or less selective with more data</td></tr>
+<tr><td>**Capability pairing**</td><td>Which pairs are compared</td><td>knowledge vs reasoning, reasoning vs code, knowledge vs code, all vs control (HellaSwag)</td><td>Test H3 (asymmetric entanglement — code and reasoning may be more entangled than knowledge and reasoning)</td></tr>
+<tr><td>**Ablation coefficient α**</td><td>Strength of ablation</td><td>0.5, 1.0, 1.5, 2.0</td><td>Test whether capability removal is dose-response or threshold-based</td></tr>
+</tbody></table>
+<p>---</p>
+<h2>9. Expected Failure Modes and Mitigations</h2>
+<table><tbody>
+<tr><td>Failure Mode</td><td>Likelihood</td><td>Severity</td><td>Mitigation</td></tr>
+<tr><td>**Task vectors are near-random (high cosine similarity across all pairs)**</td><td>Medium</td><td>High</td><td>If all task vectors point in similar directions, the fine-tuning may not be capability-specific. Mitigation: use stronger training signals (more data, higher LoRA rank, contrastive fine-tuning that explicitly penalizes cross-capability interference).</td></tr>
+<tr><td>**Causal importance maps are identical across capabilities**</td><td>Low-Medium</td><td>High</td><td>If all capabilities depend on the same layers (e.g., late layers for output generation), the maps will have high overlap from output projection alone. Mitigation: subtract the output-projection baseline from importance maps; report both raw and baseline-subtracted overlaps.</td></tr>
+<tr><td>**Negated task vectors produce degenerate models (loss diverges)**</td><td>Medium</td><td>Medium</td><td>Subtracting a large task vector may push the model into a pathological region of parameter space. Mitigation: sweep α from 0 to 2.0; report the maximum α before degeneration (unstable loss or gibberish output as detected by perplexity &gt; 3× baseline).</td></tr>
+<tr><td>**Benchmarks are insufficiently capability-pure (e.g., GSM8K tests both knowledge and reasoning)**</td><td>High</td><td>Medium</td><td>No benchmark is perfectly pure. Mitigation: compute pairwise benchmark correlation matrices; use factor analysis to identify latent capability dimensions; report results both at the &quot;raw benchmark&quot; level and the &quot;latent factor&quot; level.</td></tr>
+<tr><td>**LoRA fine-tuning is too small to produce measurable capability improvement**</td><td>Low-Medium</td><td>High</td><td>10K examples may be insufficient for some capabilities. Mitigation: if Block A training produces &lt;5% improvement on the target benchmark, increase to 50K examples or switch to full fine-tuning with LoRA as a fallback analysis.</td></tr>
+<tr><td>**Activation patching shows widespread effects (patching anything degrades everything)**</td><td>Medium</td><td>Medium</td><td>If model components are highly interconnected, any intervention may have global effects. Mitigation: use correlated ablation (patch entire contiguous layer blocks) to see if degradation is layer-specific; compare to a &quot;sham patching&quot; baseline (patch in activations from a different random input on the same task).</td></tr>
+<tr><td>**Large model (70B) is too expensive for full causal tracing**</td><td>Certain</td><td>Low</td><td>Causal tracing on 70B requires 2-3 forward passes per prompt × 32 layers × 200 prompts ≈ 12,800 passes. Mitigation: for 70B, reduce to 100 prompts and 16 sampled layers; confirm that conclusions at 8B and 70B are consistent.</td></tr>
+</tbody></table>
+<p>---</p>
+<h2>10. Execution Plan</h2>
+<h3>Phase 0: Setup (Week 1)</h3>
+<table><tbody>
+<tr><td>Task</td><td>Artifact</td></tr>
+<tr><td>Select and download base models (Llama-3.2-1B, Llama-3-8B, Llama-3-70B)</td><td>`/models/`</td></tr>
+<tr><td>Curate training subsets (10K per capability, deduplicated from train splits)</td><td>`/data/knowledge_train.json`, `/data/reasoning_train.json`, `/data/code_train.json`</td></tr>
+<tr><td>Curate evaluation suite (all 10 benchmarks, validation/test splits)</td><td>`/data/eval_suite.json`</td></tr>
+<tr><td>Set up evaluation harness (lm-eval-harness or custom framework)</td><td>`/scripts/evaluate.py`</td></tr>
+<tr><td>Run initial baseline evaluations on all base models</td><td>`/results/baselines.json`</td></tr>
+</tbody></table>
+<h3>Phase 1: Task Vector Analysis (Weeks 2-3)</h3>
+<table><tbody>
+<tr><td>Task</td><td>Artifact</td></tr>
+<tr><td>Train 3 LoRA adapters per model (knowledge, reasoning, code) × 3 seeds</td><td>`/adapters/{model}/{capability}/seed_{n}/`</td></tr>
+<tr><td>Compute task vectors and pairwise cosine similarities</td><td>`/results/task_vectors/`</td></tr>
+<tr><td>Compute composition and ablation evaluations</td><td>`/results/composition/`</td></tr>
+<tr><td>Run DARE pruning at sparsity levels 50%, 90%, 99%</td><td>`/results/dare/`</td></tr>
+</tbody></table>
+<p>**Go/no-go**: If $\max(\cos(\Delta\theta_A, \Delta\theta_B)) &gt; 0.95$ across all pairs, the task vectors are degenerate. Switch to full fine-tuning or contrastive training. Otherwise proceed.</p>
+<h3>Phase 2: Causal Tracing (Weeks 4-5)</h3>
+<table><tbody>
+<tr><td>Task</td><td>Artifact</td></tr>
+<tr><td>Implement causal tracing with mean corruption</td><td>`/scripts/causal_trace.py`</td></tr>
+<tr><td>Generate 200 capability-specific prompts per domain</td><td>`/data/causal_prompts/`</td></tr>
+<tr><td>Run causal tracing for each capability (Batch: 8B first, then 1B, skip 70B)</td><td>`/results/causal_maps/`</td></tr>
+<tr><td>Compute pairwise Jaccard overlaps and correlation</td><td>`/results/causal_overlap.json`</td></tr>
+<tr><td>Run activation patching experiments for top-3 layers per pair</td><td>`/results/patching/`</td></tr>
+</tbody></table>
+<h3>Phase 3: Surgical Ablation (Week 6)</h3>
+<table><tbody>
+<tr><td>Task</td><td>Artifact</td></tr>
+<tr><td>Compute ablated model evals for α ∈ {0.5, 1.0, 1.5, 2.0}</td><td>`/results/ablation/`</td></tr>
+<tr><td>Compute Asymmetric Interference Index for all pairs</td><td>`/results/interference_matrix.json`</td></tr>
+<tr><td>Run baselines (random perturbation, multi-task, layer-randomized)</td><td>`/results/baselines_ablation.json`</td></tr>
+</tbody></table>
+<h3>Phase 4: Ablations and Robustness (Weeks 7-8)</h3>
+<table><tbody>
+<tr><td>Task</td><td>Artifact</td></tr>
+<tr><td>Scale ablation: repeat Blocks 1-3 on Llama-3.2-1B</td><td>`/results/scale_ablation/`</td></tr>
+<tr><td>Rank ablation: repeat Block 1 with LoRA rank 8 and 128 on 8B</td><td>`/results/rank_ablation/`</td></tr>
+<tr><td>Data size ablation: repeat Block 1 with 1K and 50K examples</td><td>`/results/data_ablation/`</td></tr>
+<tr><td>Stability: verify all conclusions on Llama-3-8B across 3 seeds</td><td>`/results/stability/`</td></tr>
+</tbody></table>
+<h3>Phase 5: Analysis and Write-up (Weeks 9-10)</h3>
+<table><tbody>
+<tr><td>Task</td><td>Artifact</td></tr>
+<tr><td>Synthesize findings across all three blocks</td><td>`/results/synthesis.pdf`</td></tr>
+<tr><td>Generate figures: task vector similarity heatmap, causal importance maps, ablation curves</td><td>`/figures/`</td></tr>
+<tr><td>Draft paper (NeurIPS / ICML / ICLR format)</td><td>`/paper/`</td></tr>
+<tr><td>Run final statistical checks (bootstrapped CIs, multiple testing correction)</td><td>`/paper/supplement/`</td></tr>
+</tbody></table>
+<h3>Resource Requirements</h3>
+<ul>
+<li>**Compute**: ~25 A100-80GB GPU-hours for 8B (3 LoRAs × 3 seeds + causal tracing + ablations), ~200 GPU-hours for 70B. Total: ~50-300 GPU-hours depending on 70B scope.</li>
+<li>**Storage**: ~100 GB for model weights and adapters, ~10 GB for results.</li>
+<li>**All models and data are open-source** (Llama-3, Pile, MMLU, GSM8K, MBPP, HumanEval).</li>
+</ul>
+<p>---</p>
+<h2>11. Expected Contributions</h2>
+<p>1. **First systematic capability decomposition of an LLM** using three converging causal methodologies (task vector analysis, causal tracing, surgical ablation) rather than any single approach.</p>
+<p>2. **Quantitative capability (in)dependence metrics**: cosine similarity of task vectors, Jaccard overlap of causal maps, asymmetric interference index — a reusable toolkit for the field.</p>
+<p>3. **Test of the &quot;capability modularity&quot; hypothesis**: if confirmed, this supports the feasibility of modular model design, targeted capability editing, and interference-free multi-task fine-tuning. If rejected, it suggests fundamental limits on how independently we can manipulate LLM capabilities.</p>
+<p>4. **Empirical map of which capability pairs are most entangled**, enabling informed decisions about which combinations can be safely fine-tuned together vs. require isolation.</p>
+<p>5. **Ablation experiments across model scale** (1B, 8B, 70B) testing whether larger models exhibit more or less capability decoupling — a question with direct implications for how we train and modify frontier models.</p></article></main>
+</body>
+</html>
