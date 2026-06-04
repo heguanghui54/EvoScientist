@@ -60,6 +60,7 @@ def main() -> None:
         "build_internagent_qa_runbook.py",
         "run_internagent_qa_baseline.py",
         "build_internagent_query01_smoke_report.py",
+        "build_internagent_smoke_report.py",
         "probe_ai_scientist_v2_baseline.py",
         "build_ai_scientist_v2_ideation_runbook.py",
         "convert_ai_scientist_v2_ideation_outputs.py",
@@ -212,6 +213,35 @@ def main() -> None:
     assert set(smoke_dims) == {"Clarity", "Novelty", "Feasibility", "Relevance"}
     assert smoke_dims["Clarity"]["n"] == 2
     assert "InternAgent Query-01 Smoke Report" in internagent_smoke_md_path.read_text(
+        encoding="utf-8"
+    )
+    internagent_3q_smoke_json_path = ROOT / "internagent_queries01_03_smoke_report.json"
+    internagent_3q_smoke_md_path = ROOT / "internagent_queries01_03_smoke_report.md"
+    assert internagent_3q_smoke_json_path.is_file(), "missing InternAgent queries01-03 smoke JSON"
+    assert internagent_3q_smoke_md_path.is_file(), "missing InternAgent queries01-03 smoke markdown"
+    internagent_3q_smoke = json.loads(internagent_3q_smoke_json_path.read_text(encoding="utf-8"))
+    assert internagent_3q_smoke["baseline"] == "InternAgent"
+    assert internagent_3q_smoke["query_ids"] == [1, 2, 3]
+    assert internagent_3q_smoke["paper_exact"] is False
+    assert internagent_3q_smoke["status"] == "complete"
+    assert internagent_3q_smoke["judge_records"] == 6
+    for query_id in [1, 2, 3]:
+        assert (
+            ROOT / "artifacts" / "idea_outputs" / "InternAgent" / f"query_{query_id:02d}" / "answer.txt"
+        ).is_file()
+    assert (
+        ROOT / "artifacts" / "judge_inputs" / "evosci_vs_internagent_queries01_03.jsonl"
+    ).is_file()
+    assert (
+        ROOT / "artifacts" / "judge_outputs" / "evosci_vs_internagent_queries01_03_deepseek.jsonl"
+    ).is_file()
+    assert (
+        ROOT / "artifacts" / "tables" / "evosci_vs_internagent_queries01_03_deepseek.json"
+    ).is_file()
+    smoke_3q_dims = internagent_3q_smoke["aggregate"]["baselines"]["InternAgent"]["dimensions"]
+    assert set(smoke_3q_dims) == {"Clarity", "Novelty", "Feasibility", "Relevance"}
+    assert smoke_3q_dims["Clarity"]["n"] == 6
+    assert "InternAgent queries01_03 Smoke Report" in internagent_3q_smoke_md_path.read_text(
         encoding="utf-8"
     )
     ai_scientist_probe_json_path = ROOT / "ai_scientist_v2_baseline_probe.json"

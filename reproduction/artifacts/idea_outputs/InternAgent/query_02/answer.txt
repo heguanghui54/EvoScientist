@@ -1,0 +1,12 @@
+# InternAgent QA Replacement Output: Query 02
+
+Topic: Software engineering
+Prompt: Help me generate a research proposal on AI for software engineering.
+Model: deepseek-chat
+Paper-exact: false
+
+This answer was generated through InternAgent QA mode as a replacement baseline, not from the EvoScientist paper's original raw InternAgent outputs.
+
+## Answer
+
+The research proposal cannot be fully completed because the dependency nodes (n1 and n2) that were supposed to identify research gaps and propose a specific research question, methodology, and expected contributions both failed to execute successfully, producing no output or reasoning. Consequently, node n3 (which outlines the proposal structure) had to reconstruct the logical foundation from its task description alone, resulting in a generic architectural framework rather than a specific, tailored proposal. The available output from node n3 provides a detailed structural blueprint for a research proposal on AI for software engineering, organized into six sections—Abstract, Introduction, Related Work, Research Plan, Evaluation, and Timeline—with a hypothetical research question about hybrid AI frameworks for code repair and refactoring. However, without the foundational gaps and specific research plan from nodes n1 and n2, a concrete, integrated proposal cannot be generated.

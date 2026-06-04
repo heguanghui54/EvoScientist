@@ -1,0 +1,1 @@
+Generate a research proposal on how to address the accuracy issues of automated evaluation for Large Language Models.

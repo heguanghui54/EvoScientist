@@ -1,0 +1,12 @@
+# InternAgent QA Replacement Output: Query 03
+
+Topic: LLM evaluation
+Prompt: Generate a research proposal on how to address the accuracy issues of automated evaluation for Large Language Models.
+Model: deepseek-chat
+Paper-exact: false
+
+This answer was generated through InternAgent QA mode as a replacement baseline, not from the EvoScientist paper's original raw InternAgent outputs.
+
+## Answer
+
+The research proposal addresses accuracy issues in automated evaluation of Large Language Models by introducing the Hybrid Reference-Augmented and Free Evaluation (HRAFE) framework. This framework uses two complementary scoring branches: reference-augmented scoring (using multiple references and semantic equivalence windows) and reference-free scoring (evaluating factual consistency, fluency, and task-specific adequacy via NLI classifiers, perplexity, and reward models). A Dynamic Weight Fusion Module determines per-instance weighting of the two branches based on features like reference diversity, output length, and model uncertainty. The proposal includes an experimental validation plan to test accuracy improvements, with the framework designed for transparency, calibration to human judgment, and safeguards against biases such as reference bias and over-reliance on reference-free scores in low-resource settings.

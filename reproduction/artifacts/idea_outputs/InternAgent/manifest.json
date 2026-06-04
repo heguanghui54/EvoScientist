@@ -1,0 +1,30 @@
+{
+  "runner": "import_baseline_outputs.py",
+  "system_name": "InternAgent",
+  "query_count": 3,
+  "min_chars": 1000,
+  "outputs": [
+    {
+      "id": 1,
+      "status": "ok",
+      "dir": "reproduction/artifacts/idea_outputs/InternAgent/query_01"
+    },
+    {
+      "id": 2,
+      "status": "ok",
+      "dir": "reproduction/artifacts/idea_outputs/InternAgent/query_02"
+    },
+    {
+      "id": 3,
+      "status": "ok",
+      "dir": "reproduction/artifacts/idea_outputs/InternAgent/query_03"
+    }
+  ],
+  "summary": {
+    "written": 3,
+    "skipped": 0,
+    "missing_query_ids": [],
+    "too_short": [],
+    "complete": true
+  }
+}
