@@ -89,6 +89,7 @@ def main() -> None:
         "build_table2_surrogate_eval.py",
         "build_table2_human_label_packet.py",
         "import_table2_human_label_sheet.py",
+        "build_final_reproduction_dossier.py",
         "build_paper_reproduction_plan.py",
         "compare_reproduction_to_paper.py",
         "audit_reproduction_artifacts.py",
@@ -1057,6 +1058,24 @@ def main() -> None:
     assert first_task["answer_a_text"].strip()
     assert first_task["answer_b_text"].strip()
     assert "Import" in label_packet_guide_path.read_text(encoding="utf-8")
+    final_dossier_json_path = ROOT / "final_reproduction_dossier.json"
+    final_dossier_md_path = ROOT / "final_reproduction_dossier.md"
+    assert final_dossier_json_path.is_file(), "missing final reproduction dossier JSON"
+    assert final_dossier_md_path.is_file(), "missing final reproduction dossier markdown"
+    final_dossier = json.loads(final_dossier_json_path.read_text(encoding="utf-8"))
+    assert final_dossier["overall_status"] == "incomplete"
+    assert final_dossier["paper_exact"] is False
+    assert final_dossier["components"]["table1_llm_idea_generation"]["coverage"]["judge_outputs"] == 420
+    assert final_dossier["components"]["table2_human_idea_generation"]["human_inputs_ready"] == 120
+    assert final_dossier["components"]["table2_human_idea_generation"]["surrogate"]["label_records"] == 1440
+    assert final_dossier["components"]["table2_human_idea_generation"]["human_label_packet"]["label_rows"] == 1440
+    assert final_dossier["components"]["table3_ablation_idea_generation"]["covered_queries"] == 30
+    assert final_dossier["components"]["figure2_code_execution"]["coverage"]["execution_log_records"] == 240
+    assert final_dossier["blocking_items"] == ["incomplete: table2_human_idea_generation"]
+    final_dossier_md = final_dossier_md_path.read_text(encoding="utf-8")
+    assert "EvoScientist Reproduction Dossier" in final_dossier_md
+    assert "420/420 swapped pairwise judge records" in final_dossier_md
+    assert "human labels missing" in final_dossier_md
     paper_level_gate_json_path = ROOT / "paper_level_evidence_gate.json"
     paper_level_gate_md_path = ROOT / "paper_level_evidence_gate.md"
     assert paper_level_gate_json_path.is_file(), "missing paper-level evidence gate JSON"
