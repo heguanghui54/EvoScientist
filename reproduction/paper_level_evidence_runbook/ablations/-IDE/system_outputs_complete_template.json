@@ -1,0 +1,7 @@
+{
+  "variant": "-IDE",
+  "query_count": 30,
+  "complete": false,
+  "required_output_root": "reproduction/artifacts/ablations/-IDE/system_outputs",
+  "note": "Set complete=true only after all 30 variant outputs are present and imported into this variant artifact directory."
+}

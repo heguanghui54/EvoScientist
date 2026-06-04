@@ -1,0 +1,70 @@
+{
+  "date": "2026-06-04",
+  "paper": "arXiv:2603.08127",
+  "paper_exact": false,
+  "purpose": "Actionable evidence templates and acceptance commands for Table 2, Table 3, and Figure 2.",
+  "human_evaluation": {
+    "paper_table": "Table 2",
+    "baselines": [
+      "InternAgent",
+      "AI Scientist-v2",
+      "Novix",
+      "K-Dense"
+    ],
+    "comparison_count": 120,
+    "label_template_count": 1440,
+    "templates": {
+      "inputs": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/paper_level_evidence_runbook/human_evaluation/inputs_template.jsonl",
+      "labels": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/paper_level_evidence_runbook/human_evaluation/labels_template.jsonl"
+    },
+    "artifact_targets": {
+      "inputs": "reproduction/artifacts/human_evaluation/inputs.jsonl",
+      "labels": "reproduction/artifacts/human_evaluation/labels.jsonl",
+      "aggregate": "reproduction/artifacts/human_evaluation/aggregate.json"
+    },
+    "commands": [
+      ".venv/bin/python reproduction/aggregate_human_labels.py --inputs reproduction/artifacts/human_evaluation/inputs.jsonl --labels reproduction/artifacts/human_evaluation/labels.jsonl --output-csv reproduction/artifacts/human_evaluation/aggregate.csv --output-json reproduction/artifacts/human_evaluation/aggregate.json --strict"
+    ]
+  },
+  "ablation": {
+    "paper_table": "Table 3",
+    "variants": [
+      "-IDE",
+      "-IVE",
+      "-all"
+    ],
+    "variant_spec_roots": {
+      "-IDE": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/paper_level_evidence_runbook/ablations/-IDE",
+      "-IVE": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/paper_level_evidence_runbook/ablations/-IVE",
+      "-all": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/paper_level_evidence_runbook/ablations/-all"
+    },
+    "artifact_root": "reproduction/artifacts/ablations",
+    "commands": [
+      ".venv/bin/python reproduction/aggregate_ablation_results.py --artifacts-root reproduction/artifacts/ablations --combined-json reproduction/artifacts/ablations/combined_aggregate.json --combined-csv reproduction/artifacts/ablations/combined_aggregate.csv --strict",
+      ".venv/bin/python reproduction/compare_reproduction_to_paper.py --actual-json reproduction/artifacts/ablations/combined_aggregate.json --section table3_ablation_idea_generation --require-all"
+    ]
+  },
+  "code_execution": {
+    "paper_figure": "Figure 2",
+    "trajectory_template_count": 240,
+    "execution_log_template_count": 240,
+    "templates": {
+      "trajectories": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/paper_level_evidence_runbook/code_execution/trajectories_template.jsonl",
+      "execution_logs": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/paper_level_evidence_runbook/code_execution/execution_logs_template.jsonl"
+    },
+    "artifact_targets": {
+      "trajectories": "reproduction/artifacts/code_execution/trajectories.jsonl",
+      "execution_logs": "reproduction/artifacts/code_execution/execution_logs.jsonl",
+      "summary": "reproduction/artifacts/code_execution/summary.json"
+    },
+    "commands": [
+      ".venv/bin/python reproduction/aggregate_code_execution.py --logs reproduction/artifacts/code_execution/execution_logs.jsonl --output-json reproduction/artifacts/code_execution/summary.json --output-csv reproduction/artifacts/code_execution/summary.csv --strict",
+      ".venv/bin/python reproduction/compare_reproduction_to_paper.py --actual-json reproduction/artifacts/code_execution/summary.json --section figure2_code_execution --require-all"
+    ]
+  },
+  "acceptance_commands": [
+    ".venv/bin/python reproduction/verify_paper_artifact_schema.py --strict",
+    ".venv/bin/python reproduction/audit_paper_level_completion.py --strict"
+  ],
+  "caveat": "These files are templates and runbooks, not completed paper artifacts. Copy or generate real records under reproduction/artifacts only after collecting paper-level human labels, ablation outputs, and execution logs."
+}

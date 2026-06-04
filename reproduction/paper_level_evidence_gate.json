@@ -1,0 +1,173 @@
+{
+  "date": "2026-06-04",
+  "status": "not_ready",
+  "runbook": {
+    "path": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/paper_level_evidence_runbook/paper_level_evidence_runbook.json",
+    "exists": true,
+    "bytes": 4130
+  },
+  "components": {
+    "table2_human_evaluation": {
+      "root": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/artifacts/human_evaluation",
+      "files": {
+        "inputs.jsonl": {
+          "path": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/artifacts/human_evaluation/inputs.jsonl",
+          "exists": false,
+          "bytes": 0
+        },
+        "labels.jsonl": {
+          "path": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/artifacts/human_evaluation/labels.jsonl",
+          "exists": false,
+          "bytes": 0
+        },
+        "aggregate.json": {
+          "path": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/artifacts/human_evaluation/aggregate.json",
+          "exists": false,
+          "bytes": 0
+        }
+      },
+      "missing_files": [
+        "inputs.jsonl",
+        "labels.jsonl",
+        "aggregate.json"
+      ],
+      "complete": false
+    },
+    "table3_ablation": {
+      "root": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/artifacts/ablations",
+      "variants": {
+        "-IDE": {
+          "root": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/artifacts/ablations/-IDE",
+          "files": {
+            "system_outputs_complete.json": {
+              "path": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/artifacts/ablations/-IDE/system_outputs_complete.json",
+              "exists": false,
+              "bytes": 0
+            },
+            "judge_inputs.jsonl": {
+              "path": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/artifacts/ablations/-IDE/judge_inputs.jsonl",
+              "exists": false,
+              "bytes": 0
+            },
+            "judge_outputs.jsonl": {
+              "path": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/artifacts/ablations/-IDE/judge_outputs.jsonl",
+              "exists": false,
+              "bytes": 0
+            },
+            "aggregate.json": {
+              "path": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/artifacts/ablations/-IDE/aggregate.json",
+              "exists": false,
+              "bytes": 0
+            }
+          },
+          "missing_files": [
+            "system_outputs_complete.json",
+            "judge_inputs.jsonl",
+            "judge_outputs.jsonl",
+            "aggregate.json"
+          ],
+          "complete": false
+        },
+        "-IVE": {
+          "root": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/artifacts/ablations/-IVE",
+          "files": {
+            "system_outputs_complete.json": {
+              "path": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/artifacts/ablations/-IVE/system_outputs_complete.json",
+              "exists": false,
+              "bytes": 0
+            },
+            "judge_inputs.jsonl": {
+              "path": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/artifacts/ablations/-IVE/judge_inputs.jsonl",
+              "exists": false,
+              "bytes": 0
+            },
+            "judge_outputs.jsonl": {
+              "path": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/artifacts/ablations/-IVE/judge_outputs.jsonl",
+              "exists": false,
+              "bytes": 0
+            },
+            "aggregate.json": {
+              "path": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/artifacts/ablations/-IVE/aggregate.json",
+              "exists": false,
+              "bytes": 0
+            }
+          },
+          "missing_files": [
+            "system_outputs_complete.json",
+            "judge_inputs.jsonl",
+            "judge_outputs.jsonl",
+            "aggregate.json"
+          ],
+          "complete": false
+        },
+        "-all": {
+          "root": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/artifacts/ablations/-all",
+          "files": {
+            "system_outputs_complete.json": {
+              "path": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/artifacts/ablations/-all/system_outputs_complete.json",
+              "exists": false,
+              "bytes": 0
+            },
+            "judge_inputs.jsonl": {
+              "path": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/artifacts/ablations/-all/judge_inputs.jsonl",
+              "exists": false,
+              "bytes": 0
+            },
+            "judge_outputs.jsonl": {
+              "path": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/artifacts/ablations/-all/judge_outputs.jsonl",
+              "exists": false,
+              "bytes": 0
+            },
+            "aggregate.json": {
+              "path": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/artifacts/ablations/-all/aggregate.json",
+              "exists": false,
+              "bytes": 0
+            }
+          },
+          "missing_files": [
+            "system_outputs_complete.json",
+            "judge_inputs.jsonl",
+            "judge_outputs.jsonl",
+            "aggregate.json"
+          ],
+          "complete": false
+        }
+      },
+      "complete": false
+    },
+    "figure2_code_execution": {
+      "root": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/artifacts/code_execution",
+      "files": {
+        "trajectories.jsonl": {
+          "path": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/artifacts/code_execution/trajectories.jsonl",
+          "exists": false,
+          "bytes": 0
+        },
+        "execution_logs.jsonl": {
+          "path": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/artifacts/code_execution/execution_logs.jsonl",
+          "exists": false,
+          "bytes": 0
+        },
+        "summary.json": {
+          "path": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/artifacts/code_execution/summary.json",
+          "exists": false,
+          "bytes": 0
+        }
+      },
+      "missing_files": [
+        "trajectories.jsonl",
+        "execution_logs.jsonl",
+        "summary.json"
+      ],
+      "complete": false
+    }
+  },
+  "blocking_items": [
+    "Table 2 human evaluation artifacts are incomplete",
+    "Table 3 ablation artifacts are incomplete for -IDE",
+    "Table 3 ablation artifacts are incomplete for -IVE",
+    "Table 3 ablation artifacts are incomplete for -all",
+    "Figure 2 code-execution artifacts are incomplete"
+  ],
+  "caveat": "This gate requires real imported artifacts under reproduction/artifacts. Template files under reproduction/paper_level_evidence_runbook are not counted as completed paper evidence."
+}

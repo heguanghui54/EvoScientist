@@ -80,6 +80,8 @@ def main() -> None:
         "aggregate_human_labels.py",
         "aggregate_ablation_results.py",
         "aggregate_code_execution.py",
+        "build_paper_level_evidence_runbook.py",
+        "verify_paper_level_evidence_gate.py",
         "build_paper_reproduction_plan.py",
         "compare_reproduction_to_paper.py",
         "audit_reproduction_artifacts.py",
@@ -684,6 +686,30 @@ def main() -> None:
     assert paper_artifact_schema["schemas"]["code_execution"]["aggregator"] == "reproduction/aggregate_code_execution.py"
     paper_artifact_schema_md = paper_artifact_schema_md_path.read_text(encoding="utf-8")
     assert "Figure 2 Code Execution" in paper_artifact_schema_md
+    paper_level_runbook_root = ROOT / "paper_level_evidence_runbook"
+    paper_level_runbook_json_path = paper_level_runbook_root / "paper_level_evidence_runbook.json"
+    paper_level_runbook_md_path = paper_level_runbook_root / "paper_level_evidence_runbook.md"
+    assert paper_level_runbook_json_path.is_file(), "missing paper-level evidence runbook JSON"
+    assert paper_level_runbook_md_path.is_file(), "missing paper-level evidence runbook markdown"
+    paper_level_runbook = json.loads(paper_level_runbook_json_path.read_text(encoding="utf-8"))
+    assert paper_level_runbook["human_evaluation"]["comparison_count"] == 120
+    assert paper_level_runbook["human_evaluation"]["label_template_count"] == 1440
+    assert paper_level_runbook["ablation"]["variants"] == ["-IDE", "-IVE", "-all"]
+    assert paper_level_runbook["code_execution"]["execution_log_template_count"] == 240
+    assert (paper_level_runbook_root / "human_evaluation" / "inputs_template.jsonl").is_file()
+    assert (paper_level_runbook_root / "human_evaluation" / "labels_template.jsonl").is_file()
+    assert (paper_level_runbook_root / "ablations" / "-IDE" / "variant_run_specs.jsonl").is_file()
+    assert (paper_level_runbook_root / "code_execution" / "execution_logs_template.jsonl").is_file()
+    assert "Paper-Level Evidence Runbook" in paper_level_runbook_md_path.read_text(encoding="utf-8")
+    paper_level_gate_json_path = ROOT / "paper_level_evidence_gate.json"
+    paper_level_gate_md_path = ROOT / "paper_level_evidence_gate.md"
+    assert paper_level_gate_json_path.is_file(), "missing paper-level evidence gate JSON"
+    assert paper_level_gate_md_path.is_file(), "missing paper-level evidence gate markdown"
+    paper_level_gate = json.loads(paper_level_gate_json_path.read_text(encoding="utf-8"))
+    assert paper_level_gate["status"] == "not_ready"
+    assert "Table 2 human evaluation artifacts are incomplete" in paper_level_gate["blocking_items"]
+    assert "Figure 2 code-execution artifacts are incomplete" in paper_level_gate["blocking_items"]
+    assert "Paper-Level Evidence Gate" in paper_level_gate_md_path.read_text(encoding="utf-8")
     action_plan_json_path = ROOT / "paper_reproduction_action_plan.json"
     action_plan_md_path = ROOT / "paper_reproduction_action_plan.md"
     assert action_plan_json_path.is_file(), "missing paper reproduction action plan JSON"
@@ -695,6 +721,8 @@ def main() -> None:
     assert action_plan["baseline_readiness_matrix"] == "reproduction/baseline_readiness_matrix.json"
     assert action_plan["baseline_rerun_manifest"] == "reproduction/baseline_rerun_manifest.json"
     assert action_plan["baseline_readiness_counts"]["paper_exact_available"] == 0
+    assert any(action.get("runbook") == "reproduction/paper_level_evidence_runbook/paper_level_evidence_runbook.json" for action in action_plan["actions"])
+    assert any(action.get("gate") == "reproduction/paper_level_evidence_gate.json" for action in action_plan["actions"])
     action_plan_md = action_plan_md_path.read_text(encoding="utf-8")
     assert "Paper Reproduction Action Plan" in action_plan_md
     assert "gemini-3-flash" in action_plan_md
@@ -704,6 +732,8 @@ def main() -> None:
     assert "k_dense_baseline_probe.json" in action_plan_md
     assert "Baseline Readiness" in action_plan_md
     assert "baseline_rerun_manifest.json" in action_plan_md
+    assert "paper_level_evidence_runbook.json" in action_plan_md
+    assert "paper_level_evidence_gate.json" in action_plan_md
     full_status = json.loads(full_status_json_path.read_text(encoding="utf-8"))
     expected_success_ids = list(range(1, 31))
     expected_incomplete_ids = []

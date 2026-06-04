@@ -116,10 +116,14 @@ Commands:
 Required evidence: inputs.jsonl, labels.jsonl, and aggregate.json for three PhD-level annotators
 
 Missing Files: inputs.jsonl, labels.jsonl, aggregate.json
+Runbook: reproduction/paper_level_evidence_runbook/paper_level_evidence_runbook.json
+Gate: reproduction/paper_level_evidence_gate.json
 
 Commands:
 
 ```bash
+.venv/bin/python reproduction/build_paper_level_evidence_runbook.py
+.venv/bin/python reproduction/verify_paper_level_evidence_gate.py
 .venv/bin/python reproduction/aggregate_human_labels.py --inputs reproduction/artifacts/human_evaluation/inputs.jsonl --labels reproduction/artifacts/human_evaluation/labels.jsonl --output-csv reproduction/artifacts/human_evaluation/aggregate.csv --output-json reproduction/artifacts/human_evaluation/aggregate.json --strict
 ```
 
@@ -128,11 +132,15 @@ Commands:
 Required evidence: system_outputs_complete.json, judge_inputs.jsonl, judge_outputs.jsonl, and aggregate.json for -IDE, -IVE, and -all
 
 Missing Variants: -IDE, -IVE, -all
+Runbook: reproduction/paper_level_evidence_runbook/paper_level_evidence_runbook.json
+Gate: reproduction/paper_level_evidence_gate.json
 Note: The repository has no native ablation toggles yet; variant outputs must come from a paper-matched patch or imported raw ablation runs.
 
 Commands:
 
 ```bash
+.venv/bin/python reproduction/build_paper_level_evidence_runbook.py
+.venv/bin/python reproduction/verify_paper_level_evidence_gate.py
 .venv/bin/python reproduction/aggregate_ablation_results.py --artifacts-root reproduction/artifacts/ablations --combined-json reproduction/artifacts/ablations/combined_aggregate.json --combined-csv reproduction/artifacts/ablations/combined_aggregate.csv --strict
 .venv/bin/python reproduction/compare_reproduction_to_paper.py --actual-json reproduction/artifacts/ablations/combined_aggregate.json --section table3_ablation_idea_generation --require-all
 ```
@@ -142,10 +150,14 @@ Commands:
 Required evidence: trajectories.jsonl, execution_logs.jsonl, and summary.json with before/after evolution success rates
 
 Missing Files: trajectories.jsonl, execution_logs.jsonl, summary.json
+Runbook: reproduction/paper_level_evidence_runbook/paper_level_evidence_runbook.json
+Gate: reproduction/paper_level_evidence_gate.json
 
 Commands:
 
 ```bash
+.venv/bin/python reproduction/build_paper_level_evidence_runbook.py
+.venv/bin/python reproduction/verify_paper_level_evidence_gate.py
 .venv/bin/python reproduction/aggregate_code_execution.py --logs reproduction/artifacts/code_execution/execution_logs.jsonl --output-json reproduction/artifacts/code_execution/summary.json --output-csv reproduction/artifacts/code_execution/summary.csv --strict
 .venv/bin/python reproduction/compare_reproduction_to_paper.py --actual-json reproduction/artifacts/code_execution/summary.json --section figure2_code_execution --require-all
 ```

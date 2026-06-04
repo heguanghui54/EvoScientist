@@ -57,6 +57,8 @@ and paper-level experimental reproduction.
 | Baseline readiness matrix is recorded | `baseline_readiness_matrix.json` aggregates all seven Table 1 baseline probes into paper-exact, near-direct replacement, and adapter-required classes | Verified |
 | Baseline rerun manifest is recorded | `baseline_rerun_manifest.json` gives the seven-baseline rerun/import/judge/audit command queue, including the combined paper-exact `gemini-3-flash` judge path | Verified |
 | Paper-level non-Table-1 artifact schemas are pinned | `paper_artifact_schema.json` and `verify_paper_artifact_schema.py` define Table 2 human-label, Table 3 ablation, and Figure 2 code-execution evidence schemas | Verified |
+| Paper-level evidence runbook is executable | `build_paper_level_evidence_runbook.py` generates Table 2 human-label templates, Table 3 ablation variant specs, and Figure 2 code-execution log templates without placing placeholders under `reproduction/artifacts` | Verified |
+| Paper-level evidence gate is recorded | `paper_level_evidence_gate.json` marks Table 2, Table 3, and Figure 2 not ready until real artifacts are imported under `reproduction/artifacts` | Verified |
 | Human-label aggregation is executable | `aggregate_human_labels.py` converts Table 2 human labels into Win/Tie/Lose aggregate JSON/CSV | Verified |
 | Ablation aggregation is executable | `aggregate_ablation_results.py` converts Table 3 variant judge outputs into variant-perspective Win/Tie/Lose aggregate JSON/CSV | Verified |
 | Code-execution aggregation is executable | `aggregate_code_execution.py` converts Figure 2 execution logs into before/after and stage-level success-rate JSON/CSV | Verified |

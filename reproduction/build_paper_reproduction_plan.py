@@ -191,7 +191,11 @@ def table2_actions(components: dict[str, Any]) -> list[dict[str, Any]]:
             "kind": "human_label_import",
             "missing_files": table2["missing_files"],
             "required_evidence": "inputs.jsonl, labels.jsonl, and aggregate.json for three PhD-level annotators",
+            "runbook": "reproduction/paper_level_evidence_runbook/paper_level_evidence_runbook.json",
+            "gate": "reproduction/paper_level_evidence_gate.json",
             "commands": [
+                ".venv/bin/python reproduction/build_paper_level_evidence_runbook.py",
+                ".venv/bin/python reproduction/verify_paper_level_evidence_gate.py",
                 ".venv/bin/python reproduction/aggregate_human_labels.py --inputs reproduction/artifacts/human_evaluation/inputs.jsonl --labels reproduction/artifacts/human_evaluation/labels.jsonl --output-csv reproduction/artifacts/human_evaluation/aggregate.csv --output-json reproduction/artifacts/human_evaluation/aggregate.json --strict",
             ],
         }
@@ -211,7 +215,11 @@ def table3_actions(components: dict[str, Any]) -> list[dict[str, Any]]:
             "kind": "ablation_variant_runs",
             "missing_variants": missing_variants,
             "required_evidence": "system_outputs_complete.json, judge_inputs.jsonl, judge_outputs.jsonl, and aggregate.json for -IDE, -IVE, and -all",
+            "runbook": "reproduction/paper_level_evidence_runbook/paper_level_evidence_runbook.json",
+            "gate": "reproduction/paper_level_evidence_gate.json",
             "commands": [
+                ".venv/bin/python reproduction/build_paper_level_evidence_runbook.py",
+                ".venv/bin/python reproduction/verify_paper_level_evidence_gate.py",
                 ".venv/bin/python reproduction/aggregate_ablation_results.py --artifacts-root reproduction/artifacts/ablations --combined-json reproduction/artifacts/ablations/combined_aggregate.json --combined-csv reproduction/artifacts/ablations/combined_aggregate.csv --strict",
                 ".venv/bin/python reproduction/compare_reproduction_to_paper.py --actual-json reproduction/artifacts/ablations/combined_aggregate.json --section table3_ablation_idea_generation --require-all",
             ],
@@ -230,7 +238,11 @@ def figure2_actions(components: dict[str, Any]) -> list[dict[str, Any]]:
             "kind": "code_execution_log_import",
             "missing_files": figure2["missing_files"],
             "required_evidence": "trajectories.jsonl, execution_logs.jsonl, and summary.json with before/after evolution success rates",
+            "runbook": "reproduction/paper_level_evidence_runbook/paper_level_evidence_runbook.json",
+            "gate": "reproduction/paper_level_evidence_gate.json",
             "commands": [
+                ".venv/bin/python reproduction/build_paper_level_evidence_runbook.py",
+                ".venv/bin/python reproduction/verify_paper_level_evidence_gate.py",
                 ".venv/bin/python reproduction/aggregate_code_execution.py --logs reproduction/artifacts/code_execution/execution_logs.jsonl --output-json reproduction/artifacts/code_execution/summary.json --output-csv reproduction/artifacts/code_execution/summary.csv --strict",
                 ".venv/bin/python reproduction/compare_reproduction_to_paper.py --actual-json reproduction/artifacts/code_execution/summary.json --section figure2_code_execution --require-all",
             ],
@@ -296,7 +308,7 @@ def render_markdown(plan: dict[str, Any]) -> str:
                 "",
             ]
         )
-        for key in ["system", "missing_files", "missing_variants", "probe", "note"]:
+        for key in ["system", "missing_files", "missing_variants", "probe", "runbook", "gate", "note"]:
             if key in action and action[key]:
                 value = action[key]
                 if isinstance(value, list):
