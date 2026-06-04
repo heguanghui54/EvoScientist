@@ -1,0 +1,30 @@
+{
+  "date": "2026-06-04",
+  "paper_exact_target": true,
+  "status": "ready_for_human_annotation",
+  "comparison_count": 120,
+  "label_rows": 1440,
+  "annotators": [
+    "phd_annotator_1",
+    "phd_annotator_2",
+    "phd_annotator_3"
+  ],
+  "dimensions": [
+    "Novelty",
+    "Feasibility",
+    "Relevance",
+    "Clarity"
+  ],
+  "valid_winners": [
+    "assistant_1",
+    "assistant_2",
+    "tie"
+  ],
+  "files": {
+    "review_tasks_jsonl": "artifacts/human_evaluation/label_packet/review_tasks.jsonl",
+    "task_index_csv": "artifacts/human_evaluation/label_packet/task_index.csv",
+    "label_sheet_template_csv": "artifacts/human_evaluation/label_packet/label_sheet_template.csv",
+    "source_inputs_jsonl": "artifacts/human_evaluation/inputs.jsonl"
+  },
+  "caveat": "Real human annotators must fill winners before this packet can produce paper-level labels.jsonl."
+}

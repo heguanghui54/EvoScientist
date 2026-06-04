@@ -87,6 +87,8 @@ def main() -> None:
         "verify_paper_level_evidence_gate.py",
         "build_table1_replacement_summary.py",
         "build_table2_surrogate_eval.py",
+        "build_table2_human_label_packet.py",
+        "import_table2_human_label_sheet.py",
         "build_paper_reproduction_plan.py",
         "compare_reproduction_to_paper.py",
         "audit_reproduction_artifacts.py",
@@ -1031,6 +1033,30 @@ def main() -> None:
     assert not (human_eval_root / "labels.jsonl").exists(), "surrogate labels must not masquerade as human labels"
     assert not (human_eval_root / "aggregate.json").exists(), "surrogate aggregate must not masquerade as human aggregate"
     assert "does not replace the paper's" in table2_surrogate_md_path.read_text(encoding="utf-8")
+    label_packet_root = human_eval_root / "label_packet"
+    label_packet_manifest_path = label_packet_root / "manifest.json"
+    label_packet_guide_path = label_packet_root / "annotation_guide.md"
+    label_packet_tasks_path = label_packet_root / "review_tasks.jsonl"
+    label_packet_index_path = label_packet_root / "task_index.csv"
+    label_packet_sheet_path = label_packet_root / "label_sheet_template.csv"
+    assert label_packet_manifest_path.is_file(), "missing Table 2 label packet manifest"
+    assert label_packet_guide_path.is_file(), "missing Table 2 label packet guide"
+    assert label_packet_tasks_path.is_file(), "missing Table 2 review tasks JSONL"
+    assert label_packet_index_path.is_file(), "missing Table 2 task index CSV"
+    assert label_packet_sheet_path.is_file(), "missing Table 2 label sheet template"
+    label_packet_manifest = json.loads(label_packet_manifest_path.read_text(encoding="utf-8"))
+    assert label_packet_manifest["status"] == "ready_for_human_annotation"
+    assert label_packet_manifest["paper_exact_target"] is True
+    assert label_packet_manifest["comparison_count"] == 120
+    assert label_packet_manifest["label_rows"] == 1440
+    assert set(label_packet_manifest["valid_winners"]) == {"assistant_1", "assistant_2", "tie"}
+    assert sum(1 for line in label_packet_tasks_path.read_text(encoding="utf-8").splitlines() if line.strip()) == 120
+    assert sum(1 for line in label_packet_index_path.read_text(encoding="utf-8").splitlines() if line.strip()) == 121
+    assert sum(1 for line in label_packet_sheet_path.read_text(encoding="utf-8").splitlines() if line.strip()) == 1441
+    first_task = json.loads(label_packet_tasks_path.read_text(encoding="utf-8").splitlines()[0])
+    assert first_task["answer_a_text"].strip()
+    assert first_task["answer_b_text"].strip()
+    assert "Import" in label_packet_guide_path.read_text(encoding="utf-8")
     paper_level_gate_json_path = ROOT / "paper_level_evidence_gate.json"
     paper_level_gate_md_path = ROOT / "paper_level_evidence_gate.md"
     assert paper_level_gate_json_path.is_file(), "missing paper-level evidence gate JSON"

@@ -21,6 +21,8 @@ Commands:
 
 ```bash
 .venv/bin/python reproduction/build_paper_level_evidence_runbook.py
+.venv/bin/python reproduction/build_table2_human_label_packet.py
+.venv/bin/python reproduction/import_table2_human_label_sheet.py --sheet reproduction/artifacts/human_evaluation/label_packet/label_sheet_template.csv --output-labels reproduction/artifacts/human_evaluation/labels.jsonl --output-csv reproduction/artifacts/human_evaluation/aggregate.csv --output-json reproduction/artifacts/human_evaluation/aggregate.json --strict
 .venv/bin/python reproduction/verify_paper_level_evidence_gate.py
 .venv/bin/python reproduction/aggregate_human_labels.py --inputs reproduction/artifacts/human_evaluation/inputs.jsonl --labels reproduction/artifacts/human_evaluation/labels.jsonl --output-csv reproduction/artifacts/human_evaluation/aggregate.csv --output-json reproduction/artifacts/human_evaluation/aggregate.json --strict
 ```
