@@ -1,0 +1,113 @@
+{
+  "target_system": "EvoScientist",
+  "tie_threshold": 0.0,
+  "raw_records": 120,
+  "baselines": {
+    "AI Scientist-v2": {
+      "dimensions": {
+        "Clarity": {
+          "baseline": "AI Scientist-v2",
+          "dimension": "Clarity",
+          "n": 60,
+          "win": 37,
+          "tie": 6,
+          "lose": 17,
+          "win_pct": 61.67,
+          "tie_pct": 10.0,
+          "lose_pct": 28.33,
+          "gap": 33.34
+        },
+        "Novelty": {
+          "baseline": "AI Scientist-v2",
+          "dimension": "Novelty",
+          "n": 60,
+          "win": 11,
+          "tie": 3,
+          "lose": 46,
+          "win_pct": 18.33,
+          "tie_pct": 5.0,
+          "lose_pct": 76.67,
+          "gap": -58.34
+        },
+        "Feasibility": {
+          "baseline": "AI Scientist-v2",
+          "dimension": "Feasibility",
+          "n": 60,
+          "win": 34,
+          "tie": 1,
+          "lose": 25,
+          "win_pct": 56.67,
+          "tie_pct": 1.67,
+          "lose_pct": 41.67,
+          "gap": 15.0
+        },
+        "Relevance": {
+          "baseline": "AI Scientist-v2",
+          "dimension": "Relevance",
+          "n": 60,
+          "win": 15,
+          "tie": 35,
+          "lose": 10,
+          "win_pct": 25.0,
+          "tie_pct": 58.33,
+          "lose_pct": 16.67,
+          "gap": 8.33
+        }
+      },
+      "avg_gap": -0.42
+    },
+    "InternAgent": {
+      "dimensions": {
+        "Clarity": {
+          "baseline": "InternAgent",
+          "dimension": "Clarity",
+          "n": 60,
+          "win": 57,
+          "tie": 0,
+          "lose": 3,
+          "win_pct": 95.0,
+          "tie_pct": 0.0,
+          "lose_pct": 5.0,
+          "gap": 90.0
+        },
+        "Novelty": {
+          "baseline": "InternAgent",
+          "dimension": "Novelty",
+          "n": 60,
+          "win": 52,
+          "tie": 0,
+          "lose": 8,
+          "win_pct": 86.67,
+          "tie_pct": 0.0,
+          "lose_pct": 13.33,
+          "gap": 73.34
+        },
+        "Feasibility": {
+          "baseline": "InternAgent",
+          "dimension": "Feasibility",
+          "n": 60,
+          "win": 56,
+          "tie": 0,
+          "lose": 4,
+          "win_pct": 93.33,
+          "tie_pct": 0.0,
+          "lose_pct": 6.67,
+          "gap": 86.66
+        },
+        "Relevance": {
+          "baseline": "InternAgent",
+          "dimension": "Relevance",
+          "n": 60,
+          "win": 46,
+          "tie": 12,
+          "lose": 2,
+          "win_pct": 76.67,
+          "tie_pct": 20.0,
+          "lose_pct": 3.33,
+          "gap": 73.34
+        }
+      },
+      "avg_gap": 80.84
+    }
+  }
+}

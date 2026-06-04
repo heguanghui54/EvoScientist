@@ -1,0 +1,9 @@
+baseline,dimension,n,win,tie,lose,win_pct,tie_pct,lose_pct,gap
+AI Scientist-v2,Clarity,60,37,6,17,61.67,10.0,28.33,33.34
+AI Scientist-v2,Novelty,60,11,3,46,18.33,5.0,76.67,-58.34
+AI Scientist-v2,Feasibility,60,34,1,25,56.67,1.67,41.67,15.0
+AI Scientist-v2,Relevance,60,15,35,10,25.0,58.33,16.67,8.33
+InternAgent,Clarity,60,57,0,3,95.0,0.0,5.0,90.0
+InternAgent,Novelty,60,52,0,8,86.67,0.0,13.33,73.34
+InternAgent,Feasibility,60,56,0,4,93.33,0.0,6.67,86.66
+InternAgent,Relevance,60,46,12,2,76.67,20.0,3.33,73.34

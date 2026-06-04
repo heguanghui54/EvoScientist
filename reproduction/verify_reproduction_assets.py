@@ -439,6 +439,41 @@ def main() -> None:
     assert "AI Scientist-v2 queries01_30 Smoke Report" in ai_scientist_smoke_md_path.read_text(
         encoding="utf-8"
     )
+    table1_monica_json_path = ROOT / "table1_existing_baselines_monica_report.json"
+    table1_monica_md_path = ROOT / "table1_existing_baselines_monica_report.md"
+    assert table1_monica_json_path.is_file(), "missing Table 1 Monica/Gemini partial JSON"
+    assert table1_monica_md_path.is_file(), "missing Table 1 Monica/Gemini partial markdown"
+    table1_monica = json.loads(table1_monica_json_path.read_text(encoding="utf-8"))
+    assert table1_monica["status"] == "partial"
+    assert table1_monica["completion_scope"] == "replacement_table1_existing_baselines"
+    assert table1_monica["paper_exact"] is False
+    assert table1_monica["covered_baselines"] == ["AI Scientist-v2", "InternAgent"]
+    assert table1_monica["judge"]["provider"] == "monica"
+    assert table1_monica["judge"]["model"] == "gemini-3-flash-preview"
+    assert table1_monica["judge"]["records"] == 120
+    assert sum(
+        1
+        for line in (ROOT / "artifacts" / "judge_inputs" / "table1_existing_baselines_monica.jsonl").read_text(
+            encoding="utf-8"
+        ).splitlines()
+        if line.strip()
+    ) == 120
+    assert sum(
+        1
+        for line in (ROOT / "artifacts" / "judge_outputs" / "table1_existing_baselines_monica.jsonl").read_text(
+            encoding="utf-8"
+        ).splitlines()
+        if line.strip()
+    ) == 120
+    table1_monica_aggregate = json.loads(
+        (ROOT / "artifacts" / "tables" / "table1_existing_baselines_monica.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    assert set(table1_monica_aggregate["baselines"]) == {"AI Scientist-v2", "InternAgent"}
+    assert "Table 1 Existing Baselines Monica/Gemini Judge Report" in table1_monica_md_path.read_text(
+        encoding="utf-8"
+    )
     virtual_scientist_probe_json_path = ROOT / "virtual_scientist_baseline_probe.json"
     virtual_scientist_probe_md_path = ROOT / "virtual_scientist_baseline_probe.md"
     assert virtual_scientist_probe_json_path.is_file(), "missing Virtual Scientist probe JSON"
