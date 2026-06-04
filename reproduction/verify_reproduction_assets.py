@@ -91,6 +91,7 @@ def main() -> None:
         "import_table2_human_label_sheet.py",
         "build_final_reproduction_dossier.py",
         "build_reproducibility_bundle.py",
+        "verify_user_scope_reproduction.py",
         "build_paper_reproduction_plan.py",
         "compare_reproduction_to_paper.py",
         "audit_reproduction_artifacts.py",
@@ -1065,6 +1066,7 @@ def main() -> None:
     assert final_dossier_md_path.is_file(), "missing final reproduction dossier markdown"
     final_dossier = json.loads(final_dossier_json_path.read_text(encoding="utf-8"))
     assert final_dossier["overall_status"] == "incomplete"
+    assert final_dossier["user_scope_status"] == "complete"
     assert final_dossier["paper_exact"] is False
     assert final_dossier["components"]["table1_llm_idea_generation"]["coverage"]["judge_outputs"] == 420
     assert final_dossier["components"]["table2_human_idea_generation"]["human_inputs_ready"] == 120
@@ -1073,10 +1075,22 @@ def main() -> None:
     assert final_dossier["components"]["table3_ablation_idea_generation"]["covered_queries"] == 30
     assert final_dossier["components"]["figure2_code_execution"]["coverage"]["execution_log_records"] == 240
     assert final_dossier["blocking_items"] == ["incomplete: table2_human_idea_generation"]
+    assert final_dossier["user_scope_gate"]["human_judge_status"] == "waived_by_user_for_current_scope"
     final_dossier_md = final_dossier_md_path.read_text(encoding="utf-8")
     assert "EvoScientist Reproduction Dossier" in final_dossier_md
     assert "420/420 swapped pairwise judge records" in final_dossier_md
+    assert "User-scope status: `complete`" in final_dossier_md
     assert "human labels missing" in final_dossier_md
+    user_scope_gate_json_path = ROOT / "artifacts" / "audit" / "user_scope_reproduction_gate.json"
+    user_scope_gate_md_path = ROOT / "artifacts" / "audit" / "user_scope_reproduction_gate.md"
+    assert user_scope_gate_json_path.is_file(), "missing user-scope reproduction gate JSON"
+    assert user_scope_gate_md_path.is_file(), "missing user-scope reproduction gate markdown"
+    user_scope_gate = json.loads(user_scope_gate_json_path.read_text(encoding="utf-8"))
+    assert user_scope_gate["status"] == "complete"
+    assert user_scope_gate["paper_exact"] is False
+    assert user_scope_gate["human_judge_status"] == "waived_by_user_for_current_scope"
+    assert all(item["complete"] is True for item in user_scope_gate["checks"].values())
+    assert "User-Scope EvoScientist Reproduction Gate" in user_scope_gate_md_path.read_text(encoding="utf-8")
     bundle_manifest_path = ROOT / "artifacts" / "reproducibility_bundle" / "manifest.json"
     bundle_readme_path = ROOT / "artifacts" / "reproducibility_bundle" / "README.md"
     bundle_archive_path = ROOT / "artifacts" / "reproducibility_bundle.zip"
@@ -1085,19 +1099,24 @@ def main() -> None:
     assert bundle_archive_path.is_file(), "missing reproducibility bundle archive"
     bundle_manifest = json.loads(bundle_manifest_path.read_text(encoding="utf-8"))
     assert bundle_manifest["status"] == "incomplete"
+    assert bundle_manifest["user_scope_status"] == "complete"
     assert bundle_manifest["paper_exact"] is False
     assert bundle_manifest["line_count_checks"]["artifacts/judge_inputs/results.jsonl"] == 420
     assert bundle_manifest["line_count_checks"]["artifacts/judge_outputs/results.jsonl"] == 420
     assert bundle_manifest["line_count_checks"]["artifacts/human_evaluation/inputs.jsonl"] == 120
     assert bundle_manifest["line_count_checks"]["artifacts/human_evaluation/surrogate_labels.jsonl"] == 1440
     assert bundle_manifest["line_count_checks"]["artifacts/human_evaluation/label_packet/label_sheet_template.csv"] == 1441
-    assert len(bundle_manifest["files"]) >= 36
+    assert len(bundle_manifest["files"]) >= 38
+    bundle_paths = {item["path"] for item in bundle_manifest["files"]}
+    assert "artifacts/audit/user_scope_reproduction_gate.json" in bundle_paths
+    assert "artifacts/audit/user_scope_reproduction_gate.md" in bundle_paths
     assert bundle_manifest["archive"]["bytes"] == bundle_archive_path.stat().st_size
     assert len(bundle_manifest["archive"]["sha256"]) == 64
     assert "reproducibility_bundle.zip" in str(bundle_archive_path)
     bundle_readme = bundle_readme_path.read_text(encoding="utf-8")
     assert "EvoScientist Reproducibility Bundle" in bundle_readme
     assert "420/420 replacement/proxy judge records" in bundle_readme
+    assert "User-scope status: `complete`" in bundle_readme
     assert "formal human labels missing" in bundle_readme
     paper_level_gate_json_path = ROOT / "paper_level_evidence_gate.json"
     paper_level_gate_md_path = ROOT / "paper_level_evidence_gate.md"

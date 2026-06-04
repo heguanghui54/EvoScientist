@@ -1,0 +1,48 @@
+{
+  "date": "2026-06-04",
+  "status": "complete",
+  "scope": "user-scoped reproduction with Monica/Gemini surrogate judging and human judge waived for now",
+  "paper_exact": false,
+  "human_judge_status": "waived_by_user_for_current_scope",
+  "paper_exact_remaining_gap": [
+    "author-provided original raw Table 1 baseline outputs",
+    "author-side original Gemini judge transcripts",
+    "three PhD-level Table 2 human labels and aggregate"
+  ],
+  "checks": {
+    "full_trajectories": {
+      "complete": true,
+      "evidence": "30/30 successful full trajectories in final dossier"
+    },
+    "table1_replacement_judge": {
+      "complete": true,
+      "evidence": "seven baselines x 30 queries x 2 swapped orders = 420 Monica/Gemini judge outputs"
+    },
+    "table2_surrogate_judge": {
+      "complete": true,
+      "evidence": "human judge waived by user; Monica/Gemini surrogate labels are available"
+    },
+    "table2_human_label_packet": {
+      "complete": true,
+      "evidence": "fillable 1440-row human label sheet and full-text review tasks are present"
+    },
+    "table3_replacement_ablation": {
+      "complete": true,
+      "evidence": "30-query Monica/Gemini replacement ablation rerun"
+    },
+    "figure2_replacement_probe": {
+      "complete": true,
+      "evidence": "240-record deterministic replacement code-execution probe"
+    },
+    "dossier": {
+      "complete": true,
+      "evidence": "final reproduction dossier exists"
+    },
+    "reproducibility_bundle": {
+      "complete": true,
+      "evidence": "zip bundle, manifest, checksums, and line-count checks exist",
+      "zip_entries": 38
+    }
+  },
+  "incomplete_checks": []
+}

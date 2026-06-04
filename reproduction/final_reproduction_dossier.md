@@ -3,6 +3,7 @@
 Date: 2026-06-04
 Branch: `codex/reproduction-assets`
 Overall status: `incomplete`
+User-scope status: `complete`
 Paper-exact: `false`
 
 EvoScientist experiment reproduction with replacement/proxy evidence where public paper-exact artifacts are unavailable.
@@ -69,10 +70,18 @@ EvoScientist experiment reproduction with replacement/proxy evidence where publi
 - paper_level_md: `artifacts/audit/paper_level_completion_latest.md`
 - paper_level_json: `artifacts/audit/paper_level_completion_latest.json`
 - schema_json: `artifacts/audit/paper_artifact_schema_latest.json`
+- user_scope_gate_md: `artifacts/audit/user_scope_reproduction_gate.md`
+- user_scope_gate_json: `artifacts/audit/user_scope_reproduction_gate.json`
 
 ## Remaining Blocker
 
 - incomplete: table2_human_idea_generation
+
+## User-Scope Gate
+
+- Status: `complete`
+- Human judge status: `waived_by_user_for_current_scope`
+
 
 ## Verification
 

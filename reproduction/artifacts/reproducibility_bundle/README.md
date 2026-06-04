@@ -2,6 +2,7 @@
 
 Date: 2026-06-04
 Status: `incomplete`
+User-scope status: `complete`
 Paper-exact: `false`
 Branch: `codex/reproduction-assets`
 
@@ -14,6 +15,7 @@ portable verification bundle for the current EvoScientist replacement/proxy repr
 - table2: 120 inputs, 1440 LLM-surrogate labels, human label packet ready, formal human labels missing
 - table3: 30-query replacement ablation rerun
 - figure2: 240-record replacement code-execution probe
+- user_scope_gate: complete under Monica/Gemini surrogate judge scope with human judge waived for now
 
 ## Line Count Checks
 
@@ -31,11 +33,13 @@ portable verification bundle for the current EvoScientist replacement/proxy repr
 
 | Path | Bytes | SHA256 |
 | --- | ---: | --- |
-| `final_reproduction_dossier.md` | 2787 | `43e8e23ddff4b387c117f3a4159c0789255f575ee6c228aaf152755b040cc053` |
-| `final_reproduction_dossier.json` | 24322 | `006c5a020e49984a94ba4f9ecfb24d0a0badb794573200285c6fa07fd6239fb5` |
+| `final_reproduction_dossier.md` | 3065 | `d3eaea2d7167a764b57c8d44554e960731a472cdb4d6f8cad11a89f5481cb25e` |
+| `final_reproduction_dossier.json` | 24853 | `a7d771c0f0b7ecab552a329e8b05743a289d0204a1d0e460de99441f31e41eae` |
 | `artifacts/audit/paper_level_completion_latest.md` | 1115 | `64eec8a7ca83d1c9b24c09487aa7b4a5a391cc0eed43fbd66655467964b2b74c` |
 | `artifacts/audit/paper_level_completion_latest.json` | 15611 | `c07db6a75b98aba9675d91f4733df5e1f10a6f7d42295b60914f27a7b9115105` |
 | `artifacts/audit/paper_artifact_schema_latest.json` | 7748 | `7b6e492c04fad6a915772f59c9cfff1dfbf88761b91a44abda913f39d8fadad0` |
+| `artifacts/audit/user_scope_reproduction_gate.md` | 1269 | `959d076f1cf55d214ab64af10b54c6e1fda87a3a61fea4f5fb607fcb12f14e5d` |
+| `artifacts/audit/user_scope_reproduction_gate.json` | 1662 | `41bcc293be694d86bd3f65585a6492f77bf0c6e8a96a7cbcc998e4ae7605aa69` |
 | `table1_replacement_all_baselines_monica_report.md` | 1679 | `0eecc6b4804e8cd7cd6497024a7332d481d22e3032c73fe2744312abc827916f` |
 | `table1_replacement_all_baselines_monica_report.json` | 12079 | `0b5f48315091e24fb028e04fc437a8359eef61eecdfe99b2dfc5171152c80164` |
 | `artifacts/judge_inputs/results.jsonl` | 4772022 | `facef9e49eb24dde1f426ec61a020bd70ccbce57d49f7e69fa40c1c9d2e90d8d` |

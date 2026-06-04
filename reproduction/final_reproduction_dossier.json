@@ -4,6 +4,7 @@
     "branch": "codex/reproduction-assets"
   },
   "overall_status": "incomplete",
+  "user_scope_status": "complete",
   "paper_exact": false,
   "scope": "EvoScientist experiment reproduction with replacement/proxy evidence where public paper-exact artifacts are unavailable.",
   "components": {
@@ -701,6 +702,15 @@
   "blocking_items": [
     "incomplete: table2_human_idea_generation"
   ],
+  "user_scope_gate": {
+    "status": "complete",
+    "human_judge_status": "waived_by_user_for_current_scope",
+    "paper_exact_remaining_gap": [
+      "author-provided original raw Table 1 baseline outputs",
+      "author-side original Gemini judge transcripts",
+      "three PhD-level Table 2 human labels and aggregate"
+    ]
+  },
   "next_action": {
     "component": "table2_human_idea_generation",
     "kind": "human_label_import",
@@ -746,7 +756,9 @@
     "audit": {
       "paper_level_md": "artifacts/audit/paper_level_completion_latest.md",
       "paper_level_json": "artifacts/audit/paper_level_completion_latest.json",
-      "schema_json": "artifacts/audit/paper_artifact_schema_latest.json"
+      "schema_json": "artifacts/audit/paper_artifact_schema_latest.json",
+      "user_scope_gate_md": "artifacts/audit/user_scope_reproduction_gate.md",
+      "user_scope_gate_json": "artifacts/audit/user_scope_reproduction_gate.json"
     }
   },
   "verification_commands": [

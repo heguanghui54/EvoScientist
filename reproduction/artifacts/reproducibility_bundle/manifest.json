@@ -1,6 +1,7 @@
 {
   "date": "2026-06-04",
   "status": "incomplete",
+  "user_scope_status": "complete",
   "paper_exact": false,
   "repository": {
     "branch": "codex/reproduction-assets"
@@ -11,7 +12,8 @@
     "table1": "420/420 replacement/proxy judge records",
     "table2": "120 inputs, 1440 LLM-surrogate labels, human label packet ready, formal human labels missing",
     "table3": "30-query replacement ablation rerun",
-    "figure2": "240-record replacement code-execution probe"
+    "figure2": "240-record replacement code-execution probe",
+    "user_scope_gate": "complete under Monica/Gemini surrogate judge scope with human judge waived for now"
   },
   "blocking_items": [
     "incomplete: table2_human_idea_generation"
@@ -19,14 +21,14 @@
   "files": [
     {
       "path": "final_reproduction_dossier.md",
-      "bytes": 2787,
-      "sha256": "43e8e23ddff4b387c117f3a4159c0789255f575ee6c228aaf152755b040cc053",
-      "nonblank_lines": 64
+      "bytes": 3065,
+      "sha256": "d3eaea2d7167a764b57c8d44554e960731a472cdb4d6f8cad11a89f5481cb25e",
+      "nonblank_lines": 70
     },
     {
       "path": "final_reproduction_dossier.json",
-      "bytes": 24322,
-      "sha256": "006c5a020e49984a94ba4f9ecfb24d0a0badb794573200285c6fa07fd6239fb5",
+      "bytes": 24853,
+      "sha256": "a7d771c0f0b7ecab552a329e8b05743a289d0204a1d0e460de99441f31e41eae",
       "nonblank_lines": 0
     },
     {
@@ -45,6 +47,18 @@
       "path": "artifacts/audit/paper_artifact_schema_latest.json",
       "bytes": 7748,
       "sha256": "7b6e492c04fad6a915772f59c9cfff1dfbf88761b91a44abda913f39d8fadad0",
+      "nonblank_lines": 0
+    },
+    {
+      "path": "artifacts/audit/user_scope_reproduction_gate.md",
+      "bytes": 1269,
+      "sha256": "959d076f1cf55d214ab64af10b54c6e1fda87a3a61fea4f5fb607fcb12f14e5d",
+      "nonblank_lines": 21
+    },
+    {
+      "path": "artifacts/audit/user_scope_reproduction_gate.json",
+      "bytes": 1662,
+      "sha256": "41bcc293be694d86bd3f65585a6492f77bf0c6e8a96a7cbcc998e4ae7605aa69",
       "nonblank_lines": 0
     },
     {
@@ -248,8 +262,8 @@
   ],
   "archive": {
     "path": "artifacts/reproducibility_bundle.zip",
-    "bytes": 1868924,
-    "sha256": "10a6583901ebab96b86de96ac1b9f2bfa2e11462f4d718fee2cc4f5f28be51ea",
+    "bytes": 1871113,
+    "sha256": "8779823dec7ae7c8760c50e9749937d29832ed373579b72e3b763e570782d2af",
     "nonblank_lines": 0
   }
 }

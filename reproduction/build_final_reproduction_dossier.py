@@ -45,6 +45,8 @@ def build_dossier(date: str) -> dict[str, Any]:
     figure2 = load_json(ROOT / "figure2_code_execution_replacement_report.json")
     schema = load_json(ROOT / "artifacts" / "audit" / "paper_artifact_schema_latest.json")
     action_plan = load_json(ROOT / "paper_reproduction_action_plan.json")
+    user_scope_gate_path = ROOT / "artifacts" / "audit" / "user_scope_reproduction_gate.json"
+    user_scope_gate = load_json(user_scope_gate_path) if user_scope_gate_path.is_file() else {}
 
     artifacts = {
         "table1": {
@@ -74,6 +76,8 @@ def build_dossier(date: str) -> dict[str, Any]:
             "paper_level_md": rel(ROOT / "artifacts" / "audit" / "paper_level_completion_latest.md"),
             "paper_level_json": rel(ROOT / "artifacts" / "audit" / "paper_level_completion_latest.json"),
             "schema_json": rel(ROOT / "artifacts" / "audit" / "paper_artifact_schema_latest.json"),
+            "user_scope_gate_md": rel(ROOT / "artifacts" / "audit" / "user_scope_reproduction_gate.md"),
+            "user_scope_gate_json": rel(ROOT / "artifacts" / "audit" / "user_scope_reproduction_gate.json"),
         },
     }
 
@@ -83,6 +87,7 @@ def build_dossier(date: str) -> dict[str, Any]:
             "branch": git_branch(),
         },
         "overall_status": audit["status"],
+        "user_scope_status": user_scope_gate.get("status", "not_generated"),
         "paper_exact": False,
         "scope": "EvoScientist experiment reproduction with replacement/proxy evidence where public paper-exact artifacts are unavailable.",
         "components": {
@@ -146,6 +151,11 @@ def build_dossier(date: str) -> dict[str, Any]:
             },
         },
         "blocking_items": audit["blocking_items"],
+        "user_scope_gate": {
+            "status": user_scope_gate.get("status", "not_generated"),
+            "human_judge_status": user_scope_gate.get("human_judge_status"),
+            "paper_exact_remaining_gap": user_scope_gate.get("paper_exact_remaining_gap", []),
+        },
         "next_action": action_plan["actions"][0] if action_plan["actions"] else None,
         "artifacts": artifacts,
         "verification_commands": [
@@ -183,6 +193,7 @@ def render_markdown(dossier: dict[str, Any]) -> str:
         f"Date: {dossier['date']}",
         f"Branch: `{dossier['repository']['branch']}`",
         f"Overall status: `{dossier['overall_status']}`",
+        f"User-scope status: `{dossier['user_scope_status']}`",
         f"Paper-exact: `{str(dossier['paper_exact']).lower()}`",
         "",
         dossier["scope"],
@@ -231,6 +242,12 @@ def render_markdown(dossier: dict[str, Any]) -> str:
         lines.append(f"- {item}")
     lines.extend(
         [
+            "",
+            "## User-Scope Gate",
+            "",
+            f"- Status: `{dossier['user_scope_gate']['status']}`",
+            f"- Human judge status: `{dossier['user_scope_gate']['human_judge_status']}`",
+            "",
             "",
             "## Verification",
             "",
