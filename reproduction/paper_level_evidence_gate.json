@@ -12,8 +12,8 @@
       "files": {
         "inputs.jsonl": {
           "path": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/artifacts/human_evaluation/inputs.jsonl",
-          "exists": false,
-          "bytes": 0
+          "exists": true,
+          "bytes": 61568
         },
         "labels.jsonl": {
           "path": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/artifacts/human_evaluation/labels.jsonl",
@@ -27,7 +27,6 @@
         }
       },
       "missing_files": [
-        "inputs.jsonl",
         "labels.jsonl",
         "aggregate.json"
       ],

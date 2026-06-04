@@ -8,7 +8,6 @@
       "component": "table2_human_idea_generation",
       "kind": "human_label_import",
       "missing_files": [
-        "inputs.jsonl",
         "labels.jsonl",
         "aggregate.json"
       ],

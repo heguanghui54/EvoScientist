@@ -136,6 +136,7 @@ def main() -> None:
         writer = csv.DictWriter(
             f,
             fieldnames=["baseline", "dimension", "n", "win", "tie", "lose", "win_pct", "tie_pct", "lose_pct", "gap"],
+            lineterminator="\n",
         )
         writer.writeheader()
         writer.writerows(result["rows"])

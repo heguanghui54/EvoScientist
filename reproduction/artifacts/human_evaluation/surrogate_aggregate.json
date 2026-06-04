@@ -1,0 +1,224 @@
+{
+  "target_system": "EvoScientist",
+  "raw_label_records": 1440,
+  "annotators": [
+    "monica_gemini_forward_surrogate",
+    "monica_gemini_mean_surrogate",
+    "monica_gemini_reverse_surrogate"
+  ],
+  "skipped": [],
+  "baselines": {
+    "AI Scientist-v2": {
+      "dimensions": {
+        "Clarity": {
+          "baseline": "AI Scientist-v2",
+          "dimension": "Clarity",
+          "n": 90,
+          "win": 56,
+          "tie": 10,
+          "lose": 24,
+          "win_pct": 62.22,
+          "tie_pct": 11.11,
+          "lose_pct": 26.67,
+          "gap": 35.55
+        },
+        "Novelty": {
+          "baseline": "AI Scientist-v2",
+          "dimension": "Novelty",
+          "n": 90,
+          "win": 17,
+          "tie": 4,
+          "lose": 69,
+          "win_pct": 18.89,
+          "tie_pct": 4.44,
+          "lose_pct": 76.67,
+          "gap": -57.78
+        },
+        "Feasibility": {
+          "baseline": "AI Scientist-v2",
+          "dimension": "Feasibility",
+          "n": 90,
+          "win": 51,
+          "tie": 3,
+          "lose": 36,
+          "win_pct": 56.67,
+          "tie_pct": 3.33,
+          "lose_pct": 40.0,
+          "gap": 16.67
+        },
+        "Relevance": {
+          "baseline": "AI Scientist-v2",
+          "dimension": "Relevance",
+          "n": 90,
+          "win": 26,
+          "tie": 48,
+          "lose": 16,
+          "win_pct": 28.89,
+          "tie_pct": 53.33,
+          "lose_pct": 17.78,
+          "gap": 11.11
+        }
+      },
+      "avg_gap": 1.39
+    },
+    "InternAgent": {
+      "dimensions": {
+        "Clarity": {
+          "baseline": "InternAgent",
+          "dimension": "Clarity",
+          "n": 90,
+          "win": 86,
+          "tie": 0,
+          "lose": 4,
+          "win_pct": 95.56,
+          "tie_pct": 0.0,
+          "lose_pct": 4.44,
+          "gap": 91.12
+        },
+        "Novelty": {
+          "baseline": "InternAgent",
+          "dimension": "Novelty",
+          "n": 90,
+          "win": 77,
+          "tie": 2,
+          "lose": 11,
+          "win_pct": 85.56,
+          "tie_pct": 2.22,
+          "lose_pct": 12.22,
+          "gap": 73.34
+        },
+        "Feasibility": {
+          "baseline": "InternAgent",
+          "dimension": "Feasibility",
+          "n": 90,
+          "win": 84,
+          "tie": 1,
+          "lose": 5,
+          "win_pct": 93.33,
+          "tie_pct": 1.11,
+          "lose_pct": 5.56,
+          "gap": 87.77
+        },
+        "Relevance": {
+          "baseline": "InternAgent",
+          "dimension": "Relevance",
+          "n": 90,
+          "win": 72,
+          "tie": 14,
+          "lose": 4,
+          "win_pct": 80.0,
+          "tie_pct": 15.56,
+          "lose_pct": 4.44,
+          "gap": 75.56
+        }
+      },
+      "avg_gap": 81.95
+    },
+    "K-Dense": {
+      "dimensions": {
+        "Clarity": {
+          "baseline": "K-Dense",
+          "dimension": "Clarity",
+          "n": 90,
+          "win": 39,
+          "tie": 16,
+          "lose": 35,
+          "win_pct": 43.33,
+          "tie_pct": 17.78,
+          "lose_pct": 38.89,
+          "gap": 4.44
+        },
+        "Novelty": {
+          "baseline": "K-Dense",
+          "dimension": "Novelty",
+          "n": 90,
+          "win": 29,
+          "tie": 3,
+          "lose": 58,
+          "win_pct": 32.22,
+          "tie_pct": 3.33,
+          "lose_pct": 64.44,
+          "gap": -32.22
+        },
+        "Feasibility": {
+          "baseline": "K-Dense",
+          "dimension": "Feasibility",
+          "n": 90,
+          "win": 46,
+          "tie": 4,
+          "lose": 40,
+          "win_pct": 51.11,
+          "tie_pct": 4.44,
+          "lose_pct": 44.44,
+          "gap": 6.67
+        },
+        "Relevance": {
+          "baseline": "K-Dense",
+          "dimension": "Relevance",
+          "n": 90,
+          "win": 16,
+          "tie": 58,
+          "lose": 16,
+          "win_pct": 17.78,
+          "tie_pct": 64.44,
+          "lose_pct": 17.78,
+          "gap": 0.0
+        }
+      },
+      "avg_gap": -5.28
+    },
+    "Novix": {
+      "dimensions": {
+        "Clarity": {
+          "baseline": "Novix",
+          "dimension": "Clarity",
+          "n": 90,
+          "win": 43,
+          "tie": 14,
+          "lose": 33,
+          "win_pct": 47.78,
+          "tie_pct": 15.56,
+          "lose_pct": 36.67,
+          "gap": 11.11
+        },
+        "Novelty": {
+          "baseline": "Novix",
+          "dimension": "Novelty",
+          "n": 90,
+          "win": 41,
+          "tie": 6,
+          "lose": 43,
+          "win_pct": 45.56,
+          "tie_pct": 6.67,
+          "lose_pct": 47.78,
+          "gap": -2.22
+        },
+        "Feasibility": {
+          "baseline": "Novix",
+          "dimension": "Feasibility",
+          "n": 90,
+          "win": 38,
+          "tie": 10,
+          "lose": 42,
+          "win_pct": 42.22,
+          "tie_pct": 11.11,
+          "lose_pct": 46.67,
+          "gap": -4.45
+        },
+        "Relevance": {
+          "baseline": "Novix",
+          "dimension": "Relevance",
+          "n": 90,
+          "win": 18,
+          "tie": 49,
+          "lose": 23,
+          "win_pct": 20.0,
+          "tie_pct": 54.44,
+          "lose_pct": 25.56,
+          "gap": -5.56
+        }
+      },
+      "avg_gap": -0.28
+    }
+  }
+}

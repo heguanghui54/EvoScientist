@@ -13,7 +13,7 @@ paper-level completion audit can pass.
 
 Required evidence: inputs.jsonl, labels.jsonl, and aggregate.json for three PhD-level annotators
 
-Missing Files: inputs.jsonl, labels.jsonl, aggregate.json
+Missing Files: labels.jsonl, aggregate.json
 Runbook: reproduction/paper_level_evidence_runbook/paper_level_evidence_runbook.json
 Gate: reproduction/paper_level_evidence_gate.json
 

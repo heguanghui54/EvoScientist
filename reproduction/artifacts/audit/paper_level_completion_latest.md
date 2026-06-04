@@ -14,7 +14,7 @@ are present in the checkout.
 | --- | --- | --- |
 | Full trajectories | complete | 30/30 successful final reports; non-success IDs: none |
 | Table 1 LLM judge | complete | expected 420 pairwise records; missing baseline outputs: none; paper-exact: false |
-| Table 2 human eval | incomplete | missing files: inputs.jsonl, labels.jsonl, aggregate.json |
+| Table 2 human eval | incomplete | missing files: labels.jsonl, aggregate.json |
 | Table 3 ablation | complete | missing variants: none |
 | Figure 2 code execution | complete | missing files: none |
 

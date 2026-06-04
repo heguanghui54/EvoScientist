@@ -86,6 +86,7 @@ def main() -> None:
         "build_paper_level_evidence_runbook.py",
         "verify_paper_level_evidence_gate.py",
         "build_table1_replacement_summary.py",
+        "build_table2_surrogate_eval.py",
         "build_paper_reproduction_plan.py",
         "compare_reproduction_to_paper.py",
         "audit_reproduction_artifacts.py",
@@ -1006,6 +1007,30 @@ def main() -> None:
     assert (paper_level_runbook_root / "ablations" / "-IDE" / "variant_run_specs.jsonl").is_file()
     assert (paper_level_runbook_root / "code_execution" / "execution_logs_template.jsonl").is_file()
     assert "Paper-Level Evidence Runbook" in paper_level_runbook_md_path.read_text(encoding="utf-8")
+    table2_surrogate_json_path = ROOT / "table2_surrogate_monica_report.json"
+    table2_surrogate_md_path = ROOT / "table2_surrogate_monica_report.md"
+    assert table2_surrogate_json_path.is_file(), "missing Table 2 surrogate JSON report"
+    assert table2_surrogate_md_path.is_file(), "missing Table 2 surrogate markdown report"
+    table2_surrogate = json.loads(table2_surrogate_json_path.read_text(encoding="utf-8"))
+    assert table2_surrogate["status"] == "complete"
+    assert table2_surrogate["paper_exact"] is False
+    assert table2_surrogate["completion_scope"] == "table2_surrogate_llm_evaluation"
+    assert table2_surrogate["input_records"] == 120
+    assert table2_surrogate["surrogate_label_records"] == 1440
+    assert table2_surrogate["baselines"] == ["InternAgent", "AI Scientist-v2", "Novix", "K-Dense"]
+    human_eval_root = ROOT / "artifacts" / "human_evaluation"
+    assert sum(1 for line in (human_eval_root / "inputs.jsonl").read_text(encoding="utf-8").splitlines() if line.strip()) == 120
+    assert sum(1 for line in (human_eval_root / "surrogate_labels.jsonl").read_text(encoding="utf-8").splitlines() if line.strip()) == 1440
+    surrogate_aggregate = json.loads((human_eval_root / "surrogate_aggregate.json").read_text(encoding="utf-8"))
+    assert set(surrogate_aggregate["baselines"]) == {"InternAgent", "AI Scientist-v2", "Novix", "K-Dense"}
+    assert set(surrogate_aggregate["annotators"]) == set(table2_surrogate["surrogate_annotators"])
+    for baseline in table2_surrogate["baselines"]:
+        dims = surrogate_aggregate["baselines"][baseline]["dimensions"]
+        assert set(dims) == {"Novelty", "Feasibility", "Relevance", "Clarity"}
+        assert all(row["n"] == 90 for row in dims.values())
+    assert not (human_eval_root / "labels.jsonl").exists(), "surrogate labels must not masquerade as human labels"
+    assert not (human_eval_root / "aggregate.json").exists(), "surrogate aggregate must not masquerade as human aggregate"
+    assert "does not replace the paper's" in table2_surrogate_md_path.read_text(encoding="utf-8")
     paper_level_gate_json_path = ROOT / "paper_level_evidence_gate.json"
     paper_level_gate_md_path = ROOT / "paper_level_evidence_gate.md"
     assert paper_level_gate_json_path.is_file(), "missing paper-level evidence gate JSON"

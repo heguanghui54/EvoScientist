@@ -109,8 +109,8 @@
       "files": {
         "inputs.jsonl": {
           "path": "reproduction/artifacts/human_evaluation/inputs.jsonl",
-          "exists": false,
-          "bytes": 0
+          "exists": true,
+          "bytes": 61568
         },
         "labels.jsonl": {
           "path": "reproduction/artifacts/human_evaluation/labels.jsonl",
@@ -124,7 +124,6 @@
         }
       },
       "missing_files": [
-        "inputs.jsonl",
         "labels.jsonl",
         "aggregate.json"
       ],
@@ -136,11 +135,10 @@
         "files": {
           "inputs.jsonl": {
             "path": "reproduction/artifacts/human_evaluation/inputs.jsonl",
-            "exists": false,
-            "complete": false,
-            "missing_records": [
-              "file"
-            ]
+            "exists": true,
+            "records": 120,
+            "bad_records": [],
+            "complete": true
           },
           "labels.jsonl": {
             "path": "reproduction/artifacts/human_evaluation/labels.jsonl",
