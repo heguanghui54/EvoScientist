@@ -2,31 +2,8 @@
   "date": "2026-06-04",
   "paper": "arXiv:2603.08127",
   "status": "incomplete",
-  "action_count": 3,
+  "action_count": 2,
   "actions": [
-    {
-      "component": "table1_llm_idea_generation",
-      "kind": "baseline_output_import_or_generation",
-      "system": "K-Dense",
-      "required_evidence": "30 answer.txt files under reproduction/artifacts/idea_outputs/K-Dense/",
-      "paper_exact": true,
-      "command_templates": [
-        ".venv/bin/python reproduction/import_baseline_outputs.py --system-name K-Dense --source {source_jsonl} --source-format jsonl --output-root reproduction/artifacts/idea_outputs --strict",
-        ".venv/bin/python reproduction/import_baseline_outputs.py --system-name K-Dense --source {source_dir} --source-format directory --output-root reproduction/artifacts/idea_outputs --strict",
-        ".venv/bin/python reproduction/build_pairwise_judge_inputs.py --systems-root reproduction/artifacts/idea_outputs --baseline K-Dense --output reproduction/artifacts/judge_inputs/evosci_vs_k_dense.jsonl",
-        ".venv/bin/python reproduction/run_llm_judge.py --provider deepseek --model deepseek-v4-flash --input reproduction/artifacts/judge_inputs/evosci_vs_k_dense.jsonl --output reproduction/artifacts/judge_outputs/evosci_vs_k_dense_deepseek.jsonl --resume",
-        ".venv/bin/python reproduction/aggregate_judge_results.py --input reproduction/artifacts/judge_outputs/evosci_vs_k_dense_deepseek.jsonl --output-csv reproduction/artifacts/tables/evosci_vs_k_dense_deepseek.csv --output-json reproduction/artifacts/tables/evosci_vs_k_dense_deepseek.json",
-        ".venv/bin/python reproduction/audit_reproduction_artifacts.py --baseline K-Dense --judge-inputs reproduction/artifacts/judge_inputs/evosci_vs_k_dense.jsonl --judge-outputs reproduction/artifacts/judge_outputs/evosci_vs_k_dense_deepseek.jsonl --aggregate-json reproduction/artifacts/tables/evosci_vs_k_dense_deepseek.json"
-      ],
-      "probe": "reproduction/k_dense_baseline_probe.json",
-      "note": "Current probe found K-Dense has a BYOK local Web/API adapter through ADK `/run_sse`, but it needs a pinned Python 3.13/OpenRouter/Gemini CLI setup and is not paper-exact raw Table 1 evidence.",
-      "replacement_run_template": [
-        "git clone https://github.com/K-Dense-AI/k-dense-byok $HOME/research/k-dense-byok && cd $HOME/research/k-dense-byok && git checkout 593c49b8e79c704c5979ec81c49f1791b5114083",
-        "./start.sh",
-        "# In a separate adapter process: create one ADK session per query, POST each query to /run_sse, and save final assistant text as outputs/evoscientist_table1_queries/k_dense/query_XX.md",
-        ".venv/bin/python reproduction/import_baseline_outputs.py --system-name K-Dense --source $HOME/research/k-dense-byok/outputs/evoscientist_table1_queries/k_dense --source-format directory --output-root reproduction/artifacts/idea_outputs --strict"
-      ]
-    },
     {
       "component": "table1_llm_idea_generation",
       "kind": "paper_judge_completion",

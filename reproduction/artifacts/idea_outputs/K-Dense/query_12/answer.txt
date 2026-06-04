@@ -1,0 +1,48 @@
+### 1. Title
+**Entity-Centric Contrastive Decoding (EC-CD): Mitigating Hallucinations via Knowledge Graph-Constrained Logit Shift**
+
+### 2. Problem and Motivation
+Large Language Models (LLMs) frequently exhibit factual inconsistency, particularly "entity swapping" (attributing a correct property to the wrong entity) and "relation fabrication." This occurs because the objective function (next-token prediction) prioritizes local linguistic coherence over global factual constraints. While Retrieval-Augmented Generation (RAG) provides context, the model may still ignore the retrieved evidence in favor of its internal parametric priors. There is a need for an inference-time intervention that forces the model to align its output distribution with verified relational data.
+
+### 3. Core Hypothesis
+By contrasting the output logits of a standard LLM with a "fact-aware" distribution derived from retrieved Knowledge Graph (KG) triples, we can suppress tokens that lead to factual drift without requiring expensive fine-tuning or lengthening the prompt context.
+
+### 4. Method
+The EC-CD method operates during the decoding phase:
+1.  **Entity Extraction:** For a given prompt $Q$, extract key entities using a lightweight NER model (e.g., spaCy).
+2.  **KG Retrieval:** Retrieve relevant $(Subject, Relation, Object)$ triples from a structured source (e.g., Wikidata or a domain-specific KG).
+3.  **Fact-Aware Logit Bias:**
+    *   Define a "Knowledge-Positive" set $S^+$ containing tokens associated with the correct *Object* and *Relation* from the triples.
+    *   Define a "Knowledge-Negative" set $S^-$ containing tokens associated with known distractors or high-probability but incorrect entities.
+4.  **Contrastive Decoding Formulation:** Modify the logit distribution at each timestep $t$:
+    $$L'_{t} = L_{base, t} + \alpha \cdot \mathbb{1}(v \in S^+) - \beta \cdot \mathbb{1}(v \in S^-)$$
+    Where $L_{base, t}$ are the original logits, and $\alpha, \beta$ are hyperparameters controlling the strength of the factual constraint.
+5.  **Dynamic Adjustment:** Apply the bias only when the model's entropy exceeds a threshold, indicating uncertainty where hallucinations are most likely to occur.
+
+### 5. Dataset or Benchmark
+*   **WikiBio Hallucination Benchmark:** For evaluating consistency in biographical summaries.
+*   **FEVER (Fact Extraction and VERification):** To test the ability to generate claims that align with provided evidence.
+*   **HaluEval:** A large-scale collective of generated and human-annotated hallucinated samples.
+
+### 6. Evaluation Metrics
+*   **FactScore:** An automated metric that breaks down generations into atomic facts and verifies them against Wikipedia.
+*   **Q^2 (Query-based Question Answering):** Measures the consistency between the generated text and the source via NLI (Natural Language Inference).
+*   **Entity Precision/Recall:** Specifically measuring the accuracy of named entity tokens compared to the ground truth triples.
+*   **MAUVE:** To ensure that the contrastive decoding does not degrade the overall linguistic quality and human-likeness of the text.
+
+### 7. Baselines
+*   **Standard Decoding (Greedy/Top-p):** The base LLM (e.g., Llama-3-8B) without intervention.
+*   **RAG (Retrieval-Augmented Generation):** Providing the KG triples as raw text in the system prompt.
+*   **Self-Correction (Chain-of-Verification):** A multi-step prompting approach where the model critiques its own output.
+*   **ITI (Inference-Time Intervention):** Shifting activations in the direction of "truthful" heads.
+
+### 8. Ablations
+*   **No Negative Bias:** Removing the $\beta$ term to see if penalizing known falsehoods is as critical as rewarding known truths.
+*   **Static vs. Dynamic Thresholding:** Testing whether applying the bias at every token (static) is superior to applying it only during high-uncertainty states (dynamic).
+*   **Source Quality:** Using "Noisy" KG triples (randomly sampled) to test the robustness of the system against retrieval errors.
+
+### 9. Failure Modes and Feasibility Risks
+*   **Entity Ambiguity:** If the NER system fails to resolve entities (e.g., "Amazon" the river vs. the company), the logit bias may enforce incorrect facts.
+*   **Fluency Degradation:** Aggressive logit shifting ($\alpha, \beta$ too high) may lead to ungrammatical sequences or repetitive "looping" on entity names.
+*   **Latency:** Real-time KG retrieval and logit modification increase the per-token generation time, potentially making it unsuitable for low-latency applications.
+*   **KG Coverage:** The method is constrained by the completeness of the Knowledge Graph; facts not present in the KG will default to the base model's (potentially hallucinated) behavior.

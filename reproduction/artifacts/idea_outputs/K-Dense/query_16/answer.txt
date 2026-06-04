@@ -1,0 +1,42 @@
+### 1. Title
+**Contrastive Knowledge Injection via Structured-Latent Alignment (CKI-SLA)**
+
+### 2. Problem and Motivation
+Domain-specific Large Language Models (LLMs) face two primary hurdles: **Knowledge Conflict** (where pre-existing parametric weights contradict new domain-specific facts) and **Catastrophic Forgetting** (where domain tuning degrades general-purpose reasoning). Current methods like Retrieval-Augmented Generation (RAG) suffer from retrieval noise and context window saturation, while standard Supervised Fine-Tuning (SFT) often fails to anchor model weights to structured factual hierarchies, leading to "hallucinated" domain logic.
+
+### 3. Core Hypothesis
+Aligning the LLM’s latent hidden states with structured Knowledge Graph (KG) embeddings via a contrastive objective—specifically targeting the Feed-Forward Network (FFN) layers—will increase factual precision and reduce parametric drift compared to standard token-level cross-entropy training.
+
+### 4. Method
+1.  **Entity Mapping:** Extract (Subject, Relation, Object) triples from a domain-specific KG. Map these entities to their corresponding token spans in a domain corpus using an Entity Linker (e.g., REL or Spacy).
+2.  **Structured Embedding Projection:** Pre-compute KG embeddings using a translational model (e.g., **RotatE**). Train a linear projection layer ($W_p$) to map these KG embeddings into the LLM’s hidden dimension.
+3.  **Contrastive Alignment:** During fine-tuning, implement a dual-objective loss:
+    *   **$\mathcal{L}_{CLM}$:** Standard Causal Language Modeling loss.
+    *   **$\mathcal{L}_{Align}$:** A InfoNCE contrastive loss that maximizes the similarity between the LLM's hidden state at the entity token position and the projected KG embedding, while minimizing similarity with non-matching entities in the batch.
+4.  **PEFT Integration:** Apply the alignment objective only to **LoRA (Low-Rank Adaptation)** weights in the MLP/FFN layers, which are hypothesized to store the bulk of factual knowledge.
+
+### 5. Dataset or Benchmark
+*   **Knowledge Source:** **UMLS (Unified Medical Language System)** for medical triples.
+*   **Training Corpus:** A subset of **PubMed Central (PMC)** open-access papers.
+*   **Evaluation:** **MedQA (USMLE)** for multi-choice reasoning and **PubMedQA** for domain-specific question answering.
+
+### 6. Evaluation Metrics
+*   **Accuracy / F1-Score:** Standard performance on MedQA.
+*   **Knowledge Retention Score (KRS):** Performance delta on the **MMLU (Massive Multitask Language Understanding)** general benchmark to measure catastrophic forgetting.
+*   **Faithfulness Rate:** Using NLI-based entailment to check if model outputs are supported by the UMLS source triples.
+
+### 7. Baselines
+*   **Base Model:** Llama-3-8B (unmodified).
+*   **RAG Baseline:** Llama-3-8B with BM25/Contriever-based retrieval from the PMC corpus.
+*   **LoRA-SFT:** Standard fine-tuning on PMC text without the contrastive KG alignment objective.
+*   **K-Adapter:** An existing modular knowledge injection framework.
+
+### 8. Ablations
+*   **Objective Impact:** Train with $\mathcal{L}_{CLM}$ only vs. $\mathcal{L}_{CLM} + \mathcal{L}_{Align}$.
+*   **Layer Targeting:** Apply alignment to Attention layers vs. FFN layers.
+*   **Embedding Source:** Use random entity initialization instead of pre-trained RotatE KG embeddings to test the value of structured topology.
+
+### 9. Failure Modes and Feasibility Risks
+*   **Entity Disambiguation Errors:** If the entity linker incorrectly maps a token to a KG node, the contrastive objective will inject noise into the latent space.
+*   **Latent Space Collapse:** If the contrastive temperature is too low, the model's hidden states may converge to a narrow manifold, destroying linguistic diversity.
+*   **Computational Overhead:** Pre-computing KG embeddings for millions of triples in UMLS requires significant memory; mitigation involves using a pruned "Core" subset of the KG.

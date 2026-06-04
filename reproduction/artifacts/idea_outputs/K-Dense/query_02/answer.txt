@@ -1,0 +1,42 @@
+**1. Title**
+Graph-Augmented Multi-Agent Refactoring (GAMAR): Reducing Global Technical Debt through Structured Dependency Context.
+
+**2. Problem and Motivation**
+Large Language Models (LLMs) excel at local code completion but struggle with "global" software engineering tasks like refactoring "God Objects" or decoupling circular dependencies. The primary bottleneck is the "lost-in-the-middle" phenomenon and context window limitations, where models lose track of distant call-site dependencies. Current AI tools often introduce regressions because they lack a holistic understanding of the codebase's architectural constraints, leading to a "hallucination of local correctness" that breaks global system integrity.
+
+**3. Core Hypothesis**
+Integrating a static-analysis-derived Code Property Graph (CPG) into a multi-agent feedback loop—consisting of an Architect agent (planning), a Coder agent (implementation), and a Verifier agent (validation)—will result in a higher reduction of Cyclomatic Complexity and higher unit test pass rates compared to monolithic, zero-shot LLM refactoring.
+
+**4. Method**
+1.  **Graph Extraction:** Use *Joern* or *Tree-sitter* to generate a CPG of the target repository, capturing Abstract Syntax Trees (AST), Control Flow Graphs (CFG), and Program Dependence Graphs (PDG).
+2.  **Architect Agent:** Given a high-complexity module (identified via static metrics), the Architect queries the CPG to identify all incoming/outgoing dependencies and proposes a refactoring plan (e.g., Extract Class, Move Method).
+3.  **Coder Agent:** Executes the plan by modifying specific files. It uses the CPG to identify exactly which call sites require signature updates.
+4.  **Verifier Agent:** Triggers a dual-validation pipeline: (a) Static check via the CPG to ensure no broken references; (b) Dynamic check via existing test suites.
+5.  **Iteration:** If validation fails, the error logs are fed back to the Architect to revise the plan.
+
+**5. Dataset or Benchmark**
+*   **Refactoring-Critic:** A dataset of human-verified refactorings.
+*   **Defects4J (selected subsets):** Specifically the modules with high technical debt metrics.
+*   **Project-Level Repositories:** 50 high-star Java and Python repositories from GitHub with documented "Code Smells" (identified via *SonarQube*).
+
+**6. Evaluation Metrics**
+*   **Structural Metrics:** Reduction in Cyclomatic Complexity (CC) and Halstead Complexity.
+*   **Correctness:** Pass@k for existing unit tests post-refactor.
+*   **Maintainability Index (MI):** Pre- vs. post-refactoring score.
+*   **Dependency Impact:** Number of unintended side effects (broken external calls) caught by the Verifier.
+
+**7. Baselines**
+*   **Zero-shot GPT-4:** Providing the entire module code with a "refactor this" prompt.
+*   **RAG-based LLM:** Retrieving relevant code snippets via vector similarity (ChromaDB/Pinecone) rather than a structured graph.
+*   **Traditional Static Analysis Tools:** Automated refactoring features in IDEs like IntelliJ IDEA or Eclipse.
+
+**8. Ablations**
+*   **Graph vs. Text:** Remove the CPG and provide only raw file text to the agents.
+*   **Multi-Agent vs. Single-Agent:** Collapse the Architect, Coder, and Verifier into a single prompt session.
+*   **Feedback Loop:** Remove the Verifier's ability to trigger re-planning (one-pass generation).
+
+**9. Failure Modes and Feasibility Risks**
+*   **Graph Scaling:** For repositories >1M LOC, the CPG may exceed memory limits or become too dense for the LLM to parse efficiently.
+*   **Tooling Fragility:** Static analysis tools (Joern) may fail on non-standard syntax or multi-language interop.
+*   **Token Consumption:** Multi-agent iterations on large files can become prohibitively expensive; mitigation involves using "diff-only" prompting to minimize context.
+*   **Test Coverage:** If the original repo has low test coverage, the Verifier cannot guarantee functional equivalence, leading to "silent regressions."

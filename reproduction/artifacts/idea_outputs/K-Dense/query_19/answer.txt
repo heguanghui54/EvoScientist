@@ -1,0 +1,41 @@
+### 1. Title
+**Information-Theoretic Item Selection (ITIS): Optimizing LLM Leaderboards via 2-Parameter Logistic Item Response Theory**
+
+### 2. Problem and Motivation
+Current LLM leaderboards (e.g., Open LLM Leaderboard, HELM) face two primary bottlenecks: high computational cost and benchmark saturation. Evaluating a single 70B model on thousands of MMLU or GSM8K items requires significant GPU hours and incurs high API costs. Furthermore, many benchmark items are either too trivial (providing no signal) or too noisy/ambiguous to differentiate between top-tier models. There is a critical need for a principled method to prune benchmarks into "lean" versions that preserve model rankings while minimizing inference overhead.
+
+### 3. Core Hypothesis
+By applying Item Response Theory (IRT) to existing evaluation traces, we can identify a subset of items with high **discrimination parameters** and **Fisher Information**. A subset comprising $<15\%$ of the original benchmark can maintain a Spearman’s Rank Correlation of $\rho > 0.98$ with the full-set ranking.
+
+### 4. Method
+1.  **Trace Collection:** Aggregate response matrices (correct/incorrect) from at least 50 diverse LLMs (varying architectures and sizes) across standard benchmarks.
+2.  **IRT Modeling:** Fit a 2-Parameter Logistic (2PL) model to the data:
+    $P(u_{ij} = 1 | \theta_i) = \frac{1}{1 + e^{-a_j(\theta_i - b_j)}}$
+    where $\theta_i$ is the latent ability of model $i$, $b_j$ is the difficulty of item $j$, and $a_j$ is the discrimination factor of item $j$.
+3.  **Information Maximization:** Calculate the Fisher Information $I(\theta)$ for each item. Rank items based on their ability to minimize the standard error of $\theta$ across the expected ability distribution of modern LLMs.
+4.  **Dynamic Subset Selection:** Construct a reduced leaderboard using the top-$k$ items. Use a "sliding window" IRT update to recalibrate item parameters as new, more capable models enter the ecosystem.
+
+### 5. Dataset or Benchmark
+*   **Primary Source:** Hugging Face Open LLM Leaderboard raw results (v1 and v2).
+*   **Target Benchmarks:** MMLU (57 subjects), ARC-Challenge, and GSM8K.
+*   **Validation Set:** LMSYS Chatbot Arena Elo ratings (to ensure IRT-derived ability $\theta$ correlates with human preference).
+
+### 6. Evaluation Metrics
+*   **Rank Stability:** Spearman’s $\rho$ and Kendall’s $\tau$ between the full benchmark ranking and the ITIS-pruned ranking.
+*   **Efficiency Gain:** Reduction in total tokens processed/inference time.
+*   **Standard Error of Measurement (SEM):** The precision of the latent ability estimate $\theta$ compared to the full-set estimate.
+
+### 7. Baselines
+*   **Random Sampling:** Randomly selecting $k$ items from the benchmark.
+*   **Hardness-Only Pruning:** Selecting the $k$ items with the lowest pass rate (highest $b_j$).
+*   **MMLU-Lite:** Existing hand-curated or simple-heuristic subsets.
+
+### 8. Ablations
+*   **Model Parameterization:** Compare 1PL (Rasch model, difficulty only) vs. 2PL (difficulty + discrimination) vs. 3PL (adding a guessing parameter).
+*   **Cross-Architecture Generalization:** Train the IRT model on Decoder-only models and test if the pruned subset remains valid for Encoder-Decoder or MoE (Mixture-of-Experts) architectures.
+*   **Sample Size ($k$):** Varying the subset size from 1% to 50% to find the "elbow" of the cost-accuracy curve.
+
+### 9. Failure Modes and Feasibility Risks
+*   **Data Contamination:** If models are trained on the "informative" subset specifically, the IRT parameters will decouple from true ability.
+*   **Domain Shift:** A subset optimized for MMLU may not reflect a model's performance on coding (HumanEval) or long-context tasks.
+*   **Cold Start Problem:** New benchmarks without existing model traces cannot be pruned using IRT until a sufficient number of models have been evaluated on the full set.

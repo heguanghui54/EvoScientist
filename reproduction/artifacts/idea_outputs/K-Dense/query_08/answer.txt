@@ -1,0 +1,40 @@
+**1. Title**
+Recursive Latent Knowledge Retrieval (LKR) for Guided Monte Carlo Tree Search in Complex Multi-Hop Reasoning.
+
+**2. Problem and Motivation**
+Large Language Models (LLMs) utilizing Chain-of-Thought (CoT) prompting often suffer from "hallucination cascades," where a single factual error in an intermediate reasoning step invalidates the entire trajectory. While search algorithms like Monte Carlo Tree Search (MCTS) improve reasoning by exploring multiple paths, they typically rely on internal model heuristics for node evaluation. These heuristics are often ungrounded in external facts, leading to "consistent but incorrect" reasoning paths in knowledge-intensive tasks. There is a need for a mechanism that grounds the search process in external evidence at each branching point.
+
+**3. Core Hypothesis**
+Integrating a dense retriever into the expansion and evaluation phases of MCTS—where each proposed reasoning step is validated against a retrieved knowledge corpus—will significantly increase the success rate of multi-hop reasoning by pruning branches that contradict external evidence and boosting those with high evidentiary support.
+
+**4. Method**
+The system implements a search-based agentic framework:
+*   **Expansion (Policy):** Given a state (partial reasoning path), the LLM generates $N$ potential next reasoning steps.
+*   **Latent Retrieval:** For each candidate step, a dense retriever (e.g., BGE-M3 or Contriever) queries a vector database (e.g., Wikipedia) to find the top-k relevant passages.
+*   **Guided Evaluation (Value Function):** An evaluator LLM receives the candidate step and the retrieved passages. It assigns a scalar reward $R$ based on: (1) Logical consistency with previous steps, and (2) Factual alignment with the retrieved context.
+*   **Backpropagation:** The reward $R$ updates the Q-values of the nodes in the MCTS tree.
+*   **Termination:** The search continues until a maximum depth is reached or a terminal "Answer" node is generated with high confidence.
+
+**5. Dataset or Benchmark**
+*   **StrategyQA:** Requires multi-step implicit reasoning where facts are not explicitly stated in the prompt.
+*   **HotpotQA (Distractor Setting):** Requires finding and combining information across multiple documents to answer complex queries.
+
+**6. Evaluation Metrics**
+*   **Accuracy:** Pass@1 and Pass@5 (majority vote across multiple MCTS runs).
+*   **Reasoning Faithfulness:** The percentage of intermediate steps supported by the retrieved citations (measured via NLI - Natural Language Inference).
+*   **Search Efficiency:** The average number of nodes expanded per correct answer.
+
+**7. Baselines**
+*   **CoT-SC (Self-Consistency):** Standard Chain-of-Thought with majority voting.
+*   **Vanilla MCTS:** Tree search using only the LLM’s internal value judgments without external retrieval.
+*   **ReAct:** An agentic baseline that interleaves "Think" and "Act" (Search) steps linearly without tree-based look-ahead.
+
+**8. Ablations**
+*   **No-Retrieval MCTS:** To isolate the impact of the search algorithm vs. the knowledge grounding.
+*   **Static Retrieval:** Retrieving all documents at the start of the query instead of recursively at each MCTS node.
+*   **Random Pruning:** Pruning MCTS branches randomly to ensure the value function (grounded in retrieval) is actually providing signal.
+
+**9. Failure Modes and Feasibility Risks**
+*   **Retrieval Latency:** Executing a vector search and an evaluator LLM call for every node expansion is computationally expensive. *Mitigation:* Use small, high-throughput embedding models and cache retrieval results.
+*   **Knowledge Noise:** If the retriever returns irrelevant or contradictory snippets, the evaluator may prune correct reasoning paths. *Mitigation:* Implement a "Relevance Filter" that ignores retrieved context if the cosine similarity score is below a specific threshold.
+*   **Reward Hacking:** The agent might learn to generate steps that are easy to verify but do not lead to the final answer. *Mitigation:* Weight the final answer's correctness more heavily in the total path reward.

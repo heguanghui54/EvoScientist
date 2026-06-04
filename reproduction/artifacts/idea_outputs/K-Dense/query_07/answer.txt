@@ -1,0 +1,44 @@
+**1. Title**
+Recursive Latent-Space Distillation (RLSD): Enhancing Small Language Model Reasoning via Hierarchical Teacher-Trace Alignment.
+
+**2. Problem and Motivation**
+Small Language Models (SLMs) under 3B parameters consistently hit a performance ceiling in complex reasoning tasks (e.g., MATH, GSM8K) compared to large-scale models (>70B). Current distillation methods primarily focus on output-layer logit matching or simple supervised fine-tuning (SFT) on Teacher-generated Chain-of-Thought (CoT) data. However, SLMs often lack the internal "representational capacity" to mirror the teacher's logical jumps, leading to "hallucinated reasoning" where the model generates a correct format but incorrect logic. The bottleneck is not just the output, but the lack of structured intermediate latent representations that support multi-step inference.
+
+**3. Core Hypothesis**
+By aligning the SLM’s intermediate hidden states with a compressed, projection-mapped version of a Teacher model’s attention manifolds during CoT generation, the SLM can learn the *structural dependencies* of reasoning rather than just the surface-level text. This "Latent-Space Distillation" will allow a <2B parameter model to surpass the performance of a 7B model on logic-dense benchmarks.
+
+**4. Method**
+*   **Teacher Model:** Use Llama-3-70B-Instruct or GPT-4 (via API) to generate high-quality CoT traces for a reasoning dataset.
+*   **Student Model:** Initialize with Phi-3-mini (3.8B) or TinyLlama-1.1B.
+*   **Hierarchical Alignment:**
+    1.  **Trace Extraction:** Extract hidden states and attention heads from the Teacher at specific "reasoning nodes" (defined by punctuation or logical connectors like "therefore").
+    2.  **Projection Layer:** Implement a learnable linear projection layer ($W_p$) that maps the Student’s lower-dimensional hidden states ($h_s$) to the Teacher’s manifold ($h_t$).
+    3.  **Loss Function:** Define a multi-objective loss:
+        $L = L_{CE} + \alpha L_{MSE}(W_p h_s, h_t) + \beta L_{KLD}(A_s, A_t)$,
+        where $L_{CE}$ is standard cross-entropy, $L_{MSE}$ is the latent alignment loss, and $L_{KLD}$ is the Kullback–Leibler divergence between Student ($A_s$) and Teacher ($A_t$) attention maps.
+*   **Recursive Refinement:** Train in two stages: first on general knowledge, then a second pass specifically on the "failure cases" identified by the student during the first pass.
+
+**5. Dataset or Benchmark**
+*   **Reasoning:** GSM8K (Grade school math) and MATH (Harder competition math).
+*   **Code:** MBPP (Mostly Basic Python Problems).
+*   **General:** MMLU (Massive Multitask Language Understanding) to ensure no catastrophic forgetting of general knowledge.
+
+**6. Evaluation Metrics**
+*   **Pass@1 Accuracy:** Standard accuracy on reasoning tasks.
+*   **Reasoning Fidelity:** A metric measuring the overlap between the Student’s CoT steps and the Teacher’s CoT steps using BLEU/ROUGE on intermediate steps.
+*   **Efficiency Ratio:** Performance gain per million parameters compared to the baseline.
+
+**7. Baselines**
+*   **Vanilla SFT:** Training the SLM on the same CoT data without latent alignment.
+*   **TinyLlama-1.1B / Phi-3-mini:** Base models without specialized distillation.
+*   **Knowledge Distillation (KD):** Standard logit-based KD (e.g., using the DistilBERT approach applied to LLMs).
+
+**8. Ablations**
+*   **No Latent Alignment:** Removing the $L_{MSE}$ term to test if the projection layer is necessary.
+*   **No Attention Matching:** Removing the $L_{KLD}$ term to see if attention structure matters more than hidden state values.
+*   **Teacher Scaling:** Using a 7B teacher vs. a 70B teacher to measure the impact of teacher quality on latent mapping.
+
+**9. Failure Modes and Feasibility Risks**
+*   **Dimensionality Mismatch:** The gap between a 70B model’s hidden size (e.g., 8192) and an SLM’s (e.g., 2048) may be too wide for a linear projection to capture meaningful nuance, leading to "noise injection."
+*   **Overfitting to Teacher Biases:** The student may inherit the specific linguistic quirks or systematic errors of the teacher model.
+*   **Computational Cost:** Extracting and storing hidden states for billions of tokens is storage-intensive; this may require "on-the-fly" distillation, which increases training time by 2-3x.

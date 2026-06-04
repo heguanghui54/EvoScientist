@@ -1,0 +1,5 @@
+baseline,dimension,n,win,tie,lose,win_pct,tie_pct,lose_pct,gap
+K-Dense,Clarity,60,27,9,24,45.0,15.0,40.0,5.0
+K-Dense,Novelty,60,19,3,38,31.67,5.0,63.33,-31.66
+K-Dense,Feasibility,60,31,2,27,51.67,3.33,45.0,6.67
+K-Dense,Relevance,60,9,42,9,15.0,70.0,15.0,0.0

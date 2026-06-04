@@ -1,0 +1,41 @@
+### 1. Title
+Hierarchical Graph-Augmented Synthesis (HGAS): Leveraging Citation Topology for Thematic Literature Review Generation.
+
+### 2. Problem and Motivation
+Current automated literature review (LR) systems predominantly use flat Retrieval-Augmented Generation (RAG), which often results in "serial summarization"—a sequence of isolated paper summaries rather than a synthesized thematic narrative. These systems struggle with global coherence, redundant information across overlapping papers, and a failure to capture the evolution of research trajectories. Effective LRs require identifying the latent conceptual structure of a field, which is often encoded in the citation graph and semantic clusters rather than individual abstracts.
+
+### 3. Core Hypothesis
+By explicitly modeling the citation graph and performing community detection (e.g., Leiden algorithm) on the document embedding space, a hierarchical planning module can generate a more coherent and less redundant synthesis than standard top-k retrieval methods.
+
+### 4. Method
+The HGAS framework consists of four stages:
+1.  **Graph-Based Retrieval:** Given a query, retrieve a candidate set $P$ (e.g., $n=100$) using hybrid search (BM25 + Specter2 embeddings). Construct a local citation subgraph where edges represent direct citations or co-citation patterns.
+2.  **Thematic Clustering:** Apply the Leiden community detection algorithm on the subgraph to identify $k$ thematic clusters. For each cluster, extract key phrases using TextRank to define "Sub-topic Centroids."
+3.  **Hierarchical Planning:** An LLM (e.g., GPT-4o) generates a structured outline where each section corresponds to a cluster. The order is determined by a temporal-logical flow (e.g., foundational papers first, followed by specialized branches).
+4.  **Iterative Synthesis:** Generate text for each section using a "sliding window of context" where the LLM is provided with the current cluster's full text, the summary of previous sections, and a "contrastive prompt" to highlight differences between the current cluster and previous ones.
+
+### 5. Dataset or Benchmark
+*   **S2ORC (Semantic Scholar Open Research Corpus):** Specifically the "Computer Science" and "Medicine" subsets for high-density citation data.
+*   **Multi-XScience:** A large-scale dataset for multi-document summarization of scientific articles.
+*   **Delphi-Review:** A curated set of 500 human-written survey papers paired with their primary references for ground-truth comparison.
+
+### 6. Evaluation Metrics
+*   **Synthesis Score:** A custom metric calculating the ratio of multi-citation sentences to single-citation sentences.
+*   **Entity Coverage:** Recall of key technical entities (identified via SciSpacy) from the reference set.
+*   **Coherence (Entity Grid):** Using the Barzilay-Lapata entity grid model to measure local transitions.
+*   **ROUGE-L & BERTScore:** To measure overlap with human-written survey abstracts.
+
+### 7. Baselines
+*   **Naive RAG:** Standard top-k retrieval with long-context window (e.g., Claude 3.5 Sonnet).
+*   **Re-Ranker RAG:** Using a cross-encoder to re-rank the top 20 papers before generation.
+*   **SurveyAgent:** A recent agentic baseline that uses iterative searching but lacks graph-based clustering.
+
+### 8. Ablations
+*   **No-Graph:** Perform clustering based only on semantic embeddings (Cosine similarity) without citation edges.
+*   **No-Planning:** Generate the review in a single pass without the hierarchical outline.
+*   **Random Ordering:** Provide clusters to the generator in a shuffled order to test the importance of the temporal-logical flow.
+
+### 9. Failure Modes and Feasibility Risks
+*   **Graph Sparsity:** In emerging or niche fields, citation edges may be too sparse for effective community detection. *Mitigation:* Fall back to semantic similarity clustering.
+*   **Context Window Limits:** Even with long-context LLMs, feeding full-text for 50+ papers is computationally expensive. *Mitigation:* Use extractive summarization on individual papers before the synthesis stage.
+*   **Hallucination of Connections:** The model may claim Paper A builds on Paper B when they are merely contemporaneous. *Mitigation:* Explicitly prompt the model to verify citation directionality using the graph metadata.

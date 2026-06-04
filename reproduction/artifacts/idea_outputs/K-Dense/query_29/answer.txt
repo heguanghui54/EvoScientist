@@ -1,0 +1,39 @@
+### 1. Title
+**Context-Aware Preference Extrapolation (CAPE): Aligning AI Agents via Latent Value Disentanglement**
+
+### 2. Problem and Motivation
+Current value alignment techniques, such as Reinforcement Learning from Human Feedback (RLHF) and Direct Preference Optimization (DPO), treat human preferences as a monolithic signal. This leads to "specification gaming" or "reward hacking," where agents optimize for surface-level linguistic patterns rather than underlying moral principles. Furthermore, these models often fail in out-of-distribution (OOD) scenarios where universal values (e.g., "do no harm") conflict with task-specific utility (e.g., "be efficient"). There is a critical need for agents to disentangle invariant moral constraints from situational preferences to ensure robust alignment across diverse operational contexts.
+
+### 3. Core Hypothesis
+By decomposing preference signals into a latent space consisting of **Invariant Value Factors** (universal constraints) and **Contextual Utility Factors** (task-specific goals), an agent can extrapolate aligned behavior to novel environments more reliably than standard DPO-based models.
+
+### 4. Method
+1.  **Latent Factor Decomposition:** Implement a dual-head architecture on a transformer backbone (e.g., Llama-3-8B). Head A predicts the standard policy ($\pi$), while Head B (the "Value Probe") estimates a latent vector $z$ representing the moral context of the prompt.
+2.  **Contextual Preference Modeling:** Modify the DPO objective function to include a regularization term that minimizes the variance of the "Invariant Value" components across different tasks while allowing "Contextual Utility" to vary.
+3.  **Contrastive Training:** Use triplet loss on preference pairs $(x, y_w, y_l)$ where the "winning" response $y_w$ is paired with a synthetic "counter-aligned" response that satisfies the task but violates a core value (e.g., efficiency at the cost of safety).
+4.  **Inference-Time Steering:** At test time, use the latent Value Probe to detect potential alignment shifts and apply a dynamic KL-penalty to steer the policy back toward the Invariant Value subspace.
+
+### 5. Dataset or Benchmark
+*   **Primary Dataset:** *Anthropic HH-RLHF* (Helpfulness and Harmlessness).
+*   **OOD Evaluation:** *ETHICS* dataset (utilitarianism, deontology, and virtue ethics subsets) and *Moral Stories*.
+*   **Adversarial Benchmark:** *JailbreakBench* to test the robustness of the invariant value factors against prompt injection.
+
+### 6. Evaluation Metrics
+*   **Alignment Robustness Score (ARS):** Performance consistency across the ETHICS benchmark when task complexity increases.
+*   **Reward Model Win-Rate:** Using GPT-4o as a judge to compare CAPE outputs against standard DPO outputs.
+*   **Value Drift (KL Divergence):** Measuring the deviation of the latent value vector $z$ during multi-turn interactions compared to a human-validated baseline.
+
+### 7. Baselines
+*   **DPO (Direct Preference Optimization):** Standard preference fine-tuning without latent disentanglement.
+*   **KTO (Kahneman-Tversky Optimization):** A recent alignment method that models binary signals rather than paired preferences.
+*   **PPO-RLHF:** The traditional reinforcement learning pipeline using a separate reward model (e.g., Llama-2-7B-Reward).
+
+### 8. Ablations
+*   **Component Removal:** Removing the Latent Value Probe to test the necessity of the dual-head architecture.
+*   **Loss Function Variation:** Replacing the variance-minimization regularization with a standard weight decay.
+*   **Data Scarcity Test:** Training the model on only the "Helpfulness" subset of HH-RLHF to see if "Harmlessness" can be inferred via the latent space.
+
+### 9. Failure Modes and Feasibility Risks
+*   **Latent Collapse:** The Value Probe may converge to a trivial solution where it ignores contextual nuance, leading to an overly passive agent (the "sycophancy" problem).
+*   **Computational Overhead:** The dual-head architecture and contrastive training increase VRAM requirements by approximately 15–20%, potentially necessitating 4-bit quantization (QLoRA) for feasibility on consumer hardware.
+*   **Optimization Instability:** Balancing the policy loss and the latent regularization term requires precise hyperparameter tuning to avoid model divergence.

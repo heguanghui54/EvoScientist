@@ -1,0 +1,41 @@
+### 1. Title
+**Cross-Source Contradiction Resolution via Atomic Fact Entailment Graphs (AFEG)**
+
+### 2. Problem and Motivation
+Large Language Models (LLMs) often struggle with multi-source reasoning when sources contain disparate granularities, temporal inconsistencies, or direct factual contradictions. Standard Retrieval-Augmented Generation (RAG) treats retrieved documents as independent context blocks, leading to "lost-in-the-middle" effects or the uncritical adoption of the most recent (but potentially incorrect) source. There is a need for a mechanism that reconciles conflicting evidence at the atomic level before the final reasoning step.
+
+### 3. Core Hypothesis
+Explicitly modeling the semantic relationships (entailment, contradiction, and neutrality) between atomic facts extracted from multiple sources using a directed graph will improve reasoning accuracy and robustness against misinformation compared to flat context concatenation.
+
+### 4. Method
+1.  **Atomic Fact Extraction:** Use a T5-based or specialized LLM to decompose multiple retrieved documents into a set of independent atomic propositions ($P_1, P_2, ... P_n$).
+2.  **Graph Construction (AFEG):**
+    *   **Nodes:** Atomic propositions.
+    *   **Edges:** Determine relationships using a Natural Language Inference (NLI) model (e.g., DeBERTa-v3-large). An edge $E_{ij}$ exists if $P_i$ entails, contradicts, or provides a temporal update to $P_j$.
+3.  **Conflict Resolution Layer:** Apply a PageRank-inspired scoring mechanism weighted by source authority and NLI confidence scores to prune contradictory nodes.
+4.  **Reasoning Path Synthesis:** Feed the pruned, topologically sorted set of facts into a reasoning LLM (e.g., GPT-4o or Llama-3-70B) with a prompt requiring the model to cite specific node IDs from the AFEG.
+
+### 5. Dataset or Benchmark
+*   **MuSiQue-Ans:** A multi-hop QA dataset requiring integration of 2–4 documents.
+*   **StrategyQA:** For complex implicit reasoning steps.
+*   **Conflict-WikiQA (Synthetic):** A modified version of WikiQA where 20% of the retrieved context is perturbed with plausible but contradictory facts to test resolution capabilities.
+
+### 6. Evaluation Metrics
+*   **Exact Match (EM) and F1 Score:** Standard QA performance.
+*   **Conflict Resolution Rate (CRR):** Percentage of questions answered correctly when the context contains at least one explicit contradiction.
+*   **Faithfulness (NLI-based):** Measuring if the final answer is logically supported by the pruned AFEG nodes rather than hallucinations.
+
+### 7. Baselines
+*   **Standard RAG:** Top-K document concatenation with no preprocessing.
+*   **LongContext LLM:** Feeding 32k+ tokens directly (e.g., GPT-4-Turbo or Claude 3.5 Sonnet).
+*   **Self-RAG:** A framework where the model critiques its own retrieved evidence without explicit graph modeling.
+
+### 8. Ablations
+*   **No NLI:** Removing the entailment/contradiction edge detection and using simple cosine similarity.
+*   **No Fact Decomposition:** Building the graph at the paragraph level instead of the atomic proposition level.
+*   **Source Weighting Removal:** Treating all sources as having equal authority regardless of metadata.
+
+### 9. Failure Modes and Feasibility Risks
+*   **NLI Error Propagation:** If the NLI model incorrectly identifies an entailment as a contradiction, critical reasoning paths may be pruned.
+*   **Computational Overhead:** Decomposing documents into atomic facts and performing $O(N^2)$ NLI comparisons between facts significantly increases latency.
+*   **Granularity Mismatch:** Facts that are "near-duplicates" but differ in subtle phrasing may clutter the graph, requiring aggressive deduplication.

@@ -1,0 +1,44 @@
+### 1. Title
+Adaptive Layer-Skipping for Self-Speculative Decoding (ALS-SSD)
+
+### 2. Problem and Motivation
+The primary bottleneck in Large Language Model (LLM) inference is the autoregressive nature of decoding, which is memory-bandwidth bound. While speculative decoding (e.g., using a small drafter model like TinyLlama to assist Llama-3) reduces latency, it introduces the complexity of managing two distinct models and synchronization overhead. Furthermore, fixed drafting strategies do not account for the varying computational complexity of tokens (e.g., "the" vs. "Riemann"). Existing "Medusa-style" heads require significant fine-tuning and additional parameters.
+
+### 3. Core Hypothesis
+Early-layer representations in deep Transformer architectures contain sufficient semantic information to predict the final token distribution for high-probability tokens. By implementing a dynamic "exit-and-verify" mechanism within a single model—using early-layer outputs as drafts—we can achieve a 1.5x–2.0x speedup with zero degradation in output quality and minimal memory overhead.
+
+### 4. Method
+*   **Layer Exit Selection:** Identify an "exit layer" $L_e$ (typically at $1/4$ or $1/3$ of total depth $L$).
+*   **Self-Drafting:** For a given sequence, compute activations up to $L_e$. Use a lightweight, pre-trained linear projection (an "Auxiliary Exit Head") to generate a $k$-token draft sequence.
+*   **Dynamic Thresholding:** Implement an entropy-based gate. If the softmax entropy of the exit head's prediction exceeds a threshold $\tau$, the model reverts to standard decoding for that token, as the early-layer representation is deemed insufficient.
+*   **Parallel Verification:** Feed the $k$-token draft into the full $L$-layer model. Use a single forward pass with a causal mask modification to verify all $k$ tokens simultaneously, following the standard speculative decoding verification logic (Rejection Sampling).
+*   **KV-Cache Management:** Employ a dual-cache pointer system where the draft tokens occupy temporary slots in the PagedAttention blocks until verified.
+
+### 5. Dataset or Benchmark
+*   **General:** ShareGPT-v3 (conversational).
+*   **Reasoning:** GSM8K (mathematical word problems).
+*   **Code:** HumanEval (Python completion).
+*   **Long Context:** NarrativeQA (to test KV-cache pressure).
+
+### 6. Evaluation Metrics
+*   **Tokens Per Second (TPS):** Throughput measurement.
+*   **Speedup Ratio:** $\text{TPS}_{\text{ALS-SSD}} / \text{TPS}_{\text{Autoregressive}}$.
+*   **Acceptance Rate ($\alpha$):** The average number of tokens accepted per speculative draft.
+*   **Perplexity Parity:** Ensure the output distribution remains mathematically identical to the base model.
+*   **Time-to-First-Token (TTFT):** Ensure the exit head does not significantly delay the initial response.
+
+### 7. Baselines
+*   **Standard Autoregressive Decoding:** Vanilla Llama-3-8B/70B.
+*   **vLLM (PagedAttention):** Current industry standard for high-throughput inference.
+*   **Medusa:** Multiple-head speculative decoding (requires fine-tuning).
+*   **Lookahead Decoding:** Jacobi-iteration-based parallel decoding without a draft model.
+
+### 8. Ablations
+*   **Exit Layer Depth:** Test $L_e$ at $L/8, L/4, L/2$ to find the optimal trade-off between draft accuracy and compute savings.
+*   **Threshold $\tau$ Sensitivity:** Vary the entropy threshold to measure the impact of "conservative" vs. "aggressive" drafting.
+*   **Exit Head Complexity:** Compare a simple Linear head vs. a 2-layer MLP head.
+
+### 9. Failure Modes and Feasibility Risks
+*   **Low Acceptance Rate in Complex Reasoning:** In tasks like GSM8K, early layers may fail to predict complex logical steps, causing the acceptance rate to drop to zero and introducing the overhead of the exit head without gain.
+*   **Memory Bandwidth of Exit Head:** If the auxiliary head is too large, the time taken to compute the draft might outweigh the time saved by skipping layers.
+*   **KV-Cache Fragmentation:** Frequent "rejection" of draft tokens may lead to fragmentation in PagedAttention, requiring more aggressive garbage collection.

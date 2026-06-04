@@ -1,0 +1,36 @@
+**1. Title**
+STAR-Eval: Semantic Trace Alignment and Repository-level Reasoning for Code LLM Evaluation.
+
+**2. Problem and Motivation**
+Current benchmarks like HumanEval and MBPP primarily evaluate code LLMs on isolated, competitive-programming-style functions. These benchmarks suffer from two critical flaws: (1) **Data Leakage:** High overlap between training corpora and benchmark solutions leads to inflated performance. (2) **Contextual Atomicity:** They fail to measure a model’s ability to navigate multi-file dependencies, adhere to specific API versioning, or optimize for runtime resource constraints. There is a need for an evaluation framework that moves beyond `pass@k` on snippets toward repository-scale integration and execution-trace fidelity.
+
+**3. Core Hypothesis**
+Evaluating the alignment between a model’s generated execution traces (intermediate variable states and call stacks) and ground-truth traces provides a more granular and leak-resistant metric of code logic than final unit test pass rates alone. Furthermore, repository-level context retrieval is the primary bottleneck for code generation quality in production-scale tasks.
+
+**4. Method**
+*   **Trace Instrumentation:** Instrument a set of Python and Java repositories using `sys.settrace` or `ASM` to capture the "Ground Truth Execution Trace" (GTET) for specific feature implementations.
+*   **Multi-File Context Injection:** Construct prompts using a "Dependency-Aware Retrieval" mechanism that provides the model with relevant AST (Abstract Syntax Tree) nodes from neighboring files rather than raw text.
+*   **The STAR Metric:** Define a similarity score between the model’s generated execution trace and the GTET. This penalizes "hallucinated logic" where a model passes a test through hard-coded values or side effects rather than correct algorithmic flow.
+*   **Environment Virtualization:** Use Dockerized environments to execute the generated code against a suite of integration tests that measure memory overhead and latency.
+
+**5. Dataset or Benchmark**
+*   **Source:** A curated subset of **SWE-bench** (Software Engineering Benchmark) filtered for recent (post-2024) GitHub commits to mitigate leakage.
+*   **Composition:** 500 tasks spanning 10 diverse libraries (e.g., `pandas`, `django`, `transformers`). Each task includes a natural language issue description, the repository state at the time of the issue, and a "Golden Trace" of the fix.
+
+**6. Evaluation Metrics**
+*   **Trace-Pass@k (TP@k):** The probability that at least one of $k$ samples matches the ground-truth execution logic within a defined Jaccard similarity threshold.
+*   **Dependency Coverage (DC):** The ratio of correctly utilized cross-file class/method references.
+*   **Execution Efficiency Score (EES):** A normalized ratio of the generated code’s CPU/Memory usage vs. the ground-truth implementation.
+
+**7. Baselines**
+*   **Models:** GPT-4o, Claude 3.5 Sonnet, StarCoder2-15B, and CodeLlama-70B.
+*   **Evaluation Baselines:** Standard `pass@k` on HumanEval and the original SWE-bench "Resolved" rate.
+
+**8. Ablations**
+*   **Context Depth:** Compare performance with (a) no context, (b) single-file context, and (c) full-repo AST-indexed context.
+*   **Trace Granularity:** Evaluate the STAR metric sensitivity by varying trace depth (e.g., tracking only function calls vs. tracking every local variable assignment).
+
+**9. Failure Modes and Feasibility Risks**
+*   **Non-Determinism:** Multi-threaded code or code relying on system time may produce divergent traces despite identical logic. *Mitigation:* Focus on deterministic functional paths for initial trace-matching.
+*   **Compute Intensity:** Running full-repo tests for every LLM generation is computationally expensive. *Mitigation:* Use checkpointed Docker containers and prioritize sub-module testing.
+*   **Trace Complexity:** Overly verbose traces might lead to high false-negative rates. *Mitigation:* Apply semantic abstraction to traces, focusing on state transitions of primary data structures.

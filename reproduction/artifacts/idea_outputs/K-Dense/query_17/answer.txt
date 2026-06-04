@@ -1,0 +1,39 @@
+**1. Title**
+Schema-Constrained Contrastive Decoding for Document-Level N-ary Relation Extraction.
+
+**2. Problem and Motivation**
+Current Information Extraction (IE) systems, particularly those based on large language models (LLMs), struggle with document-level n-ary relation extraction where an event’s arguments (e.g., Subject, Object, Time, Location, Instrument) are dispersed across non-contiguous sentences. Standard autoregressive generation often suffers from "schema drift," where the model hallucinates attributes or fails to adhere to the predefined ontology. There is a need for a mechanism that enforces structural constraints during the decoding phase rather than relying on post-hoc filtering.
+
+**3. Core Hypothesis**
+Integrating a formal schema into the inference process through constrained beam search and contrastive reranking—where candidate extractions are scored against ontological validity—will significantly improve F1-scores for n-ary relations compared to unconstrained end-to-end generation.
+
+**4. Method**
+The proposed system, **Schema-IE**, utilizes a three-stage pipeline:
+*   **Stage 1: Contextual Entity Linking (CEL):** A dense retriever (e.g., Contriever) identifies all mentions and links them to a target knowledge base.
+*   **Stage 2: Candidate Proposal:** An LLM (e.g., Llama-3-70B) generates multiple candidate n-ary tuples using Chain-of-Thought (CoT) prompting to trace evidence across sentences.
+*   **Stage 3: Schema-Constrained Reranking:** A discriminative model (DeBERTa-v3) evaluates candidates based on two factors: (a) *Ontological Consistency* (do the argument types match the predicate requirements?) and (b) *Contextual Grounding* (can each argument be mapped back to a specific span in the document?). The final output is the highest-scoring tuple that satisfies the schema.
+
+**5. Dataset or Benchmark**
+*   **RAMS (Roles and Arguments in Multi-Sentence events):** Focuses on event argument extraction across sentence boundaries.
+*   **DocRED:** A large-scale document-level relation extraction dataset.
+*   **SciERC:** For domain-specific (scientific) entity and relation extraction.
+
+**6. Evaluation Metrics**
+*   **Strict F1-score:** Requires exact match of the relation type and all participating entity spans.
+*   **Partial F1 (Relaxed):** Scores based on the overlap of correctly identified arguments within an n-ary relation.
+*   **Schema Violation Rate (SVR):** Percentage of outputs that do not conform to the predefined ontology.
+
+**7. Baselines**
+*   **DyGIE++:** A framework for entity, relation, and event extraction using graph propagation.
+*   **PURE (Entity-level Relation Extraction):** A pipeline-based approach using independent encoders.
+*   **GPT-4 (Zero-shot/Few-shot):** Standard prompting without constrained decoding or specialized reranking.
+
+**8. Ablations**
+*   **No Reranker:** Evaluating Stage 2 output directly to measure the impact of the discriminative filter.
+*   **No CoT:** Testing the importance of intermediate reasoning steps in the proposal stage.
+*   **Fixed vs. Dynamic Schema:** Comparing performance when the model is given the full ontology versus a relevant subset per document.
+
+**9. Failure Modes and Feasibility Risks**
+*   **Computational Latency:** Multi-stage reranking and large-scale beam search significantly increase inference time compared to single-pass extraction.
+*   **Long-Range Dependency Limits:** If the evidence for an n-ary relation exceeds the model’s effective context window (e.g., >8k tokens in dense documents), the proposal stage will fail.
+*   **Schema Rigidity:** The system may struggle with "emergent" relations that are present in the text but not explicitly defined in the provided ontology.

@@ -1,0 +1,38 @@
+**1. Title**
+Cross-Lingual Adapter Tuning on Discrete Phonetic Units for Ultra-Low-Resource ASR.
+
+**2. Problem and Motivation**
+Fine-tuning massive self-supervised learning (SSL) models like XLS-R or Wav2Vec 2.0 on extremely low-resource languages (e.g., <5 hours of audio) typically leads to catastrophic forgetting of the pre-trained acoustic manifold or severe overfitting. Standard fine-tuning updates millions of parameters, which is unstable with sparse gradients. There is a need for a parameter-efficient approach that leverages discrete acoustic representations to bridge the gap between continuous audio and text in data-starved scenarios.
+
+**3. Core Hypothesis**
+Integrating bottleneck adapters into a frozen multilingual SSL backbone, while utilizing discrete k-means units as intermediate targets, will yield lower Word Error Rates (WER) than standard full-parameter fine-tuning by constraining the search space and preserving pre-trained phonetic priors.
+
+**4. Method**
+*   **Backbone:** Use a frozen XLS-R (300M or 1B parameter) model as the feature extractor.
+*   **Discretization:** Apply a k-means quantizer (trained on the 6th or 9th layer of the SSL model) to convert continuous latent representations into a sequence of discrete "pseudo-units."
+*   **Adapter Modules:** Insert lightweight residual bottleneck adapters (rank $r=64$ or $128$) between the Transformer blocks of the encoder. Only the adapters and the final Connectionist Temporal Classification (CTC) projection layer are trainable.
+*   **Joint Objective:** Train using a hybrid CTC/Attention loss where the encoder is conditioned on discrete units to stabilize the alignment process before mapping to the target character/phoneme set.
+
+**5. Dataset or Benchmark**
+*   **Common Voice (v11.0):** Focus on languages with <10 hours of validated data (e.g., Swahili, Kyrgyz, Tatar, or Guarani).
+*   **BABEL Development Sets:** Specifically the 1-hour and 10-hour training subsets for low-resource African and Asian languages (e.g., Zulu, Lao).
+
+**6. Evaluation Metrics**
+*   **Word Error Rate (WER):** Primary metric for transcription accuracy.
+*   **Character Error Rate (CER):** To assess performance on morphologically rich or agglutinative languages.
+*   **Parameter Efficiency:** Ratio of trainable parameters to total model size.
+
+**7. Baselines**
+*   **Full Fine-Tuning:** Standard XLS-R fine-tuning on the target language.
+*   **Wav2Vec 2.0 + CTC:** The original Facebook AI Research (FAIR) implementation for low-resource settings.
+*   **ESPnet-Transformer:** A standard E2E Transformer trained from scratch (to demonstrate the necessity of SSL).
+
+**8. Ablations**
+*   **Frozen vs. Trainable Backbone:** Testing the impact of freezing the SSL layers.
+*   **Discrete vs. Continuous:** Comparing performance when using k-means units as an intermediate step versus direct audio-to-text mapping.
+*   **Adapter Position:** Inserting adapters only in the upper layers versus all layers.
+
+**9. Failure Modes and Feasibility Risks**
+*   **Unit Mismatch:** Discrete units derived from a multilingual model may fail to capture unique phonemes in outlier languages (e.g., clicks or specific tonal variations).
+*   **Capacity Bottleneck:** If the adapter rank is too low, the model may lack the expressivity to learn the mapping from pseudo-units to the target orthography.
+*   **Computational Cost:** While parameter-efficient, the inference still requires a full pass through the large frozen backbone, which may be slow on consumer-grade hardware.

@@ -9,24 +9,7 @@ paper-level completion audit can pass.
 
 ## Actions
 
-### 1. table1_llm_idea_generation / baseline_output_import_or_generation
-
-Required evidence: 30 answer.txt files under reproduction/artifacts/idea_outputs/K-Dense/
-
-System: K-Dense
-Probe: reproduction/k_dense_baseline_probe.json
-Note: Current probe found K-Dense has a BYOK local Web/API adapter through ADK `/run_sse`, but it needs a pinned Python 3.13/OpenRouter/Gemini CLI setup and is not paper-exact raw Table 1 evidence.
-
-Commands:
-
-```bash
-git clone https://github.com/K-Dense-AI/k-dense-byok $HOME/research/k-dense-byok && cd $HOME/research/k-dense-byok && git checkout 593c49b8e79c704c5979ec81c49f1791b5114083
-./start.sh
-# In a separate adapter process: create one ADK session per query, POST each query to /run_sse, and save final assistant text as outputs/evoscientist_table1_queries/k_dense/query_XX.md
-.venv/bin/python reproduction/import_baseline_outputs.py --system-name K-Dense --source $HOME/research/k-dense-byok/outputs/evoscientist_table1_queries/k_dense --source-format directory --output-root reproduction/artifacts/idea_outputs --strict
-```
-
-### 2. table1_llm_idea_generation / paper_judge_completion
+### 1. table1_llm_idea_generation / paper_judge_completion
 
 Required evidence: 420 swapped pairwise records plus Gemini-3-flash judge outputs
 
@@ -40,7 +23,7 @@ Commands:
 .venv/bin/python reproduction/compare_reproduction_to_paper.py --actual-json reproduction/artifacts/tables/idea_generation_win_tie_lose.json --section table1_llm_idea_generation --require-all
 ```
 
-### 3. table2_human_idea_generation / human_label_import
+### 2. table2_human_idea_generation / human_label_import
 
 Required evidence: inputs.jsonl, labels.jsonl, and aggregate.json for three PhD-level annotators
 

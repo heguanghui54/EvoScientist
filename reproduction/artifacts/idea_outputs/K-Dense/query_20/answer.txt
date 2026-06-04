@@ -1,0 +1,41 @@
+**1. Title**
+Spectral Entropy of Latent Embeddings (SELE): Quantifying Semantic Diversity via Singular Value Decay
+
+**2. Problem and Motivation**
+Current diversity metrics for text generation primarily fall into two categories: lexical (e.g., Distinct-n, Self-BLEU) and distributional (e.g., MAUVE). Lexical metrics fail to account for semantic synonymy (e.g., "the car is fast" vs. "the vehicle is rapid"), while distributional metrics require large reference sets and do not isolate the internal variety of a specific generated batch. There is a need for a reference-free, semantic-aware metric that captures the "effective dimensionality" of generated text to distinguish between true creative variety and repetitive paraphrasing.
+
+**3. Core Hypothesis**
+The semantic diversity of a set of generated sequences can be accurately modeled by the spectral entropy of their latent representations. Specifically, the rate of decay of singular values in a sentence-embedding matrix reflects the number of independent semantic axes explored by the model; a slower decay (higher entropy) correlates more strongly with human-perceived diversity than n-gram-based metrics.
+
+**4. Method**
+1. **Sampling:** For a given prompt, generate $N$ independent sequences ($N \ge 100$) using stochastic decoding (e.g., Nucleus sampling).
+2. **Embedding:** Map each sequence into a high-dimensional vector space using a contrastively trained encoder (e.g., `sup-simcse-roberta-large`) to ensure semantic clustering.
+3. **Decomposition:** Construct an $N \times D$ matrix $M$ of embeddings. Perform Singular Value Decomposition (SVD) to obtain the singular values $\sigma_1, \sigma_2, \dots, \sigma_k$.
+4. **Entropy Calculation:** Normalize the singular values such that $\lambda_i = \sigma_i^2 / \sum \sigma_j^2$. Calculate the Von Neumann Entropy: $H_{SELE} = -\sum \lambda_i \ln \lambda_i$.
+5. **Normalization:** Divide by $\ln(\min(N, D))$ to bound the metric between 0 and 1.
+
+**5. Dataset or Benchmark**
+*   **WritingPrompts:** To evaluate open-ended, creative diversity.
+*   **MS-COCO Captions:** To evaluate constrained diversity in image description.
+*   **Human Annotated Diversity (HAD) Corpus:** Use existing human rankings of "diversity" and "redundancy" to validate the metric's alignment with human intuition.
+
+**6. Evaluation Metrics**
+*   **Spearman’s Rank Correlation ($\rho$):** Correlation between SELE scores and human diversity rankings.
+*   **Sensitivity to Repetition:** Measure the metric’s drop when $k\%$ of the generated set is replaced with semantically similar paraphrases.
+*   **Length Invariance:** Correlation between the metric and sequence length (lower is better, indicating the metric is not biased by verbosity).
+
+**7. Baselines**
+*   **Distinct-n (n=1, 2, 3):** Proportion of unique n-grams.
+*   **Self-BLEU:** BLEU score calculated by treating one generated sentence as a hypothesis and the rest as references.
+*   **V-Self-BLEU:** A variation of Self-BLEU using BERTScore or cosine similarity instead of n-gram overlap.
+*   **Expected Pairwise Distance (EPD):** Average cosine distance between all pairs in the generated set.
+
+**8. Ablations**
+*   **Encoder Choice:** Compare SELE performance using SimCSE, RoBERTa-base, and GPT-2 (last hidden state).
+*   **Pooling Strategy:** Compare CLS-token pooling vs. mean-pooling vs. max-pooling.
+*   **Sample Size ($N$):** Test the stability of SELE as $N$ varies from 10 to 500.
+
+**9. Failure Modes and Feasibility Risks**
+*   **Anisotropy (The "Cone Effect"):** LLM embeddings often occupy a narrow cone in the latent space, which may result in artificially low entropy. This can be mitigated by centering the embedding matrix (subtracting the mean) before SVD.
+*   **Semantic Drift:** High spectral entropy could be triggered by incoherent or nonsensical generations that occupy distant points in the embedding space, potentially conflating "diversity" with "unintelligibility."
+*   **Computational Cost:** SVD for large $N$ and high-dimensional embeddings ($D=1024$) may be slow for real-time evaluation but is feasible for offline benchmarking.

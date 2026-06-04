@@ -1,0 +1,42 @@
+**1. Title**
+Contrastive Latent Alignment for Morphological Gender Consistency in Machine Translation (CLA-MT).
+
+**2. Problem and Motivation**
+Neural Machine Translation (NMT) models frequently inherit and amplify sociodemographic biases present in training corpora, such as associating specific occupations with binary genders (e.g., "doctor" as masculine). Current debiasing methods, like Counterfactual Data Augmentation (CDA), often treat tokens in isolation. This fails in morphologically rich languages (e.g., Spanish, Arabic) where gender agreement must propagate across adjectives, determiners, and verbs. Furthermore, aggressive debiasing often leads to "catastrophic forgetting" of general translation quality, reducing BLEU scores.
+
+**3. Core Hypothesis**
+A multi-task objective that combines standard cross-entropy loss with a contrastive loss—minimizing the distance between the latent representations of original and gender-swapped counterfactual sentence pairs—will improve gender translation accuracy on professional terms while maintaining parity in general translation quality.
+
+**4. Method**
+*   **Data Preparation:** Use a rule-based approach to generate a counterfactual corpus ($D_{cf}$) from a subset of the training data ($D_{orig}$) by swapping gendered terms and applying morphological re-inflection using tools like Spacy or Trankit.
+*   **Dual-Objective Training:** Train a Transformer-based NMT model using a combined loss function: $L = L_{NMT} + \lambda L_{CL}$.
+    *   $L_{NMT}$: Standard label-smoothed cross-entropy on $D_{orig} \cup D_{cf}$.
+    *   $L_{CL}$ (Contrastive Loss): For a pair $(s, s_{cf})$, minimize the cosine distance between the encoder’s mean-pooled hidden states $H_s$ and $H_{s_{cf}}$. This forces the encoder to learn gender-invariant semantic representations for the underlying concepts.
+*   **Inference:** Standard beam search decoding; no additional computational overhead at runtime.
+
+**5. Dataset or Benchmark**
+*   **Training:** WMT14 English-Spanish (En-Es) and English-French (En-Fr) to test morphological agreement.
+*   **Evaluation:**
+    *   **WinoMT:** A professional-occupation challenge set for gender bias.
+    *   **MuST-SHE:** A benchmark for gender translation in speech-to-text/text-to-text contexts.
+    *   **General Quality:** FLORES-201 or WMT test sets.
+
+**6. Evaluation Metrics**
+*   **Primary Bias Metric:** Accuracy on WinoMT (specifically the "Pro-stereotypical" vs. "Anti-stereotypical" gap).
+*   **Translation Quality:** BLEU, chrF, and COMET scores.
+*   **Consistency Metric:** Gender Parity Score (GPS), measuring how often the model produces the same translation quality regardless of the input gender.
+
+**7. Baselines**
+*   **Vanilla Transformer-Base:** Standard training on WMT without debiasing.
+*   **CDA-Only:** Fine-tuning the Vanilla model on the counterfactual dataset without the contrastive loss.
+*   **Null Space Projection (INLP):** A post-hoc debiasing method that removes gender information from the latent space by projecting it onto the null space of a gender classifier.
+
+**8. Ablations**
+*   **Effect of $\lambda$:** Vary the weight of the contrastive loss (0.1, 0.5, 1.0) to find the Pareto frontier between debiasing and BLEU.
+*   **Encoder vs. Decoder Alignment:** Apply $L_{CL}$ only to the encoder, only to the decoder, or both.
+*   **Re-inflection Quality:** Compare results using simple word-swapping vs. full morphological re-inflection to quantify the impact of grammatical consistency in $D_{cf}$.
+
+**9. Failure Modes and Feasibility Risks**
+*   **Morphological Noise:** Rule-based re-inflection may introduce grammatical errors in the counterfactual set, potentially teaching the model incorrect syntax.
+*   **Semantic Drift:** Forcing $H_s$ and $H_{s_{cf}}$ to be too close may prevent the model from distinguishing gender when it is contextually relevant (e.g., translating a biography).
+*   **Resource Constraints:** Contrastive learning on large-scale NMT requires significantly more VRAM due to the need to process pairs of sentences simultaneously. Mitigation: Use a smaller, targeted subset for the contrastive objective.

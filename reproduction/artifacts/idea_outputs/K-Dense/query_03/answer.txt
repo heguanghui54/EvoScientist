@@ -1,0 +1,42 @@
+**1. Title**
+Meta-Evaluative Deliberation: Reducing LLM-as-a-Judge Bias via Attribution-Anchored Multi-Agent Consensus.
+
+**2. Problem and Motivation**
+Current automated evaluation frameworks (e.g., LLM-as-a-judge) exhibit significant systematic biases, including position bias (preferring the first presented candidate), verbosity bias (preferring longer outputs regardless of quality), and self-preference bias. Furthermore, evaluators often suffer from "hallucinated grading," where the judge rewards factually incorrect responses that appear stylistically confident. As LLMs are increasingly used to train reward models (RLHF), inaccuracies in evaluation lead to reward hacking and model degradation.
+
+**3. Core Hypothesis**
+Decomposing the evaluation process into an "Atomic Fact Verification" phase followed by a "Multi-Agent Deliberation" phase will increase the Spearman correlation with human expert judgments by at least 15% compared to single-pass zero-shot prompting (e.g., GPT-4 Turbo). Specifically, anchoring the final score to verified claims mitigates verbosity bias.
+
+**4. Method**
+*   **Step 1: Atomic Claim Extraction:** Use a fine-tuned Llama-3-70B to decompose the candidate response into a list of checkable atomic claims.
+*   **Step 2: External/Reference Grounding:** Verify each claim against the provided reference context or a retrieved knowledge snippet using a Natural Language Inference (NLI) model (e.g., DeBERTa-v3-large).
+*   **Step 3: Multi-Agent Debate (MAD):** Deploy three specialized agent roles:
+    *   *The Fact-Checker:* Penalizes hallucinations based on Step 2.
+    *   *The Stylist:* Evaluates coherence, tone, and formatting.
+    *   *The Moderator:* Synthesizes the two perspectives into a final Likert scale (1-5) or pairwise ranking.
+*   **Step 4: Self-Reflective Calibration:** The moderator must provide a "confidence score" based on the internal consistency of the debate. If confidence is low, the system triggers a second round of deliberation with shuffled input order to neutralize position bias.
+
+**5. Dataset or Benchmark**
+*   **AlpacaEval 2.0:** For testing head-to-head win rates against a reference model.
+*   **MT-Bench:** For multi-turn conversation evaluation.
+*   **RewardBench:** To specifically evaluate the judge's ability to distinguish between subtle reasoning errors and correct logic.
+
+**6. Evaluation Metrics**
+*   **Spearman’s $\rho$ and Kendall’s $\tau$:** Correlation between the automated scores and human-annotated ground truth.
+*   **Systematic Bias Coefficients:** Measuring the variance in scores when input order is swapped (Position Bias) or when filler text is added (Verbosity Bias).
+*   **Human Agreement Rate:** Percentage of ties broken by the system that match human expert preferences.
+
+**7. Baselines**
+*   **GPT-4 (Zero-shot):** The standard "LLM-as-a-judge" configuration.
+*   **G-Eval:** A Chain-of-Thought (CoT) based evaluation framework.
+*   **Prometheus-2:** An open-source evaluator model trained specifically for feedback generation.
+
+**8. Ablations**
+*   **-Attribution:** Removing the NLI-based fact-checking step to measure the impact of grounding.
+*   **-Multi-Agent:** Running the same prompt through a single agent to measure the impact of deliberation.
+*   **-Shuffle:** Removing the position-swapping step to quantify the baseline position bias of the moderator.
+
+**9. Failure Modes and Feasibility Risks**
+*   **Inference Latency:** The multi-agent and multi-step process significantly increases the token cost and wall-clock time per evaluation.
+*   **Consensus Collapse:** In complex reasoning tasks, agents may converge on a "majority-incorrect" opinion if the underlying base models share the same training data biases.
+*   **NLI Sensitivity:** If the Atomic Claim Extraction is too granular, the NLI model may produce excessive false negatives, leading to overly harsh grading.

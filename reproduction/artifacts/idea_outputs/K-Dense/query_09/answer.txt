@@ -1,0 +1,40 @@
+### 1. Title
+**Hessian-Guided Channel-Wise Scaling (HGC-Scale): Optimizing 3-bit Integer Quantization for Edge NPU Deployment**
+
+### 2. Problem and Motivation
+LLM deployment on edge devices (e.g., mobile SoCs, IoT gateways) is constrained by limited VRAM and the lack of high-throughput floating-point units. While 4-bit Post-Training Quantization (PTQ) is becoming standard, moving to 3-bit or lower often results in a "perplexity cliff" where model utility collapses. This collapse is primarily driven by high-magnitude activation outliers that dominate the quantization scale, crushing the precision of the remaining weights. Existing methods like AWQ or SmoothQuant often rely on per-token scaling or floating-point operations that are inefficient on integer-only Edge Neural Processing Units (NPUs).
+
+### 3. Core Hypothesis
+By utilizing a second-order (Hessian-based) sensitivity analysis during a calibration phase, we can identify "salient" weight channels that contribute most to the loss gradient. Applying a static, channel-wise integer scaling factor to these specific channels—rather than uniform scaling—will preserve model accuracy at 3-bit precision while maintaining compatibility with fixed-point NPU arithmetic.
+
+### 4. Method
+1.  **Sensitivity Mapping:** Calculate the diagonal of the Hessian matrix for each layer using a small calibration set (e.g., 128 samples from C4) to identify weights with high impact on the output manifold.
+2.  **Channel-Wise Re-scaling:** For each weight matrix $W$, introduce a scaling vector $s$ such that $\hat{W} = W \cdot diag(s)$. The values in $s$ are optimized to minimize the reconstruction error $\min ||XW - X\hat{W}||_2$, weighted by the Hessian importance.
+3.  **Integer Mapping:** Constrain scaling factors to power-of-two values to allow for bit-shifting operations on edge hardware, avoiding floating-point division during inference.
+4.  **Weight Clipping:** Implement an outlier-aware clipping strategy that truncates the top 0.1% of weights based on the Hessian-weighted distribution to maximize the dynamic range of the 3-bit grid.
+
+### 5. Dataset or Benchmark
+*   **Calibration:** 128 segments (2048 sequence length) from the **C4 (Colossal Clean Crawled Corpus)** dataset.
+*   **Evaluation:**
+    *   **Language Modeling:** WikiText-2 and PTB (Perplexity).
+    *   **Zero-Shot Tasks:** MMLU (Massive Multitask Language Understanding), HellaSwag, and ARC-Challenge.
+
+### 6. Evaluation Metrics
+*   **Accuracy:** Zero-shot task accuracy (%) and Perplexity (PPL).
+*   **Efficiency:** Peak Memory Usage (MB), Latency (ms/token) on a target edge device (e.g., Qualcomm Snapdragon 8 Gen 2 or Raspberry Pi 5).
+*   **Compression Ratio:** Model size reduction relative to FP16.
+
+### 7. Baselines
+*   **RTN (Round-to-Nearest):** Standard naive quantization.
+*   **GPTQ (Generative Pre-trained Transformer Quantization):** One-shot weight quantization based on approximate second-order information.
+*   **AWQ (Activation-aware Weight Quantization):** Protecting salient weights by observing activation magnitudes.
+
+### 8. Ablations
+*   **Hessian vs. Magnitude:** Compare Hessian-based importance against simple absolute-magnitude-based importance.
+*   **Scaling Granularity:** Compare per-tensor scaling, per-channel scaling, and per-group scaling (e.g., group size 64).
+*   **Bit-Width:** Test the method across 2-bit, 3-bit, and 4-bit regimes to find the Pareto optimal point.
+
+### 9. Failure Modes and Feasibility Risks
+*   **Hardware Kernel Support:** Most edge NPUs are optimized for 4-bit or 8-bit. 3-bit quantization requires custom SIMD kernels or "bit-packing" which may introduce overhead that offsets the memory gains.
+*   **Calibration Overfitting:** The Hessian-based scaling factors may overfit to the calibration dataset (C4), leading to poor generalization on niche domains (e.g., medical or legal text).
+*   **Computational Cost:** Calculating the Hessian diagonal is more compute-intensive than simple PTQ, potentially making the calibration phase slow for 70B+ parameter models.

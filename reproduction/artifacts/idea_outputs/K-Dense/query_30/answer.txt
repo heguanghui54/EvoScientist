@@ -1,0 +1,41 @@
+**Title:** Latent-Interleaved Audio Transformers (LIAT): Enhancing Temporal Grounding in General-Purpose Audio Foundation Models
+
+**Problem and Motivation:**
+Current audio foundation models (e.g., AudioLM, AudioLDM2) often struggle with fine-grained temporal-semantic alignment. While they can generate audio from global captions or perform Automatic Speech Recognition (ASR), they fail at "audio-centric reasoning"—tasks requiring the model to pinpoint exactly when an event occurs or to modify specific acoustic events within a complex soundscape without affecting the global context. This is due to the semantic gap between high-level text embeddings and low-level discrete acoustic tokens (e.g., EnCodec, DAC).
+
+**Core Hypothesis:**
+Interleaving discrete semantic tokens (derived from a frozen ASR/audio-tagging backbone) with residual vector-quantized (RVQ) acoustic tokens in a single decoder-only transformer will enable the model to learn superior temporal boundaries, leading to better zero-shot performance in audio editing and temporally-constrained captioning compared to hierarchical or late-fusion architectures.
+
+**Method:**
+1.  **Tokenization:** Convert raw audio into discrete tokens using a high-fidelity codec like Descript Audio Codec (DAC) at 44.1kHz. Simultaneously, extract semantic features using a frozen PANNs or Audio Spectrogram Transformer (AST) and discretize them via a small codebook.
+2.  **Architecture:** Utilize a multi-scale Transformer (decoder-only) that accepts an interleaved sequence: `[Text Prompt] [Semantic Token_t1] [Acoustic Tokens_t1...tn] [Semantic Token_t2]...`.
+3.  **Training Phase 1 (Pre-training):** Masked Audio Modeling (MAM) and Next-Token Prediction on 500k hours of unlabeled audio to learn acoustic grammar.
+4.  **Training Phase 2 (Instruction Tuning):** Fine-tune on "Audio-Reasoning" tasks where the model must answer questions about timing (e.g., "At what second does the glass break?") or perform "In-filling" (e.g., "Replace the dog bark at 2.5s with a car horn").
+
+**Dataset or Benchmark:**
+*   **Training:** AudioSet (2M clips), VGGSound, and LibriLight.
+*   **Evaluation:**
+    *   **AudioCaps/Clotho:** For standard captioning and retrieval.
+    *   **Audio-Text Bench (ATB):** To measure temporal grounding accuracy.
+    *   **WavCaps:** For diverse sound event descriptions.
+
+**Evaluation Metrics:**
+*   **FAD (Fréchet Audio Distance):** To measure generative quality.
+*   **Temporal IoU (Intersection over Union):** To evaluate the accuracy of time-stamp predictions in audio-to-text tasks.
+*   **CLAP Score:** To measure semantic alignment between text prompts and generated audio.
+*   **FD (Fréchet Distance):** Specifically for rhythmic and temporal consistency.
+
+**Baselines:**
+*   **AudioLM:** For hierarchical acoustic modeling.
+*   **AudioLDM2:** For latent diffusion-based audio generation.
+*   **LTU (Listen, Think, and Understand):** For LLM-based audio reasoning.
+
+**Ablations:**
+1.  **Tokenization Strategy:** Compare interleaved semantic-acoustic tokens vs. purely acoustic tokens with text-prefixing.
+2.  **Codebook Size:** Test the impact of semantic codebook granularity (e.g., 128 vs. 1024 tokens) on reasoning vs. generation quality.
+3.  **Positional Encodings:** Compare standard Rotary Positional Embeddings (RoPE) against Alibi for long-form audio context.
+
+**Failure Modes and Feasibility Risks:**
+1.  **Sequence Length:** Interleaving tokens significantly increases sequence length, potentially hitting the quadratic scaling limit of Transformers. *Mitigation:* Use FlashAttention-2 or Linear Attention kernels.
+2.  **Codebook Collapse:** The semantic tokens might become redundant if the acoustic tokens capture all variance. *Mitigation:* Apply commitment loss and codebook re-initialization during the first 10k steps.
+3.  **Data Sparsity:** High-quality audio-text pairs with precise timestamps are rare. *Mitigation:* Use automated pipeline (Whisper + AudioSet tagging) to synthetically generate temporal labels for pre-training.

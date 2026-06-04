@@ -1,0 +1,39 @@
+### 1. Title
+**Selective Semantic Anchoring (SSA): Mitigating False Positives in AIGC Detection via Syntactic Complexity and Factual Consistency Analysis.**
+
+### 2. Problem and Motivation
+Current AI-generated content (AIGC) detectors—whether zero-shot (e.g., DetectGPT) or supervised (e.g., RoBERTa-based)—suffer from high False Positive Rates (FPR) on specific human-authored subsets. Specifically, non-native (L2) English writing, technical documentation, and legal texts are frequently misclassified as AI-generated because they exhibit low perplexity and high structural regularity. This "L2 bias" undermines the reliability of detectors in academic and professional settings.
+
+### 3. Core Hypothesis
+Human-authored "low-entropy" text (e.g., technical or L2 writing) can be distinguished from LLM-generated text by analyzing two features: (1) **Syntactic Burstiness** (variance in sentence structure/length) and (2) **Factual Grounding Density** (the ratio of verifiable entities to transitional filler). LLMs tend to maintain a uniform "smoothness" even in technical domains, whereas humans exhibit higher structural variance.
+
+### 4. Method
+The proposed system, **SSA-Detector**, utilizes a dual-stream architecture:
+1.  **Probabilistic Stream:** Calculates the log-likelihood curvature (similar to DetectGPT) to establish a baseline probability of machine origin.
+2.  **Structural Stream:** Computes a "Burstiness Score" based on the Coefficient of Variation (CV) of sentence lengths and POS-tag n-gram entropy.
+3.  **Semantic Anchoring Module:** Uses a lightweight Entity Linker (e.g., spaCy or REL) to measure the density of specific factual claims. It then applies a **Refinement Layer** (a Random Forest classifier) that weighs the Probabilistic Stream against the Structural Stream. If a text has low perplexity but high syntactic burstiness, the Refinement Layer overrides the "AI" label to "Human."
+
+### 5. Dataset or Benchmark
+*   **RAID Benchmark:** Use the "Real-world AI Detection" dataset which includes diverse domains.
+*   **L2-Human Dataset:** A curated subset of the TOEFL11 dataset (human-written essays by non-native speakers).
+*   **Technical Subset:** ArXiv abstracts and PubMed summaries (human-authored) vs. GPT-4/Llama-3 generated equivalents.
+
+### 6. Evaluation Metrics
+*   **TPR at 1% FPR:** The primary metric, as the goal is to minimize false accusations.
+*   **Area Under the ROC Curve (AUC-ROC):** For overall classification performance.
+*   **L2-Accuracy:** Specific accuracy on the L2 English subset to measure bias reduction.
+
+### 7. Baselines
+*   **DetectGPT:** Zero-shot log-likelihood perturbation method.
+*   **Binoculars:** A contrastive method using two LLMs to calculate perplexity/cross-perplexity.
+*   **RoBERTa-Large-Detector:** The standard supervised baseline for AIGC detection.
+
+### 8. Ablations
+*   **-Burstiness:** Removing the syntactic variance feature to see if perplexity alone suffices.
+*   **-Anchoring:** Removing the entity-density check to evaluate the impact of factual grounding.
+*   **Fixed vs. Learned Weighting:** Comparing a simple heuristic-based override against the trained Random Forest refinement layer.
+
+### 9. Failure Modes and Feasibility Risks
+*   **Adversarial Paraphrasing:** LLMs prompted to "write with high burstiness" or "incorporate varied sentence lengths" may bypass the structural stream.
+*   **Computational Overhead:** Running entity linking and multiple probability checks increases latency compared to simple classifiers.
+*   **Short-Text Limitation:** Syntactic burstiness is difficult to calculate reliably for texts under 150 words (e.g., social media posts).

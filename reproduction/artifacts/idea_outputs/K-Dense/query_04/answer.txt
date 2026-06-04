@@ -1,0 +1,41 @@
+**1. Title**
+Hierarchical Multi-Agent Refinement for Guideline-Adherent Differential Diagnosis (H-MARD)
+
+**2. Problem and Motivation**
+Large Language Models (LLMs) in clinical settings frequently exhibit "premature closure"—the tendency to jump to a diagnosis without exhaustive consideration of alternative hypotheses or adherence to established clinical pathways (e.g., ordering high-cost imaging before bedside exams). While single-turn RAG (Retrieval-Augmented Generation) improves factual recall, it fails to enforce the sequential logic required by clinical guidelines (e.g., GOLD for COPD or AHA for hypertension). There is a critical need for agentic architectures that decouple hypothesis generation from clinical verification.
+
+**3. Core Hypothesis**
+A hierarchical multi-agent system—comprising a "Diagnostic Proposer" and a "Guideline Critic" grounded in medical ontologies—will achieve higher diagnostic accuracy and better adherence to clinical protocols than single-agent systems by forcing explicit verification of intermediate diagnostic steps.
+
+**4. Method**
+The H-MARD framework employs two specialized agents:
+*   **The Proposer Agent:** Generates a differential diagnosis (DDx) and a proposed workup using Chain-of-Thought (CoT) prompting.
+*   **The Critic Agent:** Utilizes a RAG pipeline indexed over clinical textbooks (e.g., Harrison’s Principles of Internal Medicine) and a Knowledge Graph (UMLS) to audit the Proposer’s output.
+*   **The Loop:** If the Critic identifies a guideline violation (e.g., "MRI suggested before X-ray for suspected osteoarthritis"), it returns a structured critique. The Proposer must then regenerate the plan. This continues for a maximum of $N=3$ iterations or until the Critic issues a "Pass" token.
+
+**5. Dataset or Benchmark**
+*   **MedQA (USMLE):** For evaluating standardized medical knowledge and reasoning.
+*   **MIMIC-IV-ED:** De-identified electronic health records from emergency departments to test reasoning on real-world, noisy clinical trajectories.
+*   **DDxPlus:** A large-scale dataset specifically designed for differential diagnosis with symptom-disease links.
+
+**6. Evaluation Metrics**
+*   **Diagnostic Accuracy (Top-1 and Top-3):** Correctness of the final diagnosis.
+*   **Guideline Adherence Score (GAS):** A custom metric measuring the percentage of suggested diagnostic steps that align with standard-of-care sequences (evaluated via expert-annotated templates).
+*   **Test Parsimony:** The ratio of "necessary" to "redundant" diagnostic tests suggested.
+*   **UMLS Grounding Ratio:** The percentage of generated medical entities successfully mapped to UMLS Concept Unique Identifiers (CUIs).
+
+**7. Baselines**
+*   **Zero-shot LLMs:** GPT-4o and Llama-3-70B-Instruct.
+*   **Med-PaLM 2 (or open-source equivalent like Med-Llama-3):** Domain-specific fine-tuned models.
+*   **Standard RAG:** A single-agent system with access to the same clinical corpus but without the iterative critic loop.
+
+**8. Ablations**
+*   **No Critic:** Removing the Verifier agent to test the impact of the feedback loop.
+*   **No RAG:** The Critic relies on its internal weights rather than external clinical guidelines.
+*   **Zero Feedback:** The Critic provides a score but no textual feedback for refinement.
+
+**9. Failure Modes and Feasibility Risks**
+*   **Infinite Loop/Oscillation:** The Proposer and Critic may enter a non-convergent cycle where they disagree indefinitely on subjective presentations.
+*   **Knowledge Conflict:** Discrepancies between different clinical guidelines (e.g., ACC vs. ESC) may confuse the Critic agent.
+*   **Latency:** The multi-agent iterative process significantly increases inference time and API costs compared to single-turn generation.
+*   **Hallucinated Guidelines:** The Critic may fabricate a "protocol" that does not exist if the RAG retrieval fails to find a relevant document.

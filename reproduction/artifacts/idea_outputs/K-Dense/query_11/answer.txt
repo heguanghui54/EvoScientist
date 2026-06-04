@@ -1,0 +1,39 @@
+**1. Title**
+Decomposing Parametric Memory and Procedural Logic via Low-Rank Modular Intervention.
+
+**2. Problem and Motivation**
+Current Large Language Models (LLMs) exhibit "capability entanglement," where scaling parameters to improve logical reasoning (e.g., symbolic deduction) simultaneously increases the footprint of parametric memory (e.g., factual trivia). This entanglement leads to "Knowledge-Reasoning Conflicts" (KRC), where a model’s internalized factual errors override correct logical chains provided in-context. Decoupling these capabilities is essential for creating "Reasoning-Only" cores that can be specialized for private, externalized datasets without the overhead or interference of general-purpose parametric knowledge.
+
+**3. Core Hypothesis**
+Logical reasoning and factual retrieval occupy distinct, identifiable subspaces within the transformer’s latent representations. By applying rank-constrained modular adapters (LoRA) to specific weight matrices identified via gradient-based sensitivity analysis, it is possible to enhance logical consistency while minimizing the influence of the model’s internal factual database.
+
+**4. Method**
+*   **Sensitivity Mapping:** Perform a Taylor-series expansion of the loss function across the layers of a base model (e.g., Llama-3-8B) using two distinct datasets: one focusing on multi-step reasoning (GSM8K) and one on factual recall (WikiText-103).
+*   **Subspace Identification:** Identify "Logic-Critical" weights (typically located in the Attention projections) and "Memory-Critical" weights (typically in the MLP up-projections).
+*   **Modular Training:** Train "Logic-LoRAs" specifically on the Logic-Critical weights using a reasoning-only corpus.
+*   **Decoupling Intervention:** Implement a "Counterfactual Inference" protocol where the model is prompted with premises that contradict its internal training data (e.g., "The capital of France is Tokyo"). A decoupled model should successfully reason from the new premise without reverting to its internal memory.
+
+**5. Dataset or Benchmark**
+*   **GSM8K:** For evaluating multi-step mathematical reasoning.
+*   **MMLU (Massive Multitask Language Understanding):** To measure the baseline of parametric knowledge.
+*   **Counterfactual-MMLU:** A modified version of MMLU where factual premises are swapped to test the decoupling of reasoning from memory.
+
+**6. Evaluation Metrics**
+*   **Reasoning Accuracy (RA):** Percentage of correct solutions on GSM8K.
+*   **Conflict Sensitivity (CS):** The performance delta between standard MMLU and Counterfactual-MMLU. A lower delta indicates superior decoupling.
+*   **Parametric Sparsity (PS):** The ratio of reasoning performance to the number of active factual parameters.
+
+**7. Baselines**
+*   **Vanilla Llama-3-8B:** Standard pre-trained model without intervention.
+*   **Full Fine-Tuning (FFT):** The model fine-tuned globally on reasoning tasks.
+*   **Standard LoRA:** Uniformly applied low-rank adaptation across all transformer blocks.
+
+**8. Ablations**
+*   **Component-wise isolation:** Testing the effect of applying adapters only to Attention layers versus only to MLP layers.
+*   **Rank Variation:** Evaluating the impact of LoRA rank ($r=8, 16, 64$) on the degree of capability leakage.
+*   **Layer-depth analysis:** Applying interventions only to early layers (often associated with syntax) versus late layers (often associated with semantics).
+
+**9. Failure Modes and Feasibility Risks**
+*   **Reasoning Collapse:** The risk that suppressing "Memory-Critical" weights may inadvertently destroy the linguistic structures necessary to express logic, leading to incoherent outputs.
+*   **Latent Entanglement:** If reasoning and memory are too deeply intertwined at a fundamental neuron level (e.g., polysemanticity), linear decoupling methods like LoRA may fail to achieve clean separation.
+*   **Feasibility:** Requires high-resolution gradient tracing, which is computationally expensive but manageable on A100/H100 class hardware for models under 13B parameters.

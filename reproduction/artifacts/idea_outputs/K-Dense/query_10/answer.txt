@@ -1,0 +1,45 @@
+### 1. Title
+**Graph-Pruned Schema Selection (GPSS): Enhancing Text-to-SQL on Large-Scale Databases via Minimal Subgraph Extraction.**
+
+### 2. Problem and Motivation
+Current Large Language Model (LLM) based Text-to-SQL systems struggle with "schema noise" in large-scale databases (e.g., the BIRD benchmark). When a database contains hundreds of tables and thousands of columns, providing the entire schema in the prompt leads to:
+1. **Context Window Saturation:** Exceeding token limits.
+2. **Distraction/Hallucination:** The model selects semantically similar but structurally incorrect columns.
+3. **Join Failures:** The model fails to identify the necessary "bridge" tables required to link disparate data points.
+
+Existing RAG-based schema retrieval often treats tables as independent documents, ignoring the relational constraints (Foreign Key dependencies) essential for valid SQL.
+
+### 3. Core Hypothesis
+By representing a database schema as a directed multigraph and using a cross-encoder to identify a **minimal connected subgraph** (a Steiner Tree variant) relevant to the natural language query, we can improve SQL Execution Accuracy (EX) compared to standard top-k table retrieval.
+
+### 4. Method
+1.  **Schema Graph Construction:** Map the database into a graph $G = (V, E)$. Nodes $V$ are tables and columns; edges $E$ represent Primary Key-Foreign Key (PK-FK) relationships and semantic containment.
+2.  **Node Scoring:** Use a Cross-Encoder (e.g., `cross-encoder/ms-marco-MiniLM-L-6-v2`) to rank all columns and tables against the user query $Q$.
+3.  **Subgraph Extraction:** Identify the top-$N$ highest-scoring nodes. To ensure the LLM can generate valid JOINs, apply a **Steiner Tree heuristic** to find the minimal set of intermediate "bridge" tables that connect these top-$N$ nodes.
+4.  **Prompt Construction:** Serialize only the DDL (Data Definition Language) of the extracted subgraph and provide 3-shot in-context examples relevant to the identified domain.
+5.  **SQL Generation:** Pass the pruned schema and query to a reasoning-heavy LLM (e.g., GPT-4o or Claude 3.5 Sonnet).
+
+### 5. Dataset or Benchmark
+*   **BIRD (Big Bench for Large-scale Database Grounded Text-to-SQL):** Specifically for its large schemas and complex join requirements.
+*   **Spider:** For cross-domain generalization testing.
+
+### 6. Evaluation Metrics
+*   **Execution Accuracy (EX):** Percentage of queries where the predicted SQL returns the same result as the ground truth.
+*   **Valid Efficiency Score (VES):** Measures the computational efficiency of the generated SQL.
+*   **Schema Recall:** Percentage of ground-truth tables/columns included in the pruned subgraph.
+
+### 7. Baselines
+*   **DIN-SQL:** Decomposed In-Context Learning approach.
+*   **RESDSQL:** A ranking-enhanced encoder-decoder framework.
+*   **C3:** A ChatGPT-based zero-shot baseline using standard prompt engineering.
+*   **Top-K RAG:** Standard vector-store retrieval of tables based on cosine similarity.
+
+### 8. Ablations
+*   **Connectivity Constraint:** Remove the Steiner Tree/bridge table logic to see if raw top-k scoring suffices.
+*   **Granularity:** Compare Table-level pruning vs. Column-level pruning.
+*   **Scoring Model:** Compare a Bi-Encoder (fast) vs. a Cross-Encoder (accurate) for node ranking.
+
+### 9. Failure Modes and Feasibility Risks
+*   **Over-Pruning:** The Steiner Tree might exclude a table that contains no keywords from the query but is necessary for a complex filter condition.
+*   **Graph Complexity:** In extremely denormalized schemas, the number of possible paths between nodes may lead to a combinatorial explosion during subgraph extraction.
+*   **Schema Ambiguity:** If the database lacks explicit PK-FK constraints (common in legacy systems), the graph construction will rely on heuristic name-matching, increasing the risk of disconnected components.

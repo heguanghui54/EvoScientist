@@ -1,0 +1,42 @@
+**1. Title**
+Quantifying the "Alignment Friction" Index: A Dynamic UX Evaluation Framework for Iterative Prompt Refinement.
+
+**2. Problem and Motivation**
+Current LLM evaluations (e.g., MMLU, AlpacaEval) focus on static, single-turn accuracy or model-as-a-judge preferences. However, real-world user experience is defined by the *iterative* process of prompt engineering. Models that require high "Alignment Friction"—the cognitive load and manual effort spent by a user to correct hallucinations or steer a model toward a specific constraint—suffer from poor UX despite high benchmark scores. There is currently no standardized metric to quantify the efficiency of the human-LLM feedback loop.
+
+**3. Core Hypothesis**
+The "Iterative Efficiency Score" (IES) of an LLM—defined as the inverse of the cumulative semantic distance between a user’s initial intent and the final satisfactory output—will better correlate with longitudinal user retention than traditional single-turn Win Rates.
+
+**4. Method**
+The study adopts a "Reference-Guided Iteration" (RGI) protocol:
+*   **Task Definition:** Users (or high-fidelity LLM simulators) are given a complex "Gold Standard" output requirement (e.g., a specific code snippet with 5 constraints).
+*   **Interaction Loop:** The user provides an initial prompt. If the model fails a constraint, the user must provide a refinement prompt.
+*   **Metric Calculation:** We track the number of turns ($T$), the total tokens of instruction required ($I$), and the "Edit Distance" ($E$) required by the user to manually fix the final output.
+*   **IES Formula:** $IES = \frac{1}{\sum (T \times \log(I) + E)}$.
+*   **Comparison:** Compare IES across models of varying sizes (e.g., Llama-3-8B vs. 70B) to determine if larger models actually reduce "Alignment Friction" or merely increase output length.
+
+**5. Dataset or Benchmark**
+*   **WildChat:** To extract real-world iterative patterns and common "refinement" keywords (e.g., "No, I meant...", "Add more...").
+*   **MT-Bench:** For multi-turn conversational consistency.
+*   **HumanEval-X (Modified):** Specifically focusing on tasks where the initial prompt is intentionally underspecified to trigger the need for clarification.
+
+**6. Evaluation Metrics**
+*   **TTR (Turns to Resolution):** Number of prompts until all constraints are met.
+*   **KED (Keypress Edit Distance):** Amount of manual text editing the user performs on the LLM output.
+*   **Semantic Drift:** Using BERTScore to measure how much the model's focus shifts away from the original intent across a 5-turn conversation.
+*   **TTFT (Time to First Token):** Integrated as a weight for "System Latency" UX.
+
+**7. Baselines**
+*   **Static Win Rate:** Standard Bradley-Terry model rankings (e.g., LMSYS Chatbot Arena).
+*   **Instruction Following Assessment (IFEval):** Measuring strict constraint adherence in a single turn.
+*   **Pass@k:** Standard coding benchmark for comparison on objective tasks.
+
+**8. Ablations**
+*   **System Prompt Impact:** Test if providing a "Persona" (e.g., "You are a helpful assistant") reduces TTR compared to a raw base model.
+*   **Context Window Pressure:** Evaluating IES as the conversation length approaches the model’s effective context limit to observe "forgetting" friction.
+*   **Few-Shot vs. Zero-Shot:** Measuring the reduction in Alignment Friction when the user provides 1–3 examples in the first turn.
+
+**9. Failure Modes and Feasibility Risks**
+*   **User Subjectivity:** "Satisfactory output" is subjective. *Mitigation:* Use objective constraint-based tasks (e.g., "Write a poem with exactly 14 lines and no letter 'e'").
+*   **Simulator Bias:** If using an LLM to simulate the user, the simulator may be biased toward the model it was trained on. *Mitigation:* Use a diverse ensemble of models (GPT-4o, Claude 3.5 Sonnet) as user simulators.
+*   **Cost of Human Studies:** Recruiting expert prompt engineers for KED measurement is expensive. *Mitigation:* Use automated "Edit Distance" calculations between the model's $N$-th turn and the Gold Standard.

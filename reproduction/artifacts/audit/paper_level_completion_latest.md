@@ -13,7 +13,7 @@ are present in the checkout.
 | Component | Status | Evidence |
 | --- | --- | --- |
 | Full trajectories | complete | 30/30 successful final reports; non-success IDs: none |
-| Table 1 LLM judge | incomplete | expected 420 pairwise records; missing baseline outputs: K-Dense |
+| Table 1 LLM judge | incomplete | expected 420 pairwise records; missing baseline outputs: none |
 | Table 2 human eval | incomplete | missing files: inputs.jsonl, labels.jsonl, aggregate.json |
 | Table 3 ablation | complete | missing variants: none |
 | Figure 2 code execution | complete | missing files: none |

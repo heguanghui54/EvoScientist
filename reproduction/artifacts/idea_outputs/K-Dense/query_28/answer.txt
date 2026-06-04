@@ -1,0 +1,39 @@
+### 1. Title
+**Culturally-Diversified Preference Learning (CDPL): Modular Value Alignment via Low-Rank Reward Adapters**
+
+### 2. Problem and Motivation
+Current Large Language Model (LLM) alignment techniques, primarily Reinforcement Learning from Human Feedback (RLHF) and Direct Preference Optimization (DPO), rely on preference datasets that overrepresent Western, Educated, Industrialized, Rich, and Democratic (WEIRD) populations. This creates a "value monism" where the model’s behavioral guardrails and moral reasoning default to individualistic norms, often conflicting with collectivist or non-Western cultural frameworks (e.g., Confucian ethics, Ubuntu philosophy). Existing multilingual models often translate language without translating the underlying cultural value systems, leading to "cultural imposition" in sensitive downstream tasks like mediation or ethical advisory.
+
+### 3. Core Hypothesis
+Fine-tuning modular, culture-specific Low-Rank Reward Model Adapters (LoRA-RMs) on curated preference data from diverse sociological frameworks will allow an LLM to shift its normative stance dynamically. Specifically, we hypothesize that a "Mixture-of-Reward-Adapters" approach will achieve higher cultural alignment scores (CAS) than a single monolithic reward model without suffering from catastrophic forgetting of general reasoning capabilities.
+
+### 4. Method
+1.  **Preference Dataset Curation:** Construct a preference dataset ($D_{pref}$) where each entry is a triplet: (Prompt, Winner, Loser). Prompts are derived from culturally sensitive scenarios (e.g., filial piety, social hierarchy, dietary taboos).
+2.  **Modular Reward Training:** Initialize a base LLM (e.g., Llama-3-8B). For each target culture $C_i$, train a specific LoRA Reward Model ($\text{LoRA}_{RM}^i$) using the Bradley-Terry objective on subset $D_{pref}^i$.
+3.  **Alignment Stage:** Use Direct Preference Optimization (DPO) or PPO where the reward signal is provided by the specific $\text{LoRA}_{RM}^i$ or a weighted interpolation of adapters.
+4.  **Inference-Time Routing:** Implement a light-weight "Culture Classifier" that identifies the cultural context of a prompt and activates the corresponding LoRA adapter for the policy model.
+
+### 5. Dataset or Benchmark
+*   **World Values Survey (WVS) Wave 7:** Used to generate prompt templates based on the Inglehart–Welzel cultural map.
+*   **Culture-Bench:** A specialized benchmark for evaluating cross-cultural understanding.
+*   **Global-Moral-Foundations (GMF):** A synthetic dataset generated using the Moral Foundations Questionnaire (MFQ) translated and adapted for 10 distinct geographic regions.
+
+### 6. Evaluation Metrics
+*   **Cultural Alignment Score (CAS):** The Pearson correlation between model preference distributions and human survey data (WVS/MFQ) for a specific region.
+*   **Cross-Cultural Robustness (CCR):** The drop in general MMLU (Massive Multitask Language Understanding) scores when cultural adapters are active.
+*   **Win-Rate vs. GPT-4:** Using a "Cultural-Judge" (native speaker or localized LLM) to compare CDPL outputs against standard aligned models.
+
+### 7. Baselines
+*   **Vanilla Llama-3-Instruct:** Standard RLHF-aligned model.
+*   **Polyglot-LLM:** Models trained on specific multilingual corpora but without explicit cultural preference tuning.
+*   **Few-shot In-context Alignment:** Providing the model with a "cultural persona" in the system prompt without parameter updates.
+
+### 8. Ablations
+*   **Adapter vs. Full Fine-tuning:** Comparing LoRA efficiency against full parameter updates for each culture.
+*   **Uniform Reward Model:** Training one single RM on the pooled data from all cultures to test if "value averaging" outperforms modularity.
+*   **Adapter Merging:** Testing if merging LoRA weights (e.g., using TIES-Merging) can create a "Global-Neutral" model.
+
+### 9. Failure Modes and Feasibility Risks
+*   **Cultural Essentialism:** The risk of the model falling into stereotypes by over-simplifying complex, heterogeneous cultures into a single "adapter."
+*   **Reward Hacking:** The model may learn to output specific cultural keywords to "trick" the Reward Adapter without genuinely reflecting the underlying value system.
+*   **Data Scarcity:** High-quality preference data for specific Global South cultures is significantly harder to acquire than for East Asian or Western cultures, potentially leading to imbalanced performance.

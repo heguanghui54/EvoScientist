@@ -1,0 +1,44 @@
+### 1. Title
+**Lexically-Constrained Curriculum Distillation (LCCD): Enhancing Low-Resource NMT via Cross-Lingual Adapter Alignment**
+
+### 2. Problem and Motivation
+Low-Resource Machine Translation (LRMT) suffers from the "data-scarcity bottleneck," where neural models fail to learn robust cross-lingual mappings due to sparse parallel corpora. While Massively Multilingual Pretrained Language Models (mPLMs) like mBART or NLLB-200 provide a strong foundation, direct fine-tuning on LR pairs often leads to **representation collapse** or **negative transfer** from dominant languages. Existing solutions like Back-Translation (BT) introduce significant noise when the initial seed model is weak. There is a need for a mechanism that anchors LR representations to high-resource (HR) semantic spaces using structured lexical knowledge before attempting full-sentence synthesis.
+
+### 3. Core Hypothesis
+Integrating external bilingual lexicons as a **lexical prior** within a curriculum-based Knowledge Distillation (KD) framework—where a high-resource teacher guides a low-resource student through increasing levels of syntactic complexity—will significantly reduce translation hallucinations and improve morphological accuracy in LRMT.
+
+### 4. Method
+The LCCD framework consists of three sequential phases:
+
+1.  **Lexical Anchor Warm-up:** Initialize language-specific **Adapters** (e.g., MAD-X architecture) within a frozen mPLM. Fine-tune these adapters using word-level and phrase-level pairs from bilingual dictionaries (e.g., PanLex) to align the LR embedding space with a pivot language (English).
+2.  **Cross-Lingual Knowledge Distillation:** Train the LR student model using a HR teacher (e.g., an English-German model) to translate into the LR target. The loss function is a weighted combination of:
+    *   $\mathcal{L}_{CE}$: Cross-entropy on available LR parallel data.
+    *   $\mathcal{L}_{KD}$: KL-divergence between student and teacher output distributions, filtered by a **Lexical Overlap Constraint** (only penalizing the student when the teacher’s top-k predictions align with the bilingual lexicon).
+3.  **Syntactic Curriculum Scaling:** Gradually increase the maximum sequence length and syntactic complexity (measured by dependency tree depth) of the training samples, ensuring the model masters core constituent mapping before long-form generation.
+
+### 5. Dataset or Benchmark
+*   **Primary Dataset:** **FLORES-200** (specifically focusing on the "Low" and "Very Low" resource tiers, e.g., Yoruba, Quechua, or Lao).
+*   **Lexical Source:** **PanLex** or **MUSE** bilingual dictionaries for lexical anchoring.
+*   **Parallel Data:** **OPUS-100** or **TICO-19** (for domain-specific LRMT evaluation).
+
+### 6. Evaluation Metrics
+*   **chrF++:** Preferred over BLEU for LRMT due to better correlation with human judgment in morphologically rich languages.
+*   **COMET (Cross-lingual Optimized Metric for Evaluation of Translation):** To leverage neural-based semantic similarity.
+*   **Lexical Precision:** Accuracy of translating specific "rare" content words identified in the bilingual lexicons.
+
+### 7. Baselines
+*   **mBART-50 / NLLB-200:** Standard fine-tuning on the LR pair.
+*   **MAD-X:** Language-specific adapter fine-tuning without the lexical curriculum.
+*   **Back-Translation (BT):** Standard iterative BT using monolingual target data.
+*   **Dual Conditional Cross-Entropy Filtering:** A state-of-the-art data denoising baseline.
+
+### 8. Ablations
+*   **- Lexical Anchoring:** Removing the dictionary-based warm-up phase to test the impact of the initial embedding alignment.
+*   **- KD Constraint:** Using standard KD without the Lexical Overlap Constraint to measure hallucination rates.
+*   **- Curriculum Scaling:** Training on all sequence lengths simultaneously to evaluate the necessity of the complexity-based curriculum.
+
+### 9. Failure Modes and Feasibility Risks
+*   **Lexical Ambiguity:** Bilingual dictionaries often lack context, potentially leading the model to learn incorrect polysemous mappings during the warm-up phase.
+*   **Domain Mismatch:** If the lexicon is general-purpose but the evaluation benchmark is technical (e.g., medical), the "anchors" may be irrelevant.
+*   **Compute Overhead:** Distillation from large teachers (e.g., NLLB-3B) to smaller students increases training wall-clock time significantly.
+*   **Risk Mitigation:** Implement a "Soft-Gating" mechanism in the adapters to allow the model to ignore lexical priors when contextual confidence is high.

@@ -1,0 +1,42 @@
+**1. Title**
+Entropy-Aware Contrastive Filtering (EACF): Optimizing Domain-Specific Pre-training via Semantic Influence and Cross-Model Divergence.
+
+**2. Problem and Motivation**
+Standard data filtering pipelines (e.g., CCNet, RefinedWeb) utilize heuristics like fastText-based language identification and perplexity thresholds derived from general-purpose corpora. These methods frequently discard high-value, niche technical data because its linguistic structure deviates from "average" web text. In domain-specific contexts (e.g., clinical, legal, or hardware engineering), this results in the "niche-loss" problem, where the most informative documents are filtered out as outliers, forcing models to rely on diluted or irrelevant data.
+
+**3. Core Hypothesis**
+A contrastive filtering approach—measuring the divergence between a general-purpose language model’s cross-entropy and a domain-specific "seed" model’s cross-entropy—will identify data points with high "Domain Influence Scores." Specifically, documents where $H_{general}(x) - H_{domain}(x)$ is maximized will yield higher downstream task performance per token than traditional frequency-based or perplexity-based filters.
+
+**4. Method**
+*   **Step 1: Seed Model Training.** Train a lightweight (e.g., 125M parameter) Transformer on a gold-standard curated subset of the target domain (e.g., 5B tokens of PubMed or CaseLaw).
+*   **Step 2: Scoring.** For every candidate document $x$ in a large, noisy pool (e.g., Common Crawl):
+    *   Calculate $L_{gen}$: Cross-entropy loss under a general-purpose model (e.g., Pythia-70M).
+    *   Calculate $L_{dom}$: Cross-entropy loss under the domain-specific seed model.
+    *   Compute the Influence Score: $S(x) = L_{gen}(x) / L_{dom}(x)$.
+*   **Step 3: Dynamic Thresholding.** Instead of a hard cutoff, fit a two-component Gaussian Mixture Model (GMM) to the distribution of $S(x)$ to automatically separate "Domain-Relevant" from "General Noise."
+*   **Step 4: Diversity Re-weighting.** To prevent semantic collapse, apply a k-means clustering on the embeddings of the top-decile documents and sub-sample proportionally from each cluster to maintain breadth.
+
+**5. Dataset or Benchmark**
+*   **Source Pool:** The Pile (specifically the Common Crawl and Pile-CC components).
+*   **Target Domain:** Biomedical and Clinical text.
+*   **Downstream Evaluation:** MedQA (USMLE), PubMedQA, and BioASQ.
+
+**6. Evaluation Metrics**
+*   **Primary:** Zero-shot and few-shot accuracy on MedQA and PubMedQA.
+*   **Efficiency:** Data Efficiency Ratio (performance achieved per 1B tokens processed).
+*   **Intrinsic:** Perplexity on a held-out set of NEJM (New England Journal of Medicine) articles.
+
+**7. Baselines**
+*   **Random Sampling:** Uniformly sampled tokens from the source pool.
+*   **DSIR (Domain-Specific Information Retrieval):** Importance sampling based on n-gram language models (Xie et al., 2023).
+*   **Perplexity Filtering:** Standard KenLM-based filtering trained on Wikipedia.
+
+**8. Ablations**
+*   **No Contrastive Normalization:** Filtering based solely on the domain seed model's $L_{dom}$ without subtracting $L_{gen}$.
+*   **Static vs. Dynamic Thresholding:** Replacing the GMM with a fixed top-$k$ percentile cutoff.
+*   **Seed Size Sensitivity:** Varying the size of the gold-standard seed set (100M vs. 1B vs. 5B tokens).
+
+**9. Failure Modes and Feasibility Risks**
+*   **Computational Overhead:** Scoring billions of tokens with two models is expensive. Mitigation: Use highly distilled, small-parameter models (e.g., <100M params) for the scoring phase.
+*   **Echo-Chamber Effect:** The filter may only select data that is identical to the seed set, failing to capture "frontier" knowledge. Mitigation: The Diversity Re-weighting step (Step 4) is designed to force the selection of diverse semantic clusters.
+*   **Short Document Bias:** Cross-entropy can be unstable on very short sequences. Mitigation: Apply length-normalization to the influence scores.
