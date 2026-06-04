@@ -1,0 +1,163 @@
+{
+  "date": "2026-06-04",
+  "baseline": "InternAgent",
+  "query_ids": [
+    1,
+    2,
+    3,
+    4,
+    5
+  ],
+  "topics": [
+    "Machine translation",
+    "Software engineering",
+    "LLM evaluation",
+    "Healthcare agents",
+    "Literature review automation"
+  ],
+  "paper_exact": false,
+  "status": "complete",
+  "external_checkout": "/Users/hgh54913/research/InternAgent",
+  "external_head": "e341f8f181e6d337317c6bc2cddae6391b1f0390",
+  "runner": "reproduction/run_internagent_qa_baseline.py",
+  "model": "deepseek-chat",
+  "judge_model": "deepseek-v4-flash",
+  "files": {
+    "external_outputs": [
+      {
+        "path": "/Users/hgh54913/research/InternAgent/outputs/evoscientist_table1_queries/internagent/query_01.md",
+        "exists": true,
+        "bytes": 2505
+      },
+      {
+        "path": "/Users/hgh54913/research/InternAgent/outputs/evoscientist_table1_queries/internagent/query_02.md",
+        "exists": true,
+        "bytes": 1348
+      },
+      {
+        "path": "/Users/hgh54913/research/InternAgent/outputs/evoscientist_table1_queries/internagent/query_03.md",
+        "exists": true,
+        "bytes": 1324
+      },
+      {
+        "path": "/Users/hgh54913/research/InternAgent/outputs/evoscientist_table1_queries/internagent/query_04.md",
+        "exists": true,
+        "bytes": 3933
+      },
+      {
+        "path": "/Users/hgh54913/research/InternAgent/outputs/evoscientist_table1_queries/internagent/query_05.md",
+        "exists": true,
+        "bytes": 1584
+      }
+    ],
+    "imported_outputs": [
+      {
+        "path": "reproduction/artifacts/idea_outputs/InternAgent/query_01/answer.txt",
+        "exists": true,
+        "bytes": 2505
+      },
+      {
+        "path": "reproduction/artifacts/idea_outputs/InternAgent/query_02/answer.txt",
+        "exists": true,
+        "bytes": 1348
+      },
+      {
+        "path": "reproduction/artifacts/idea_outputs/InternAgent/query_03/answer.txt",
+        "exists": true,
+        "bytes": 1324
+      },
+      {
+        "path": "reproduction/artifacts/idea_outputs/InternAgent/query_04/answer.txt",
+        "exists": true,
+        "bytes": 3933
+      },
+      {
+        "path": "reproduction/artifacts/idea_outputs/InternAgent/query_05/answer.txt",
+        "exists": true,
+        "bytes": 1584
+      }
+    ],
+    "judge_input": {
+      "path": "reproduction/artifacts/judge_inputs/evosci_vs_internagent_queries01_05.jsonl",
+      "exists": true,
+      "bytes": 107316
+    },
+    "judge_output": {
+      "path": "reproduction/artifacts/judge_outputs/evosci_vs_internagent_queries01_05_deepseek.jsonl",
+      "exists": true,
+      "bytes": 18295
+    },
+    "aggregate_json": {
+      "path": "reproduction/artifacts/tables/evosci_vs_internagent_queries01_05_deepseek.json",
+      "exists": true,
+      "bytes": 1342
+    },
+    "aggregate_csv": {
+      "path": "reproduction/artifacts/tables/evosci_vs_internagent_queries01_05_deepseek.csv",
+      "exists": true,
+      "bytes": 269
+    }
+  },
+  "judge_records": 10,
+  "aggregate": {
+    "target_system": "EvoScientist",
+    "tie_threshold": 0.0,
+    "raw_records": 10,
+    "baselines": {
+      "InternAgent": {
+        "dimensions": {
+          "Clarity": {
+            "baseline": "InternAgent",
+            "dimension": "Clarity",
+            "n": 10,
+            "win": 9,
+            "tie": 0,
+            "lose": 1,
+            "win_pct": 90.0,
+            "tie_pct": 0.0,
+            "lose_pct": 10.0,
+            "gap": 80.0
+          },
+          "Novelty": {
+            "baseline": "InternAgent",
+            "dimension": "Novelty",
+            "n": 10,
+            "win": 9,
+            "tie": 0,
+            "lose": 1,
+            "win_pct": 90.0,
+            "tie_pct": 0.0,
+            "lose_pct": 10.0,
+            "gap": 80.0
+          },
+          "Feasibility": {
+            "baseline": "InternAgent",
+            "dimension": "Feasibility",
+            "n": 10,
+            "win": 10,
+            "tie": 0,
+            "lose": 0,
+            "win_pct": 100.0,
+            "tie_pct": 0.0,
+            "lose_pct": 0.0,
+            "gap": 100.0
+          },
+          "Relevance": {
+            "baseline": "InternAgent",
+            "dimension": "Relevance",
+            "n": 10,
+            "win": 8,
+            "tie": 1,
+            "lose": 1,
+            "win_pct": 80.0,
+            "tie_pct": 10.0,
+            "lose_pct": 10.0,
+            "gap": 70.0
+          }
+        },
+        "avg_gap": 82.5
+      }
+    }
+  },
+  "caveat": "This is a replacement-baseline smoke run for recovered paper queries. It is not the paper's original raw InternAgent Table 1 output. The run preserves observed InternAgent/DeepSeek parsing failures as baseline behavior."
+}

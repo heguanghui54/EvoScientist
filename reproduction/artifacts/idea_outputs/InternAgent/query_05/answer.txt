@@ -1,0 +1,12 @@
+# InternAgent QA Replacement Output: Query 05
+
+Topic: Literature review automation
+Prompt: Generate a research proposal on automated literature review generation.
+Model: deepseek-chat
+Paper-exact: false
+
+This answer was generated through InternAgent QA mode as a replacement baseline, not from the EvoScientist paper's original raw InternAgent outputs.
+
+## Answer
+
+The research proposal is structured to address four key gaps in automated literature review generation, as identified by analyzing current challenges and surveying existing methods. First, it aims to develop a contradiction-aware synthesis module using fine-tuned natural language inference to detect and explain disagreements among studies, enabling critical evaluation. Second, it proposes a domain-adaptive pretrained model enhanced with contextual lexical disambiguation to handle specialized terminology accurately. Third, it introduces a dynamic verification module that continuously checks live bibliographic databases to ensure citations remain valid and can trigger regeneration when new evidence emerges. Fourth, it designs an adaptive retrieval framework that queries multiple indices—including non-English and grey literature repositories—and uses iterative coverage auditing to debias source selection. These four components are integrated into a cohesive architecture where a diverse corpus is retrieved with terminological precision, contradictions are explicitly resolved, and all claims are dynamically verified, producing a more reliable, equitable, and truly autonomous literature review system.
