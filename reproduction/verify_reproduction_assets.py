@@ -273,6 +273,35 @@ def main() -> None:
     assert "InternAgent queries01_05 Smoke Report" in internagent_5q_smoke_md_path.read_text(
         encoding="utf-8"
     )
+    internagent_10q_smoke_json_path = ROOT / "internagent_queries01_10_smoke_report.json"
+    internagent_10q_smoke_md_path = ROOT / "internagent_queries01_10_smoke_report.md"
+    assert internagent_10q_smoke_json_path.is_file(), "missing InternAgent queries01-10 smoke JSON"
+    assert internagent_10q_smoke_md_path.is_file(), "missing InternAgent queries01-10 smoke markdown"
+    internagent_10q_smoke = json.loads(internagent_10q_smoke_json_path.read_text(encoding="utf-8"))
+    assert internagent_10q_smoke["baseline"] == "InternAgent"
+    assert internagent_10q_smoke["query_ids"] == list(range(1, 11))
+    assert internagent_10q_smoke["paper_exact"] is False
+    assert internagent_10q_smoke["status"] == "complete"
+    assert internagent_10q_smoke["judge_records"] == 20
+    for query_id in range(1, 11):
+        assert (
+            ROOT / "artifacts" / "idea_outputs" / "InternAgent" / f"query_{query_id:02d}" / "answer.txt"
+        ).is_file()
+    assert (
+        ROOT / "artifacts" / "judge_inputs" / "evosci_vs_internagent_queries01_10.jsonl"
+    ).is_file()
+    assert (
+        ROOT / "artifacts" / "judge_outputs" / "evosci_vs_internagent_queries01_10_deepseek.jsonl"
+    ).is_file()
+    assert (
+        ROOT / "artifacts" / "tables" / "evosci_vs_internagent_queries01_10_deepseek.json"
+    ).is_file()
+    smoke_10q_dims = internagent_10q_smoke["aggregate"]["baselines"]["InternAgent"]["dimensions"]
+    assert set(smoke_10q_dims) == {"Clarity", "Novelty", "Feasibility", "Relevance"}
+    assert smoke_10q_dims["Clarity"]["n"] == 20
+    assert "InternAgent queries01_10 Smoke Report" in internagent_10q_smoke_md_path.read_text(
+        encoding="utf-8"
+    )
     ai_scientist_probe_json_path = ROOT / "ai_scientist_v2_baseline_probe.json"
     ai_scientist_probe_md_path = ROOT / "ai_scientist_v2_baseline_probe.md"
     assert ai_scientist_probe_json_path.is_file(), "missing AI Scientist-v2 probe JSON"

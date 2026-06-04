@@ -1,0 +1,12 @@
+# InternAgent QA Replacement Output: Query 06
+
+Topic: Speech recognition
+Prompt: Generate a research proposal on low-resource speech recognition.
+Model: deepseek-chat
+Paper-exact: false
+
+This answer was generated through InternAgent QA mode as a replacement baseline, not from the EvoScientist paper's original raw InternAgent outputs.
+
+## Answer
+
+The research proposal introduces the Typology-Aware Self-Supervised Adaptation with Parameter-Efficient Fine-Tuning (TASSA-PEFT) framework. It addresses the triadic constraints of data scarcity, language diversity, and acoustic variability through three components: (1) a multi-source, typology-aware self-supervised pretraining phase that selects and combines encoders from language families similar to the target language using a learned weighted fusion layer; (2) a hybrid Dynamic Adapter-LoRA (DAL) module for parameter-efficient fine-tuning with dynamic placement based on layer-wise similarity analysis; and (3) a contrastive prototypical adjustment mechanism to detect and compensate for negative transfer without requiring linguistic annotations. The framework is designed to operate effectively with as little as one hour of transcribed speech.

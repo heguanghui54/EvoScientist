@@ -1,0 +1,12 @@
+# InternAgent QA Replacement Output: Query 09
+
+Topic: Model deployment
+Prompt: Generate a research proposal on solving quantization challenges for LLM deployment on edge devices.
+Model: deepseek-chat
+Paper-exact: false
+
+This answer was generated through InternAgent QA mode as a replacement baseline, not from the EvoScientist paper's original raw InternAgent outputs.
+
+## Answer
+
+The research proposal should start by addressing the four key quantization challenges for LLM deployment on edge devices: memory constraints, latency requirements, accuracy loss, and hardware limitations. The proposal should then build on a survey of existing quantization techniques (though the survey and proposed directions nodes were not successfully executed, the challenges node provides a solid foundation). The core of the proposal should propose novel research directions and an experimental methodology that jointly optimizes memory footprint, latency, accuracy, and hardware compatibility, using techniques such as layer-wise sensitivity analysis, outlier-aware quantization, and hardware-aware mixed-precision schemes. Experimental evaluation should measure performance under specific memory caps, latency targets, and accuracy thresholds across multiple tasks and hardware platforms.

@@ -1,0 +1,12 @@
+# InternAgent QA Replacement Output: Query 10
+
+Topic: Text-to-SQL
+Prompt: Help me generate a research proposal on Text-to-SQL.
+Model: deepseek-chat
+Paper-exact: false
+
+This answer was generated through InternAgent QA mode as a replacement baseline, not from the EvoScientist paper's original raw InternAgent outputs.
+
+## Answer
+
+Based on the workflow execution, the research proposal on Text-to-SQL should focus on a novel framework called SCORE-SQL (Self-Correcting, Retrieval-augmented, and cOmpositional REasoning for SQL). The proposal is grounded in three key areas: (1) current challenges in Text-to-SQL—such as handling complex queries, domain adaptation, and evaluation benchmarks; (2) recent state-of-the-art methods—including LLM-based approaches, schema linking, and few-shot learning; and (3) a novel research direction that integrates a self-correcting retrieval-augmented generation pipeline with graph-aware schema linking and compositional few-shot learning. The proposed framework consists of five modules: a schema-aware retrieval module, a compositional few-shot example selector, a multi-step prompt construction and LLM generation module, a self-correction engine (the core novelty), and an optional interactive refinement interface. The evaluation plan includes primary datasets (Spider, SParC, CoSQL, WikiSQL) and a new domain adaptation testbed in biomedical, financial, and legal domains, with metrics such as execution accuracy, compositional accuracy, robustness, correction efficiency, and semantic fidelity. This proposal directly addresses the limitations of current methods and aims to improve accuracy, robustness, and practicality in Text-to-SQL systems.

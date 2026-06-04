@@ -1,0 +1,12 @@
+# InternAgent QA Replacement Output: Query 07
+
+Topic: Model efficiency
+Prompt: Generate a research proposal on how to break the performance ceiling of small models.
+Model: deepseek-chat
+Paper-exact: false
+
+This answer was generated through InternAgent QA mode as a replacement baseline, not from the EvoScientist paper's original raw InternAgent outputs.
+
+## Answer
+
+Based on the workflow execution trace, the research proposal to break the performance ceiling of small models is built on three synergistic directions: Architecture-Aware Distillation (AAD), which adaptively aligns the student's internal representational geometry with a large teacher's, dynamically expanding capacity where the distillation loss is high; Data-Efficient Synthetic Augmentation Strategies (DESAS), which generate targeted synthetic examples to address specific failure modes like compositional generalization and OOD detection; and Modular Dynamic Networks (MDNs), which use a learned gating mechanism to activate specialized sub-modules per task, preventing catastrophic forgetting and enabling adaptive capacity allocation. These three directions are integrated into a closed-loop framework: the MDN establishes baseline modularity, AAD transfers relational knowledge from a teacher to critical modules, DESAS identifies and generates data for remaining failure modes, and the model is fine-tuned on a mixture of real and synthetic data with gating updates. The framework iterates until performance plateaus, jointly addressing the capacity, data efficiency, and generalization bottlenecks that were systematically identified in the bottleneck analysis.

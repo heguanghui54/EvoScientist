@@ -1,0 +1,5 @@
+baseline,dimension,n,win,tie,lose,win_pct,tie_pct,lose_pct,gap
+InternAgent,Clarity,20,20,0,0,100.0,0.0,0.0,100.0
+InternAgent,Novelty,20,18,1,1,90.0,5.0,5.0,85.0
+InternAgent,Feasibility,20,20,0,0,100.0,0.0,0.0,100.0
+InternAgent,Relevance,20,18,1,1,90.0,5.0,5.0,85.0
