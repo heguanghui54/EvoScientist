@@ -48,23 +48,6 @@ Commands:
 
 ### 3. table1_llm_idea_generation / baseline_output_import_or_generation
 
-Required evidence: 30 answer.txt files under reproduction/artifacts/idea_outputs/AI Scientist-v2/
-
-System: AI Scientist-v2
-Probe: reproduction/ai_scientist_v2_baseline_probe.json
-Note: Current probe found AI Scientist-v2 has an ideation CLI suitable for a replacement baseline adapter, but it is not paper-exact raw Table 1 evidence.
-
-Commands:
-
-```bash
-.venv/bin/python reproduction/build_ai_scientist_v2_ideation_runbook.py
-bash /path/to/EvoScientist/reproduction/ai_scientist_v2_ideation_runbook/run_ai_scientist_v2_ideation.sh
-.venv/bin/python reproduction/convert_ai_scientist_v2_ideation_outputs.py
-.venv/bin/python reproduction/import_baseline_outputs.py --system-name 'AI Scientist-v2' --source reproduction/ai_scientist_v2_ideation_import_template.jsonl --source-format jsonl --output-root reproduction/artifacts/idea_outputs --strict
-```
-
-### 4. table1_llm_idea_generation / baseline_output_import_or_generation
-
 Required evidence: 30 answer.txt files under reproduction/artifacts/idea_outputs/Hypogenic/
 
 System: Hypogenic
@@ -80,7 +63,7 @@ Commands:
 .venv/bin/python reproduction/import_baseline_outputs.py --system-name Hypogenic --source $HOME/research/hypogenic/outputs/evoscientist_table1_queries/hypogenic --source-format directory --output-root reproduction/artifacts/idea_outputs --strict
 ```
 
-### 5. table1_llm_idea_generation / baseline_output_import_or_generation
+### 4. table1_llm_idea_generation / baseline_output_import_or_generation
 
 Required evidence: 30 answer.txt files under reproduction/artifacts/idea_outputs/Novix/
 
@@ -97,7 +80,7 @@ Commands:
 .venv/bin/python reproduction/import_baseline_outputs.py --system-name Novix --source $HOME/research/novix/outputs/evoscientist_table1_queries/novix --source-format directory --output-root reproduction/artifacts/idea_outputs --strict
 ```
 
-### 6. table1_llm_idea_generation / baseline_output_import_or_generation
+### 5. table1_llm_idea_generation / baseline_output_import_or_generation
 
 Required evidence: 30 answer.txt files under reproduction/artifacts/idea_outputs/K-Dense/
 
@@ -114,7 +97,7 @@ git clone https://github.com/K-Dense-AI/k-dense-byok $HOME/research/k-dense-byok
 .venv/bin/python reproduction/import_baseline_outputs.py --system-name K-Dense --source $HOME/research/k-dense-byok/outputs/evoscientist_table1_queries/k_dense --source-format directory --output-root reproduction/artifacts/idea_outputs --strict
 ```
 
-### 7. table1_llm_idea_generation / paper_judge_completion
+### 6. table1_llm_idea_generation / paper_judge_completion
 
 Required evidence: 420 swapped pairwise records plus Gemini-3-flash judge outputs
 
@@ -128,7 +111,7 @@ Commands:
 .venv/bin/python reproduction/compare_reproduction_to_paper.py --actual-json reproduction/artifacts/tables/idea_generation_win_tie_lose.json --section table1_llm_idea_generation --require-all
 ```
 
-### 8. table2_human_idea_generation / human_label_import
+### 7. table2_human_idea_generation / human_label_import
 
 Required evidence: inputs.jsonl, labels.jsonl, and aggregate.json for three PhD-level annotators
 
@@ -140,7 +123,7 @@ Commands:
 .venv/bin/python reproduction/aggregate_human_labels.py --inputs reproduction/artifacts/human_evaluation/inputs.jsonl --labels reproduction/artifacts/human_evaluation/labels.jsonl --output-csv reproduction/artifacts/human_evaluation/aggregate.csv --output-json reproduction/artifacts/human_evaluation/aggregate.json --strict
 ```
 
-### 9. table3_ablation_idea_generation / ablation_variant_runs
+### 8. table3_ablation_idea_generation / ablation_variant_runs
 
 Required evidence: system_outputs_complete.json, judge_inputs.jsonl, judge_outputs.jsonl, and aggregate.json for -IDE, -IVE, and -all
 
@@ -154,7 +137,7 @@ Commands:
 .venv/bin/python reproduction/compare_reproduction_to_paper.py --actual-json reproduction/artifacts/ablations/combined_aggregate.json --section table3_ablation_idea_generation --require-all
 ```
 
-### 10. figure2_code_execution / code_execution_log_import
+### 9. figure2_code_execution / code_execution_log_import
 
 Required evidence: trajectories.jsonl, execution_logs.jsonl, and summary.json with before/after evolution success rates
 

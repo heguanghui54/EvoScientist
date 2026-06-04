@@ -1,0 +1,32 @@
+# Uncertainty-Guided Data Filtering: Using a Small Domain Expert to Curate Pretraining Data for Large Models
+
+Short Hypothesis: A small, pre-trained domain-specific model can serve as an effective data filter for pretraining a larger model by identifying and upweighting examples where the small model exhibits high predictive uncertainty (i.e., novel or informative examples) while downweighting examples where the small model is overconfident (i.e., redundant or trivial). This reverses the typical assumption that high-confidence examples are best, proposing instead that uncertainty signals from a weaker model can guide a stronger model toward more diverse and challenging data.
+
+Related Work: Existing data filtering methods for domain-specific models typically rely on heuristics (e.g., keyword matching, perplexity thresholds from a reference model) or supervised classifiers trained on human-curated data. Recent work on data selection for language models (e.g., D4, DSIR, and quality filtering) often uses a reference model to score data by likelihood or similarity to a target distribution. In contrast, this proposal uses predictive uncertainty (e.g., entropy) from a small domain expert model to dynamically weight data during training. This is distinct from curriculum learning (which orders data by difficulty) and from self-distillation (which uses the model's own predictions). The key novelty is using uncertainty as an explicit filter signal, where high uncertainty indicates data that is 'interesting' for the larger model to learn from, rather than noise. This is not a trivial extension because it requires a theoretical justification and empirical validation that uncertainty from a weaker model correlates with learning utility for a stronger model.
+
+Abstract: Data filtering is critical for training domain-specific models, as web-scale data contains vast amounts of irrelevant or low-quality content. Existing methods often rely on static quality scores or domain classifiers, which can miss nuanced, domain-relevant information. We propose a novel approach: use a small, pre-trained domain expert model to dynamically filter data during pretraining of a larger model. Specifically, we compute the predictive uncertainty (e.g., entropy of the output distribution) of the small model on each training example. Examples with high uncertainty are upweighted in the loss, while low-uncertainty examples are downweighted or discarded. The intuition is that high-uncertainty examples represent novel or challenging content that the small model cannot easily predict, thus providing valuable learning signal for the larger model. We validate this hypothesis on two domains: biomedical text (PubMed) and code generation (Python). We compare against baselines including random sampling, perplexity filtering, and domain classifier filtering. Results show that our method consistently improves downstream task performance (e.g., F1 on biomedical QA, pass@k on code generation) while using less total data. We also analyze the types of examples selected and find they are more diverse and contain rare but important patterns. Our work challenges the assumption that easy-to-predict data is best for training, offering a new perspective on data curation.
+
+Experiments: We conduct experiments on two domains: biomedical NLP and code generation.
+
+**Setup:**
+- Small expert model: For biomedical, a 125M parameter BERT-style model fine-tuned on PubMed abstracts. For code, a 125M parameter GPT-style model fine-tuned on a small corpus of high-quality Python code (e.g., from GitHub repos with high stars).
+- Large target model: For both domains, a 1.5B parameter decoder-only transformer (e.g., GPT-2 scale).
+- Data source: For biomedical, a random 10B token subset of the Pile (including PubMed). For code, a 10B token subset of The Stack (Python).
+
+**Algorithmic details:**
+During pretraining of the large model, for each batch, we first compute the small model's per-token entropy on each example. We then compute a weight for each example as w = sigmoid( (entropy - threshold) / temperature ), where threshold is the median entropy over a held-out set. The loss for each example is multiplied by w. We also experiment with a hard filter (discard examples below threshold). Threshold and temperature are hyperparameters tuned on a small validation set.
+
+**Baselines:**
+1. No filtering (random sampling from the same data source).
+2. Perplexity filtering: keep examples with perplexity below a threshold (using the small model).
+3. Domain classifier filtering: keep examples where a classifier (trained on a small domain corpus) assigns high domain probability.
+4. Data selection via DSIR (importance resampling).
+
+**Evaluation metrics:**
+- Biomedical: F1 on PubMedQA, BioASQ, and relation extraction (ChemProt). Also measure perplexity on a held-out biomedical test set.
+- Code: pass@k on HumanEval and MBPP, and perplexity on a held-out Python test set.
+- Additionally, we measure data efficiency (performance vs. number of tokens seen) and diversity of selected data (via n-gram overlap and topic modeling).
+
+**Statistical rigor:** Each experiment is run 3 times with different random seeds. We report mean and std. We perform ablation on threshold and temperature, and compare hard vs. soft weighting.
+
+Risk Factors and Limitations: 1. **Computational overhead**: Running a small model on every batch adds ~10-20% compute cost, though still feasible for an academic lab (small model is 125M vs 1.5B). 2. **Domain mismatch**: The small expert model may not generalize well to subdomains or new topics, potentially filtering out useful data. We mitigate by using a broad domain corpus for fine-tuning. 3. **Uncertainty calibration**: Small models may have poorly calibrated uncertainty. We will test with temperature scaling. 4. **Theoretical justification**: The hypothesis that high uncertainty correlates with learning utility may not hold universally; we provide empirical analysis. 5. **Hyperparameter sensitivity**: Threshold and temperature may need tuning per domain. We provide sensitivity analysis. 6. **Comparison to simpler baselines**: A simpler approach might just use the small model's loss as a filter; we compare directly to perplexity filtering to show uncertainty adds value.

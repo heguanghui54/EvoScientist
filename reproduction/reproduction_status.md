@@ -41,6 +41,7 @@ and paper-level experimental reproduction.
 | InternAgent queries 01-30 replacement baseline is complete | `internagent_queries01_30_smoke_report.json` records thirty real InternAgent QA outputs, import, 60 swapped DeepSeek judge records, aggregate table, and local audit completion for queries 01-30; q13/q29 are preserved as short degraded baseline outputs | Verified |
 | AI Scientist-v2 baseline probe is recorded | `ai_scientist_v2_baseline_probe.json` records an ideation-adapter replacement path and its paper-exact limitations | Verified |
 | AI Scientist-v2 ideation runbook is executable | `build_ai_scientist_v2_ideation_runbook.py` generates 30 topic files plus ideation/import/judge/audit steps | Verified |
+| AI Scientist-v2 queries 01-30 replacement baseline is complete | `ai_scientist_v2_queries01_30_smoke_report.json` records thirty real AI Scientist-v2 ideation outputs, import, 60 swapped DeepSeek judge records, aggregate table, and local audit completion; Semantic Scholar search was bounded and degraded under rate limits | Verified |
 | Hypogenic baseline probe is recorded | `hypogenic_baseline_probe.json` records a hosted Assistant/IdeaHub/Arena adapter path and its paper-exact limitations | Verified |
 | Novix baseline probe is recorded | `novix_baseline_probe.json` records a hosted UI/account adapter path and its paper-exact limitations | Verified |
 | K-Dense baseline probe is recorded | `k_dense_baseline_probe.json` records a hosted plus BYOK local Web/API adapter path and its paper-exact limitations | Verified |

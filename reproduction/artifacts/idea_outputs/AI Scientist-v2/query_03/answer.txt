@@ -1,0 +1,34 @@
+# Calibrating LLM Judges via Adversarial Conflict Resolution: A Self-Improving Evaluation Framework
+
+Short Hypothesis: Current LLM-based automated evaluators (e.g., GPT-4 as a judge) suffer from systematic biases (position bias, verbosity bias, self-enhancement bias) that cannot be eliminated via simple prompt engineering or fine-tuning on human preferences. We hypothesize that these biases can be exposed and corrected by forcing the evaluator LLM to resolve conflicting judgments between two different evaluator personas (e.g., a strict critic vs. a lenient reviewer) on the same candidate response. The resolution process—where the LLM must articulate why one judgment is more valid—acts as a self-supervised calibration signal, improving evaluation accuracy without external human labels. This is the best setting because it directly leverages the LLM's own reasoning to detect and correct its internal inconsistencies, rather than relying on static reference data.
+
+Related Work: Existing work on LLM evaluation bias (Zheng et al., 2023; Wang et al., 2023) identifies position and verbosity biases but offers only post-hoc correction or ensemble methods. 'LLM-as-a-judge' frameworks (e.g., MT-Bench, AlpacaEval) use a single evaluator, inheriting its biases. Self-improvement via self-critique (Madaan et al., 2023) focuses on generation, not evaluation. Our proposal differs by introducing a novel 'conflict resolution' step that forces the evaluator to reconcile two biased personas, turning bias into a learning signal. This is not a trivial extension because it requires the LLM to meta-evaluate its own evaluative processes, which is a form of recursive self-calibration unexplored in the evaluation literature.
+
+Abstract: Automated evaluation of LLM outputs using LLM judges (e.g., GPT-4) is pervasive but plagued by systematic biases: position bias (preferring first/last answers), verbosity bias (preferring longer responses), and self-enhancement bias (preferring outputs from the same model family). We propose Conflict Resolution Evaluation (CRE), a novel framework that improves evaluation accuracy by having the evaluator LLM resolve disagreements between two deliberately biased evaluator personas. Specifically, given a candidate response to a query, we first generate two conflicting evaluations: one from a 'strict' persona instructed to focus on factual precision, and one from a 'lenient' persona instructed to reward fluency and creativity. The evaluator LLM is then prompted to analyze the conflict, identify potential biases in each persona's judgment, and produce a final reconciled score with an explicit reasoning trace. This process forces the LLM to engage in meta-cognitive calibration, reducing bias without any human feedback. We conduct experiments on the MT-Bench and Chatbot Arena datasets, comparing CRE against standard single-judge evaluation, multi-judge voting, and post-hoc debiasing methods. Metrics include agreement with human judgments (Spearman correlation, Cohen's kappa), bias reduction (measured via controlled perturbation tests), and computational cost. We hypothesize CRE will achieve 5-10% higher human agreement while being more robust to adversarial prompt manipulations. The framework is simple, training-free, and applicable to any instruction-tuned LLM evaluator.
+
+Experiments: We will test the hypothesis using the following experimental plan:
+
+1. **Datasets**: MT-Bench (80 multi-turn questions, human preference labels) and Chatbot Arena (33K human preference comparisons). We will sample 1K comparisons for evaluation.
+
+2. **Baselines**: (a) Single-judge evaluation (GPT-4, default prompt). (b) Multi-judge voting (3 independent GPT-4 judges, majority vote). (c) Post-hoc debiasing (position-swap averaging). (d) Self-critique (judge writes a critique, then re-evaluates).
+
+3. **CRE Implementation**: For each (query, response_A, response_B) pair, we generate two persona prompts:
+   - Strict Persona: 'You are a strict, detail-oriented evaluator. Focus on factual accuracy and logical consistency. Penalize vague or unsubstantiated claims.'
+   - Lenient Persona: 'You are a lenient, creativity-appreciating evaluator. Focus on fluency, engagement, and originality. Overlook minor inaccuracies.'
+   Each persona produces a preference (A>B, B>A, or tie) and a confidence score (1-5). Then a meta-prompt is given: 'Two evaluators disagree on which response is better. Analyze their reasoning. Identify potential biases (e.g., strictness vs. leniency). Provide a final reconciled judgment with explanation.' The final judgment is compared to human labels.
+
+4. **Evaluation Metrics**:
+   - Agreement with human: Spearman rank correlation, Cohen's kappa (for pairwise preferences).
+   - Bias measurement: For position bias, we swap the order of A and B and measure flip rate (lower is better). For verbosity bias, we artificially lengthen one response (adding filler sentences) and measure how often the judge favors the longer one. For self-enhancement bias, we compare evaluations when the judge is from the same family as the candidate (e.g., GPT-4 judging GPT-4 outputs) vs. different.
+   - Computational cost: API calls and token usage per evaluation.
+
+5. **Ablations**: (a) Varying persona strength (e.g., more extreme strict/lenient instructions). (b) Using three personas instead of two. (c) Replacing the meta-prompt with a simple 'average the scores' baseline.
+
+6. **Expected Outcome**: CRE will show higher human agreement (5-10% improvement in Spearman) and lower bias metrics (20-30% reduction in flip rate) compared to all baselines. The reasoning traces will reveal that the LLM explicitly corrects for identified biases.
+
+Risk Factors and Limitations: 1. The meta-prompt may introduce new biases (e.g., over-correction toward the middle). We will monitor for this by analyzing the distribution of reconciled judgments.
+2. The framework doubles API costs (three calls per evaluation instead of one). We will report cost-benefit trade-off.
+3. The personas may not be sufficiently differentiated; we will test multiple persona prompts.
+4. The approach may not generalize to non-English languages or non-chat tasks. We limit claims to English conversational evaluation.
+5. If the LLM cannot effectively meta-analyze its own biases (e.g., it simply averages the two scores), the method degrades to a simple ensemble. We will test for this via qualitative analysis of reasoning traces.
+6. The method assumes the evaluator LLM is capable of introspection; weaker models (e.g., LLaMA-13B) may fail. We will test with GPT-4 and Claude-3.

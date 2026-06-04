@@ -63,7 +63,9 @@ def main() -> None:
         "build_internagent_smoke_report.py",
         "probe_ai_scientist_v2_baseline.py",
         "build_ai_scientist_v2_ideation_runbook.py",
+        "run_ai_scientist_v2_ideation_baseline.py",
         "convert_ai_scientist_v2_ideation_outputs.py",
+        "build_ai_scientist_v2_smoke_report.py",
         "probe_hypogenic_baseline.py",
         "probe_novix_baseline.py",
         "probe_k_dense_baseline.py",
@@ -365,6 +367,41 @@ def main() -> None:
     ).read_text(encoding="utf-8")
     assert "ai_scientist_v2_ideation_import_template.jsonl" in ai_scientist_converter_text
     assert "query_*.json" in ai_scientist_converter_text
+    ai_scientist_runner_text = (
+        ROOT / "run_ai_scientist_v2_ideation_baseline.py"
+    ).read_text(encoding="utf-8")
+    assert "deepseek-coder-v2-0724" in ai_scientist_runner_text
+    assert "bounded replacement-baseline runner attempted a Semantic Scholar" in ai_scientist_runner_text
+    ai_scientist_smoke_json_path = ROOT / "ai_scientist_v2_queries01_30_smoke_report.json"
+    ai_scientist_smoke_md_path = ROOT / "ai_scientist_v2_queries01_30_smoke_report.md"
+    assert ai_scientist_smoke_json_path.is_file(), "missing AI Scientist-v2 smoke JSON"
+    assert ai_scientist_smoke_md_path.is_file(), "missing AI Scientist-v2 smoke markdown"
+    ai_scientist_smoke = json.loads(ai_scientist_smoke_json_path.read_text(encoding="utf-8"))
+    assert ai_scientist_smoke["baseline"] == "AI Scientist-v2"
+    assert ai_scientist_smoke["query_ids"] == list(range(1, 31))
+    assert ai_scientist_smoke["paper_exact"] is False
+    assert ai_scientist_smoke["status"] == "complete"
+    assert ai_scientist_smoke["min_chars"] == 1000
+    assert ai_scientist_smoke["judge_records"] == 60
+    for query_id in range(1, 31):
+        assert (
+            ROOT / "artifacts" / "idea_outputs" / "AI Scientist-v2" / f"query_{query_id:02d}" / "answer.txt"
+        ).is_file()
+    assert (
+        ROOT / "artifacts" / "judge_inputs" / "evosci_vs_ai_scientist_v2.jsonl"
+    ).is_file()
+    assert (
+        ROOT / "artifacts" / "judge_outputs" / "evosci_vs_ai_scientist_v2_deepseek.jsonl"
+    ).is_file()
+    assert (
+        ROOT / "artifacts" / "tables" / "evosci_vs_ai_scientist_v2_deepseek.json"
+    ).is_file()
+    ai_scientist_dims = ai_scientist_smoke["aggregate"]["baselines"]["AI Scientist-v2"]["dimensions"]
+    assert set(ai_scientist_dims) == {"Clarity", "Novelty", "Feasibility", "Relevance"}
+    assert ai_scientist_dims["Clarity"]["n"] == 60
+    assert "AI Scientist-v2 queries01_30 Smoke Report" in ai_scientist_smoke_md_path.read_text(
+        encoding="utf-8"
+    )
     virtual_scientist_probe_json_path = ROOT / "virtual_scientist_baseline_probe.json"
     virtual_scientist_probe_md_path = ROOT / "virtual_scientist_baseline_probe.md"
     assert virtual_scientist_probe_json_path.is_file(), "missing Virtual Scientist probe JSON"
@@ -523,9 +560,6 @@ def main() -> None:
     assert "Paper Reproduction Action Plan" in action_plan_md
     assert "gemini-3-flash" in action_plan_md
     assert "virtual_scientist_baseline_probe.json" in action_plan_md
-    assert "ai_scientist_v2_baseline_probe.json" in action_plan_md
-    assert "build_ai_scientist_v2_ideation_runbook.py" in action_plan_md
-    assert "convert_ai_scientist_v2_ideation_outputs.py" in action_plan_md
     assert "hypogenic_baseline_probe.json" in action_plan_md
     assert "novix_baseline_probe.json" in action_plan_md
     assert "k_dense_baseline_probe.json" in action_plan_md
@@ -623,6 +657,7 @@ def main() -> None:
         "InternAgent queries 01-30 replacement baseline is complete",
         "AI Scientist-v2 baseline probe is recorded",
         "AI Scientist-v2 ideation runbook is executable",
+        "AI Scientist-v2 queries 01-30 replacement baseline is complete",
         "Hypogenic baseline probe is recorded",
         "Novix baseline probe is recorded",
         "K-Dense baseline probe is recorded",

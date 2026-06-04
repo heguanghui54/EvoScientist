@@ -2,7 +2,7 @@
   "date": "2026-06-04",
   "paper": "arXiv:2603.08127",
   "status": "incomplete",
-  "action_count": 10,
+  "action_count": 9,
   "actions": [
     {
       "component": "table1_llm_idea_generation",
@@ -44,29 +44,6 @@
       ],
       "probe": "reproduction/ai_researcher_baseline_probe.json",
       "note": "Current probe found the public AI-Researcher runner is benchmark-instance based, not a drop-in runner for the 30 recovered EvoScientist queries."
-    },
-    {
-      "component": "table1_llm_idea_generation",
-      "kind": "baseline_output_import_or_generation",
-      "system": "AI Scientist-v2",
-      "required_evidence": "30 answer.txt files under reproduction/artifacts/idea_outputs/AI Scientist-v2/",
-      "paper_exact": true,
-      "command_templates": [
-        ".venv/bin/python reproduction/import_baseline_outputs.py --system-name 'AI Scientist-v2' --source {source_jsonl} --source-format jsonl --output-root reproduction/artifacts/idea_outputs --strict",
-        ".venv/bin/python reproduction/import_baseline_outputs.py --system-name 'AI Scientist-v2' --source {source_dir} --source-format directory --output-root reproduction/artifacts/idea_outputs --strict",
-        ".venv/bin/python reproduction/build_pairwise_judge_inputs.py --systems-root reproduction/artifacts/idea_outputs --baseline 'AI Scientist-v2' --output reproduction/artifacts/judge_inputs/evosci_vs_ai_scientist_v2.jsonl",
-        ".venv/bin/python reproduction/run_llm_judge.py --provider deepseek --model deepseek-v4-flash --input reproduction/artifacts/judge_inputs/evosci_vs_ai_scientist_v2.jsonl --output reproduction/artifacts/judge_outputs/evosci_vs_ai_scientist_v2_deepseek.jsonl --resume",
-        ".venv/bin/python reproduction/aggregate_judge_results.py --input reproduction/artifacts/judge_outputs/evosci_vs_ai_scientist_v2_deepseek.jsonl --output-csv reproduction/artifacts/tables/evosci_vs_ai_scientist_v2_deepseek.csv --output-json reproduction/artifacts/tables/evosci_vs_ai_scientist_v2_deepseek.json",
-        ".venv/bin/python reproduction/audit_reproduction_artifacts.py --baseline 'AI Scientist-v2' --judge-inputs reproduction/artifacts/judge_inputs/evosci_vs_ai_scientist_v2.jsonl --judge-outputs reproduction/artifacts/judge_outputs/evosci_vs_ai_scientist_v2_deepseek.jsonl --aggregate-json reproduction/artifacts/tables/evosci_vs_ai_scientist_v2_deepseek.json"
-      ],
-      "probe": "reproduction/ai_scientist_v2_baseline_probe.json",
-      "note": "Current probe found AI Scientist-v2 has an ideation CLI suitable for a replacement baseline adapter, but it is not paper-exact raw Table 1 evidence.",
-      "replacement_run_template": [
-        ".venv/bin/python reproduction/build_ai_scientist_v2_ideation_runbook.py",
-        "bash /path/to/EvoScientist/reproduction/ai_scientist_v2_ideation_runbook/run_ai_scientist_v2_ideation.sh",
-        ".venv/bin/python reproduction/convert_ai_scientist_v2_ideation_outputs.py",
-        ".venv/bin/python reproduction/import_baseline_outputs.py --system-name 'AI Scientist-v2' --source reproduction/ai_scientist_v2_ideation_import_template.jsonl --source-format jsonl --output-root reproduction/artifacts/idea_outputs --strict"
-      ]
     },
     {
       "component": "table1_llm_idea_generation",

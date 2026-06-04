@@ -1,0 +1,5 @@
+baseline,dimension,n,win,tie,lose,win_pct,tie_pct,lose_pct,gap
+AI Scientist-v2,Clarity,60,32,3,25,53.33,5.0,41.67,11.66
+AI Scientist-v2,Novelty,60,12,2,46,20.0,3.33,76.67,-56.67
+AI Scientist-v2,Feasibility,60,31,4,25,51.67,6.67,41.67,10.0
+AI Scientist-v2,Relevance,60,18,31,11,30.0,51.67,18.33,11.67

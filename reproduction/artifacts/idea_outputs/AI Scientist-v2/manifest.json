@@ -1,0 +1,165 @@
+{
+  "runner": "import_baseline_outputs.py",
+  "system_name": "AI Scientist-v2",
+  "query_count": 30,
+  "min_chars": 1000,
+  "outputs": [
+    {
+      "id": 1,
+      "status": "ok",
+      "dir": "reproduction/artifacts/idea_outputs/AI Scientist-v2/query_01"
+    },
+    {
+      "id": 2,
+      "status": "ok",
+      "dir": "reproduction/artifacts/idea_outputs/AI Scientist-v2/query_02"
+    },
+    {
+      "id": 3,
+      "status": "ok",
+      "dir": "reproduction/artifacts/idea_outputs/AI Scientist-v2/query_03"
+    },
+    {
+      "id": 4,
+      "status": "ok",
+      "dir": "reproduction/artifacts/idea_outputs/AI Scientist-v2/query_04"
+    },
+    {
+      "id": 5,
+      "status": "ok",
+      "dir": "reproduction/artifacts/idea_outputs/AI Scientist-v2/query_05"
+    },
+    {
+      "id": 6,
+      "status": "ok",
+      "dir": "reproduction/artifacts/idea_outputs/AI Scientist-v2/query_06"
+    },
+    {
+      "id": 7,
+      "status": "ok",
+      "dir": "reproduction/artifacts/idea_outputs/AI Scientist-v2/query_07"
+    },
+    {
+      "id": 8,
+      "status": "ok",
+      "dir": "reproduction/artifacts/idea_outputs/AI Scientist-v2/query_08"
+    },
+    {
+      "id": 9,
+      "status": "ok",
+      "dir": "reproduction/artifacts/idea_outputs/AI Scientist-v2/query_09"
+    },
+    {
+      "id": 10,
+      "status": "ok",
+      "dir": "reproduction/artifacts/idea_outputs/AI Scientist-v2/query_10"
+    },
+    {
+      "id": 11,
+      "status": "ok",
+      "dir": "reproduction/artifacts/idea_outputs/AI Scientist-v2/query_11"
+    },
+    {
+      "id": 12,
+      "status": "ok",
+      "dir": "reproduction/artifacts/idea_outputs/AI Scientist-v2/query_12"
+    },
+    {
+      "id": 13,
+      "status": "ok",
+      "dir": "reproduction/artifacts/idea_outputs/AI Scientist-v2/query_13"
+    },
+    {
+      "id": 14,
+      "status": "ok",
+      "dir": "reproduction/artifacts/idea_outputs/AI Scientist-v2/query_14"
+    },
+    {
+      "id": 15,
+      "status": "ok",
+      "dir": "reproduction/artifacts/idea_outputs/AI Scientist-v2/query_15"
+    },
+    {
+      "id": 16,
+      "status": "ok",
+      "dir": "reproduction/artifacts/idea_outputs/AI Scientist-v2/query_16"
+    },
+    {
+      "id": 17,
+      "status": "ok",
+      "dir": "reproduction/artifacts/idea_outputs/AI Scientist-v2/query_17"
+    },
+    {
+      "id": 18,
+      "status": "ok",
+      "dir": "reproduction/artifacts/idea_outputs/AI Scientist-v2/query_18"
+    },
+    {
+      "id": 19,
+      "status": "ok",
+      "dir": "reproduction/artifacts/idea_outputs/AI Scientist-v2/query_19"
+    },
+    {
+      "id": 20,
+      "status": "ok",
+      "dir": "reproduction/artifacts/idea_outputs/AI Scientist-v2/query_20"
+    },
+    {
+      "id": 21,
+      "status": "ok",
+      "dir": "reproduction/artifacts/idea_outputs/AI Scientist-v2/query_21"
+    },
+    {
+      "id": 22,
+      "status": "ok",
+      "dir": "reproduction/artifacts/idea_outputs/AI Scientist-v2/query_22"
+    },
+    {
+      "id": 23,
+      "status": "ok",
+      "dir": "reproduction/artifacts/idea_outputs/AI Scientist-v2/query_23"
+    },
+    {
+      "id": 24,
+      "status": "ok",
+      "dir": "reproduction/artifacts/idea_outputs/AI Scientist-v2/query_24"
+    },
+    {
+      "id": 25,
+      "status": "ok",
+      "dir": "reproduction/artifacts/idea_outputs/AI Scientist-v2/query_25"
+    },
+    {
+      "id": 26,
+      "status": "ok",
+      "dir": "reproduction/artifacts/idea_outputs/AI Scientist-v2/query_26"
+    },
+    {
+      "id": 27,
+      "status": "ok",
+      "dir": "reproduction/artifacts/idea_outputs/AI Scientist-v2/query_27"
+    },
+    {
+      "id": 28,
+      "status": "ok",
+      "dir": "reproduction/artifacts/idea_outputs/AI Scientist-v2/query_28"
+    },
+    {
+      "id": 29,
+      "status": "ok",
+      "dir": "reproduction/artifacts/idea_outputs/AI Scientist-v2/query_29"
+    },
+    {
+      "id": 30,
+      "status": "ok",
+      "dir": "reproduction/artifacts/idea_outputs/AI Scientist-v2/query_30"
+    }
+  ],
+  "summary": {
+    "written": 30,
+    "skipped": 0,
+    "missing_query_ids": [],
+    "too_short": [],
+    "complete": true
+  }
+}

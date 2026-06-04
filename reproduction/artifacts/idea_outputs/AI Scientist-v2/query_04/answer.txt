@@ -1,0 +1,36 @@
+# Uncertainty-Driven Adaptive Autonomy for AI Agents in Clinical Triage
+
+Short Hypothesis: An AI agent that dynamically adjusts its level of autonomy (fully autonomous, recommend with explanation, or defer to human) based on real-time calibrated epistemic uncertainty will achieve higher overall clinical utility—balancing accuracy, timeliness, and human workload—compared to fixed-level autonomy or simple confidence-threshold approaches. This is best investigated in clinical triage because it involves sequential decisions under time pressure where over-reliance on AI is risky but complete human oversight is inefficient.
+
+Related Work: Existing work on human-AI collaboration in healthcare (e.g., the TRIAD framework, Li et al. 2025) emphasizes calibrated uncertainty and team-level metrics but does not propose an adaptive autonomy mechanism. Adaptive autonomy has been explored in military (STAR-SKY testbed, Paul et al. 2026) and cybersecurity (Yaich et al. 2025) but not healthcare. Simple confidence-threshold deferral (e.g., Madras et al. 2018, 'Predict Responsibly') uses fixed cutoffs and does not learn the deferral policy online. Our proposal uniquely combines: (1) epistemic uncertainty estimation via deep ensembles, (2) a learned deferral policy via contextual bandits that optimizes a multi-objective reward (accuracy, timeliness, workload), and (3) a three-level autonomy spectrum tailored to clinical workflows. This is not a trivial extension because it requires joint learning of uncertainty estimation and adaptive policy in a sequential decision-making setting.
+
+Abstract: AI agents hold promise for reducing clinician workload in clinical triage, but their deployment risks over-reliance or under-utilization. We propose Uncertainty-Driven Adaptive Autonomy (UDAA), a framework where an AI agent dynamically adjusts its autonomy level based on calibrated epistemic uncertainty. The agent operates in three modes: (1) fully autonomous action, (2) recommendation with explanation for human review, and (3) deferral to human. A deep ensemble estimates prediction uncertainty, and a contextual bandit learns an optimal deferral policy that maximizes a reward combining accuracy, timeliness, and a penalty for excessive human workload. We evaluate UDAA on a simulated triage task using the MIMIC-IV dataset, comparing against fixed autonomy (always autonomous, always recommend, always defer) and a confidence-threshold baseline. Metrics include accuracy, average response time, human workload (fraction of cases requiring human input), and a composite clinical utility score. We hypothesize that UDAA will achieve superior utility by autonomously handling low-uncertainty cases and escalating uncertain ones, while the learned policy adapts to individual clinician preferences and workload. This work provides a principled path toward safe, efficient human-AI teams in healthcare.
+
+Experiments: We will conduct experiments on a clinical triage simulation using the MIMIC-IV Emergency Department dataset. Task: Predict whether a patient requires immediate critical care (binary) based on vitals and history. Setup: Simulate an environment where an AI agent makes sequential decisions; a human clinician can intervene at a cost (time delay + workload penalty).
+
+**Baselines:**
+1. Fixed Fully Autonomous: Agent always makes final decision.
+2. Fixed Recommend: Agent always outputs a recommendation; human always reviews.
+3. Fixed Defer: Agent always defers to human.
+4. Confidence Threshold: Agent defers if max softmax probability < 0.8 (tuned on validation).
+
+**UDAA Implementation:**
+- Uncertainty Estimation: Deep ensemble of 5 neural networks. Epistemic uncertainty = variance of predictions across ensemble.
+- Autonomy Levels: Level 1 (Autonomous) if uncertainty < low_threshold; Level 2 (Recommend) if uncertainty between low and high; Level 3 (Defer) if uncertainty > high_threshold.
+- Deferral Policy Learning: Contextual bandit (e.g., LinUCB) with state = patient features + uncertainty estimate + current clinician workload. Action = autonomy level. Reward = +1 for correct decision, -1 for incorrect, -0.1 for each human review (workload cost), -0.05 for time delay (if Level 2 or 3). The bandit is trained online over simulated episodes.
+
+**Evaluation Metrics:**
+- Accuracy
+- Average time per case
+- Human workload (proportion of cases requiring human input)
+- Clinical Utility Score = Accuracy - alpha * Workload - beta * Time, where alpha and beta are tuned via stakeholder input (we use alpha=0.2, beta=0.1 as default).
+- Ablation study: Compare with fixed uncertainty thresholds (no bandit learning) to isolate benefit of adaptive policy.
+
+**Statistical Analysis:** 5-fold cross-validation, report mean and 95% CI. We will test whether UDAA significantly outperforms baselines via paired t-test (p<0.05).
+
+Risk Factors and Limitations: 1. **Simulation realism**: The simulated clinician may not capture real human behavior (e.g., trust dynamics, fatigue). Follow-up user studies needed.
+2. **Reward specification**: The composite reward may not align with true clinical priorities; mis-specification could lead to suboptimal policies. We mitigate by testing multiple weight settings.
+3. **Uncertainty calibration**: Deep ensembles may not be well-calibrated on out-of-distribution cases; we will monitor calibration error.
+4. **Generalizability**: Results on MIMIC-IV triage may not transfer to other clinical domains (e.g., radiology, surgery).
+5. **Safety**: The agent might learn to defer too often, defeating purpose, or too rarely, risking errors. We impose hard safety constraints (e.g., always defer if uncertainty > 0.9).
+6. **Ethical concerns**: Adaptive autonomy could shift responsibility ambiguously; we discuss human-in-the-loop oversight and transparency.
