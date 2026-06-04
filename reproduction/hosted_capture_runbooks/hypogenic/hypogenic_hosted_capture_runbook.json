@@ -1,0 +1,240 @@
+{
+  "date": "2026-06-04",
+  "baseline": "Hypogenic",
+  "mode": "hosted_assistant_capture",
+  "paper_exact": false,
+  "source_probe": "reproduction/hypogenic_baseline_probe.json",
+  "hosted_url": "https://hypogenic.ai/chat",
+  "query_count": 30,
+  "prompt_dir": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/hosted_capture_runbooks/hypogenic/query_prompts",
+  "capture_manifest_dir": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/hosted_capture_runbooks/hypogenic/capture_manifests",
+  "source_dir": "$HOME/research/hypogenic/outputs/evoscientist_table1_queries/hypogenic",
+  "capture_steps": [
+    {
+      "query_id": 1,
+      "topic": "Machine translation",
+      "prompt_path": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/hosted_capture_runbooks/hypogenic/query_prompts/query_01.md",
+      "capture_manifest_path": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/hosted_capture_runbooks/hypogenic/capture_manifests/query_01.json",
+      "expected_answer_path": "$HOME/research/hypogenic/outputs/evoscientist_table1_queries/hypogenic/query_01.md"
+    },
+    {
+      "query_id": 2,
+      "topic": "Software engineering",
+      "prompt_path": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/hosted_capture_runbooks/hypogenic/query_prompts/query_02.md",
+      "capture_manifest_path": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/hosted_capture_runbooks/hypogenic/capture_manifests/query_02.json",
+      "expected_answer_path": "$HOME/research/hypogenic/outputs/evoscientist_table1_queries/hypogenic/query_02.md"
+    },
+    {
+      "query_id": 3,
+      "topic": "LLM evaluation",
+      "prompt_path": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/hosted_capture_runbooks/hypogenic/query_prompts/query_03.md",
+      "capture_manifest_path": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/hosted_capture_runbooks/hypogenic/capture_manifests/query_03.json",
+      "expected_answer_path": "$HOME/research/hypogenic/outputs/evoscientist_table1_queries/hypogenic/query_03.md"
+    },
+    {
+      "query_id": 4,
+      "topic": "Healthcare agents",
+      "prompt_path": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/hosted_capture_runbooks/hypogenic/query_prompts/query_04.md",
+      "capture_manifest_path": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/hosted_capture_runbooks/hypogenic/capture_manifests/query_04.json",
+      "expected_answer_path": "$HOME/research/hypogenic/outputs/evoscientist_table1_queries/hypogenic/query_04.md"
+    },
+    {
+      "query_id": 5,
+      "topic": "Literature review automation",
+      "prompt_path": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/hosted_capture_runbooks/hypogenic/query_prompts/query_05.md",
+      "capture_manifest_path": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/hosted_capture_runbooks/hypogenic/capture_manifests/query_05.json",
+      "expected_answer_path": "$HOME/research/hypogenic/outputs/evoscientist_table1_queries/hypogenic/query_05.md"
+    },
+    {
+      "query_id": 6,
+      "topic": "Speech recognition",
+      "prompt_path": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/hosted_capture_runbooks/hypogenic/query_prompts/query_06.md",
+      "capture_manifest_path": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/hosted_capture_runbooks/hypogenic/capture_manifests/query_06.json",
+      "expected_answer_path": "$HOME/research/hypogenic/outputs/evoscientist_table1_queries/hypogenic/query_06.md"
+    },
+    {
+      "query_id": 7,
+      "topic": "Model efficiency",
+      "prompt_path": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/hosted_capture_runbooks/hypogenic/query_prompts/query_07.md",
+      "capture_manifest_path": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/hosted_capture_runbooks/hypogenic/capture_manifests/query_07.json",
+      "expected_answer_path": "$HOME/research/hypogenic/outputs/evoscientist_table1_queries/hypogenic/query_07.md"
+    },
+    {
+      "query_id": 8,
+      "topic": "AI agents",
+      "prompt_path": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/hosted_capture_runbooks/hypogenic/query_prompts/query_08.md",
+      "capture_manifest_path": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/hosted_capture_runbooks/hypogenic/capture_manifests/query_08.json",
+      "expected_answer_path": "$HOME/research/hypogenic/outputs/evoscientist_table1_queries/hypogenic/query_08.md"
+    },
+    {
+      "query_id": 9,
+      "topic": "Model deployment",
+      "prompt_path": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/hosted_capture_runbooks/hypogenic/query_prompts/query_09.md",
+      "capture_manifest_path": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/hosted_capture_runbooks/hypogenic/capture_manifests/query_09.json",
+      "expected_answer_path": "$HOME/research/hypogenic/outputs/evoscientist_table1_queries/hypogenic/query_09.md"
+    },
+    {
+      "query_id": 10,
+      "topic": "Text-to-SQL",
+      "prompt_path": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/hosted_capture_runbooks/hypogenic/query_prompts/query_10.md",
+      "capture_manifest_path": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/hosted_capture_runbooks/hypogenic/capture_manifests/query_10.json",
+      "expected_answer_path": "$HOME/research/hypogenic/outputs/evoscientist_table1_queries/hypogenic/query_10.md"
+    },
+    {
+      "query_id": 11,
+      "topic": "LLM capabilities",
+      "prompt_path": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/hosted_capture_runbooks/hypogenic/query_prompts/query_11.md",
+      "capture_manifest_path": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/hosted_capture_runbooks/hypogenic/capture_manifests/query_11.json",
+      "expected_answer_path": "$HOME/research/hypogenic/outputs/evoscientist_table1_queries/hypogenic/query_11.md"
+    },
+    {
+      "query_id": 12,
+      "topic": "Factual consistency",
+      "prompt_path": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/hosted_capture_runbooks/hypogenic/query_prompts/query_12.md",
+      "capture_manifest_path": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/hosted_capture_runbooks/hypogenic/capture_manifests/query_12.json",
+      "expected_answer_path": "$HOME/research/hypogenic/outputs/evoscientist_table1_queries/hypogenic/query_12.md"
+    },
+    {
+      "query_id": 13,
+      "topic": "Data synthesis",
+      "prompt_path": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/hosted_capture_runbooks/hypogenic/query_prompts/query_13.md",
+      "capture_manifest_path": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/hosted_capture_runbooks/hypogenic/capture_manifests/query_13.json",
+      "expected_answer_path": "$HOME/research/hypogenic/outputs/evoscientist_table1_queries/hypogenic/query_13.md"
+    },
+    {
+      "query_id": 14,
+      "topic": "Inference efficiency",
+      "prompt_path": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/hosted_capture_runbooks/hypogenic/query_prompts/query_14.md",
+      "capture_manifest_path": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/hosted_capture_runbooks/hypogenic/capture_manifests/query_14.json",
+      "expected_answer_path": "$HOME/research/hypogenic/outputs/evoscientist_table1_queries/hypogenic/query_14.md"
+    },
+    {
+      "query_id": 15,
+      "topic": "Machine translation",
+      "prompt_path": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/hosted_capture_runbooks/hypogenic/query_prompts/query_15.md",
+      "capture_manifest_path": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/hosted_capture_runbooks/hypogenic/capture_manifests/query_15.json",
+      "expected_answer_path": "$HOME/research/hypogenic/outputs/evoscientist_table1_queries/hypogenic/query_15.md"
+    },
+    {
+      "query_id": 16,
+      "topic": "Knowledge injection",
+      "prompt_path": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/hosted_capture_runbooks/hypogenic/query_prompts/query_16.md",
+      "capture_manifest_path": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/hosted_capture_runbooks/hypogenic/capture_manifests/query_16.json",
+      "expected_answer_path": "$HOME/research/hypogenic/outputs/evoscientist_table1_queries/hypogenic/query_16.md"
+    },
+    {
+      "query_id": 17,
+      "topic": "Information extraction",
+      "prompt_path": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/hosted_capture_runbooks/hypogenic/query_prompts/query_17.md",
+      "capture_manifest_path": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/hosted_capture_runbooks/hypogenic/capture_manifests/query_17.json",
+      "expected_answer_path": "$HOME/research/hypogenic/outputs/evoscientist_table1_queries/hypogenic/query_17.md"
+    },
+    {
+      "query_id": 18,
+      "topic": "UX evaluation",
+      "prompt_path": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/hosted_capture_runbooks/hypogenic/query_prompts/query_18.md",
+      "capture_manifest_path": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/hosted_capture_runbooks/hypogenic/capture_manifests/query_18.json",
+      "expected_answer_path": "$HOME/research/hypogenic/outputs/evoscientist_table1_queries/hypogenic/query_18.md"
+    },
+    {
+      "query_id": 19,
+      "topic": "Evaluation leaderboards",
+      "prompt_path": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/hosted_capture_runbooks/hypogenic/query_prompts/query_19.md",
+      "capture_manifest_path": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/hosted_capture_runbooks/hypogenic/capture_manifests/query_19.json",
+      "expected_answer_path": "$HOME/research/hypogenic/outputs/evoscientist_table1_queries/hypogenic/query_19.md"
+    },
+    {
+      "query_id": 20,
+      "topic": "Text generation",
+      "prompt_path": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/hosted_capture_runbooks/hypogenic/query_prompts/query_20.md",
+      "capture_manifest_path": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/hosted_capture_runbooks/hypogenic/capture_manifests/query_20.json",
+      "expected_answer_path": "$HOME/research/hypogenic/outputs/evoscientist_table1_queries/hypogenic/query_20.md"
+    },
+    {
+      "query_id": 21,
+      "topic": "Content detection",
+      "prompt_path": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/hosted_capture_runbooks/hypogenic/query_prompts/query_21.md",
+      "capture_manifest_path": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/hosted_capture_runbooks/hypogenic/capture_manifests/query_21.json",
+      "expected_answer_path": "$HOME/research/hypogenic/outputs/evoscientist_table1_queries/hypogenic/query_21.md"
+    },
+    {
+      "query_id": 22,
+      "topic": "Code LLM security",
+      "prompt_path": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/hosted_capture_runbooks/hypogenic/query_prompts/query_22.md",
+      "capture_manifest_path": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/hosted_capture_runbooks/hypogenic/capture_manifests/query_22.json",
+      "expected_answer_path": "$HOME/research/hypogenic/outputs/evoscientist_table1_queries/hypogenic/query_22.md"
+    },
+    {
+      "query_id": 23,
+      "topic": "Code LLM evaluation",
+      "prompt_path": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/hosted_capture_runbooks/hypogenic/query_prompts/query_23.md",
+      "capture_manifest_path": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/hosted_capture_runbooks/hypogenic/capture_manifests/query_23.json",
+      "expected_answer_path": "$HOME/research/hypogenic/outputs/evoscientist_table1_queries/hypogenic/query_23.md"
+    },
+    {
+      "query_id": 24,
+      "topic": "RAG",
+      "prompt_path": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/hosted_capture_runbooks/hypogenic/query_prompts/query_24.md",
+      "capture_manifest_path": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/hosted_capture_runbooks/hypogenic/capture_manifests/query_24.json",
+      "expected_answer_path": "$HOME/research/hypogenic/outputs/evoscientist_table1_queries/hypogenic/query_24.md"
+    },
+    {
+      "query_id": 25,
+      "topic": "Multi-source reasoning",
+      "prompt_path": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/hosted_capture_runbooks/hypogenic/query_prompts/query_25.md",
+      "capture_manifest_path": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/hosted_capture_runbooks/hypogenic/capture_manifests/query_25.json",
+      "expected_answer_path": "$HOME/research/hypogenic/outputs/evoscientist_table1_queries/hypogenic/query_25.md"
+    },
+    {
+      "query_id": 26,
+      "topic": "Data filtering",
+      "prompt_path": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/hosted_capture_runbooks/hypogenic/query_prompts/query_26.md",
+      "capture_manifest_path": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/hosted_capture_runbooks/hypogenic/capture_manifests/query_26.json",
+      "expected_answer_path": "$HOME/research/hypogenic/outputs/evoscientist_table1_queries/hypogenic/query_26.md"
+    },
+    {
+      "query_id": 27,
+      "topic": "Long-context understanding",
+      "prompt_path": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/hosted_capture_runbooks/hypogenic/query_prompts/query_27.md",
+      "capture_manifest_path": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/hosted_capture_runbooks/hypogenic/capture_manifests/query_27.json",
+      "expected_answer_path": "$HOME/research/hypogenic/outputs/evoscientist_table1_queries/hypogenic/query_27.md"
+    },
+    {
+      "query_id": 28,
+      "topic": "Alignment",
+      "prompt_path": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/hosted_capture_runbooks/hypogenic/query_prompts/query_28.md",
+      "capture_manifest_path": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/hosted_capture_runbooks/hypogenic/capture_manifests/query_28.json",
+      "expected_answer_path": "$HOME/research/hypogenic/outputs/evoscientist_table1_queries/hypogenic/query_28.md"
+    },
+    {
+      "query_id": 29,
+      "topic": "Alignment",
+      "prompt_path": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/hosted_capture_runbooks/hypogenic/query_prompts/query_29.md",
+      "capture_manifest_path": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/hosted_capture_runbooks/hypogenic/capture_manifests/query_29.json",
+      "expected_answer_path": "$HOME/research/hypogenic/outputs/evoscientist_table1_queries/hypogenic/query_29.md"
+    },
+    {
+      "query_id": 30,
+      "topic": "Audio foundation models",
+      "prompt_path": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/hosted_capture_runbooks/hypogenic/query_prompts/query_30.md",
+      "capture_manifest_path": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/hosted_capture_runbooks/hypogenic/capture_manifests/query_30.json",
+      "expected_answer_path": "$HOME/research/hypogenic/outputs/evoscientist_table1_queries/hypogenic/query_30.md"
+    }
+  ],
+  "access_gate": "reproduction/hypogenic_hosted_capture_gate.json",
+  "capture_protocol": [
+    "Use one fresh hosted session per recovered query.",
+    "Record account/profile state, hosted session URL or task id, visible model/agent label, and capture time.",
+    "Save only the final assistant answer to query_XX.md; save metadata in capture_manifests/query_XX.json.",
+    "Do not mix generated repository examples with Table 1 answers.",
+    "After all 30 answers are present, import and judge through the shared swapped pairwise pipeline."
+  ],
+  "import_command": ".venv/bin/python reproduction/import_baseline_outputs.py --system-name Hypogenic --source $HOME/research/hypogenic/outputs/evoscientist_table1_queries/hypogenic --source-format directory --output-root reproduction/artifacts/idea_outputs --strict",
+  "next_commands_after_import": [
+    ".venv/bin/python reproduction/build_pairwise_judge_inputs.py --systems-root reproduction/artifacts/idea_outputs --baseline Hypogenic --output reproduction/artifacts/judge_inputs/evosci_vs_hypogenic.jsonl",
+    ".venv/bin/python reproduction/run_llm_judge.py --provider deepseek --model deepseek-v4-flash --input reproduction/artifacts/judge_inputs/evosci_vs_hypogenic.jsonl --output reproduction/artifacts/judge_outputs/evosci_vs_hypogenic_deepseek.jsonl --resume",
+    ".venv/bin/python reproduction/aggregate_judge_results.py --input reproduction/artifacts/judge_outputs/evosci_vs_hypogenic_deepseek.jsonl --output-csv reproduction/artifacts/tables/evosci_vs_hypogenic_deepseek.csv --output-json reproduction/artifacts/tables/evosci_vs_hypogenic_deepseek.json",
+    ".venv/bin/python reproduction/audit_reproduction_artifacts.py --baseline Hypogenic --judge-inputs reproduction/artifacts/judge_inputs/evosci_vs_hypogenic.jsonl --judge-outputs reproduction/artifacts/judge_outputs/evosci_vs_hypogenic_deepseek.jsonl --aggregate-json reproduction/artifacts/tables/evosci_vs_hypogenic_deepseek.json"
+  ],
+  "caveat": "Hypogenic is treated as a hosted replacement rerun candidate. The checked public artifacts do not provide a standalone public batch runner or the original EvoScientist Table 1 baseline outputs."
+}

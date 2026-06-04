@@ -47,7 +47,11 @@ and paper-level experimental reproduction.
 | AI Scientist-v2 ideation runbook is executable | `build_ai_scientist_v2_ideation_runbook.py` generates 30 topic files plus ideation/import/judge/audit steps | Verified |
 | AI Scientist-v2 queries 01-30 replacement baseline is complete | `ai_scientist_v2_queries01_30_smoke_report.json` records thirty real AI Scientist-v2 ideation outputs, import, 60 swapped DeepSeek judge records, aggregate table, and local audit completion; Semantic Scholar search was bounded and degraded under rate limits | Verified |
 | Hypogenic baseline probe is recorded | `hypogenic_baseline_probe.json` records a hosted Assistant/IdeaHub/Arena adapter path and its paper-exact limitations | Verified |
+| Hypogenic hosted capture runbook is executable | `hosted_capture_runbooks/hypogenic/hypogenic_hosted_capture_runbook.json` records 30 prompt templates, capture metadata templates, and import/judge/audit steps | Verified |
+| Hypogenic hosted capture gate is recorded | `hypogenic_hosted_capture_gate.json` marks capture not ready until a pinned account/session and 30 captured answer files are present | Verified |
 | Novix baseline probe is recorded | `novix_baseline_probe.json` records a hosted UI/account adapter path and its paper-exact limitations | Verified |
+| Novix hosted capture runbook is executable | `hosted_capture_runbooks/novix/novix_hosted_capture_runbook.json` records 30 prompt templates, capture metadata templates, and import/judge/audit steps | Verified |
+| Novix hosted capture gate is recorded | `novix_hosted_capture_gate.json` marks capture not ready until a pinned account/session and 30 captured answer files are present | Verified |
 | K-Dense baseline probe is recorded | `k_dense_baseline_probe.json` records a hosted plus BYOK local Web/API adapter path and its paper-exact limitations | Verified |
 | K-Dense runtime gate is recorded | `k_dense_runtime_gate.json` confirms the pinned BYOK checkout but marks the local rerun not ready because Python 3.13, uv, Gemini CLI, OpenRouter/Ollama route, and a live K-Dense backend are currently missing | Verified |
 | Baseline readiness matrix is recorded | `baseline_readiness_matrix.json` aggregates all seven Table 1 baseline probes into paper-exact, near-direct replacement, and adapter-required classes | Verified |

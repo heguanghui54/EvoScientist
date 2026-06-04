@@ -1,0 +1,24 @@
+# Novix Hosted Capture Gate
+
+Date: 2026-06-04
+Status: `not_ready`
+Hosted URL: https://novix.science/chat
+Prompt templates: 30
+Capture manifests: 30
+Captured answers: 0
+
+This gate only verifies readiness for a hosted replacement capture. It does not prove paper-exact reproduction without author-provided Table 1 raw outputs and original judge records.
+
+## Blocking Items
+
+- NOVIX_CAPTURE_READY=1 is not set for a pinned account/browser capture
+- NOVIX_SESSION_NOTE is not set with account/session metadata
+- 30 captured answer files are not present in the expected output directory
+
+## Access State
+
+- NOVIX_CAPTURE_READY: False
+- NOVIX_SESSION_NOTE: False
+- Output directory: `/Users/hgh54913/research/novix/outputs/evoscientist_table1_queries/novix`
+- Hosted probe available: True
+- Hosted probe status: 200

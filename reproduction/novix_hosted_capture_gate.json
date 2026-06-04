@@ -1,0 +1,29 @@
+{
+  "date": "2026-06-04",
+  "baseline": "Novix",
+  "hosted_url": "https://novix.science/chat",
+  "hosted_probe": {
+    "available": true,
+    "status": 200,
+    "body_prefix": "<!DOCTYPE html>\n<html lang=\"en\" style=\"color-scheme:dark\" class=\"dark\">\n  <head>\n    <meta charset=\"utf-8\" />\n    <meta name=\"renderer\" content=\"webkit\" />\n    <meta name=\"force-rendering\" content=\"webkit\" />\n    <meta http-equiv=\"X-UA-Compatible\" content=\"IE=edge,chrome=1\" />\n    <meta name=\"referr"
+  },
+  "runbook": "reproduction/hosted_capture_runbooks/novix/novix_hosted_capture_runbook.json",
+  "prompt_template_count": 30,
+  "capture_manifest_template_count": 30,
+  "ready_env": "NOVIX_CAPTURE_READY",
+  "ready_env_present": false,
+  "session_note_env": "NOVIX_SESSION_NOTE",
+  "session_note_present": false,
+  "output_inventory": {
+    "output_dir": "/Users/hgh54913/research/novix/outputs/evoscientist_table1_queries/novix",
+    "answer_count": 0,
+    "answer_files": []
+  },
+  "status": "not_ready",
+  "blocking_items": [
+    "NOVIX_CAPTURE_READY=1 is not set for a pinned account/browser capture",
+    "NOVIX_SESSION_NOTE is not set with account/session metadata",
+    "30 captured answer files are not present in the expected output directory"
+  ],
+  "caveat": "This gate only verifies readiness for a hosted replacement capture. It does not prove paper-exact reproduction without author-provided Table 1 raw outputs and original judge records."
+}

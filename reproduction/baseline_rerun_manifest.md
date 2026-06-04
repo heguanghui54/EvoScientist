@@ -94,6 +94,8 @@ Probe: `reproduction/hypogenic_baseline_probe.json`
 Commands:
 
 ```bash
+.venv/bin/python reproduction/build_hosted_baseline_capture_runbook.py --baseline Hypogenic
+.venv/bin/python reproduction/verify_hosted_baseline_access.py --baseline Hypogenic
 # With Hypogenic account access: open https://hypogenic.ai/chat under a pinned browser/profile state.
 # Submit one recovered query per fresh Assistant session and capture the final answer plus session metadata.
 # Save outputs as $HOME/research/hypogenic/outputs/evoscientist_table1_queries/hypogenic/query_XX.md.
@@ -113,6 +115,8 @@ Probe: `reproduction/novix_baseline_probe.json`
 Commands:
 
 ```bash
+.venv/bin/python reproduction/build_hosted_baseline_capture_runbook.py --baseline Novix
+.venv/bin/python reproduction/verify_hosted_baseline_access.py --baseline Novix
 # With Novix account access: open https://novix.science/chat under a pinned browser/profile state.
 # Submit one recovered query per fresh session and capture the final assistant answer plus session metadata.
 # Save outputs as $HOME/research/novix/outputs/evoscientist_table1_queries/novix/query_XX.md.

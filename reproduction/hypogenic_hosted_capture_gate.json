@@ -1,0 +1,29 @@
+{
+  "date": "2026-06-04",
+  "baseline": "Hypogenic",
+  "hosted_url": "https://hypogenic.ai/chat",
+  "hosted_probe": {
+    "available": true,
+    "status": 307,
+    "error": "HTTP Error 307: The HTTP server returned a redirect error that would lead to an infinite loop.\nThe last 30x error message was:\nTemporary Redirect"
+  },
+  "runbook": "reproduction/hosted_capture_runbooks/hypogenic/hypogenic_hosted_capture_runbook.json",
+  "prompt_template_count": 30,
+  "capture_manifest_template_count": 30,
+  "ready_env": "HYPOGENIC_CAPTURE_READY",
+  "ready_env_present": false,
+  "session_note_env": "HYPOGENIC_SESSION_NOTE",
+  "session_note_present": false,
+  "output_inventory": {
+    "output_dir": "/Users/hgh54913/research/hypogenic/outputs/evoscientist_table1_queries/hypogenic",
+    "answer_count": 0,
+    "answer_files": []
+  },
+  "status": "not_ready",
+  "blocking_items": [
+    "HYPOGENIC_CAPTURE_READY=1 is not set for a pinned account/browser capture",
+    "HYPOGENIC_SESSION_NOTE is not set with account/session metadata",
+    "30 captured answer files are not present in the expected output directory"
+  ],
+  "caveat": "This gate only verifies readiness for a hosted replacement capture. It does not prove paper-exact reproduction without author-provided Table 1 raw outputs and original judge records."
+}

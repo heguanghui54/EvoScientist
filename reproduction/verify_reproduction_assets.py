@@ -70,6 +70,8 @@ def main() -> None:
         "run_ai_scientist_v2_ideation_baseline.py",
         "convert_ai_scientist_v2_ideation_outputs.py",
         "build_ai_scientist_v2_smoke_report.py",
+        "build_hosted_baseline_capture_runbook.py",
+        "verify_hosted_baseline_access.py",
         "probe_hypogenic_baseline.py",
         "probe_novix_baseline.py",
         "probe_k_dense_baseline.py",
@@ -506,6 +508,32 @@ def main() -> None:
     assert hypogenic_probe["direct_30_query_runner_available"] is False
     assert hypogenic_probe["hypogenic_generated_repo_examples"], "missing generated repo examples"
     assert "hosted_competition_adapter_candidate" in hypogenic_probe_md_path.read_text(encoding="utf-8")
+    hypogenic_runbook_root = ROOT / "hosted_capture_runbooks" / "hypogenic"
+    hypogenic_runbook_json_path = hypogenic_runbook_root / "hypogenic_hosted_capture_runbook.json"
+    hypogenic_runbook_md_path = hypogenic_runbook_root / "hypogenic_hosted_capture_runbook.md"
+    assert hypogenic_runbook_json_path.is_file(), "missing Hypogenic hosted capture runbook JSON"
+    assert hypogenic_runbook_md_path.is_file(), "missing Hypogenic hosted capture runbook markdown"
+    hypogenic_runbook = json.loads(hypogenic_runbook_json_path.read_text(encoding="utf-8"))
+    assert hypogenic_runbook["baseline"] == "Hypogenic"
+    assert hypogenic_runbook["query_count"] == 30
+    assert hypogenic_runbook["paper_exact"] is False
+    assert len(hypogenic_runbook["capture_steps"]) == 30
+    assert (hypogenic_runbook_root / "query_prompts" / "query_30.md").is_file()
+    assert (hypogenic_runbook_root / "capture_manifests" / "query_30.json").is_file()
+    assert "Hypogenic Hosted Capture Runbook" in hypogenic_runbook_md_path.read_text(
+        encoding="utf-8"
+    )
+    hypogenic_gate_json_path = ROOT / "hypogenic_hosted_capture_gate.json"
+    hypogenic_gate_md_path = ROOT / "hypogenic_hosted_capture_gate.md"
+    assert hypogenic_gate_json_path.is_file(), "missing Hypogenic hosted capture gate JSON"
+    assert hypogenic_gate_md_path.is_file(), "missing Hypogenic hosted capture gate markdown"
+    hypogenic_gate = json.loads(hypogenic_gate_json_path.read_text(encoding="utf-8"))
+    assert hypogenic_gate["baseline"] == "Hypogenic"
+    assert hypogenic_gate["prompt_template_count"] == 30
+    assert hypogenic_gate["capture_manifest_template_count"] == 30
+    assert hypogenic_gate["status"] == "not_ready"
+    assert "30 captured answer files are not present in the expected output directory" in hypogenic_gate["blocking_items"]
+    assert "Hypogenic Hosted Capture Gate" in hypogenic_gate_md_path.read_text(encoding="utf-8")
     novix_probe_json_path = ROOT / "novix_baseline_probe.json"
     novix_probe_md_path = ROOT / "novix_baseline_probe.md"
     assert novix_probe_json_path.is_file(), "missing Novix probe JSON"
@@ -522,6 +550,32 @@ def main() -> None:
     assert novix_probe["direct_30_query_runner_available"] is False
     assert "/task/submit_user_question" in novix_probe["visible_product_endpoints"]
     assert "hosted_ui_adapter_candidate" in novix_probe_md_path.read_text(encoding="utf-8")
+    novix_runbook_root = ROOT / "hosted_capture_runbooks" / "novix"
+    novix_runbook_json_path = novix_runbook_root / "novix_hosted_capture_runbook.json"
+    novix_runbook_md_path = novix_runbook_root / "novix_hosted_capture_runbook.md"
+    assert novix_runbook_json_path.is_file(), "missing Novix hosted capture runbook JSON"
+    assert novix_runbook_md_path.is_file(), "missing Novix hosted capture runbook markdown"
+    novix_runbook = json.loads(novix_runbook_json_path.read_text(encoding="utf-8"))
+    assert novix_runbook["baseline"] == "Novix"
+    assert novix_runbook["query_count"] == 30
+    assert novix_runbook["paper_exact"] is False
+    assert len(novix_runbook["capture_steps"]) == 30
+    assert (novix_runbook_root / "query_prompts" / "query_30.md").is_file()
+    assert (novix_runbook_root / "capture_manifests" / "query_30.json").is_file()
+    assert "Novix Hosted Capture Runbook" in novix_runbook_md_path.read_text(
+        encoding="utf-8"
+    )
+    novix_gate_json_path = ROOT / "novix_hosted_capture_gate.json"
+    novix_gate_md_path = ROOT / "novix_hosted_capture_gate.md"
+    assert novix_gate_json_path.is_file(), "missing Novix hosted capture gate JSON"
+    assert novix_gate_md_path.is_file(), "missing Novix hosted capture gate markdown"
+    novix_gate = json.loads(novix_gate_json_path.read_text(encoding="utf-8"))
+    assert novix_gate["baseline"] == "Novix"
+    assert novix_gate["prompt_template_count"] == 30
+    assert novix_gate["capture_manifest_template_count"] == 30
+    assert novix_gate["status"] == "not_ready"
+    assert "30 captured answer files are not present in the expected output directory" in novix_gate["blocking_items"]
+    assert "Novix Hosted Capture Gate" in novix_gate_md_path.read_text(encoding="utf-8")
     k_dense_probe_json_path = ROOT / "k_dense_baseline_probe.json"
     k_dense_probe_md_path = ROOT / "k_dense_baseline_probe.md"
     assert k_dense_probe_json_path.is_file(), "missing K-Dense probe JSON"

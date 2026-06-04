@@ -1,0 +1,22 @@
+{
+  "baseline": "Hypogenic",
+  "query_id": 27,
+  "topic": "Long-context understanding",
+  "goal": "Generate a research proposal on how to enhance the long-context understanding of Large Language Models.",
+  "hosted_url": "https://hypogenic.ai/chat",
+  "paper_exact": false,
+  "capture_status": "pending",
+  "captured_at": null,
+  "account_state": {
+    "browser_profile": null,
+    "login_required": true,
+    "session_id_or_url": null,
+    "model_or_agent_label": null
+  },
+  "output_contract": {
+    "answer_path": "$HOME/research/hypogenic/outputs/evoscientist_table1_queries/hypogenic/query_27.md",
+    "minimum_characters": 200,
+    "save_final_assistant_answer_only": true
+  },
+  "caveat": "Hosted capture is a replacement rerun protocol. It is not the original EvoScientist paper Table 1 raw baseline output unless the paper authors provide those exact outputs and metadata."
+}
