@@ -92,6 +92,7 @@ def main() -> None:
         "build_final_reproduction_dossier.py",
         "build_reproducibility_bundle.py",
         "verify_user_scope_reproduction.py",
+        "build_html_report.py",
         "build_paper_reproduction_plan.py",
         "compare_reproduction_to_paper.py",
         "audit_reproduction_artifacts.py",
@@ -1118,6 +1119,17 @@ def main() -> None:
     assert "420/420 replacement/proxy judge records" in bundle_readme
     assert "User-scope status: `complete`" in bundle_readme
     assert "formal human labels missing" in bundle_readme
+    html_report_path = ROOT / "experiment_reproduction_report.html"
+    assert html_report_path.is_file(), "missing visual HTML reproduction report"
+    html_report = html_report_path.read_text(encoding="utf-8")
+    assert "EvoScientist 复现实验报告" in html_report
+    assert "User-scope gate: <strong>complete</strong>" in html_report
+    assert "420/420 swapped judge records" in html_report
+    assert "Table 2: Monica/Gemini surrogate" in html_report
+    assert "严格 paper-exact 还缺什么" in html_report
+    assert "artifacts/paper_previews/rendered/evoscientist_query01_final_report_page1.png" in html_report
+    assert "artifacts/paper_previews/rendered/ai_scientist_v2_query01_idea_page1.png" in html_report
+    assert "artifacts/reproducibility_bundle.zip" in html_report
     paper_level_gate_json_path = ROOT / "paper_level_evidence_gate.json"
     paper_level_gate_md_path = ROOT / "paper_level_evidence_gate.md"
     assert paper_level_gate_json_path.is_file(), "missing paper-level evidence gate JSON"
