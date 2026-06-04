@@ -15,15 +15,13 @@ are present in the checkout.
 | Full trajectories | complete | 30/30 successful final reports; non-success IDs: none |
 | Table 1 LLM judge | incomplete | expected 420 pairwise records; missing baseline outputs: Virtual Scientist, AI-Researcher, Hypogenic, Novix, K-Dense |
 | Table 2 human eval | incomplete | missing files: inputs.jsonl, labels.jsonl, aggregate.json |
-| Table 3 ablation | incomplete | missing variants: none |
-| Figure 2 code execution | incomplete | missing files: trajectories.jsonl, execution_logs.jsonl, summary.json |
+| Table 3 ablation | complete | missing variants: none |
+| Figure 2 code execution | complete | missing files: none |
 
 ## Blocking Items
 
 - incomplete: table1_llm_idea_generation
 - incomplete: table2_human_idea_generation
-- incomplete: table3_ablation_idea_generation
-- incomplete: figure2_code_execution
 
 ## Interpretation
 

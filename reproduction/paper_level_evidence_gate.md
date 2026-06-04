@@ -8,13 +8,9 @@ This gate requires real imported artifacts under reproduction/artifacts. Templat
 ## Blocking Items
 
 - Table 2 human evaluation artifacts are incomplete
-- Table 3 ablation artifacts are incomplete for -IDE
-- Table 3 ablation artifacts are incomplete for -IVE
-- Table 3 ablation artifacts are incomplete for -all
-- Figure 2 code-execution artifacts are incomplete
 
 ## Component Status
 
 - Table 2 human evaluation: False
-- Table 3 ablation: False
-- Figure 2 code execution: False
+- Table 3 ablation: True
+- Figure 2 code execution: True

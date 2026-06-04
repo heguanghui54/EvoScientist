@@ -1,0 +1,81 @@
+{
+  "metric": "execution_success_rate",
+  "raw_execution_records": 240,
+  "usable_execution_records": 240,
+  "skipped": [],
+  "before_evolution_pct": 84.17,
+  "after_evolution_pct": 100.0,
+  "phase_success_rates": {
+    "after_evolution": {
+      "attempts": 120,
+      "successes": 120,
+      "success_pct": 100.0
+    },
+    "before_evolution": {
+      "attempts": 120,
+      "successes": 101,
+      "success_pct": 84.17
+    }
+  },
+  "stage_success_rates": {
+    "after_evolution": {
+      "stage_1": {
+        "attempts": 30,
+        "successes": 30,
+        "success_pct": 100.0
+      },
+      "stage_2": {
+        "attempts": 30,
+        "successes": 30,
+        "success_pct": 100.0
+      },
+      "stage_3": {
+        "attempts": 30,
+        "successes": 30,
+        "success_pct": 100.0
+      },
+      "stage_4": {
+        "attempts": 30,
+        "successes": 30,
+        "success_pct": 100.0
+      }
+    },
+    "before_evolution": {
+      "stage_1": {
+        "attempts": 30,
+        "successes": 30,
+        "success_pct": 100.0
+      },
+      "stage_2": {
+        "attempts": 30,
+        "successes": 30,
+        "success_pct": 100.0
+      },
+      "stage_3": {
+        "attempts": 30,
+        "successes": 19,
+        "success_pct": 63.33
+      },
+      "stage_4": {
+        "attempts": 30,
+        "successes": 22,
+        "success_pct": 73.33
+      }
+    }
+  },
+  "stage3_before_evolution_pct": 63.33,
+  "stage3_after_evolution_pct": 100.0,
+  "reported_targets": {
+    "metric": "mean execution success rate across four experiment stages",
+    "before_evolution_pct": 34.39,
+    "after_evolution_pct": 44.56,
+    "stage3_before_evolution_pct": 20.33,
+    "stage3_after_evolution_pct": 21.57
+  },
+  "deltas_from_paper": {
+    "before_evolution_pct": 49.78,
+    "after_evolution_pct": 55.44,
+    "stage3_before_evolution_pct": 43.0,
+    "stage3_after_evolution_pct": 78.43
+  }
+}

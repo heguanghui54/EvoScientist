@@ -688,6 +688,7 @@ def main() -> None:
     assert paper_artifact_schema["schemas"]["code_execution"]["aggregator"] == "reproduction/aggregate_code_execution.py"
     paper_artifact_schema_md = paper_artifact_schema_md_path.read_text(encoding="utf-8")
     assert "Figure 2 Code Execution" in paper_artifact_schema_md
+    assert "`assistant_1`, and `assistant_2` score dictionaries" in paper_artifact_schema_md
     paper_level_runbook_root = ROOT / "paper_level_evidence_runbook"
     paper_level_runbook_json_path = paper_level_runbook_root / "paper_level_evidence_runbook.json"
     paper_level_runbook_md_path = paper_level_runbook_root / "paper_level_evidence_runbook.md"
@@ -712,7 +713,10 @@ def main() -> None:
     paper_level_gate = json.loads(paper_level_gate_json_path.read_text(encoding="utf-8"))
     assert paper_level_gate["status"] == "not_ready"
     assert "Table 2 human evaluation artifacts are incomplete" in paper_level_gate["blocking_items"]
-    assert "Figure 2 code-execution artifacts are incomplete" in paper_level_gate["blocking_items"]
+    assert not any("Table 3 ablation artifacts" in item for item in paper_level_gate["blocking_items"])
+    assert "Figure 2 code-execution artifacts are incomplete" not in paper_level_gate["blocking_items"]
+    assert paper_level_gate["components"]["table3_ablation"]["complete"] is True
+    assert paper_level_gate["components"]["figure2_code_execution"]["complete"] is True
     assert "Paper-Level Evidence Gate" in paper_level_gate_md_path.read_text(encoding="utf-8")
     ablation_smoke_json_path = ROOT / "ablation_ide_query01_smoke_report.json"
     ablation_smoke_md_path = ROOT / "ablation_ide_query01_smoke_report.md"
@@ -832,7 +836,8 @@ def main() -> None:
         assert sum(1 for line in (vroot / "judge_outputs.jsonl").read_text(encoding="utf-8").splitlines() if line.strip()) == 30
         assert formal_combined["variants"][variant]["usable_records"] == 30
     schema_latest = json.loads((ROOT / "artifacts" / "audit" / "paper_artifact_schema_latest.json").read_text(encoding="utf-8"))
-    assert schema_latest["components"]["ablation"]["complete"] is False
+    assert schema_latest["components"]["ablation"]["complete"] is True
+    assert schema_latest["components"]["code_execution"]["complete"] is True
     assert "Ablation Queries 01-15 Monica/Gemini Judge Report" in ablation_15q_md_path.read_text(
         encoding="utf-8"
     )
@@ -842,6 +847,22 @@ def main() -> None:
     assert "Ablation Queries 01-30 Monica/Gemini Judge Report" in ablation_30q_md_path.read_text(
         encoding="utf-8"
     )
+    figure2_json_path = ROOT / "figure2_code_execution_replacement_report.json"
+    figure2_md_path = ROOT / "figure2_code_execution_replacement_report.md"
+    assert figure2_json_path.is_file(), "missing Figure 2 replacement report JSON"
+    assert figure2_md_path.is_file(), "missing Figure 2 replacement report markdown"
+    figure2_report = json.loads(figure2_json_path.read_text(encoding="utf-8"))
+    assert figure2_report["status"] == "complete"
+    assert figure2_report["completion_scope"] == "replacement_code_execution_probe"
+    assert figure2_report["paper_exact"] is False
+    assert figure2_report["headline"]["raw_execution_records"] == 240
+    assert figure2_report["headline"]["usable_execution_records"] == 240
+    code_root = ROOT / "artifacts" / "code_execution"
+    assert sum(1 for line in (code_root / "trajectories.jsonl").read_text(encoding="utf-8").splitlines() if line.strip()) == 240
+    assert sum(1 for line in (code_root / "execution_logs.jsonl").read_text(encoding="utf-8").splitlines() if line.strip()) == 240
+    code_summary = json.loads((code_root / "summary.json").read_text(encoding="utf-8"))
+    assert code_summary["usable_execution_records"] == 240
+    assert "Figure 2 Code Execution Replacement Report" in figure2_md_path.read_text(encoding="utf-8")
     ablation_monica_json_path = ROOT / "ablation_queries01_03_monica_gemini_report.json"
     ablation_monica_md_path = ROOT / "ablation_queries01_03_monica_gemini_report.md"
     assert ablation_monica_json_path.is_file(), "missing Monica/Gemini ablation report JSON"
@@ -876,8 +897,11 @@ def main() -> None:
     assert action_plan["baseline_readiness_counts"]["paper_exact_available"] == 0
     assert any(action.get("runbook") == "reproduction/paper_level_evidence_runbook/paper_level_evidence_runbook.json" for action in action_plan["actions"])
     assert any(action.get("gate") == "reproduction/paper_level_evidence_gate.json" for action in action_plan["actions"])
-    table3_actions = [action for action in action_plan["actions"] if action["component"] == "table3_ablation_idea_generation"]
-    assert table3_actions and "run_ablation_variants.py" in "\n".join(table3_actions[0]["commands"])
+    components_in_plan = {action["component"] for action in action_plan["actions"]}
+    assert "table1_llm_idea_generation" in components_in_plan
+    assert "table2_human_idea_generation" in components_in_plan
+    assert "table3_ablation_idea_generation" not in components_in_plan
+    assert "figure2_code_execution" not in components_in_plan
     action_plan_md = action_plan_md_path.read_text(encoding="utf-8")
     assert "Paper Reproduction Action Plan" in action_plan_md
     assert "gemini-3-flash" in action_plan_md

@@ -30,7 +30,7 @@
           "record_required_fields": ["comparison_id", "query_id", "assistant_1_system", "assistant_2_system", "answer_a", "answer_b"]
         },
         "judge_outputs.jsonl": {
-          "record_required_fields": ["comparison_id", "scores"]
+          "record_required_fields": ["comparison_id", "query_id", "assistant_1", "assistant_2"]
         },
         "aggregate.json": {
           "required_fields": ["baselines"]

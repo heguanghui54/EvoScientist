@@ -39,7 +39,8 @@ Each variant needs:
 
 - `system_outputs_complete.json`
 - `judge_inputs.jsonl`
-- `judge_outputs.jsonl`
+- `judge_outputs.jsonl`: each record needs `comparison_id`, `query_id`,
+  `assistant_1`, and `assistant_2` score dictionaries.
 - `aggregate.json`
 - Aggregator: `reproduction/aggregate_ablation_results.py`.
 

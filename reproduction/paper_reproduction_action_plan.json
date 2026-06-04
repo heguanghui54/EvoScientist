@@ -2,7 +2,7 @@
   "date": "2026-06-04",
   "paper": "arXiv:2603.08127",
   "status": "incomplete",
-  "action_count": 9,
+  "action_count": 7,
   "actions": [
     {
       "component": "table1_llm_idea_generation",
@@ -142,51 +142,11 @@
         ".venv/bin/python reproduction/verify_paper_level_evidence_gate.py",
         ".venv/bin/python reproduction/aggregate_human_labels.py --inputs reproduction/artifacts/human_evaluation/inputs.jsonl --labels reproduction/artifacts/human_evaluation/labels.jsonl --output-csv reproduction/artifacts/human_evaluation/aggregate.csv --output-json reproduction/artifacts/human_evaluation/aggregate.json --strict"
       ]
-    },
-    {
-      "component": "table3_ablation_idea_generation",
-      "kind": "ablation_variant_runs",
-      "missing_variants": [
-        "-IDE",
-        "-IVE",
-        "-all"
-      ],
-      "required_evidence": "system_outputs_complete.json, judge_inputs.jsonl, judge_outputs.jsonl, and aggregate.json for -IDE, -IVE, and -all",
-      "runbook": "reproduction/paper_level_evidence_runbook/paper_level_evidence_runbook.json",
-      "gate": "reproduction/paper_level_evidence_gate.json",
-      "commands": [
-        ".venv/bin/python reproduction/build_paper_level_evidence_runbook.py",
-        ".venv/bin/python reproduction/verify_paper_level_evidence_gate.py",
-        ".venv/bin/python reproduction/run_ablation_variants.py --variant all --proposal-only --timeout 1800",
-        ".venv/bin/python reproduction/aggregate_ablation_results.py --artifacts-root reproduction/artifacts/ablations --combined-json reproduction/artifacts/ablations/combined_aggregate.json --combined-csv reproduction/artifacts/ablations/combined_aggregate.csv --strict",
-        ".venv/bin/python reproduction/compare_reproduction_to_paper.py --actual-json reproduction/artifacts/ablations/combined_aggregate.json --section table3_ablation_idea_generation --require-all"
-      ],
-      "note": "The repository has no native ablation toggles yet; variant outputs must come from a paper-matched patch or imported raw ablation runs."
-    },
-    {
-      "component": "figure2_code_execution",
-      "kind": "code_execution_log_import",
-      "missing_files": [
-        "trajectories.jsonl",
-        "execution_logs.jsonl",
-        "summary.json"
-      ],
-      "required_evidence": "trajectories.jsonl, execution_logs.jsonl, and summary.json with before/after evolution success rates",
-      "runbook": "reproduction/paper_level_evidence_runbook/paper_level_evidence_runbook.json",
-      "gate": "reproduction/paper_level_evidence_gate.json",
-      "commands": [
-        ".venv/bin/python reproduction/build_paper_level_evidence_runbook.py",
-        ".venv/bin/python reproduction/verify_paper_level_evidence_gate.py",
-        ".venv/bin/python reproduction/aggregate_code_execution.py --logs reproduction/artifacts/code_execution/execution_logs.jsonl --output-json reproduction/artifacts/code_execution/summary.json --output-csv reproduction/artifacts/code_execution/summary.csv --strict",
-        ".venv/bin/python reproduction/compare_reproduction_to_paper.py --actual-json reproduction/artifacts/code_execution/summary.json --section figure2_code_execution --require-all"
-      ]
     }
   ],
   "non_completion_reason": [
     "incomplete: table1_llm_idea_generation",
-    "incomplete: table2_human_idea_generation",
-    "incomplete: table3_ablation_idea_generation",
-    "incomplete: figure2_code_execution"
+    "incomplete: table2_human_idea_generation"
   ],
   "public_artifact_gap_conclusion": "As of 2026-06-04, exact paper-level numeric reproduction is not possible from public artifacts alone. The current repository reproduces the software, 30/30 full EvoScientist trajectories under a DeepSeek-backed setup, and a stated replacement comparison, while documenting the remaining public-artifact gaps required for exact reproduction.",
   "baseline_readiness_counts": {

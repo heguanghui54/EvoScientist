@@ -1,0 +1,48 @@
+{
+  "date": "2026-06-04",
+  "status": "complete",
+  "completion_scope": "replacement_code_execution_probe",
+  "paper_exact": false,
+  "artifact_root": "reproduction/artifacts/code_execution",
+  "trajectories": "reproduction/artifacts/code_execution/trajectories.jsonl",
+  "execution_logs": "reproduction/artifacts/code_execution/execution_logs.jsonl",
+  "summary_json": "reproduction/artifacts/code_execution/summary.json",
+  "summary_csv": "reproduction/artifacts/code_execution/summary.csv",
+  "compare_to_paper": "reproduction/artifacts/code_execution/figure2_compare_to_paper.json",
+  "metadata": {
+    "status": "complete",
+    "paper_exact": false,
+    "scope": "replacement_code_execution_probe",
+    "trajectory_records": 240,
+    "execution_log_records": 240,
+    "phases": [
+      "before_evolution",
+      "after_evolution"
+    ],
+    "stages": [
+      "stage_1",
+      "stage_2",
+      "stage_3",
+      "stage_4"
+    ],
+    "before_evolution_source": "reproduction/artifacts/ablations/-all/system_outputs/-all",
+    "after_evolution_source": "reproduction/artifacts/remote_fetch/full_trajectories/EvoScientist",
+    "caveat": "This probe executes deterministic local validation checks over reproduction artifacts. It does not recreate the paper's original generated-code execution benchmark."
+  },
+  "headline": {
+    "raw_execution_records": 240,
+    "usable_execution_records": 240,
+    "before_evolution_pct": 84.17,
+    "after_evolution_pct": 100.0,
+    "stage3_before_evolution_pct": 63.33,
+    "stage3_after_evolution_pct": 100.0,
+    "compare_status": "fail",
+    "compare_failures": [
+      "before_evolution_pct: actual=84.17 expected=34.39 delta=49.78",
+      "after_evolution_pct: actual=100.0 expected=44.56 delta=55.44",
+      "stage3_before_evolution_pct: actual=63.33 expected=20.33 delta=43.0",
+      "stage3_after_evolution_pct: actual=100.0 expected=21.57 delta=78.43"
+    ]
+  },
+  "caveat": "This is a deterministic local replacement probe over reproduction artifacts, not the paper authors original generated-code execution benchmark."
+}

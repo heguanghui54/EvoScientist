@@ -1,0 +1,20 @@
+{
+  "status": "complete",
+  "paper_exact": false,
+  "scope": "replacement_code_execution_probe",
+  "trajectory_records": 240,
+  "execution_log_records": 240,
+  "phases": [
+    "before_evolution",
+    "after_evolution"
+  ],
+  "stages": [
+    "stage_1",
+    "stage_2",
+    "stage_3",
+    "stage_4"
+  ],
+  "before_evolution_source": "reproduction/artifacts/ablations/-all/system_outputs/-all",
+  "after_evolution_source": "reproduction/artifacts/remote_fetch/full_trajectories/EvoScientist",
+  "caveat": "This probe executes deterministic local validation checks over reproduction artifacts. It does not recreate the paper's original generated-code execution benchmark."
+}

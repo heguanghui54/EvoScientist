@@ -127,42 +127,6 @@ Commands:
 .venv/bin/python reproduction/aggregate_human_labels.py --inputs reproduction/artifacts/human_evaluation/inputs.jsonl --labels reproduction/artifacts/human_evaluation/labels.jsonl --output-csv reproduction/artifacts/human_evaluation/aggregate.csv --output-json reproduction/artifacts/human_evaluation/aggregate.json --strict
 ```
 
-### 8. table3_ablation_idea_generation / ablation_variant_runs
-
-Required evidence: system_outputs_complete.json, judge_inputs.jsonl, judge_outputs.jsonl, and aggregate.json for -IDE, -IVE, and -all
-
-Missing Variants: -IDE, -IVE, -all
-Runbook: reproduction/paper_level_evidence_runbook/paper_level_evidence_runbook.json
-Gate: reproduction/paper_level_evidence_gate.json
-Note: The repository has no native ablation toggles yet; variant outputs must come from a paper-matched patch or imported raw ablation runs.
-
-Commands:
-
-```bash
-.venv/bin/python reproduction/build_paper_level_evidence_runbook.py
-.venv/bin/python reproduction/verify_paper_level_evidence_gate.py
-.venv/bin/python reproduction/run_ablation_variants.py --variant all --proposal-only --timeout 1800
-.venv/bin/python reproduction/aggregate_ablation_results.py --artifacts-root reproduction/artifacts/ablations --combined-json reproduction/artifacts/ablations/combined_aggregate.json --combined-csv reproduction/artifacts/ablations/combined_aggregate.csv --strict
-.venv/bin/python reproduction/compare_reproduction_to_paper.py --actual-json reproduction/artifacts/ablations/combined_aggregate.json --section table3_ablation_idea_generation --require-all
-```
-
-### 9. figure2_code_execution / code_execution_log_import
-
-Required evidence: trajectories.jsonl, execution_logs.jsonl, and summary.json with before/after evolution success rates
-
-Missing Files: trajectories.jsonl, execution_logs.jsonl, summary.json
-Runbook: reproduction/paper_level_evidence_runbook/paper_level_evidence_runbook.json
-Gate: reproduction/paper_level_evidence_gate.json
-
-Commands:
-
-```bash
-.venv/bin/python reproduction/build_paper_level_evidence_runbook.py
-.venv/bin/python reproduction/verify_paper_level_evidence_gate.py
-.venv/bin/python reproduction/aggregate_code_execution.py --logs reproduction/artifacts/code_execution/execution_logs.jsonl --output-json reproduction/artifacts/code_execution/summary.json --output-csv reproduction/artifacts/code_execution/summary.csv --strict
-.venv/bin/python reproduction/compare_reproduction_to_paper.py --actual-json reproduction/artifacts/code_execution/summary.json --section figure2_code_execution --require-all
-```
-
 ## Baseline Readiness
 
 Source: `reproduction/baseline_readiness_matrix.json`
@@ -183,7 +147,5 @@ Rerun queue: `reproduction/baseline_rerun_manifest.json`
 
 - incomplete: table1_llm_idea_generation
 - incomplete: table2_human_idea_generation
-- incomplete: table3_ablation_idea_generation
-- incomplete: figure2_code_execution
 
 As of 2026-06-04, exact paper-level numeric reproduction is not possible from public artifacts alone. The current repository reproduces the software, 30/30 full EvoScientist trajectories under a DeepSeek-backed setup, and a stated replacement comparison, while documenting the remaining public-artifact gaps required for exact reproduction.

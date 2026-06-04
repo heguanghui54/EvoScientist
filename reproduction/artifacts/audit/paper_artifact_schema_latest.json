@@ -61,189 +61,8 @@
               "path": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/artifacts/ablations/-IDE/judge_outputs.jsonl",
               "exists": true,
               "records": 30,
-              "bad_records": [
-                {
-                  "line": 1,
-                  "missing_fields": [
-                    "scores"
-                  ]
-                },
-                {
-                  "line": 2,
-                  "missing_fields": [
-                    "scores"
-                  ]
-                },
-                {
-                  "line": 3,
-                  "missing_fields": [
-                    "scores"
-                  ]
-                },
-                {
-                  "line": 4,
-                  "missing_fields": [
-                    "scores"
-                  ]
-                },
-                {
-                  "line": 5,
-                  "missing_fields": [
-                    "scores"
-                  ]
-                },
-                {
-                  "line": 6,
-                  "missing_fields": [
-                    "scores"
-                  ]
-                },
-                {
-                  "line": 7,
-                  "missing_fields": [
-                    "scores"
-                  ]
-                },
-                {
-                  "line": 8,
-                  "missing_fields": [
-                    "scores"
-                  ]
-                },
-                {
-                  "line": 9,
-                  "missing_fields": [
-                    "scores"
-                  ]
-                },
-                {
-                  "line": 10,
-                  "missing_fields": [
-                    "scores"
-                  ]
-                },
-                {
-                  "line": 11,
-                  "missing_fields": [
-                    "scores"
-                  ]
-                },
-                {
-                  "line": 12,
-                  "missing_fields": [
-                    "scores"
-                  ]
-                },
-                {
-                  "line": 13,
-                  "missing_fields": [
-                    "scores"
-                  ]
-                },
-                {
-                  "line": 14,
-                  "missing_fields": [
-                    "scores"
-                  ]
-                },
-                {
-                  "line": 15,
-                  "missing_fields": [
-                    "scores"
-                  ]
-                },
-                {
-                  "line": 16,
-                  "missing_fields": [
-                    "scores"
-                  ]
-                },
-                {
-                  "line": 17,
-                  "missing_fields": [
-                    "scores"
-                  ]
-                },
-                {
-                  "line": 18,
-                  "missing_fields": [
-                    "scores"
-                  ]
-                },
-                {
-                  "line": 19,
-                  "missing_fields": [
-                    "scores"
-                  ]
-                },
-                {
-                  "line": 20,
-                  "missing_fields": [
-                    "scores"
-                  ]
-                },
-                {
-                  "line": 21,
-                  "missing_fields": [
-                    "scores"
-                  ]
-                },
-                {
-                  "line": 22,
-                  "missing_fields": [
-                    "scores"
-                  ]
-                },
-                {
-                  "line": 23,
-                  "missing_fields": [
-                    "scores"
-                  ]
-                },
-                {
-                  "line": 24,
-                  "missing_fields": [
-                    "scores"
-                  ]
-                },
-                {
-                  "line": 25,
-                  "missing_fields": [
-                    "scores"
-                  ]
-                },
-                {
-                  "line": 26,
-                  "missing_fields": [
-                    "scores"
-                  ]
-                },
-                {
-                  "line": 27,
-                  "missing_fields": [
-                    "scores"
-                  ]
-                },
-                {
-                  "line": 28,
-                  "missing_fields": [
-                    "scores"
-                  ]
-                },
-                {
-                  "line": 29,
-                  "missing_fields": [
-                    "scores"
-                  ]
-                },
-                {
-                  "line": 30,
-                  "missing_fields": [
-                    "scores"
-                  ]
-                }
-              ],
-              "complete": false,
+              "bad_records": [],
+              "complete": true,
               "expected_records": 30,
               "missing_query_ids": []
             },
@@ -254,7 +73,7 @@
               "complete": true
             }
           },
-          "complete": false
+          "complete": true
         },
         "-IVE": {
           "root": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/artifacts/ablations/-IVE",
@@ -282,189 +101,8 @@
               "path": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/artifacts/ablations/-IVE/judge_outputs.jsonl",
               "exists": true,
               "records": 30,
-              "bad_records": [
-                {
-                  "line": 1,
-                  "missing_fields": [
-                    "scores"
-                  ]
-                },
-                {
-                  "line": 2,
-                  "missing_fields": [
-                    "scores"
-                  ]
-                },
-                {
-                  "line": 3,
-                  "missing_fields": [
-                    "scores"
-                  ]
-                },
-                {
-                  "line": 4,
-                  "missing_fields": [
-                    "scores"
-                  ]
-                },
-                {
-                  "line": 5,
-                  "missing_fields": [
-                    "scores"
-                  ]
-                },
-                {
-                  "line": 6,
-                  "missing_fields": [
-                    "scores"
-                  ]
-                },
-                {
-                  "line": 7,
-                  "missing_fields": [
-                    "scores"
-                  ]
-                },
-                {
-                  "line": 8,
-                  "missing_fields": [
-                    "scores"
-                  ]
-                },
-                {
-                  "line": 9,
-                  "missing_fields": [
-                    "scores"
-                  ]
-                },
-                {
-                  "line": 10,
-                  "missing_fields": [
-                    "scores"
-                  ]
-                },
-                {
-                  "line": 11,
-                  "missing_fields": [
-                    "scores"
-                  ]
-                },
-                {
-                  "line": 12,
-                  "missing_fields": [
-                    "scores"
-                  ]
-                },
-                {
-                  "line": 13,
-                  "missing_fields": [
-                    "scores"
-                  ]
-                },
-                {
-                  "line": 14,
-                  "missing_fields": [
-                    "scores"
-                  ]
-                },
-                {
-                  "line": 15,
-                  "missing_fields": [
-                    "scores"
-                  ]
-                },
-                {
-                  "line": 16,
-                  "missing_fields": [
-                    "scores"
-                  ]
-                },
-                {
-                  "line": 17,
-                  "missing_fields": [
-                    "scores"
-                  ]
-                },
-                {
-                  "line": 18,
-                  "missing_fields": [
-                    "scores"
-                  ]
-                },
-                {
-                  "line": 19,
-                  "missing_fields": [
-                    "scores"
-                  ]
-                },
-                {
-                  "line": 20,
-                  "missing_fields": [
-                    "scores"
-                  ]
-                },
-                {
-                  "line": 21,
-                  "missing_fields": [
-                    "scores"
-                  ]
-                },
-                {
-                  "line": 22,
-                  "missing_fields": [
-                    "scores"
-                  ]
-                },
-                {
-                  "line": 23,
-                  "missing_fields": [
-                    "scores"
-                  ]
-                },
-                {
-                  "line": 24,
-                  "missing_fields": [
-                    "scores"
-                  ]
-                },
-                {
-                  "line": 25,
-                  "missing_fields": [
-                    "scores"
-                  ]
-                },
-                {
-                  "line": 26,
-                  "missing_fields": [
-                    "scores"
-                  ]
-                },
-                {
-                  "line": 27,
-                  "missing_fields": [
-                    "scores"
-                  ]
-                },
-                {
-                  "line": 28,
-                  "missing_fields": [
-                    "scores"
-                  ]
-                },
-                {
-                  "line": 29,
-                  "missing_fields": [
-                    "scores"
-                  ]
-                },
-                {
-                  "line": 30,
-                  "missing_fields": [
-                    "scores"
-                  ]
-                }
-              ],
-              "complete": false,
+              "bad_records": [],
+              "complete": true,
               "expected_records": 30,
               "missing_query_ids": []
             },
@@ -475,7 +113,7 @@
               "complete": true
             }
           },
-          "complete": false
+          "complete": true
         },
         "-all": {
           "root": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/artifacts/ablations/-all",
@@ -503,189 +141,8 @@
               "path": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/artifacts/ablations/-all/judge_outputs.jsonl",
               "exists": true,
               "records": 30,
-              "bad_records": [
-                {
-                  "line": 1,
-                  "missing_fields": [
-                    "scores"
-                  ]
-                },
-                {
-                  "line": 2,
-                  "missing_fields": [
-                    "scores"
-                  ]
-                },
-                {
-                  "line": 3,
-                  "missing_fields": [
-                    "scores"
-                  ]
-                },
-                {
-                  "line": 4,
-                  "missing_fields": [
-                    "scores"
-                  ]
-                },
-                {
-                  "line": 5,
-                  "missing_fields": [
-                    "scores"
-                  ]
-                },
-                {
-                  "line": 6,
-                  "missing_fields": [
-                    "scores"
-                  ]
-                },
-                {
-                  "line": 7,
-                  "missing_fields": [
-                    "scores"
-                  ]
-                },
-                {
-                  "line": 8,
-                  "missing_fields": [
-                    "scores"
-                  ]
-                },
-                {
-                  "line": 9,
-                  "missing_fields": [
-                    "scores"
-                  ]
-                },
-                {
-                  "line": 10,
-                  "missing_fields": [
-                    "scores"
-                  ]
-                },
-                {
-                  "line": 11,
-                  "missing_fields": [
-                    "scores"
-                  ]
-                },
-                {
-                  "line": 12,
-                  "missing_fields": [
-                    "scores"
-                  ]
-                },
-                {
-                  "line": 13,
-                  "missing_fields": [
-                    "scores"
-                  ]
-                },
-                {
-                  "line": 14,
-                  "missing_fields": [
-                    "scores"
-                  ]
-                },
-                {
-                  "line": 15,
-                  "missing_fields": [
-                    "scores"
-                  ]
-                },
-                {
-                  "line": 16,
-                  "missing_fields": [
-                    "scores"
-                  ]
-                },
-                {
-                  "line": 17,
-                  "missing_fields": [
-                    "scores"
-                  ]
-                },
-                {
-                  "line": 18,
-                  "missing_fields": [
-                    "scores"
-                  ]
-                },
-                {
-                  "line": 19,
-                  "missing_fields": [
-                    "scores"
-                  ]
-                },
-                {
-                  "line": 20,
-                  "missing_fields": [
-                    "scores"
-                  ]
-                },
-                {
-                  "line": 21,
-                  "missing_fields": [
-                    "scores"
-                  ]
-                },
-                {
-                  "line": 22,
-                  "missing_fields": [
-                    "scores"
-                  ]
-                },
-                {
-                  "line": 23,
-                  "missing_fields": [
-                    "scores"
-                  ]
-                },
-                {
-                  "line": 24,
-                  "missing_fields": [
-                    "scores"
-                  ]
-                },
-                {
-                  "line": 25,
-                  "missing_fields": [
-                    "scores"
-                  ]
-                },
-                {
-                  "line": 26,
-                  "missing_fields": [
-                    "scores"
-                  ]
-                },
-                {
-                  "line": 27,
-                  "missing_fields": [
-                    "scores"
-                  ]
-                },
-                {
-                  "line": 28,
-                  "missing_fields": [
-                    "scores"
-                  ]
-                },
-                {
-                  "line": 29,
-                  "missing_fields": [
-                    "scores"
-                  ]
-                },
-                {
-                  "line": 30,
-                  "missing_fields": [
-                    "scores"
-                  ]
-                }
-              ],
-              "complete": false,
+              "bad_records": [],
+              "complete": true,
               "expected_records": 30,
               "missing_query_ids": []
             },
@@ -696,40 +153,36 @@
               "complete": true
             }
           },
-          "complete": false
+          "complete": true
         }
       },
-      "complete": false
+      "complete": true
     },
     "code_execution": {
       "root": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/artifacts/code_execution",
       "files": {
         "trajectories.jsonl": {
           "path": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/artifacts/code_execution/trajectories.jsonl",
-          "exists": false,
-          "complete": false,
-          "missing_records": [
-            "file"
-          ]
+          "exists": true,
+          "records": 240,
+          "bad_records": [],
+          "complete": true
         },
         "execution_logs.jsonl": {
           "path": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/artifacts/code_execution/execution_logs.jsonl",
-          "exists": false,
-          "complete": false,
-          "missing_records": [
-            "file"
-          ]
+          "exists": true,
+          "records": 240,
+          "bad_records": [],
+          "complete": true
         },
         "summary.json": {
           "path": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/artifacts/code_execution/summary.json",
-          "exists": false,
-          "complete": false,
-          "missing_fields": [
-            "file"
-          ]
+          "exists": true,
+          "missing_fields": [],
+          "complete": true
         }
       },
-      "complete": false
+      "complete": true
     }
   },
   "complete": false

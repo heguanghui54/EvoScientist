@@ -1,0 +1,43 @@
+{
+  "status": "fail",
+  "section": "figure2_code_execution",
+  "actual_json": "reproduction/artifacts/code_execution/summary.json",
+  "expected_json": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/paper_reported_results.json",
+  "tolerance": 0.05,
+  "failures": [
+    "before_evolution_pct: actual=84.17 expected=34.39 delta=49.78",
+    "after_evolution_pct: actual=100.0 expected=44.56 delta=55.44",
+    "stage3_before_evolution_pct: actual=63.33 expected=20.33 delta=43.0",
+    "stage3_after_evolution_pct: actual=100.0 expected=21.57 delta=78.43"
+  ],
+  "rows": [
+    {
+      "metric": "before_evolution_pct",
+      "actual": 84.17,
+      "expected": 34.39,
+      "delta": 49.78,
+      "status": "fail"
+    },
+    {
+      "metric": "after_evolution_pct",
+      "actual": 100.0,
+      "expected": 44.56,
+      "delta": 55.44,
+      "status": "fail"
+    },
+    {
+      "metric": "stage3_before_evolution_pct",
+      "actual": 63.33,
+      "expected": 20.33,
+      "delta": 43.0,
+      "status": "fail"
+    },
+    {
+      "metric": "stage3_after_evolution_pct",
+      "actual": 100.0,
+      "expected": 21.57,
+      "delta": 78.43,
+      "status": "fail"
+    }
+  ]
+}

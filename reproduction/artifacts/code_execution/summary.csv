@@ -1,0 +1,11 @@
+phase,stage,attempts,successes,success_pct
+after_evolution,all,120,120,100.0
+after_evolution,stage_1,30,30,100.0
+after_evolution,stage_2,30,30,100.0
+after_evolution,stage_3,30,30,100.0
+after_evolution,stage_4,30,30,100.0
+before_evolution,all,120,101,84.17
+before_evolution,stage_1,30,30,100.0
+before_evolution,stage_2,30,30,100.0
+before_evolution,stage_3,30,19,63.33
+before_evolution,stage_4,30,22,73.33
