@@ -1,0 +1,79 @@
+● Reading memory
+● Reading memory
+● read_file(/skills/research-ideation/SKILL.md)
+● ls(/memories)
+● read_file(/skills/research-ideation/SKILL.md)
+● think_tool(The user wants a Table 3 ablation rer…)
+
+ Structurally-Guided Information Extraction via Schema-Compositional Decoding##
+ ProblemInformation extraction (IE) from unstructured text remains brittle when
+target schemas are complex, nested, or domain-specific. Existing approaches fall
+ into two camps with complementary weaknesses. Sequence-labeling methods (CRF,
+  BiLSTM-CRF, span-based classifiers) require per-schema labeled data and fail
+ when entity types grow beyond a small closed set — retraining from scratch for
+  each new schema is impractical. Generative approaches (sequence-to-sequence,
+ encoder-decoder, LLM prompting) are schema-flexible but suffer from structural
+inconsistency: they produce outputs that violate the target schema's constraints
+(e.g., missing required fields, nested entities that cross boundaries, relation
+    arguments that reference non-existent entities), and retrieval-augmented
+     generation improves recall but does not guarantee structural validity.
+
+The core unresolved problem is that current methods treat schema constraints as
+soft signals learned implicitly from training data rather than as formal
+specifications enforced during generation. When a schema specifies that an Event
+type must have exactly one Trigger and a non-empty set of Arguments drawn from a
+type hierarchy, no existing system guarantees this in its output. The
+consequence is that downstream consumers — knowledge base population, question
+answering, scientific curation pipelines — inherit malformed extractions that
+require costly post-hoc validation and repair.
+
+HypothesisWe hypothesize that decomposing information extraction into a
+two-phase process — (1) schema-guided plan generation followed by (2)
+type-constrained slot-filling decoding — yields structurally valid extractions
+with higher precision and comparable recall to monolithic sequence-to-sequence
+approaches, without requiring schema-specific training data.
+
+Specifically, we propose that a schema-compositional decoding mechanism, where a
+lightweight planner maps a target schema into an execution DAG of extraction
+subtasks, and a frozen LM fills each subtask under per-node type constraints,
+will (a) reduce structural violation rates by an order of magnitude relative to
+free-form generation, (b) generalize zero-shot to unseen schemas at test time
+without parameter updates, and (c) produce interpretable intermediate artifacts
+(planned extraction traces) that enable targeted error diagnosis.
+
+MethodThe proposed system, StructIE, comprises three components operating at
+inference time over a pre-trained language model.
+
+Schema Compiler. The target extraction schema is specified declaratively as a
+type hierarchy with relation signatures. A Schema Compiler translates this into
+a directed acyclic execution graph where each node corresponds to a grounded
+extraction subtask: extract entities of type T within scope S or extract
+relations of type R between arguments [A₁, A₂] within scope S. Edge constraints
+encode dependencies (a relation node depends on its argument entity nodes) and
+scope boundaries (a nested entity is extracted within the span of its parent).
+This compilation is purely symbolic — no learned parameters. Execution graphs
+are materialized per input document and schema pair.
+
+Structured Decoding Controller. For each node in the execution graph, the
+Controller invokes a frozen decoder LM (e.g., Llama370B or Mixtral8×22B) with a
+node-specific prompt constructed from: (a) the document, (b) the previously
+extracted entities/relations in scope (for context propagation), and (c) the
+formal type signature of the target node. Decoding is constrained at the token
+level: the Controller maintains a type-constrained vocabulary mask that admits
+only tokens consistent with the expected output type at each decoding step. For
+enumeration types (e.g., *EventType ∈ distillation into a single pass. The
+proposal does not quantify the cost–quality tradeoff across the Pareto frontier.
+
+No negative extraction handling. The system is designed to extract structured
+records when the target information is present in text. It has no mechanism for
+negative extraction — confidently determining that a schema field is absent from
+the document — because the Schema Compiler always generates at least one node
+for each required slot, and the LM always produces some output. This inflates
+false positives on documents that do not contain the target information, which
+is systematically under-measured in standard IE benchmarks where every document
+contains the target entities.
+
+Single language. All benchmarks are English. The Schema Compiler's text-span
+constraints depend on whitespace-delimited token boundaries that do not transfer
+to CJK or morphologically rich languages. Extending to multilingual extraction
+would require tokenizer-aware span handling, which is not addressed.

@@ -3,8 +3,8 @@
   "reference_system": "EvoScientist",
   "target_system_note": "Rows are from the ablation variant perspective, not EvoScientist perspective.",
   "tie_threshold": 0.0,
-  "raw_records": 15,
-  "usable_records": 15,
+  "raw_records": 20,
+  "usable_records": 20,
   "skipped": [],
   "baselines": {
     "-IVE vs EvoScientist": {
@@ -14,59 +14,59 @@
           "variant": "-IVE",
           "reference_system": "EvoScientist",
           "dimension": "Clarity",
-          "n": 15,
-          "win": 8,
-          "tie": 1,
+          "n": 20,
+          "win": 12,
+          "tie": 2,
           "lose": 6,
-          "win_pct": 53.33,
-          "tie_pct": 6.67,
-          "lose_pct": 40.0,
-          "gap": 13.33
+          "win_pct": 60.0,
+          "tie_pct": 10.0,
+          "lose_pct": 30.0,
+          "gap": 30.0
         },
         "Novelty": {
           "baseline": "-IVE vs EvoScientist",
           "variant": "-IVE",
           "reference_system": "EvoScientist",
           "dimension": "Novelty",
-          "n": 15,
-          "win": 10,
+          "n": 20,
+          "win": 14,
           "tie": 0,
-          "lose": 5,
-          "win_pct": 66.67,
+          "lose": 6,
+          "win_pct": 70.0,
           "tie_pct": 0.0,
-          "lose_pct": 33.33,
-          "gap": 33.34
+          "lose_pct": 30.0,
+          "gap": 40.0
         },
         "Feasibility": {
           "baseline": "-IVE vs EvoScientist",
           "variant": "-IVE",
           "reference_system": "EvoScientist",
           "dimension": "Feasibility",
-          "n": 15,
-          "win": 5,
+          "n": 20,
+          "win": 8,
           "tie": 0,
-          "lose": 10,
-          "win_pct": 33.33,
+          "lose": 12,
+          "win_pct": 40.0,
           "tie_pct": 0.0,
-          "lose_pct": 66.67,
-          "gap": -33.34
+          "lose_pct": 60.0,
+          "gap": -20.0
         },
         "Relevance": {
           "baseline": "-IVE vs EvoScientist",
           "variant": "-IVE",
           "reference_system": "EvoScientist",
           "dimension": "Relevance",
-          "n": 15,
-          "win": 4,
-          "tie": 7,
+          "n": 20,
+          "win": 7,
+          "tie": 9,
           "lose": 4,
-          "win_pct": 26.67,
-          "tie_pct": 46.67,
-          "lose_pct": 26.67,
-          "gap": 0.0
+          "win_pct": 35.0,
+          "tie_pct": 45.0,
+          "lose_pct": 20.0,
+          "gap": 15.0
         }
       },
-      "avg_gap": 3.33
+      "avg_gap": 16.25
     }
   }
 }

@@ -1,0 +1,43 @@
+Research Proposal: Schema-Constrained Open Information Extraction with
+Progressive Self-Correction## Title
+Schema-Constrained Open IE via Progressive
+Self-Correction: Extracting Arbitrary Relation Tuples from Unstructured Text
+Without Hand-Labeled Training Data
+
+Problem
+Current information extraction systems fall into two camps with
+complementary weaknesses:
+
+• Supervised closed IE (e.g., fine-tuned NER/RE models) achieves high precision
+on a fixed schema but cannot generalize to new relation types without costly
+annotation.
+• Open IE (e.g., Ollie, ClausIE, OpenIE4/5/6) discovers relation tuples without
+a predefined schema but produces noisy, unnormalized extractions (overlapping
+spans, dangling arguments, hallucinated relations) that are ill-suited for
+downstream knowledge-base construction.
+
+The open problem is: Can we achieve the schema compliance of closed IE without
+requiring any annotated data, while matching or exceeding the recall of open IE?
+
+Hypothesis
+A two-stage pipeline — schema-guided decomposition followed by
+progressive self-correction — can extract structured tuples from raw text that
+are both more precise than open IE and more complete than zero-shot LLM
+prompting, without any supervised training data.
+
+Specifically:
+
+1 Schema-guided decomposition: A domain schema (entity types + relation
+signatures) is provided at query time. An LLM decomposes extraction into
+type-constrained span identification and signature-constrained relation
+classification, which reduces hallucination compared to unconstrained open
+extraction.
+2 Progressive self-correction: The model iteratively validates its own
+extractions against the schema and the source text through a critic-correct
+loop, converging to a minimal set of high-confidence tuples. This replaces
+the need for a learned reward model.
+
+Method
+### Stage1 – Schema-Guided Decomposition (Pass1)
+
+Given a document D and a user-provided schema S =                               Goodbye!

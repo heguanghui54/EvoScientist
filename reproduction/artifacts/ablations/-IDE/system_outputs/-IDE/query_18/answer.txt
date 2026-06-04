@@ -1,0 +1,128 @@
+Ablation Variant –IDE (No Idea-Direction Evolution)
+
+Generated from query and ordinary reasoning only. No prior direction-memory
+used.
+
+--------------------------------------------------------------------------------
+
+TitleUX-LLM: A Multi-Dimensional Framework for Evaluating User Experience in
+Open-Domain LLM Interactions
+
+ProblemCurrent LLM evaluation is dominated by two paradigms: (1) automated
+task-performance benchmarks (MMLU, HumanEval, GSM8K) that measure correctness on
+closed tasks, and (2) pairwise preference ratings (Chatbot Arena, human eval
+studies) that reduce user experience to a single comparative score. Neither
+approach captures the multi-dimensional nature of user experience — including
+trust, perceived competence, conversational flow, helpfulness, and satisfaction
+— as separate, measurable constructs. Existing UX frameworks from HCI (e.g.,
+SUS, UEQ) were designed for static GUIs and do not map cleanly onto dynamic,
+generative, open-ended LLM interactions. A principled evaluation framework that
+adapts UX constructs to the LLM setting is missing.
+
+HypothesisA multi-dimensional UX evaluation framework for LLMs — comprising five
+constructs (Competence, Trustworthiness, Conversational Flow, Helpfulness,
+Satisfaction) — can discriminate between models of different capability tiers
+(e.g., frontier vs. open-weight vs. small) and reveals systematic failure modes
+that task-accuracy benchmarks miss. Specifically, models with comparable MMLU
+scores (within3 pp) will differ significantly (Cohen's d >0.4) on at least two
+of the five UX dimensions, and the UX dimensions will show low-to-moderate
+inter-correlation (average |r| <0.5), confirming they measure distinct aspects
+of the interaction.
+
+MethodPhase1 — Instrument Development. Adapt and validate a15-item questionnaire
+(3 items per construct) drawn from established HCI scales (SUS, UEQ, Trust in
+Automation scale) with wording modified for generative LLM interactions. Conduct
+an initial validation study (n=50) using exploratory factor analysis to verify
+the five-factor structure. Items use7-point Likert scales.
+
+Phase2 — Controlled User Study. Within-subjects design with four LLMs (see
+baselines). Each participant completes five open-ended tasks per model (e.g.,
+explain a concept, write a persuasive email, debug code, brainstorm ideas,
+summarize a document). Task order and model order are Latin-square
+counterbalanced. After each model, participants complete the15-item UX
+questionnaire plus a free-text justification. Target: n=120 participants
+recruited via Prolific, balanced on LLM familiarity (self-reported
+novice/intermediate/expert).
+
+Phase3 — Analysis. (a) Compare UX dimension scores across models with
+repeated-measures ANOVA and post-hoc Tukey HSD. (b) Compute UX-model rankings
+and compare to Chatbot Arena Elo. (c) Fit a mixed-effects model predicting
+overall satisfaction from the four other dimensions. (d) Thematic analysis of
+free-text responses to identify recurring UX themes.
+
+Dataset / BenchmarkNo existing unified benchmark covers all five UX dimensions.
+We construct a new evaluation set — UX-LLM-Bench — comprising20 open-ended tasks
+across five categories: explanation, creative writing, code generation,
+analytical reasoning, and information synthesis. Each task has a clear goal for
+the participant (what to produce) but no single correct answer, preserving the
+open-ended nature that stresses UX quality. The benchmark and collected ratings
+will be released as a public resource.
+
+Evaluation Metrics| Metric | Description |
+
+|---|---| | Five UX dimension scores | Mean per-dimension (3 items,7-point
+Likert), per model | | Overall UX score | Mean of all15 items | | Pairwise
+effect sizes | Cohen's d between each model pair on each dimension | | UX-task
+correlation | Pearson r between UX scores and automated quality metrics (G-Eval,
+LLM-as-judge) on the same tasks | | Free-text theme frequencies | % of
+participants citing each UX theme per model |
+
+Baselines| Model | Rationale |
+
+|---|---| | GPT-4o (frontier) | Top of current Chatbot Arena Elo; ceiling
+reference | | Claude3.5 Sonnet (frontier, alternative family) | Structural
+replication; tests whether UX differences exist between frontier families | |
+Llama370B (open-weight) | Representative of strong open-weight tier
+(~GPT-3.5-class) | | Llama38B (small) | Lower bound; tests whether the
+instrument detects known quality gaps | | Chatbot Arena Elo ranking (external
+baseline) | Compare whether UX-dimensional rankings agree with aggregate
+pairwise preference |
+
+Ablations| Ablation | Component Removed | Expected Effect |
+
+|---|---|---| | –Satisfaction | Drop the overall satisfaction dimension | If
+remaining4 dimensions still predict model tier separation, satisfaction may be
+redundant | | –Flow | Drop conversational flow items | If discriminability
+collapses, flow is the primary UX driver | | Single-item | Use1 item per
+dimension instead of3 | Reliability drops; tests whether the full15-item
+instrument is necessary | | –Free text | Drop free-text justifications from
+analysis | Loses qualitative signal; tests whether quantitative scores alone
+suffice to identify failure modes |
+
+Expected Failure Modes1. Ceiling effects on frontier models. GPT-4o and
+Claude3.5 Sonnet may both score near ceiling on all dimensions, yielding no
+significant difference. Mitigation: Add two difficult "stress test" tasks
+designed to trigger known failure modes (hallucination, refusal, incoherence).
+
+ 2 Construct confounding. Participants may conflate "helpfulness" with
+   "satisfaction" or "competence" — if inter-dimension correlations exceed |r|
+   >0.7, the dimensional decomposition collapses. Mitigation: EFA validation in
+   Phase1; if factors merge, report a reduced-factor solution.
+ 3 Familiarity bias. Expert LLM users may rate models differently from novices.
+   Mitigation: Stratify recruitment by self-reported familiarity and include
+   familiarity as a covariate in mixed-effects models.
+ 4 Task underspecification. Open-ended tasks may be interpreted differently
+   across participants, inflating variance. Mitigation: Each task includes a
+   concrete deliverable goal and a worked example during instruction.
+ 5 Order effects. Even with counterbalancing, earlier models may anchor later
+   ratings (contrast effects). Mitigation: Include a practice task before the
+   first rated interaction; collect a baseline "expectation" rating before any
+   model exposure.
+
+Limitations- Lab setting, not naturalistic. Participants perform assigned tasks
+rather than self-selected queries. Ecological validity is limited — UX in real
+use depends on personal goals and context.
+
+ • No longitudinal component. Trust and satisfaction evolve over repeated use;
+   the study captures only first-impression UX from a single session per model.
+ • English-only, Western participant pool. UX dimensions (especially trust and
+   conversational flow) may differ across languages and cultures.
+   Generalizability to non-English populations is unknown.
+ • No multimodal interaction. The study tests text-only chat. UX of voice,
+   image, or tool-use interactions may involve different dimensions.
+ • LLM-as-judge correlation is secondary. Automated metrics are computed on task
+   outputs, not interaction experience — low correlation may simply reflect that
+   outputs and process are different constructs, not a failure of either.
+ • The instrument is new and unvalidated across time. Test-retest reliability is
+   not assessed in this study; scores may drift on re-exposure to the same
+   model.

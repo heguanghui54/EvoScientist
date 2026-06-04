@@ -1,0 +1,113 @@
+● think_tool(The user wants a Table 3 ablation rer…)
+
+ Research Proposal: Adaptive Subset Selection for Efficient LLM Leaderboards##
+TitleBudget-Constrained Leaderboard Construction via Adaptive Item Sampling for
+                                 LLM Evaluation
+
+ProblemPublic LLM leaderboards (Open LLM Leaderboard, Chatbot Arena, HELM,
+LMSys) evaluate models on massive batteries of benchmarks totaling tens of
+thousands of examples per submission. As the number of models grows
+exponentially — hundreds of submissions per month on some platforms — the
+compute cost of full-benchmark evaluation becomes prohibitive. Worse, the
+marginal information gained per additional example follows a sharply diminishing
+returns curve: once a leaderboard ranking stabilizes, further evaluation
+consumes resources without changing the ordering.
+
+The core problem is statistically inefficient evaluation: current leaderboards
+treat each evaluation as an isolated measurement rather than an adaptive
+process. They do not exploit the fact that after evaluating a few dozen models,
+we can predict which remaining items are informative and which are redundant.
+The result is a waste of compute — estimated at60–80% of benchmark evaluations
+contribute negligibly to final rankings — and a barrier to entry for smaller
+labs that cannot afford full evaluation suites.
+
+HypothesisLeaderboard rankings on standard LLM benchmarks can be recovered with
+high fidelity (≥0.95 Spearman correlation with the full-evaluation ranking)
+using fewer than30% of total benchmark items by adaptively selecting which
+examples each model sees, with selection decisions informed by item response
+characteristics inferred from prior model submissions. Concretely:
+
+H1: A two-parameter item response model (difficulty, discrimination) fit from
+historical model submissions predicts which items will maximally differentiate
+between any two candidate models. Selecting items with highest discrimination
+near a model's estimated ability yields rankings that converge rapidly.
+
+H2: An active sampling policy that terminates evaluation for each model once its
+ability estimate's confidence interval falls below a threshold (e.g., δ <0.1
+logits) reduces per-model evaluation cost by at least60% while preserving rank
+order.
+
+MethodWe propose Adaptive Leaderboard Sampling (ALS), a three-component system:
+
+Component1 — Item Response Calibration (offline). Given a historical evaluation
+matrix R of shape M models × N items (binary correctness or correctness scores),
+fit a2-parameter logistic item response model for each benchmark. Each item j is
+characterized by:
+
+ • αⱼ — discrimination (slope): how sharply the item separates models near its
+   difficulty- βⱼ — difficulty (threshold): the ability level at which a model
+   has50% probability of answering correctlyThese parameters are estimated via
+   marginal maximum likelihood (MML) using historical submission data, requiring
+   no per-model computation at inference time.
+
+Component2 — Adaptive Item Selection (per model). When a new model k is
+submitted:
+
+ 1 Warm-start: Evaluate a fixed seed set of S =32 items spanning the difficulty
+   range (stratified by β quantiles) to obtain an initial ability estimate θ̂ₖ.
+ 2 Loop: Select the next item j that maximizes Iⱼ(θ̂ₖ) = αⱼ² · Pⱼ(θ̂ₖ) · (1 −
+   Pⱼ(θ̂ₖ)) — the Fisher information at the current ability estimate. This
+   naturally prioritizes items where the model is near the decision boundary.
+ 3 Update θ̂ₖ via Bayesian EAP estimation after each response.
+ 4 Terminate when the posterior standard deviation σ(θ̂ₖ) <0.1 or when t = T_max
+   items have been evaluated (whichever comes first).
+
+Component3 — Leaderboard Aggregation. After all models are evaluated:
+
+ • Map each model's ability estimate θ̂ₖ to a leaderboard score (linear transform
+   to a0–100 scale).
+ • Compute pairwise rank confidence intervals via bootstrapping (1,000 resamples
+   of the selected item sets).
+ • For model pairs whose intervals overlap, flag them as statistically tied at p
+   <0.05 (using a Benjamini-Hochberg corrected Mann-Whitney U test).
+
+Dataset & BenchmarkWe evaluate on four leaderboard-style benchmarks spanning
+different evaluation paradigms:
+
+
+ Benchmark        Type              Items      Typical Models  Output
+ MMLU (5-shot)    Multiple-choice   14,042     ~200            Accuracy per
+                  knowledge                                    model
+ ARC-Challenge    Multiple-choice   2,590      ~200            Accuracy per
+                  reasoning                                    model
+ GSM8K            Math word         1,319      ~150            Pass@1
+                  problems
+ MT-Bench         Multi-turn        80 (8×10)  ~100            Average score
+ (LLM-as-judge)   conversation                                 per model
+
+
+For each benchmark, we use the full public evaluation history (as of May2025)
+from the Open LLM Leaderboard v2 and LMSys datasets as the reference ground
+truth.
+
+Evaluation MetricsFour metrics measure the fidelity and efficiency of ALS
+against full-benchmark evaluation:
+
+ 1 Spearman rank correlation between the ALS-derived ranking and the
+   full-evaluation ranking across all models. Target: ρ ≥0.95.
+ 2 Kendall tau correlation for sensitivity to top-of-leaderboard changes.
+   Target: τ ≥0.90.
+ 3 Item savings ratio:1 − (items per model under ALS) / (items per model under
+   full evaluation). Target: ≥60%.
+ 4 Top-k overlap: precision@10, precision@20 — fraction of models in the
+   full-evaluation top k that also appear in the ALS top k. Target: ≥0.90.
+
+All metrics reported with95% bootstrap confidence intervals over100 simulated
+leaderboard runs (each run re-samples the item selection procedure with a
+different random seed for the warm-start items).
+
+Baselines| Method | Description |
+
+|---|---| | Full evaluation | All items, all models (upper bound on fidelity,
+lower bound on efficiency) | | Random subset | Randomly sample r items per model
+(same r as ALS's average), reported for r =

@@ -1,0 +1,75 @@
+● think_tool(The user wants a Table 3 ablation rer…)
+
+Knowledge Injection in Domain-Specific Large Language Models: A Structured
+Representation Approach### TitleStructured Knowledge Injection for
+Domain-Specific LLMs via Latent Context Gating
+
+ProblemDomain-specific LLMs (legal, medical, scientific) require accurate,
+up-to-date, and non-conflicting knowledge beyond what is captured in pretraining
+corpora. Current approaches — continued pretraining on domain text,
+retrieval-augmented generation, and parameter-efficient fine-tuning — each
+suffer from a fundamental tension: parametric updates cause catastrophic
+forgetting of general capabilities, retrieval introduces latency and fragility
+to noisy sources, and PEFT methods struggle to inject dense, relational
+knowledge that competes with the model's existing parametric beliefs. No
+existing method cleanly separates when to trust injected knowledge versus when
+to rely on pre-trained representations without task-specific tuning.
+
+HypothesisInjecting domain knowledge through a lightweight, learnable gating
+mechanism — interleaved between existing transformer layers — can modulate the
+model's internal representations toward domain-consistent states without
+modifying the underlying weights. This preserves general capabilities while
+achieving domain grounding comparable to full fine-tuning, provided the gating
+pathways are conditioned on both the input context and a compact domain
+knowledge base encoded as structured latent keys.
+
+MethodLatent Context Gating (LCG). We propose inserting learned gating vectors
+at the output of every K-th transformer layer (K=2,4, or6). Each gate is a
+learned linear projection that produces a multiplicative mask over the residual
+stream, gated by a similarity score between the hidden state and a compact set
+of domain concept embeddings. The concept embeddings are derived by encoding a
+domain knowledge graph (entities and relations) through a small graph encoder
+(e.g.,2-layer GCN), then projecting each entity's embedding into the LLM's
+hidden dimension. At inference time, a sparse retrieval step selects the top-M
+relevant concepts per token position, and the gating vector is the weighted sum
+of those concept embeddings.
+
+Training recipe.
+
+ 1 Freeze the base LLM entirely.
+ 2 Train only the gating parameters (per-layer linear projections + concept
+   embeddings + graph encoder) on a mixed-batch objective: (a) standard
+   next-token prediction on domain text, (b) a contrastive loss that pushes
+   selected concept embeddings closer to the hidden states they gate, and (c) a
+   consistency loss that penalizes the gated and ungated representations from
+   diverging on held-out general-domain text.
+ 3 Total trainable parameters: <0.5% of the base model.
+
+Domain knowledge graph construction. For each domain, we extract entity-relation
+triples from a seed corpus (e.g., PubMed abstracts for biomedicine; statute
+texts for legal) using an off-the-shelf NER+RE pipeline (e.g., BioBERT + Spacy).
+Edges are typed relations; nodes carry textual descriptions encoded through
+sentence embeddings. The graph is filtered to retain entities appearing ≥5 times
+and relations with ≥10 instances in the corpus.
+
+Dataset / Benchmark| Domain | Training Data | Evaluation Benchmark |
+
+|--------|-------------|---------------------| | Biomedicine |500K PubMed
+abstracts (2019–2024) | MedQA (USMLE), PubMedQA, BioASQ | | Legal |200K US court
+opinions + statutes | CaseHOLD, ContractNLI, LexGLUE | | General (negative
+control) | — | MMLU, HellaSwag, WinoGrande |
+
+The general-domain benchmarks serve as a forgetting detector: any drop in
+general-task performance indicates undesirable drift.
+
+Evaluation Metrics- Domain accuracy: Exact match / F1 on domain QA and NLI
+benchmarks (primary).
+
+ • Knowledge consistency: Percentage of entity-relation predictions that agree
+   with the source knowledge graph (constructed by prompting the model to
+   generate entity pairs and classifying relations).
+ • General retention: Delta in MMLU/HellaSwag/WinoGrande accuracy before and
+   after LCG insertion.
+ • Parameter efficiency: Storage and latency overhead relative to base model (MB
+   added, ms/token added).
+ • Ablation sensitivity: Metric variance across gate insertion frequencies (K ∈

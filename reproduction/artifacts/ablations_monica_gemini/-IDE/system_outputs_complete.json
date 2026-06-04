@@ -1,6 +1,6 @@
 {
   "variant": "-IDE",
-  "query_count": 15,
+  "query_count": 20,
   "expected_query_count": 30,
   "complete": false,
   "dry_run": false,
@@ -22,14 +22,14 @@
     12,
     13,
     14,
-    15
-  ],
-  "missing_variant_query_ids": [
+    15,
     16,
     17,
     18,
     19,
-    20,
+    20
+  ],
+  "missing_variant_query_ids": [
     21,
     22,
     23,
@@ -42,11 +42,6 @@
     30
   ],
   "missing_reference_query_ids": [
-    16,
-    17,
-    18,
-    19,
-    20,
     21,
     22,
     23,
@@ -178,9 +173,49 @@
       "reference_present": true,
       "status": "ok",
       "answer_chars": 3588
+    },
+    {
+      "query_id": 16,
+      "topic": "Knowledge injection",
+      "dir": "reproduction/artifacts/ablations_monica_gemini/-IDE/system_outputs/-IDE/query_16",
+      "reference_present": true,
+      "status": "ok",
+      "answer_chars": 11532
+    },
+    {
+      "query_id": 17,
+      "topic": "Information extraction",
+      "dir": "reproduction/artifacts/ablations_monica_gemini/-IDE/system_outputs/-IDE/query_17",
+      "reference_present": true,
+      "status": "ok",
+      "answer_chars": 8873
+    },
+    {
+      "query_id": 18,
+      "topic": "UX evaluation",
+      "dir": "reproduction/artifacts/ablations_monica_gemini/-IDE/system_outputs/-IDE/query_18",
+      "reference_present": true,
+      "status": "ok",
+      "answer_chars": 7575
+    },
+    {
+      "query_id": 19,
+      "topic": "Evaluation leaderboards",
+      "dir": "reproduction/artifacts/ablations_monica_gemini/-IDE/system_outputs/-IDE/query_19",
+      "reference_present": true,
+      "status": "ok",
+      "answer_chars": 9269
+    },
+    {
+      "query_id": 20,
+      "topic": "Text generation",
+      "dir": "reproduction/artifacts/ablations_monica_gemini/-IDE/system_outputs/-IDE/query_20",
+      "reference_present": true,
+      "status": "ok",
+      "answer_chars": 3411
     }
   ],
   "paper_exact": false,
   "caveat": "Replacement ablation run driven by prompt-level disabled-component constraints. The public checkout does not expose the paper's native IDE/IVE ablation switches.",
-  "judge_input_records": 15
+  "judge_input_records": 20
 }

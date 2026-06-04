@@ -102,78 +102,16 @@
             "complete": false
           },
           "InternAgent": {
-            "present": 0,
+            "present": 30,
             "expected": 30,
-            "missing_query_ids": [
-              1,
-              2,
-              3,
-              4,
-              5,
-              6,
-              7,
-              8,
-              9,
-              10,
-              11,
-              12,
-              13,
-              14,
-              15,
-              16,
-              17,
-              18,
-              19,
-              20,
-              21,
-              22,
-              23,
-              24,
-              25,
-              26,
-              27,
-              28,
-              29,
-              30
-            ],
-            "complete": false
+            "missing_query_ids": [],
+            "complete": true
           },
           "AI Scientist-v2": {
-            "present": 0,
+            "present": 30,
             "expected": 30,
-            "missing_query_ids": [
-              1,
-              2,
-              3,
-              4,
-              5,
-              6,
-              7,
-              8,
-              9,
-              10,
-              11,
-              12,
-              13,
-              14,
-              15,
-              16,
-              17,
-              18,
-              19,
-              20,
-              21,
-              22,
-              23,
-              24,
-              25,
-              26,
-              27,
-              28,
-              29,
-              30
-            ],
-            "complete": false
+            "missing_query_ids": [],
+            "complete": true
           },
           "Hypogenic": {
             "present": 0,
@@ -1236,96 +1174,81 @@
           "files": {
             "system_outputs_complete.json": {
               "path": "reproduction/artifacts/ablations/-IDE/system_outputs_complete.json",
-              "exists": false,
-              "bytes": 0
+              "exists": true,
+              "bytes": 5659
             },
             "judge_inputs.jsonl": {
               "path": "reproduction/artifacts/ablations/-IDE/judge_inputs.jsonl",
-              "exists": false,
-              "bytes": 0
+              "exists": true,
+              "bytes": 296611
             },
             "judge_outputs.jsonl": {
               "path": "reproduction/artifacts/ablations/-IDE/judge_outputs.jsonl",
-              "exists": false,
-              "bytes": 0
+              "exists": true,
+              "bytes": 38930
             },
             "aggregate.json": {
               "path": "reproduction/artifacts/ablations/-IDE/aggregate.json",
-              "exists": false,
-              "bytes": 0
+              "exists": true,
+              "bytes": 1866
             }
           },
-          "missing_files": [
-            "system_outputs_complete.json",
-            "judge_inputs.jsonl",
-            "judge_outputs.jsonl",
-            "aggregate.json"
-          ],
-          "complete": false
+          "missing_files": [],
+          "complete": true
         },
         "-IVE": {
           "root": "reproduction/artifacts/ablations/-IVE",
           "files": {
             "system_outputs_complete.json": {
               "path": "reproduction/artifacts/ablations/-IVE/system_outputs_complete.json",
-              "exists": false,
-              "bytes": 0
+              "exists": true,
+              "bytes": 5660
             },
             "judge_inputs.jsonl": {
               "path": "reproduction/artifacts/ablations/-IVE/judge_inputs.jsonl",
-              "exists": false,
-              "bytes": 0
+              "exists": true,
+              "bytes": 304659
             },
             "judge_outputs.jsonl": {
               "path": "reproduction/artifacts/ablations/-IVE/judge_outputs.jsonl",
-              "exists": false,
-              "bytes": 0
+              "exists": true,
+              "bytes": 37707
             },
             "aggregate.json": {
               "path": "reproduction/artifacts/ablations/-IVE/aggregate.json",
-              "exists": false,
-              "bytes": 0
+              "exists": true,
+              "bytes": 1867
             }
           },
-          "missing_files": [
-            "system_outputs_complete.json",
-            "judge_inputs.jsonl",
-            "judge_outputs.jsonl",
-            "aggregate.json"
-          ],
-          "complete": false
+          "missing_files": [],
+          "complete": true
         },
         "-all": {
           "root": "reproduction/artifacts/ablations/-all",
           "files": {
             "system_outputs_complete.json": {
               "path": "reproduction/artifacts/ablations/-all/system_outputs_complete.json",
-              "exists": false,
-              "bytes": 0
+              "exists": true,
+              "bytes": 5654
             },
             "judge_inputs.jsonl": {
               "path": "reproduction/artifacts/ablations/-all/judge_inputs.jsonl",
-              "exists": false,
-              "bytes": 0
+              "exists": true,
+              "bytes": 279710
             },
             "judge_outputs.jsonl": {
               "path": "reproduction/artifacts/ablations/-all/judge_outputs.jsonl",
-              "exists": false,
-              "bytes": 0
+              "exists": true,
+              "bytes": 40633
             },
             "aggregate.json": {
               "path": "reproduction/artifacts/ablations/-all/aggregate.json",
-              "exists": false,
-              "bytes": 0
+              "exists": true,
+              "bytes": 1868
             }
           },
-          "missing_files": [
-            "system_outputs_complete.json",
-            "judge_inputs.jsonl",
-            "judge_outputs.jsonl",
-            "aggregate.json"
-          ],
-          "complete": false
+          "missing_files": [],
+          "complete": true
         }
       },
       "schema_valid": false,
@@ -1337,35 +1260,191 @@
             "files": {
               "system_outputs_complete.json": {
                 "path": "reproduction/artifacts/ablations/-IDE/system_outputs_complete.json",
-                "exists": false,
+                "exists": true,
+                "missing_fields": [],
                 "complete": false,
-                "missing_fields": [
-                  "file"
-                ]
+                "expected_query_count": 30,
+                "complete_query_count": 20,
+                "missing_query_ids": [
+                  21,
+                  22,
+                  23,
+                  24,
+                  25,
+                  26,
+                  27,
+                  28,
+                  29,
+                  30
+                ],
+                "unexpected_query_ids": []
               },
               "judge_inputs.jsonl": {
                 "path": "reproduction/artifacts/ablations/-IDE/judge_inputs.jsonl",
-                "exists": false,
+                "exists": true,
+                "records": 20,
+                "bad_records": [],
                 "complete": false,
-                "missing_records": [
-                  "file"
+                "expected_records": 30,
+                "missing_query_ids": [
+                  21,
+                  22,
+                  23,
+                  24,
+                  25,
+                  26,
+                  27,
+                  28,
+                  29,
+                  30
                 ]
               },
               "judge_outputs.jsonl": {
                 "path": "reproduction/artifacts/ablations/-IDE/judge_outputs.jsonl",
-                "exists": false,
+                "exists": true,
+                "records": 20,
+                "bad_records": [
+                  {
+                    "line": 1,
+                    "missing_fields": [
+                      "scores"
+                    ]
+                  },
+                  {
+                    "line": 2,
+                    "missing_fields": [
+                      "scores"
+                    ]
+                  },
+                  {
+                    "line": 3,
+                    "missing_fields": [
+                      "scores"
+                    ]
+                  },
+                  {
+                    "line": 4,
+                    "missing_fields": [
+                      "scores"
+                    ]
+                  },
+                  {
+                    "line": 5,
+                    "missing_fields": [
+                      "scores"
+                    ]
+                  },
+                  {
+                    "line": 6,
+                    "missing_fields": [
+                      "scores"
+                    ]
+                  },
+                  {
+                    "line": 7,
+                    "missing_fields": [
+                      "scores"
+                    ]
+                  },
+                  {
+                    "line": 8,
+                    "missing_fields": [
+                      "scores"
+                    ]
+                  },
+                  {
+                    "line": 9,
+                    "missing_fields": [
+                      "scores"
+                    ]
+                  },
+                  {
+                    "line": 10,
+                    "missing_fields": [
+                      "scores"
+                    ]
+                  },
+                  {
+                    "line": 11,
+                    "missing_fields": [
+                      "scores"
+                    ]
+                  },
+                  {
+                    "line": 12,
+                    "missing_fields": [
+                      "scores"
+                    ]
+                  },
+                  {
+                    "line": 13,
+                    "missing_fields": [
+                      "scores"
+                    ]
+                  },
+                  {
+                    "line": 14,
+                    "missing_fields": [
+                      "scores"
+                    ]
+                  },
+                  {
+                    "line": 15,
+                    "missing_fields": [
+                      "scores"
+                    ]
+                  },
+                  {
+                    "line": 16,
+                    "missing_fields": [
+                      "scores"
+                    ]
+                  },
+                  {
+                    "line": 17,
+                    "missing_fields": [
+                      "scores"
+                    ]
+                  },
+                  {
+                    "line": 18,
+                    "missing_fields": [
+                      "scores"
+                    ]
+                  },
+                  {
+                    "line": 19,
+                    "missing_fields": [
+                      "scores"
+                    ]
+                  },
+                  {
+                    "line": 20,
+                    "missing_fields": [
+                      "scores"
+                    ]
+                  }
+                ],
                 "complete": false,
-                "missing_records": [
-                  "file"
+                "expected_records": 30,
+                "missing_query_ids": [
+                  21,
+                  22,
+                  23,
+                  24,
+                  25,
+                  26,
+                  27,
+                  28,
+                  29,
+                  30
                 ]
               },
               "aggregate.json": {
                 "path": "reproduction/artifacts/ablations/-IDE/aggregate.json",
-                "exists": false,
-                "complete": false,
-                "missing_fields": [
-                  "file"
-                ]
+                "exists": true,
+                "missing_fields": [],
+                "complete": true
               }
             },
             "complete": false
@@ -1375,35 +1454,191 @@
             "files": {
               "system_outputs_complete.json": {
                 "path": "reproduction/artifacts/ablations/-IVE/system_outputs_complete.json",
-                "exists": false,
+                "exists": true,
+                "missing_fields": [],
                 "complete": false,
-                "missing_fields": [
-                  "file"
-                ]
+                "expected_query_count": 30,
+                "complete_query_count": 20,
+                "missing_query_ids": [
+                  21,
+                  22,
+                  23,
+                  24,
+                  25,
+                  26,
+                  27,
+                  28,
+                  29,
+                  30
+                ],
+                "unexpected_query_ids": []
               },
               "judge_inputs.jsonl": {
                 "path": "reproduction/artifacts/ablations/-IVE/judge_inputs.jsonl",
-                "exists": false,
+                "exists": true,
+                "records": 20,
+                "bad_records": [],
                 "complete": false,
-                "missing_records": [
-                  "file"
+                "expected_records": 30,
+                "missing_query_ids": [
+                  21,
+                  22,
+                  23,
+                  24,
+                  25,
+                  26,
+                  27,
+                  28,
+                  29,
+                  30
                 ]
               },
               "judge_outputs.jsonl": {
                 "path": "reproduction/artifacts/ablations/-IVE/judge_outputs.jsonl",
-                "exists": false,
+                "exists": true,
+                "records": 20,
+                "bad_records": [
+                  {
+                    "line": 1,
+                    "missing_fields": [
+                      "scores"
+                    ]
+                  },
+                  {
+                    "line": 2,
+                    "missing_fields": [
+                      "scores"
+                    ]
+                  },
+                  {
+                    "line": 3,
+                    "missing_fields": [
+                      "scores"
+                    ]
+                  },
+                  {
+                    "line": 4,
+                    "missing_fields": [
+                      "scores"
+                    ]
+                  },
+                  {
+                    "line": 5,
+                    "missing_fields": [
+                      "scores"
+                    ]
+                  },
+                  {
+                    "line": 6,
+                    "missing_fields": [
+                      "scores"
+                    ]
+                  },
+                  {
+                    "line": 7,
+                    "missing_fields": [
+                      "scores"
+                    ]
+                  },
+                  {
+                    "line": 8,
+                    "missing_fields": [
+                      "scores"
+                    ]
+                  },
+                  {
+                    "line": 9,
+                    "missing_fields": [
+                      "scores"
+                    ]
+                  },
+                  {
+                    "line": 10,
+                    "missing_fields": [
+                      "scores"
+                    ]
+                  },
+                  {
+                    "line": 11,
+                    "missing_fields": [
+                      "scores"
+                    ]
+                  },
+                  {
+                    "line": 12,
+                    "missing_fields": [
+                      "scores"
+                    ]
+                  },
+                  {
+                    "line": 13,
+                    "missing_fields": [
+                      "scores"
+                    ]
+                  },
+                  {
+                    "line": 14,
+                    "missing_fields": [
+                      "scores"
+                    ]
+                  },
+                  {
+                    "line": 15,
+                    "missing_fields": [
+                      "scores"
+                    ]
+                  },
+                  {
+                    "line": 16,
+                    "missing_fields": [
+                      "scores"
+                    ]
+                  },
+                  {
+                    "line": 17,
+                    "missing_fields": [
+                      "scores"
+                    ]
+                  },
+                  {
+                    "line": 18,
+                    "missing_fields": [
+                      "scores"
+                    ]
+                  },
+                  {
+                    "line": 19,
+                    "missing_fields": [
+                      "scores"
+                    ]
+                  },
+                  {
+                    "line": 20,
+                    "missing_fields": [
+                      "scores"
+                    ]
+                  }
+                ],
                 "complete": false,
-                "missing_records": [
-                  "file"
+                "expected_records": 30,
+                "missing_query_ids": [
+                  21,
+                  22,
+                  23,
+                  24,
+                  25,
+                  26,
+                  27,
+                  28,
+                  29,
+                  30
                 ]
               },
               "aggregate.json": {
                 "path": "reproduction/artifacts/ablations/-IVE/aggregate.json",
-                "exists": false,
-                "complete": false,
-                "missing_fields": [
-                  "file"
-                ]
+                "exists": true,
+                "missing_fields": [],
+                "complete": true
               }
             },
             "complete": false
@@ -1413,35 +1648,191 @@
             "files": {
               "system_outputs_complete.json": {
                 "path": "reproduction/artifacts/ablations/-all/system_outputs_complete.json",
-                "exists": false,
+                "exists": true,
+                "missing_fields": [],
                 "complete": false,
-                "missing_fields": [
-                  "file"
-                ]
+                "expected_query_count": 30,
+                "complete_query_count": 20,
+                "missing_query_ids": [
+                  21,
+                  22,
+                  23,
+                  24,
+                  25,
+                  26,
+                  27,
+                  28,
+                  29,
+                  30
+                ],
+                "unexpected_query_ids": []
               },
               "judge_inputs.jsonl": {
                 "path": "reproduction/artifacts/ablations/-all/judge_inputs.jsonl",
-                "exists": false,
+                "exists": true,
+                "records": 20,
+                "bad_records": [],
                 "complete": false,
-                "missing_records": [
-                  "file"
+                "expected_records": 30,
+                "missing_query_ids": [
+                  21,
+                  22,
+                  23,
+                  24,
+                  25,
+                  26,
+                  27,
+                  28,
+                  29,
+                  30
                 ]
               },
               "judge_outputs.jsonl": {
                 "path": "reproduction/artifacts/ablations/-all/judge_outputs.jsonl",
-                "exists": false,
+                "exists": true,
+                "records": 20,
+                "bad_records": [
+                  {
+                    "line": 1,
+                    "missing_fields": [
+                      "scores"
+                    ]
+                  },
+                  {
+                    "line": 2,
+                    "missing_fields": [
+                      "scores"
+                    ]
+                  },
+                  {
+                    "line": 3,
+                    "missing_fields": [
+                      "scores"
+                    ]
+                  },
+                  {
+                    "line": 4,
+                    "missing_fields": [
+                      "scores"
+                    ]
+                  },
+                  {
+                    "line": 5,
+                    "missing_fields": [
+                      "scores"
+                    ]
+                  },
+                  {
+                    "line": 6,
+                    "missing_fields": [
+                      "scores"
+                    ]
+                  },
+                  {
+                    "line": 7,
+                    "missing_fields": [
+                      "scores"
+                    ]
+                  },
+                  {
+                    "line": 8,
+                    "missing_fields": [
+                      "scores"
+                    ]
+                  },
+                  {
+                    "line": 9,
+                    "missing_fields": [
+                      "scores"
+                    ]
+                  },
+                  {
+                    "line": 10,
+                    "missing_fields": [
+                      "scores"
+                    ]
+                  },
+                  {
+                    "line": 11,
+                    "missing_fields": [
+                      "scores"
+                    ]
+                  },
+                  {
+                    "line": 12,
+                    "missing_fields": [
+                      "scores"
+                    ]
+                  },
+                  {
+                    "line": 13,
+                    "missing_fields": [
+                      "scores"
+                    ]
+                  },
+                  {
+                    "line": 14,
+                    "missing_fields": [
+                      "scores"
+                    ]
+                  },
+                  {
+                    "line": 15,
+                    "missing_fields": [
+                      "scores"
+                    ]
+                  },
+                  {
+                    "line": 16,
+                    "missing_fields": [
+                      "scores"
+                    ]
+                  },
+                  {
+                    "line": 17,
+                    "missing_fields": [
+                      "scores"
+                    ]
+                  },
+                  {
+                    "line": 18,
+                    "missing_fields": [
+                      "scores"
+                    ]
+                  },
+                  {
+                    "line": 19,
+                    "missing_fields": [
+                      "scores"
+                    ]
+                  },
+                  {
+                    "line": 20,
+                    "missing_fields": [
+                      "scores"
+                    ]
+                  }
+                ],
                 "complete": false,
-                "missing_records": [
-                  "file"
+                "expected_records": 30,
+                "missing_query_ids": [
+                  21,
+                  22,
+                  23,
+                  24,
+                  25,
+                  26,
+                  27,
+                  28,
+                  29,
+                  30
                 ]
               },
               "aggregate.json": {
                 "path": "reproduction/artifacts/ablations/-all/aggregate.json",
-                "exists": false,
-                "complete": false,
-                "missing_fields": [
-                  "file"
-                ]
+                "exists": true,
+                "missing_fields": [],
+                "complete": true
               }
             },
             "complete": false

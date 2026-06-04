@@ -1,0 +1,157 @@
+Efficient Leaderboards for LLM Evaluation: Adaptive Subset Selection via
+Proxy-Gated Benchmarking### ProblemPublic LLM leaderboards (Open LLM, Chatbot
+Arena, HELM, etc.) have become the de facto standard for comparing models, but
+their cost scales linearly with the number of submitted models. Each new
+submission runs the full evaluation suite — often50–100+ tasks across thousands
+of prompts — even when most of those tasks contribute negligible discriminative
+power for the current leaderboard state. For an ecosystem with thousands of
+submissions (Open LLM Leaderboard v1 received ~4,000), this imposes massive
+redundant compute: the marginal information gain of the4,000th full evaluation
+over the same80 tasks is near zero, yet the cost is identical to the first.
+
+The core problem is that current leaderboards are stateless with respect to
+prior submissions. They do not exploit the fact that once the performance
+distribution across tasks is known, many tasks become uninformative — either
+because all models perform near ceiling, variance is too high to separate
+models, or the task ranks models identically to a cheaper proxy. The question
+is: can we build a leaderboard that dynamically selects only the most
+informative subset of evaluations for each new model submission, given the
+history of prior evaluations?
+
+HypothesisIt is possible to construct an efficient leaderboard that reduces
+per-submission evaluation cost by60–80% while preserving rank ordering (Spearman
+ρ ≥0.95) against the full-suite leaderboard, by applying adaptive subset
+selection conditioned on the evaluation history of previously submitted models.
+The key design principle is to treat evaluation task selection as an active
+learning problem: given the matrix of prior model × task scores, select the
+smallest subset of tasks that maximally preserves the model ranking induced by
+the full suite.
+
+MethodThe proposed framework, ProxyGated Leaderboard (PGL), operates in three
+phases:
+
+Phase1 — Historical Embedding. Given an observed score matrix S ∈ ℝ^{N×M} (N
+models, M tasks), we compute a task-level co-ranking matrix where each task is
+represented by its N-dimensional score vector across all previously submitted
+models. Tasks that produce highly correlated score vectors are redundant; tasks
+with low correlation or high variance carry orthogonal information.
+
+Phase2 — Adaptive Subset Selection. When a new model submits for evaluation, we
+select a task subset in two stages:
+
+ • Proxy gating. A fast proxy (e.g., a small auxiliary model scored on2–3 cheap
+   held-out prompts from each task, or task-level metadata like task
+   length/domain) estimates which tasks are likely to yield high information
+   gain. Tasks where the proxy predicts near-ceiling performance (all models
+   scored >95%) or near-floor performance (all <20%) with confidence are
+   deprioritized.
+ • Greedy coverage maximization. From the remaining pool, we greedily select
+   tasks using a diversity-weighted objective: maximize the Frobenius norm of
+   the selected submatrix's leverage scores, constrained by a per-submission
+   compute budget (e.g., equivalent to15 full tasks). This ensures selected
+   tasks are both informative and cover distinct skill dimensions.
+
+Phase3 — Estimation. The full-suite score is estimated from the selected subset
+via a calibrated ridge regression model trained on the historical model × task
+matrix, with the selected task scores as features. Uncertainty intervals are
+reported alongside point estimates.
+
+Key design choices:
+
+ • The proxy gate is stateless (no memory of past proposals) — selecting tasks
+   purely based on the current leaderboard state and the proxy's static
+   confidence heuristic.
+ • The task selection matrix updates after each batch of K submissions (K =10)
+   to incorporate new rows into S.
+ • Compute budget is expressed in "task-equivalent units" — the per-submission
+   cost is capped at a configurable fraction (default:20%) of the full suite
+   cost.
+
+Dataset / BenchmarkWe simulate a leaderboard using Open LLM Leaderboard v2 data
+(or a comparable public dataset such as HELM's full benchmark matrix). This
+dataset provides N ≈2,000 model submissions scored across M ≈80 tasks covering
+reasoning, knowledge, math, coding, and instruction following. We also construct
+a synthetic extension where additional "true" model scores are generated from a
+factor model (5 latent skill dimensions + per-task noise) to test scaling
+behavior beyond observed data.
+
+Evaluation Metrics- Rank preservation: Spearman rank correlation between
+PGL-estimated leaderboard and full-suite leaderboard, measured across all
+models. Target: ρ ≥0.95.
+
+ • Top-k hit rate: Fraction of the true top-10 models that appear in the
+   PGL-estimated top-10. Target: ≥0.90.
+ • Per-submission cost reduction: (1 − |S_sel| / M) ×100%. Target: ≥60%.
+ • Calibration: Expected calibration error (ECE) of estimated scores vs. true
+   scores, binned by decile.
+ • Robustness to new models: Rank preservation evaluated on held-out model
+   families (e.g., train on LLaMA/Mistra variants only, test on Qwen/Falcon
+   variants) to simulate distribution shift in new submissions.
+
+Baselines1. Full-suite leaderboard (upper bound): Evaluate every model on all M
+tasks.
+
+ 2 Random subset: For each new model, evaluate on a randomly selected subset of
+   size equal to PGL's budget.
+ 3 Static task pruning: Identify the top-K most discriminating tasks via
+   variance-based filtering on the full history, then use only those tasks for
+   all future submissions (no adaptation).
+ 4 Uniform sampling with imputation: Randomly sample tasks per model but use
+   matrix factorization to impute missing scores before ranking.
+ 5 Active learning (uncertainty sampling): Select tasks where the current
+   ensemble of imputation models has highest predictive variance — a standard
+   active learning baseline without proxy gating.
+
+Ablations1. w/o proxy gate: Remove Phase2's proxy gating; select directly via
+greedy coverage on the full task pool. Tests whether the proxy contributes
+meaningful efficiency or just adds complexity.
+
+ 2 w/o greedy coverage: Replace greedy coverage with simple random + proxy gate.
+   Tests whether diversity-driven selection matters.
+ 3 w/o re-estimation: Use the raw average of selected task scores (instead of
+   ridge regression) to estimate the full-suite score. Tests whether the
+   estimation model or the subset selection drives accuracy.
+ 4 Static budget: Fix per-submission cost at25 task-equivalents vs.10
+   task-equivalents. Tests the accuracy-efficiency Pareto frontier.
+
+Expected Failure Modes- Cold-start failure: With few historical models, the
+selection matrix S is rank-deficient and coverage-based selection may collapse
+to a few noisy tasks. Early submissions (first50–100 models) may need full
+evaluation until the matrix is well-conditioned.
+
+ • Proxy bias: The proxy gate may systematically deprioritize tasks where the
+   proxy is unreliable (e.g., tasks with bimodal difficulty distributions),
+   biasing the estimator against certain model families. Mitigation: periodic
+   full-suite evaluations (every20th submission) to detect drift.
+ • Rank inversion for tail models: Models at the very bottom of the distribution
+   may be poorly estimated because few historical models occupy the same
+   performance region — the regression estimator extrapolates outside its
+   training support. Mitigation: full-suite evaluation for models whose
+   estimated rank falls below a confidence threshold.
+ • Task obsolescence: Over time, new capability categories (e.g., long-context
+   reasoning) may appear that are not represented in the historical task set.
+   The adaptive selector cannot select from tasks that do not exist yet.
+   Mitigation: the leaderboard operator must periodically add new tasks; PGL
+   requires a mechanism to flag out-of-distribution submissions for manual task
+   expansion.
+
+Limitations- Statistical: The approach assumes the evaluation matrix S is
+approximately low-rank (i.e., task scores correlate across models). If future
+models introduce genuinely novel skill decompositions (e.g., a model that is
+uniquely good at a specific task in a way uncorrelated with all prior models),
+the estimator will underestimate that model's rank. This is a fundamental
+limitation of any history-based efficient evaluation scheme.
+
+ • Scope: The proposal addresses task-level efficiency (reducing the number of
+   tasks evaluated per model) but not prompt-level efficiency within a task
+   (e.g., reducing the number of few-shot examples or response length). These
+   are complementary but separate.
+ • Operational: PGL requires the leaderboard operator to maintain a growing
+   score matrix and re-run task selection periodically. For very high-throughput
+   leaderboards (10+ submissions/day), this overhead is small relative to
+   evaluation cost, but for small leaderboards it may not amortize.
+ • Causal interpretation: PGL estimates what a model would score on the full
+   suite, but never measures it directly (except for periodic calibration
+   checks). Estimates carry uncertainty, and overconfident reporting of
+   estimated scores could mislead practitioners who rely on leaderboard ranks
+   for model selection.

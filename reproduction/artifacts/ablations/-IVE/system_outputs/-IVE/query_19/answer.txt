@@ -1,0 +1,163 @@
+Research Proposal: Adaptive Subset Selection for Efficient LLM Leaderboards##
+      TitleAdaptive Subset Selection for Cost-Efficient LLM Evaluation: A
+                     Variance-Guided Leaderboard Framework
+
+ProblemStatic LLM leaderboards such as HELM, Open LLM Leaderboard, and LMSys
+Chatbot Arena evaluate every submitted model on the same fixed benchmark suite.
+This approach has three critical inefficiencies. First, many benchmark items are
+highly correlated — once a model passes a certain capability threshold, most
+items within a category become redundant and contribute negligible
+discrimination. Second, evaluation cost scales linearly with the number of items
+and models, creating a bottleneck for small teams and rapid iteration cycles.
+Third, leaderboard rankings are sensitive to item selection, yet current
+selection strategies are either static (full suite) or heuristic (random
+subsets), lacking principled guarantees on ranking fidelity. The central problem
+is: how can we select a minimal subset of evaluation items per model that
+preserves the global leaderboard ranking with high confidence?
+
+HypothesisLeaderboard ranking can be preserved using only30–50% of the full
+evaluation suite by adaptively selecting items per model based on item-level
+variance and model-item interaction signals. Specifically, items with high
+cross-model variance and low redundancy contribute disproportionate ranking
+signal; selecting items where a model's performance is uncertain (near its
+capability boundary) yields the most discriminative information per unit cost.
+We hypothesize that an adaptive, variance-guided subset selection policy will
+reproduce the full-suite ranking with Kendall τ ≥0.95 at ≤40% of the original
+evaluation cost.
+
+MethodWe propose AdaLead (Adaptive Leaderboard Evaluator), a three-component
+framework:
+
+ 1 Item Profiling Phase. Given a seed set of ~50–100 diverse models and a
+   benchmark suite of N items, compute for each item its cross-model variance,
+   its pairwise redundancy (Spearman ρ with other items), and its "decision
+   boundary density" — the fraction of model pairs whose relative ordering flips
+   on this item versus the aggregate ranking. Items that are high-variance,
+   low-redundancy, and high-boundary-density form a core discriminative set
+   (~20% of N). This set is fixed and evaluated for every model.
+ 2 Adaptive Completion Phase. For each new model m, evaluate the core set first,
+   then iteratively select additional items from the remaining pool. Selection
+   is driven by an acquisition function that scores remaining items by: (a) how
+   much adding the item would reduce the model's ranking uncertainty (measured
+   as the width of the credible interval around its current rank), (b) how far
+   the model's current partial score is from the nearest decision boundary
+   (model pairs with close scores), and (c) a discount term for item redundancy
+   with already-selected items. This is a greedy submodular optimization —
+   equivalent to maximising a monotone submodular function with a cardinality
+   constraint — and admits a (1−1/e) approximation guarantee.
+ 3 Stopping Criterion. Stop when adding any next item would not change the
+   model's rank relative to any already-evaluated model, given a confidence
+   threshold of95% (bootstrapped rank intervals). The total number of items
+   evaluated per model is bounded by B_max, set to50% of the full suite, with
+   the stopping criterion typically activating earlier.
+
+Dataset / BenchmarkWe use three existing leaderboard frameworks:
+
+ • Open LLM Leaderboard v2 (6 tasks, ~350 items): ARC-Challenge, HellaSwag,
+   MMLU, TruthfulQA, Winogrande, GSM8K. Provides a mix of reasoning, knowledge,
+   and safety items.
+ • HELM-Mix (42 scenarios, ~1200 items): A broader cross-section including
+   summarization, toxicity, disinformation, and fairness scenarios. Used for
+   scalability stress-testing.
+ • LMSys Chatbot Arena (human preference, ~100K pairwise votes): Used to
+   validate that subset rankings correlate with human preference rankings,
+   providing an external validity check.
+
+All experiments use publicly available model outputs (cacheable from the HELM
+and Open LLM Leaderboard repositories) to avoid re-running inference on every
+model. We use150 models spanning1B–175B parameters, including open-weight and
+API-based models, drawn from existing leaderboard submissions.
+
+Evaluation Metrics1. Ranking fidelity: Kendall τ (primary) and Spearman ρ
+between the AdaLead partial-suite ranking and the full-suite ranking. A τ ≥0.95
+is the target success signal.
+
+ 2 Cost reduction: Average fraction of items evaluated per model (f_eval).
+   Primary goal: f_eval ≤0.4.
+ 3 Rank error tolerance: Fraction of models misranked by more than k positions
+   (k =1,3,5). Target: <5% misranked by >3 positions.
+ 4 Top-k hit rate: For the top-10 and bottom-10 ranked models, the proportion
+   correctly identified by AdaLead.
+ 5 Robustness to model pool shifts: Measure rank fidelity when AdaLead is re-run
+   with a random50% subset of the150 models (testing whether item selections
+   overfit to the model pool).
+
+Baselines1. Full-suite ranking — the ground truth; all items, all models.
+
+ 2 Random subset — for each model, randomly select k items (k matched to
+   AdaLead's average per-model count). Repeated over10 seeds; mean and variance
+   reported.
+ 3 Static hard subset — a fixed set of high-variance items (top30% by
+   cross-model variance) applied uniformly to all models. This tests whether
+   adaptivity adds value over a one-time selection.
+ 4 Item-wise greedy (no stopping) — AdaLead's adaptive selection without the
+   early stopping criterion, using the same per-model budget as the full method.
+   Ablates the stopping rule.
+ 5 Random + early stopping — random selection with AdaLead's stopping rule.
+   Ablates the acquisition function.
+
+Ablations (within AdaLead)
+
+ 1 −Variance (ablate item variance term): Acquisition uses only boundary-density
+   and redundancy discount.
+ 2 −Boundary (ablate decision boundary density term): Acquisition uses only
+   variance and redundancy discount.
+ 3 −Redundancy (ablate redundancy discount): Acquisition allows selecting
+   near-duplicate items. Tests whether redundancy correction is necessary.
+ 4 −Adaptive (use fixed core + static top-up): Replace the per-model adaptive
+   selection with core set + a fixed high-variance supplemental set. Tests
+   whether per-model adaptivity matters.
+ 5 Different B_max (30%,40%,50%,60%): Sensitivity analysis on the maximum
+   budget.
+
+Expected Failure Modes1. Ranking collapse when the model pool is very
+homogeneous. If all models are similarly capable (e.g., only LLama-3 variants),
+variance across items drops and the acquisition function becomes noise-driven.
+AdaLead may evaluate more items than budgeted or produce unstable rankings.
+Mitigation: pre-cluster models by family and evaluate representative seeds per
+cluster; flag homogeneous pools and issue a warning.
+
+ 2 Brittle stopping criterion when rank intervals are wide. If the model pool is
+   very large (e.g.,150+ models), credible intervals around each model's rank
+   may remain wide even after many items, preventing the stopping criterion from
+   triggering. Mitigation: cap evaluation at B_max regardless; for large pools,
+   use a hierarchical two-stage ranking (coarse grouping → fine ranking within
+   groups).
+ 3 The core set overfits to the seed model pool. The item profiling phase uses a
+   seed set of models that may not represent later-submitted models (e.g., seed
+   set is dominated by strong models but new submissions are weak). Mitigation:
+   periodically recompute the core set (every30 new models) and validate that
+   the top-ranked core items remain high-variance on the growing pool.
+ 4 Redundancy estimation is sensitive to the Spearman threshold. Choosing the
+   wrong threshold for "redundant" items (ρ >0.9 vs. ρ >0.8) changes the
+   composition of the selected set. Mitigation: report sensitivity across three
+   thresholds; select threshold via cross-validation within the seed set.
+ 5 Cost reduction is lower on benchmarks with many near-independent items. If
+   every item measures a distinct capability (e.g., HELM-Mix), redundancy is low
+   and f_eval may approach40–50% rather than30%. Mitigation: report cost
+   reduction per benchmark separately; the method still reduces cost versus full
+   evaluation even at50%.
+
+Limitations1. Offline evaluation only. This proposal evaluates AdaLead on
+existing model output traces. It does not address the online setting where
+models arrive sequentially and the pool evolves. Extending to an online,
+continuously updated leaderboard is left to future work.
+
+ 2 Dependence on a representative seed set. The item profiling phase requires a
+   diverse seed set of50–100 models. For new benchmarks with few submissions,
+   the core set may not be informative. In such settings, AdaLead degrades to
+   the static hard-subset baseline.
+ 3 No coverage guarantee for rare capabilities. Items that only a few models can
+   solve (e.g., a very difficult reasoning question) will have low cross-model
+   variance and may be excluded. If these items capture a dimension stakeholders
+   care about, the leaderboard may miss that dimension. AdaLead optimises for
+   ranking fidelity, not comprehensive capability coverage.
+ 4 Bootstrapped rank intervals assume i.i.d. items. Items within a benchmark are
+   not independent (e.g., multiple MMLU questions on chemistry). This may shrink
+   credible intervals artificially. We use a block bootstrap (clustering by
+   benchmark scenario) to partially address this, but residual within-scenario
+   dependence remains.
+ 5 Human preference alignment is tested but not used directly. The LMSys
+   validation shows correlation with human preferences but AdaLead does not
+   incorporate human-item difficulty ratings. Incorporating human-provided item
+   difficulty as a prior could further improve selection.

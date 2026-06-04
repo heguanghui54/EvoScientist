@@ -1,0 +1,74 @@
+Research Proposal: Evaluating Diversity in Text Generation via Distributional
+ Alignment Metrics## TitleDistributional Alignment for Evaluating Diversity in
+              Neural Text Generation: A Benchmark and Metric Suite
+
+ProblemCurrent text generation evaluation is dominated by quality-oriented
+metrics (perplexity, BLEU, ROUGE, BERTScore, GPT-as-judge) that primarily
+measure how well a model matches a reference. Diversity — the property that a
+model generates outputs spanning the full range of plausible alternatives rather
+than collapsing to a narrow mode — remains poorly captured by these metrics.
+High-quality but degenerate generators (e.g., beam-search-decoded models
+producing near-identical outputs, or fine-tuned LLMs that over-anchor to
+frequent patterns) score well on quality metrics yet fail in deployment where
+output variety matters.
+
+Existing diversity metrics such as distinct-n, self-BLEU, and perplexity of
+generated sequences each have known blind spots: distinct-n rewards
+surface-level token variation without semantic structure, self-BLEU conflates
+fluency with diversity, and per-sequence perplexity is sensitive to length
+artifacts. The field lacks a unified framework that (a) measures diversity at
+the distributional level — comparing the model's output distribution to the true
+data distribution — and (b) isolates diversity from quality in a principled way.
+
+HypothesisDistributional alignment metrics — specifically, estimates of the
+divergence between the model's generated text distribution and a reference
+corpus distribution in a semantically meaningful embedding space — provide a
+more reliable, interpretable, and quality-orthogonal measure of diversity than
+surface-form heuristics. We hypothesize that:
+
+ 1 Embedding-based distributional divergence (e.g., sliced Wasserstein distance,
+   maximum mean discrepancy, or kernelized Stein discrepancy computed over
+   sentence embeddings) correlates with human judgments of output variety more
+   strongly than distinct-n or self-BLEU.
+ 2 These metrics are approximately orthogonal to quality metrics — a model can
+   be improved on distributional alignment without degrading BERTScore, and vice
+   versa — meaning they capture a distinct axis of generation quality.
+ 3 A composite diversity score combining distributional alignment with a
+   count-based coverage term can predict downstream task performance on
+   diversity-reliant applications (e.g., data augmentation, creative writing,
+   dialogue response generation).
+
+MethodWe propose a three-component evaluation suite:
+
+Component1: Semantic Distributional Divergence (SDD)
+
+Given a reference corpus of human-written text and a generated corpus from a
+model:
+
+ 1 Encode all utterances into a dense embedding space using a frozen sentence
+   transformer (e.g., all-MiniLM-L6-v2).
+ 2 Project embeddings to a low-dimensional subspace via PCA (retaining95%
+   variance) to mitigate the curse of dimensionality.
+ 3 Compute three distributional divergence measures on the projected embeddings:
+
+ • Sliced Wasserstein Distance (SWD): Monte Carlo estimate over random
+   projection directions. Interpretable as a "transport cost" between the two
+   distributions.
+ • Maximum Mean Discrepancy (MMD): Using a Gaussian RBF kernel with median
+   heuristic bandwidth. Detects higher-order moment mismatches.
+ • Fréchet Embedding Distance (FED): Analogous to FID in image generation — the
+   Fréchet distance between two multivariate Gaussians fitted to the reference
+   and generated embedding sets.
+
+ 4 Report the mean and standard deviation across10 bootstrap resamples of both
+   corpora for uncertainty quantification.
+
+Component2: Coverage-Adjusted Diversity (CAD)
+
+To complement SDD's global perspective, add a per-sample local measure:
+
+ • Coverage score: For each generated utterance, count the number of reference
+   utterances within a radius (r) in embedding space (or alternatively, the
+   fraction of reference utterances for which the generated utterance is the
+   nearest neighbor). Aggregate as the mean inverse coverage distance.
+ • Adjusted diversity: ( \text

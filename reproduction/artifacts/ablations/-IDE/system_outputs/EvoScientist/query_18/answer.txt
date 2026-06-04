@@ -1,0 +1,130 @@
+Research Proposal: Systematic Comparison of UX Evaluation Methods for LLM-Based
+Conversational Agents## Title
+Evaluating the Evaluators: A Comparative Study of
+User Experience Assessment Methods for LLM-Based Conversational Agents
+
+Problem
+User experience (UX) evaluation for LLM-based conversational agents lacks
+a validated, standardized methodology. Researchers and practitioners currently
+rely on ad-hoc combinations of:
+
+• General-purpose UX questionnaires (SUS, UEQ, QUIS) designed for traditional
+software- Behavioral proxies (task completion rate, response time) that may
+miss novel failure modes like hallucination or sycophancy- Emerging
+"LLM-as-judge" automated evaluation, which has unknown validity as a UX
+proxyNo published work systematically compares these approaches on the same
+set of LLM interactions, making it impossible to know which method (or
+combination) best captures perceived quality, trust, and satisfaction — the
+core dimensions of LLM UX.
+
+Hypothesis1. Primary: Standardized UX questionnaires (SUS, UEQ) exhibit
+moderate-to-weak correlation with task-level behavioral metrics (completion
+rate, time-on-task, repair frequency) when applied to LLM interactions, because
+LLM failures (plausible-sounding errors) differ qualitatively from GUI failures.
+
+2 Secondary: An LLM-as-judge evaluator fine-tuned on human UX ratings can
+approximate mean UEQ scores within ±0.5 scale points across a held-out set of
+interaction scenarios, but will fail systematically on specific failure types
+(hallucination, refusal, sycophancy) that require human judgment.
+3 Tertiary: A composite evaluation combining behavioral metrics + a short
+(3-item) custom UX scale achieves higher test-retest reliability (ICC >0.75)
+than any single method alone.
+
+Method
+A controlled within-subjects experiment with three UX evaluation
+conditions applied to the same set of24 prerecorded LLM interaction sessions:
+
+Interaction Sessions (Stimuli)
+
+24 sessions crossing:
+
+• 2 LLMs: GPT-4o, Llama3.170B- 3 task types: factual QA, creative writing,
+decision-making/planning- 4 output quality levels (validated by expert
+raters): correct + fluent, correct but verbose, fluent but incorrect
+(hallucination), incoherentEach session is a3–5 turn interaction shown as a
+recorded transcript + final output.
+
+Evaluation Conditions (Independent Variable)
+
+1 Standardized questionnaires: SUS (10 items), UEQ (26 items), and a3-item
+custom LLM-UX scale (satisfaction, trust, output quality) administered after
+each session.
+2 Behavioral metrics: Task completion (binary), time-on-task, number of user
+repairs/rewrites, confidence-rated correctness (user-reported) — collected
+during interaction.
+3 LLM-as-judge: An LLM (same models under test + a held-out judge model)
+prompted to rate each session on the same3-item LLM-UX scale, given system
+prompt templates from Zheng et al. (2024).
+
+Procedure-60 participants (power analysis: within-subjects,24 sessions, α =0.05,
+β =0.80 → n ≥48 for medium effect)
+
+• Each participant rated12 sessions via questionnaires and12 sessions via
+behavioral interaction recording + self-report- LLM-as-judge evaluated all24
+sessions ×3 judge model variants- Randomize session and condition order###
+Analysis- R1 (questionnaire vs behavioral): Spearman correlations between
+SUS/UEQ scores and behavioral metrics; Bland-Altman plots for agreement- R2
+(LLM-as-judge accuracy): MAE, Pearson r, and confusion matrices between LLM
+ratings and human questionnaire scores; stratified error analysis by failure
+type- R3 (composite): Intraclass correlation (ICC(2,1)) for each method and
+the weighted composite; bootstrap CIs## Dataset / Benchmark
+No existing
+benchmark fully covers this. We construct and release LLM-UX-Eval-24, a
+dataset of24 curated interaction sessions with:
+• Transcripts and final outputs (JSON format)
+• Expert-validated failure type labels (gold standard)
+• Human UX ratings from10 pilot participants (for validation prior to main
+study)
+• Behavioral log templates for replicationSize:24 sessions ×60 participants
+=1,440 human evaluation data points;24 ×3 judge models =72 LLM-as-judge
+ratings.
+
+Evaluation Metrics| Dimension | Metric | Target |
+
+|---|---|---| | Convergent validity | Spearman ρ between methods | >0.5 for
+same-construct pairs | | LLM-as-judge accuracy | MAE vs human mean | <0.5 (on1–5
+scale) | | LLM-as-judge bias | Mean signed error per failure type | Report per
+type | | Test-retest reliability | ICC(2,1) on20% repeated sessions | >0.70 | |
+Composite reliability | ICC(2,1) of weighted composite | >0.75 | | Time cost |
+Minutes per evaluation session | Report descriptive |
+
+Baselines1. Single-method baselines: Each evaluation method (SUS, UEQ,
+behavioral-only, LLM-as-judge) treated as the sole UX assessment — this is
+current practice in published LLM evaluations.
+
+2 GUI-trained UX norms: SUS and UEQ industry benchmarks (e.g., SUS mean =68)
+used as-is without LLM-specific adaptation — the implicit default in most
+current work.
+3 Random judge: LLM-as-judge with shuffled labels as a lower-bound sanity check
+for correlation significance.
+
+Ablations1. Questionnaire length: Does UEQ (26 items) outperform the3-item
+LLM-UX scale in discriminability? Remove UEQ data and re-fit models.
+
+2 Judge model: Replace LLM judge with GPT-4o-mini vs GPT-4o — how much does
+judge capability matter?
+3 Prompt template: Test3 prompt variants (zero-shot, few-shot with2 examples,
+expert-designed rubric) — is prompt engineering the dominant factor in
+LLM-as-judge validity?
+4 Task type: Remove one task type at a time — are effects driven by a specific
+interaction type?
+
+Expected Failure Modes1. Low between-method correlation: Questionnaires and
+behavioral metrics may measure different latent constructs (perception vs.
+performance), yielding weak ρ even if both are valid — this would invalidate the
+composite approach but still be a useful finding (recommending both as separate
+axes).
+
+2 LLM-as-judge collapse: LLM ratings may cluster near the center (regression to
+mean) or correlate only with surface features (output length, readability)
+rather than substantive quality, rendering them useless as UX proxies. This
+is the most likely failure mode based on prior LLM-as-judge critiques.
+3 Carryover effects: Participants who rate via behavioral metrics first may
+anchor expectations when later using questionnaires. Mitigated by
+randomization and tested via period effect analysis.
+4 Fatigue:12 sessions per participant may induce satisficing on later ratings.
+Mitigated by capping sessions at12 (≈40 min total) and embedding attention
+checks (repeated sessions with known scores).
+5 Generalizability: All interactions use English text-only outputs. Findings
+may not transfer to multimodal, voice, or non-English LLM interactions.
+Stated explicitly as a limitation.

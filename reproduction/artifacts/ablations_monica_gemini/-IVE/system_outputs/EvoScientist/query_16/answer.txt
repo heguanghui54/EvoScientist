@@ -1,0 +1,112 @@
+Research Proposal: Adaptive Knowledge Injection via Confidence-Gated Adapter
+Fusion for Domain-Specific LLMs## Title
+Confidence-Gated Adapter Fusion for
+Mitigating Knowledge Conflicts During Domain-Specific LLM Injection
+
+Problem
+Domain-specific LLM deployment (legal, medical, finance) requires
+injecting specialized knowledge into general-purpose pre-trained models. Three
+interrelated challenges remain unresolved:
+
+1 Knowledge conflicts — injected domain facts contradict or compete with the
+model's pre-training knowledge, causing inconsistent behavior depending on
+prompt phrasing.
+2 Selective forgetting — fine-tuning on domain text degrades general-language
+capabilities, especially on reasoning and rare-token recall.
+3 Sub-domain interference — a single domain (e.g., clinical medicine) contains
+heterogeneous sub-domains (radiology, pathology, pharmacology) that interfere
+when injected via a single adapter or fine-tuning run.
+
+Current solutions (full fine-tuning, RAG, LoRA, model editing) each address only
+a subset of these. No method jointly handles all three while providing per-input
+routing between base and injected knowledge.
+
+Hypothesis
+Confidence-gated routing — where the model dynamically selects between
+base knowledge and injected domain knowledge based on its own predictive
+uncertainty — reduces knowledge conflicts and sub-domain interference compared
+to monolithic injection, while preserving general capabilities better than full
+fine-tuning and matching the domain accuracy of state-of-the-art fixed injection
+methods.
+
+More concretely: an adapter mixture with a learned confidence-gating mechanism
+will achieve higher domain-specific accuracy and lower general-task degradation
+than the Pareto frontier of existing injection methods.
+
+Method
+Architecture. Start with a frozen base LLM (e.g., Llama-3-8B). We train a
+set of k lightweight LoRA adapters, each specialized on a distinct sub-domain
+cluster of the target domain (clusters discovered via topic modeling or
+metadata-driven splits). A small learned confidence gate is trained to produce,
+for each input token/sequence: (a) a routing weight over the k adapters, and (b)
+a scalar β ∈ [0,1] that mixes the adapter output with the base model's original
+hidden state. When β is low, the model relies on base knowledge; when high,
+injected knowledge dominates.
+
+Gate architecture. A2-layer MLP over the hidden state of the last layer at the
+final token position, outputting a softmax over adapters and a sigmoid-gated β.
+Trained jointly with adapters via a regularized objective.
+
+Training objective. Two terms:
+
+• Domain accuracy — standard cross-entropy on domain data, but weighted by a
+per-sample confidence bonus that down-weights examples the base model already
+answers well (to focus injection on genuinely novel knowledge).
+• General capability preservation — a distillation regularizer that penalizes
+large β when the base model's output distribution on held-out general
+benchmarks (MMLU subsets, GSM8K) has low entropy (high confidence),
+preventing unnecessary overrides.
+
+Inference. Single forward pass per token. Gating adds negligible latency (<1%
+parameter overhead).
+
+Dataset / Benchmark
+We construct a multi-sub-domain biomedical benchmark from
+public sources:
+
+Sub-domain           Dataset                            Size         Source
+Clinical guidelines  MedQA (subset)                     1.2K Q&A     USMLE
+Pharmacology         DrugBank QA                        800 QA       DrugBank
+Radiology reports    MIMIC-III (report impressions)     2K excerpts  PhysioNet
+Molecular biology    PubMedQA                           1K QA        PubMed
+General (probe)      MMLU (biomedical subset) +3        2.5K         MMLU
+general sections
+
+We also collect a training corpus by pooling the full source documents (not just
+QA pairs) for each sub-domain, filtering for overlap with pre-training data to
+remove ~90% intersection (document-level dedup against C4/RedPajama using
+MinHash).
+
+Evaluation Metrics| Category | Metric | Rationale |
+
+|---|---|---| | Domain accuracy | Per sub-domain accuracy (F1/MCC for binary
+tasks); macro-average | Measures injection effectiveness | | General retention |
+Δ(MMLU_full), Δ(GSM8K) — absolute drop from pre-injection | Measures forgetting
+| | Knowledge consistency | Counterfactual accuracy — same fact queried with3
+phrasings, pass@1 agreement | Measures conflict robustness | | Sub-domain
+interference | When querying sub-domain A, compute logit change on sub-domain B
+adapters' outputs | Measures cross-talk | | Routing interpretability | Spearman
+correlation between β and ground-truth fact novelty (was this fact in
+pre-training?) | Validates gating works as intended |
+
+Baselines1. Full fine-tuning — domain corpus,1 epoch, AdamW.
+
+2 Prompt-based injection — zero-shot with domain-relevant system prompt (no
+parameter update).
+3 Retrieval-Augmented Generation (RAG) — ColBERTv2 retriever over domain
+corpus; top-3 chunks prepended to prompt.
+4 Single LoRA — one rank-32 LoRA on all domain data.
+5 Mixture of Adapters (fixed routing) — same k adapters, but routing weights
+hard-coded by sub-domain label (oracle routing). Upper-bound measure.
+6 Knowledge-editing baseline (MEMIT) — model editing at scale on the training
+corpus.
+
+Ablations1. No confidence gating — always mix with uniform β =0.5. Isolates the
+benefit of adaptive routing.
+
+2 No sub-domain clustering — single adapter with gating. Tests whether multiple
+adapters matter.
+3 No regularization term — train only on domain accuracy. Measures how much
+general retention comes from the distillation regularizer vs. adapter
+architecture alone.
+4 Varying k —                                                                  Goodbye!

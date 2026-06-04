@@ -1,0 +1,296 @@
+I'll read the relevant skill file to match the output format expected for an
+ideation-stage proposal before drafting.
+● read_file(/skills/research-ideation/SKILL.md)
+
+Now let me check the existing memory files to understand what the -IVE ablation
+should not reference.
+● glob(/memories/**/*.md)
+● Reading memory
+
+--------------------------------------------------------------------------------
+
+  Proposal: Decomposing Diversity — A Multi-Axis Evaluation Framework for Text
+    Generation## ProblemDiversity in text generation is widely recognized as
+    essential for natural, non-degenerate output, yet the community lacks a
+ principled evaluation methodology. Existing metrics each capture only a narrow
+   facet: Distinct-n (Li et al.,2016) measures token-level uniqueness but is
+    confounded by length and ignores semantics; Self-BLEU (Zhu et al.,2018)
+  quantifies intra-corpus n-gram overlap but conflates quality with diversity;
+  entropy-based measures (Zhang et al.,2021) are distributional at the corpus
+level and provide no instance- or facet-level signal; embedding-based diversity
+(e.g., mean pairwise cosine distance) is sensitive to the choice of encoder and
+    to semantic drift in long-form generation; and repetition-aware metrics
+ (Holtzman et al.,2020; Fu et al.,2021) focus on degeneration modes rather than
+                              positive diversity.
+
+The consequence is a fragmented evaluation landscape: a method that improves
+Distinct-4 may degrade Self-BLEU; a model with high embedding diversity may be
+semantically incoherent. Researchers select the metric that flatters their
+method, and reviewers have no shared standard for evaluating diversity claims.
+Meta-evaluation studies (e.g., Pillutla et al.,2021; Tevet & Berant,2021) have
+shown that existing diversity metrics correlate poorly with each other and with
+human judgments, but no prior work proposes a unified, validated framework that
+disambiguates failure modes.
+
+Open question: Can diversity be decomposed into interpretable, independently
+measurable axes that collectively explain human judgments of text diversity, and
+can those axes be validated against a controlled benchmark?
+
+HypothesisText diversity is not a monolithic property but decomposes into four
+weakly correlated axes — lexical, syntactic, semantic, and structural — each of
+which can be quantified by a targeted metric. A multi-axis evaluation framework
+that reports all four dimensions separately will (a) reveal failure modes that
+monolithic metrics mask, (b) correlate more strongly with fine-grained human
+diversity judgments than any single existing metric, and (c) enable researchers
+to identify which kind of diversity their method improves or degrades.
+
+MethodWe propose Div4 (Diversity in Four Dimensions), an evaluation framework
+that decomposes text diversity into four axes and provides a standardized
+reporting protocol.
+
+Axis definitions| Axis | What it measures | Operationalization |
+
+|---|---|---| | Lexical | Rare and varied vocabulary use beyond stopwords |
+Type-token ratio on content words after length normalization (slope-corrected
+TTR); distinct-1/2/3 with corpus-level z-score normalization | | Syntactic |
+Variation in syntactic structures | Tree-depth entropy over constituency parses
+(Kitaev & Klein,2018); POS-tag bigram entropy; dependency-arc length variance |
+| Semantic | Coverage of distinct meanings and topics | Mean pairwise cosine
+distance over Sentence-BERT (Reimers & Gurevych,2019) embeddings, corrected for
+semantic drift via centroid estimation; number of distinct nearest-neighbor
+clusters in a reference embedding space | | Structural | Variation in
+discourse-level organization (length, paragraph breaks, repetition patterns) |
+Self-BLEU at corpus level; block-repeat frequency (contiguous n-gram
+re-occurrence within a window); Gini coefficient of sentence-length distribution
+|
+
+Reporting protocolFor each evaluation set, the framework produces a Div4 profile
+— a four-element vector with each axis score normalized to [0,1] against a
+reference corpus of human-written text in the same domain. The protocol also
+reports two aggregate diagnostics:
+
+ • Diversity gap vector: (human_axis_score − model_axis_score) per axis,
+   identifying which dimensions the model underperforms on.
+ • Collapse indicator: a binary flag set to1 if any axis falls below the5th
+   percentile of the human reference distribution.
+
+Meta-validation designTo validate the framework, we construct a controlled
+diversity benchmark where we systematically modulate each diversity axis
+independently and measure whether Div4 detects the modulation while the other
+three axes remain stable.
+
+ 1 Lexical modulation: Replace content words in a held-out set of human-written
+   texts via WordNet synonym substitution with controlled frequency bins (rare →
+   rare; rare → common; common → rare; common → common). The lexical axis should
+   drop significantly only when rare words are replaced by common words.
+ 2 Syntactic modulation: Parse each sentence into a constituency tree, then
+   flatten subtrees (reducing depth) or reorder constituents via a controlled
+   permutation. The syntactic axis should detect depth reduction while lexical
+   and semantic axes remain stable.
+ 3 Semantic modulation: Replace noun phrases with hypernyms (moving toward
+   abstract/generic) or hyponyms (moving toward specific/fine-grained). The
+   semantic axis should reflect reduced semantic coverage.
+ 4 Structural modulation: Duplicate random sentences within texts at controlled
+   rates (10%–50% duplication). The structural axis should capture increased
+   redundancy while lexical and semantic axes change minimally.
+
+Each modulation condition is applied at three intensity levels (1×,2×,4× the
+minimum detectable change) and validated by human annotators (Amazon Mechanical
+Turk, N =200 per condition,3 judgments per item) to confirm the intended
+perceptual effect.
+
+Dataset / BenchmarkWe evaluate on four generation tasks spanning different
+diversity regimes:
+
+
+                                                             Expected diversity
+ Task                Dataset             Sample size         profile
+ Open-ended story    WritingPrompts      2,000 prompts,5     High lexical, high
+ generation          (Fan et al.,2018)   generations per     semantic
+                                         model per prompt
+ Dialogue response   PersonaChat (Zhang  1,000 contexts,5    Moderate lexical,
+ generation          et al.,2018)        responses per       high structural
+                                         model
+ Data-to-text        CommonGen (Lin et   1,000 concept       Constrained
+ (commonsense)       al.,2020)           sets,5 generations  semantic, moderate
+                                         per model           syntactic
+ Machine             WMT14 En→De (Bojar  2,000 sentences,5   Low diversity
+ translation         et al.,2014)        translations per    expected; serves
+                                         model               as lower-bound
+                                                             sanity check
+
+
+For each task, we collect human diversity judgments on all four axes using a
+Likert-scale annotation (1–5) with3 annotators per item, yielding ~240,000
+annotation judgments total. Inter-annotator agreement (Krippendorff's alpha) is
+computed per axis and reported.
+
+Models evaluated (as sources of generated text)
+
+We generate from8 models spanning the diversity spectrum:
+
+ • GPT-2 (Radford et al.,2019) with4 decoding strategies: greedy,
+   temperature0.7, top-(k)=50, top-(p)=0.92- GPT-2 with contrastive search (Su
+   et al.,2022) as a diversity-promoting baseline- LLaMA-27B (Touvron et
+   al.,2023) with the same4 decoding strategies- Dolly-v23B (instruction-tuned)
+   as a representative instruction-following model with reduced inherent
+   diversity- Vicuna7B (Chiang et al.,2023) as a chat-tuned model- T5-Large
+   (Raffel et al.,2020) — NLG fine-tuned on each dataset, beam search decoding-
+   Unconditional sampling baseline: random subsequences drawn from the training
+   corpus (upper-bound diversity estimate per dataset)
+ • Naive copy baseline: the most common training-set output repeated for all
+   inputs (lower-bound diversity estimate)
+
+Evaluation Metrics### Primary metrics (what Div4 reports)
+
+ 1 Lexical diversity score — slope-corrected content-word TTR averaged over
+   generations2. Syntactic diversity score — tree-depth entropy averaged over
+   generations3. Semantic diversity score — mean pairwise S-BERT distance,
+   centroid-corrected4. Structural diversity score — composite of Self-BLEU,
+   block-repeat frequency, and sentence-length Gini (PCA-weighted into a single
+   score)
+
+Validation metrics (for establishing construct validity)
+
+ 5 Human–Div4 correlation: Pearson (r) between each Div4 axis score and the
+   corresponding human Likert rating, computed per task6. Between-axis
+   correlation: Pearson (r) between all Div4 axis pairs (expectation: weak to
+   moderate correlation, indicating meaningful decomposition)
+ 6 Modulation detection accuracy: For each controlled modulation experiment,
+   whether the correct axis exhibits a statistically significant change ((p
+   <0.05) after Bonferroni correction across4 axes) while others do not###
+   Conventional metrics (for comparison)
+ 7 Distinct-1/2/3 (Li et al.,2016) — standard lexical diversity9. Self-BLEU (Zhu
+   et al.,2018) — standard structural repetition metric10. MAUVE (Pillutla et
+   al.,2021) — distributional divergence between human and model text (not
+   strictly diversity, but the most widely used unified evaluation)
+ 8 Repetition rate (Fu et al.,2021) — percentage of repeated n-grams##
+   Baselines| Comparison point | What it establishes | |---|---| | Div4 vs.
+   conventional metrics (Distinct, Self-BLEU, MAUVE, Repetition rate) | Whether
+   Div4 provides additional predictive power for human judgments beyond existing
+   metrics, estimated via (R^2) improvement in nested regression | | Div4 vs.
+   single-embedding baseline (S-BERT mean pairwise distance alone) | Whether the
+   multi-axis decomposition is necessary or a single embedding-based score
+   suffices | | Div4 vs. random4-dimensional projection | Whether the axes are
+   meaningful or any4 random nonlinear transformations of raw text would perform
+   as well (permutation test with1,000 random4-d projections) | | Human
+   inter-axis correlation | Whether human annotators naturally distinguish
+   diversity axes (if human judgments per axis correlate above (r >0.7), the
+   decomposition may not be perceptually real) |
+
+AblationsAll ablations are evaluated on the meta-validation benchmark
+(controlled modulations) and on WritingPrompts generations from GPT-2 top-(p)
+decoding.
+
+
+ Ablation                  Disabled component        Expected effect
+ A1: Single-axis           Report only1 of the4      Statistically significant
+ reporting                 axes (all4 variants run   loss of correlation with
+                           independently)            human judgments on
+                                                     non-reported axes;
+                                                     individual axes fail to
+                                                     detect modulations they
+                                                     are not designed for
+ A2: Unnormalized scores   Remove human-reference    Scores become
+                           normalization from each   dataset-dependent;
+                           axis score                modulation detection
+                                                     accuracy drops as
+                                                     systematic variance from
+                                                     dataset properties is
+                                                     conflated with diversity
+                                                     differences
+ A3: No sentence-BERT      Remove centroid-based     Semantic diversity scores
+ correction                semantic drift            inflate for longer
+                           correction from semantic  generations; false
+                           axis                      positive correlations with
+                                                     structural axis appear
+ A4: Binary collapse       Replace continuous [0,1]  Loss of granularity —
+ indicator only            axis scores with a        methods that improve
+                           single binary collapse    diversity within the
+                           flag                      acceptable range become
+                                                     indistinguishable
+ A5: Corpus-level          Remove instance-level     Masking of high-variance
+ aggregation only          diversity computation;    generation profiles where
+                           report only corpus-level  some outputs are diverse
+                           statistics                and others are degenerate
+
+
+Expected Failure Modes1. Axis non-orthogonality. The four axes may not be
+empirically independent — semantic diversity could correlate with lexical
+diversity because rare words signal rare topics. Countermeasure: report
+between-axis correlation matrices explicitly; reframe as "weakly correlated"
+rather than "orthogonal" if (0.3 < r <0.7).
+
+ 2 Modulation spillover. A controlled lexical modulation (WordNet substitution)
+   may unintentionally alter semantic diversity (changing words changes
+   meanings). Countermeasure: pre-register an "acceptable spillover" threshold
+   ((\Delta \leq0.1) on non-targeted axes); flag any modulation that exceeds
+   this threshold as a failed validity test.
+ 3 Encoder bias in semantic axis. Sentence-BERT embeddings are optimized for
+   semantic similarity, not diversity. Embedding geometry may collapse diverse
+   but semantically related outputs. Countermeasure: replicate semantic axis
+   results with a second encoder (INSTRUCTOR; Su et al.,2023) and an alternative
+   diversity-aware embedding (D4 metric from Tevet & Berant,2021).
+ 4 Human annotation unreliability. Annotators may not consistently distinguish
+   diversity axes (e.g., rating "syntactic diversity" and "structural diversity"
+   similarly). Countermeasure: compute Krippendorff's alpha per axis; if (\alpha
+   <0.6) for any axis, collapse that axis with the nearest reliable axis and
+   report the merged dimension.
+ 5 Reference corpus mismatch. Human-reference normalization requires a
+   domain-matched reference corpus. If the reference and generation domains
+   differ (e.g., WritingPrompts stories vs. PersonaChat dialogues),
+   normalization may distort scores. Countermeasure: construct per-task
+   reference corpora from the training/validation splits of each dataset, not
+   from a universal corpus.
+ 6 Metric saturation. For very strong models (e.g., LLaMA-2 with optimal
+   decoding), all four axes may approach the human upper bound, producing
+   ceiling effects. Countermeasure: include the unconditional and naive-copy
+   baselines as floor/ceiling calibration; report effect sizes (Cohen's (d) vs.
+   human reference) rather than raw scores.
+
+Limitations1. Framework scope. Div4 evaluates diversity of a set of generations
+from the same model on the same input. It does not evaluate diversity across
+inputs (topical breadth), across model checkpoints (training diversity), or
+across decoding seeds (sampling stochasticity). These are distinct phenomena
+requiring separate evaluation protocols.
+
+ 2 Encoder dependence. The semantic axis inherits the biases and limitations of
+   Sentence-BERT and INSTRUCTOR embeddings. If future encoders shift the
+   geometry of semantic representations, Div4 norms will need recalibration.
+ 3 Task coverage. Our benchmark spans four generation tasks but does not cover
+   code generation, mathematical reasoning, or long-document summarization
+   (where diversity manifests differently — e.g., algorithmic diversity in code,
+   proof diversity in math). Extending to these domains is left to future work.
+ 4 No quality–diversity trade-off modeled. Div4 is an evaluation framework, not
+   a joint optimization objective. We intentionally do not propose a composite
+   score that balances diversity with quality (perplexity, factuality,
+   coherence), as conflation would reintroduce the very ambiguity the framework
+   aims to resolve. Users of Div4 should report quality metrics alongside
+   diversity metrics.
+ 5 Static axes, dynamic language. The four axes are defined for English text.
+   Their operationalizations depend on English-specific tools (constituency
+   parsers, WordNet, Sentence-BERT trained on English data). Cross-lingual
+   generalization would require re-validation of each axis's operationalization
+   in the target language.
+ 6 Annotated judgment scale. Human judgments are collected on a Likert scale
+   (1–5), which imposes linearity assumptions. Ordinal modeling (e.g.,
+   cumulative link models) would be more appropriate for analysis but is not
+   implemented in this proposal.
+
+--------------------------------------------------------------------------------
+
+Div4 profile vector: For each model and task, the framework outputs
+a4-dimensional score vector and a diversity gap vector against human text. All
+scores are normalized to [0,1] against per-task human reference corpora. The
+collapse indicator flags models whose diversity falls below the5th percentile of
+human text on any axis.
+
+Contribution type: Evaluation methodology + validated benchmark (±150k human
+judgments across4 tasks ×4 axes).
+
+Key differentiator from prior work: Unlike MAUVE (distributional divergence),
+Div4 identifies which kind of diversity is deficient and reports axis-level
+diagnostics. Unlike Distinct-n (a single scalar), Div4 separates lexical from
+semantic from structural failure modes. Unlike existing meta-evaluations that
+merely correlate metrics, Div4 provides a validated protocol with controlled
+modulation experiments.

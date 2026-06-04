@@ -1,0 +1,45 @@
+Research Proposal: Adaptive Bayesian Leaderboards — Efficient LLM Evaluation via
+Active Sampling## Title
+Adaptive Bayesian Leaderboards: Accelerating LLM
+Evaluation via Active Benchmark Selection
+
+--------------------------------------------------------------------------------
+
+Problem
+Current LLM leaderboards (Open LLM Leaderboard, LMSYS Chatbot Arena,
+HELM, etc.) evaluate every model on a fixed battery of benchmarks. This is
+increasingly unsustainable:
+
+• Computational cost grows linearly with each new model and each new benchmark.
+Evaluating a single70B model across20+ benchmarks can cost thousands of
+GPU-hours.
+• Redundant evaluation — many benchmarks are highly correlated (e.g., MMLU
+subsets, HellaSwag, ARC-Challenge), yet every model runs all of them.
+• Delayed rankings — new models must wait for full eval cycles, slowing the
+feedback loop for practitioners.
+• No statistical stopping — evaluations run to completion even when a model's
+rank relative to others is already statistically certain.
+
+The central question: Can we estimate a model's position on a leaderboard using
+only a fraction of the full benchmark suite, without sacrificing ranking
+fidelity?
+
+--------------------------------------------------------------------------------
+
+Hypothesis> A Bayesian latent-variable model, coupled with an active sampling
+policy that selects the next most informative benchmark for each new model, can
+recover the full leaderboard ranking using ≤40% of the benchmark evaluations
+while maintaining a Spearman rank correlation of ≥0.95 with the ground-truth
+ranking.
+
+--------------------------------------------------------------------------------
+
+Method
+We propose Adaptive Bayesian Leaderboards (ABL), a three-component system:
+
+1. Latent Skill ModelFit a probabilistic model that jointly explains all
+benchmark scores. Use a Bayesian item-response-theory (IRT) variant —
+specifically, a two-parameter logistic (2PL) model extended to continuous
+scores:
+
+[P(\text                                                                        Goodbye!

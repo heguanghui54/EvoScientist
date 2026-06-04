@@ -1,0 +1,192 @@
+Research Proposal: User Experience Evaluation for Large Language Models## TitleA
+   Multi-Dimensional Framework for Evaluating User Experience in Open-Domain
+Conversational LLMs## ProblemLarge language models are increasingly deployed as
+   conversational agents in open-domain settings, yet the dominant evaluation
+  paradigm remains heavily skewed toward automated metrics (perplexity, BLEU,
+ROUGE, METEOR, BERTScore, GPT-as-judge) and narrow benchmark performance (MMLU,
+ GSM8K, HumanEval). These metrics capture surface-level linguistic fidelity and
+  isolated capability dimensions but fail to measure how real users experience
+   these systems over sustained interactions. User experience — encompassing
+     satisfaction, trust, perceived intelligence, conversational flow, task
+ completion comfort, and emotional response — remains under-characterized as a
+       construct, with no standardized evaluation framework that is both
+    psychometrically validated and practical for LLM developers. Existing UX
+   instruments borrowed from HCI (SUS, QUIS, UEQ) were designed for graphical
+interfaces and GUI applications, not for open-ended language interactions where
+   the "interface" is entirely linguistic, context-dependent, and dynamically
+                        co-constructed by both parties.
+
+HypothesisA multi-dimensional UX evaluation framework designed specifically for
+conversational LLMs — comprising (1) interaction fluency, (2) epistemic trust,
+(3) goal alignment, (4) emotional valence, and (5) perceived adaptability — will
+yield higher discriminative power, test-retest reliability, and predictive
+validity for downstream behavioral outcomes (e.g., retention, referral, paid
+conversion) than both:
+
+ • H1a: Existing general-purpose UX instruments (SUS, UEQ) adapted post-hoc to
+   conversational AI.
+ • H1b: Single-metric LLM-as-judge evaluations currently prevalent in NLP.
+
+Specifically, the framework will explain at least40% more variance in user
+retention at2-week follow-up compared to the best existing alternative
+(UEQ:12–18% variance explained in prior studies).
+
+MethodPhase1 — Instrument Development (Qualitative → Quantitative). Conduct
+semi-structured interviews with30 diverse LLM users (varying in technical
+proficiency, use case, and interaction frequency). Thematic analysis will
+surface the latent dimensions of user experience unique to conversational LLMs.
+These dimensions will be operationalized into a25–30 item instrument using
+Likert-scale and semantic-differential items. Items will be refined through
+cognitive interviewing (n=10) and pilot testing (n=100) for clarity,
+non-redundancy, and floor/ceiling effects.
+
+Phase2 — Psychometric Validation (n=500). Deploy the instrument via a
+longitudinal study. Participants interact with three different LLMs (two
+instruction-tuned open-source models and one proprietary API) across five
+scripted tasks (creative writing, factual question answering, emotional support,
+code generation, multi-turn planning) over three sessions each. After each
+session, participants complete the proposed instrument plus SUS, UEQ, and a
+single-item GPT-as-judge correlation measure (participants rate "how intelligent
+the model seemed"). At session3, participants complete a behavioral choice: they
+may return for a follow-up session, recommend the model to a friend (binary), or
+switch to a different model for the final task. Two-week follow-up surveys
+measure retention and self-reported usage frequency.
+
+Phase3 — Construct Validation (Discriminant and Convergent). Factor analysis
+(EFA → CFA) assesses dimensionality. Correlate instrument dimensions with
+automated metrics (perplexity, response length, self-repetition rate, lexical
+diversity, BERTScore against ground-truth responses) to determine what automated
+metrics capture (convergent) and miss (discriminant). Regress behavioral
+outcomes (retention, recommendation) on instrument dimensions to establish
+predictive validity.
+
+Dataset / BenchmarkNo single existing dataset covers multi-model, multi-session
+UX evaluation. The study will produce a new benchmark — LLM-UX-Bench —
+comprising:
+
+ • 500 participants ×3 models ×5 tasks ×3 sessions =22,500 interaction logs
+   (anonymized, de-identified)
+ • Item-level responses for the proposed instrument, SUS, UEQ, and the
+   single-item intelligence rating- Behavioral outcomes: binary retention
+   (returned for follow-up), binary recommendation willingness, continuous
+   self-reported usage frequency at2 weeks- Model response transcripts (for
+   reproducibility and automated metric computation)
+
+Models under evaluation: Llama-3-70B-Instruct (open-source),
+Mistral-8x22B-Instruct (open-source), GPT-4o (proprietary).
+
+Evaluation MetricsPrimary instrument quality metrics:
+
+ • Cronbach's α ≥0.80 per subscale (internal consistency)
+ • Test-retest ICC ≥0.70 over1-week interval (stability)
+ • Confirmatory Fit Index (CFI) ≥0.90, RMSEA ≤0.08 (structural validity)
+ • Discriminant validity: average variance extracted (AVE) ≥0.50 per factor,
+   inter-factor correlations ≤0.85Predictive validity metrics:
+ • ΔR² in binary retention (logistic regression) and continuous usage (linear
+   regression) compared to SUS, UEQ, and single-item intelligence rating- AUC
+   for retention prediction (proposed instrument vs. alternatives)
+ • Correlation matrix between instrument dimensions and automated NLG
+   metricsComparison with automated evaluation:
+ • Spearman correlation between each instrument dimension and GPT-as-judge
+   scores (expected to be weak for emotional valence and trust dimensions,
+   moderate for fluency)
+
+Baselines1. System Usability Scale (SUS) — the most widely used general UX
+instrument, adapted by rewording "system" to "conversational AI agent".
+
+ 2 User Experience Questionnaire (UEQ) —26 items across6 scales (Attractiveness,
+   Perspicuity, Efficiency, Dependability, Stimulation, Novelty). Standard
+   adaptation to conversational AI context.
+ 3 Single-item LLM Intelligence Rating — "On a scale of1–7, how intelligent did
+   the model seem?" Matches the common "LLM-as-judge" paradigm but from the
+   user's perspective.
+ 4 Automated NLG Metrics — Perplexity, BERTScore, Repetition Rate, Response
+   Length, Distinct-N. Included to benchmark how much UX variance automated
+   metrics already capture.
+
+Ablations1. -TRUST: Omit the epistemic trust dimension from the instrument.
+Measure loss in predictive power for retention and recommendation outcomes.
+Tests whether trust is a separable and necessary construct or merely a correlate
+of fluency.
+
+ 2 -EMOTION: Omit the emotional valence dimension. Tests whether affective
+   response adds variance beyond cognitive appraisals (fluency, goal alignment).
+   If predictive power does not drop, emotional valence may be redundant with
+   satisfaction.
+ 3 -SINGLE-SESSION: Train and evaluate the predictive model on data from
+   session1 only (no multi-session learning). Tests whether UX evaluations
+   converge in a single interaction or require repeated exposure to stabilize.
+ 4 -BEHAVIORAL-ANCHORS: Replace behavioral-choice outcomes with
+   hypothetical-intention items (e.g., "I would use this model again") as the
+   dependent variable. Tests whether stated intentions predict actual behavior
+   or are inflated by social desirability bias.
+
+Expected Failure Modes1. Dimension collapse: Users may not distinguish between
+perceived intelligence, trust, and satisfaction in practice (all load onto a
+single "liking" factor). If EFA yields a single factor, the framework collapses
+to a univariate measure and loses its claimed advantage over UEQ. Mitigation: if
+this occurs, conduct a forced bifactor model to examine whether a general factor
+dominates while specific factors still capture meaningful residual variance.
+
+ 2 Sequence effects dominate: Users' ratings in session2 may be driven primarily
+   by contrast with the previous model rather than absolute experience. This
+   would inflate variance and reduce test-retest reliability. Mitigation:
+   counterbalance model order across participants and include order as a
+   covariate in all regression models.
+ 3 Low retention base rate: If <20% of participants return for the2-week
+   follow-up, retention becomes a near-constant with insufficient variation for
+   logistic regression. Mitigation: oversample in the initial recruitment;
+   target n=800 to account for35–40% attrition; pre-register a secondary
+   continuous outcome (self-reported usage hours/week) as backup.
+ 4 Automated metrics already saturate UX prediction: If perplexity + BERTScore +
+   repetition rate alone explain >50% of UX variance, the proposed instrument
+   adds marginal value. This would itself be a significant negative result but
+   weakens the paper's contribution. Mitigation: include ablation -AUTO that
+   removes all automated metrics and tests whether the pure-instrument model
+   still predicts retention.
+ 5 Social desirability bias inflates all self-report measures: Users may
+   systematically over-report satisfaction for socially acceptable models (e.g.,
+   GPT-4o, due to brand familiarity). This could create an artificial separation
+   between proprietary and open-source models that reflects brand halo effects
+   rather than UX. Mitigation: include a social desirability scale
+   (Marlowe-Crowne short form) as a covariate; pre-register a sensitivity
+   analysis without the proprietary model.
+ 6 Task heterogeneity obscures general factors: UX dimensions may factor
+   differently by task type (emotional support → trust dominates; code
+   generation → goal alignment dominates). If factor structure is non-invariant
+   across tasks, a single unified instrument is invalid. Mitigation: test
+   measurement invariance (configural, metric, scalar) across task types before
+   pooling; if invariance fails, report task-specific subscales.
+
+Limitations1. Self-selection bias: Participants who volunteer for a
+multi-session LLM study are likely more tech-literate and positively disposed
+toward AI than the general population. This limits generalizability to less
+engaged or more skeptical user segments.
+
+ 2 Western-cultural instrument bias: Interview and validation samples will be
+   predominantly English-speaking, likely drawn from MTurk/Prolific pools (US/UK
+   demos). Emotional expression, trust calibration, and conversational norms
+   vary significantly across cultures; the resulting instrument may not be
+   cross-culturally invariant without substantial adaptation.
+ 3 Model obsolescence: The three target models represent a snapshot from
+   early2025. As capabilities advance at a rapid pace, absolute UX scores will
+   shift, and dimensions that matter today (e.g., factual accuracy concern) may
+   become less salient while new dimensions (e.g., personalization depth,
+   long-term memory) emerge. The framework's dimensionality should be
+   re-validated annually.
+ 4 No ground truth for UX: Unlike classification accuracy, there is no objective
+   "correct" UX score. All validation is necessarily relative (predicting
+   downstream behavior). Behavioral outcomes (retention, referral) are
+   themselves confounded by model pricing, API latency, brand preference, and
+   contextual factors outside the interaction. The framework predicts user
+   behavior, not an objective ground truth.
+ 5 Controlled tasks vs. naturalistic use: The five scripted tasks constrain
+   interaction in ways that may not reflect how users actually engage with LLMs.
+   Real-world use is self-directed, often interleaved with other activities, and
+   varies in goal specificity. Ecological validity is traded for experimental
+   control and cross-model comparability.
+ 6 No longitudinal calibration beyond2 weeks: Retention at2 weeks captures
+   early-adoption patterns but does not measure long-term habituation,
+   disenchantment, or skill development (users learning to prompt better over
+   time). A longer horizon (3–6 months) may reveal different UX dynamics not
+   captured here.

@@ -1,0 +1,156 @@
+Beyond the Chat: A Structured Protocol for User Experience Evaluation of Large
+ Language Models## ProblemCurrent approaches to evaluating LLM user experience
+rely on ad-hoc human preference judgments (Chatbot Arena-style ELO), single-turn
+satisfaction ratings, or task-specific accuracy metrics that fail to capture the
+multi-dimensional, longitudinal nature of real human-LLM interaction. The field
+lacks a reproducible, standardized evaluation protocol that separates confounds
+ — task difficulty, user expectation, model persona, interaction history — from
+                             the core UX construct.
+
+Existing benchmarks (MT-Bench, AlpacaEval, LMSYS Chatbot Arena) conflate
+capability with experience: a model that answers correctly but feels robotic,
+verbose, or misaligned with user goals can score highly on automated metrics
+while delivering poor UX. Conversely, a warm, engaging model that hallucinates
+may receive inflated user satisfaction. No current framework decomposes UX into
+independently measurable axes with validated psychometric properties.
+
+HypothesisA structured, multi-axis UX evaluation protocol — comprising perceived
+competence, interaction efficiency, conversational naturalness, user
+trust/calibration, and satisfaction — can produce higher discriminability
+(separation between model conditions with fewer judgments) and higher
+test-retest reliability than unconstrained ELO-based crowdsourcing, while
+maintaining construct validity against a held-out holistic preference label.
+
+MethodWe propose UX-LLM, a fixed-protocol evaluation framework that does not
+evolve across runs (single-shot, non-adaptive). The protocol consists of four
+stages:
+
+ 1 Task taxonomy construction. Define10 interaction scenarios spanning three
+   difficulty levels (simple QA, multi-step reasoning, open-ended creative) and
+   three interaction modes (single-turn, multi-turn with context, multi-turn
+   with revision/editing). Each scenario is paired with a concrete user goal
+   statement.
+ 2 Stimulus generation. For each scenario, generate model responses from each
+   candidate LLM. Responses are stripped of identifying markers and presented in
+   randomized order. Each scenario includes a distractor (a deliberately poor
+   response from a weaker model) to test discrimination floor.
+ 3 Multi-axis annotation. For each response, human annotators rate five axes on
+   a5-point Likert scale:
+
+ • Competence: factual accuracy and relevance - Efficiency: conciseness and
+   time-to-useful-answer - Naturalness: fluency, tone appropriateness, and
+   conversational coherence - Trust calibration: how well the model signals
+   uncertainty vs. overconfidence - Satisfaction: overall willingness to use
+   again4. Aggregation and reporting. Compute per-axis means,95% CIs, and a
+   weighted composite UX score (weights derived from a calibration study).
+   Report model rankings and pairwise effect sizes (Cohen's d). No cross-run
+   memory, no adaptive refinement, no iterative reweighting — the protocol is
+   fixed at proposal time.
+
+The key methodological choice is to fix all protocol parameters before any data
+collection: task list, rating scales, aggregation weights, and sample size. This
+contrasts with evolving approaches that update weighting schemes or task pools
+based on accumulated observations.
+
+Dataset / BenchmarkWe construct UX-Bench-50:50 human-annotated evaluation
+instances covering10 scenarios ×5 models. Models to be evaluated:
+
+ • GPT-4o (baseline, closed-source)
+ • Claude3.5 Sonnet (closed-source)
+ • Llama370B (open-source)
+ • Mistral Large (open-source)
+ • A deliberately weaker model (e.g., Llama27B) as a detection floorEach of
+   the50 instances receives5 independent human annotations (250 annotations
+   total, minimum). Annotators are recruited from a homogeneous pool
+   (English-proficient, familiar with LLM chat interfaces) and screened with a
+   calibration task. The full annotation set is released as a benchmark.
+
+Evaluation Metrics| Metric | Definition | Rationale |
+
+|---|---|---| | AXI discriminant power | Average Cohen's d between
+adjacent-ranked models per axis | Measures whether each axis separates models
+meaningfully | | Composite separation | d between top-1 and top-2 models on
+weighted UX composite | Primary comparison: does the protocol resolve
+leaderboard ties? | | Inter-annotator agreement | Krippendorff's α per axis |
+Measures reliability of each construct | | Test-retest ρ | Spearman correlation
+of model rankings between split-halves of annotators | Measures ranking
+stability | | Construct validity | Spearman ρ between composite UX score and
+holistic preference (separate held-out vote) | Validates that axes capture what
+holistic preference measures | | Floor detection rate | Proportion of instances
+where the weakest model is correctly ranked last | Measures discriminant floor |
+
+BaselinesWe compare against three existing evaluation paradigms:
+
+
+ Baseline                  Description                Key limitation addressed
+ Chatbot Arena ELO         Unconstrained pairwise     Confounds task
+                           preference crowdsourcing   difficulty, user
+                           (as run by LMSYS)          expectation, and model
+                                                      quality; low per-judgment
+                                                      information
+ MT-Bench                  GPT-4-as-judge scoring of  Automated judge bias;
+                           multi-turn conversations   single aggregate score
+ Single-axis satisfaction  "Rate your overall         Single axis; no construct
+                           satisfaction1-5"           decomposition; high
+                           following a free-form      variance
+                           chat
+
+
+The UX-LLM protocol is expected to outperform all three by producing tighter
+confidence intervals per model and higher test-retest rank stability (primary
+success criterion: ρ >0.85 for test-retest, vs. <0.70 for Chatbot Arena ELO in
+equivalent annotation budget).
+
+AblationsSince the protocol is non-evolving by construction, ablations test the
+internal architecture of the fixed protocol:
+
+
+ Ablation   Manipulation                      Expected impact
+ -axes      Reduce to3 axes (drop             Lower construct validity; reduced
+            Naturalness and Trust)            discriminant power for models
+                                              that differ primarily on persona
+ -weighted  Use equal weighting instead of    Small loss of composite
+            calibration-derived weights       separation; useful diagnostic
+ -floor     Remove the deliberately weak      Inflated apparent separation
+            model                             between top models (ceiling
+                                              effect)
+ -single    Single annotator per instance     Krippendorff's α cannot be
+            instead of5                       computed; higher variance per
+                                              model estimate
+
+
+Expected Failure Modes1. Task taxonomy collapse. If the10 scenarios do not span
+the full difficulty/mode space, the protocol will not generalize beyond narrow
+interaction types. Mitigation: pre-register the taxonomy with a pilot study
+showing coverage.
+
+ 2 Annotation fatigue. Five axes ×50 instances may produce rater drift.
+   Mitigation: randomize presentation order, include attention checks, limit
+   sessions to30 minutes.
+ 3 Low inter-annotator agreement on Naturalness or Trust. These are inherently
+   subjective. If α <0.4, these axes should be reported as exploratory, not
+   confirmatory.
+ 4 Composite weights not generalizing. Calibration weights from one task
+   distribution may not transfer. We report unweighted results alongside
+   weighted results.
+ 5 Floor effect on hard scenarios. All models may perform similarly poorly on
+   open-ended creative tasks, reducing discriminant power in that cell. We
+   pre-specify scenario-level analysis to detect this.
+
+Limitations- No longitudinal UX. The protocol measures single-session
+impressions, not long-term engagement, habit formation, or trust erosion over
+repeated use.
+
+ • No task personalization. Every annotator sees the same scenarios with the
+   same user goals. Real UX varies by individual intent and background.
+ • Static weights. The composite weighting does not adapt to user-specific
+   importance of each axis (e.g., a user who values efficiency over
+   naturalness).
+ • Annotator pool homogeneity. Results may not generalize to
+   non-English-speaking or less technically experienced user populations.
+ • Single-run design. The protocol cannot improve its task set, weighting
+   scheme, or annotation rubric across iterations — any deficiencies in the
+   initial design persist throughout the evaluation. This is a deliberate
+   constraint of the -all ablation, and expected to produce lower efficiency
+   than an adaptive protocol that tunes its instruments based on earlier
+   discriminant failures.

@@ -1,0 +1,63 @@
+● think_tool(The user wants a Table-3-style ablati…)
+
+ Proposal: DIVERSE — A Composite Framework for Evaluating Semantic and Lexical
+    Diversity in Text Generation## ProblemAutoregressive language models are
+      typically optimized for likelihood, which drives models toward safe,
+     high-probability tokens. The result is text that is fluent but bland,
+  repetitive, and lacking in lexical and semantic breadth. While diversity is
+    widely recognized as a critical quality dimension alongside fluency and
+            relevance, the field lacks a reliable way to measure it.
+
+Existing metrics fall into two camps, both with major blind spots.
+
+Lexical n-gram metrics (Distinct‑1/2, Self-BLEU, entropy) are cheap and
+interpretable but fundamentally shallow. They are sensitive to sentence length,
+conflate type variation with semantic breadth, and can be gamed — a model that
+cycles through rare synonyms without changing meaning scores higher than one
+that actually explores distinct content.
+
+Semantic embedding metrics (sentential embedding distance, coverage in latent
+space) address the surface-level problem but introduce their own: they depend on
+the quality and bias of the embedding model, they are sensitive to the choice of
+reference distribution, and there is no single agreed-upon aggregator that
+correlates reliably with human diversity judgments.
+
+No existing evaluation jointly conditions on three desiderata: (1) diversity of
+tokens, (2) diversity of meaning, and (3) diversity of structural patterning
+beyond bag-of-words properties. Furthermore, there is no standardised synthetic
+benchmark where true diversity is known by construction, making it impossible to
+calibrate metrics against ground truth.
+
+HypothesisA composite metric that combines three complementary signals —
+semantic dispersion in embedding space, compression-based novelty relative to a
+reference corpus, and length-calibrated n-gram diversity — will correlate with
+human judgments of diversity more strongly (Spearman ρ ≥0.80 on held-out
+evaluation) than any single signal alone, and will be more robust to length
+confounds and adversarial surface-level manipulation.
+
+Method: DIVERSE FrameworkWe propose the Diversity Index Via Entropic
+Representation and Semantic Expansion (DIVERSE) metric, defined as the weighted
+arithmetic mean of three component scores:
+
+Component A — Semantic Dispersion (SD)
+
+Embed each generated text with a frozen sentence encoder (Sentence-T5-XXL).
+Compute the mean pairwise cosine distance across all generated texts in a set.
+Then compute the coverage radius: the minimum sphere in embedding space that
+encloses a specified fraction (e.g.,95%) of the set's representations,
+normalised by the same radius for a reference corpus of equivalent size. Higher
+values indicate broader semantic coverage.
+
+Component B — Compression-Based Novelty (CN)
+
+Concatenate all generated texts into a single string. Compute the
+gzip-compressed length ratio: (original_length - compressed_length) /
+original_length. Separately compute the same ratio for the reference corpus. The
+novelty score is the gap between the two ratios. Intuitively, if the generated
+text compresses nearly as well as the reference, it contains little new
+information; if it compresses poorly, it is more novel relative to what has been
+seen.
+
+Component C — Length-Calibrated Lexical Diversity (LC-LD)
+
+For each n-gram order n ∈

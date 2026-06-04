@@ -1,0 +1,206 @@
+Knowledge Injection in Domain-Specific LLMs: A Curriculum-Grounded Parameter
+Integration Framework### TitleCurriculum-Guided Parameter Integration for Robust
+Knowledge Injection in Domain-Specific Large Language Models
+
+--------------------------------------------------------------------------------
+
+ProblemInjecting structured, domain-specific knowledge into pretrained LLMs
+faces three interconnected challenges not adequately solved by existing methods:
+
+ 1 Catastrophic forgetting vs. insufficient integration — Fine-tuning on domain
+   corpora either overwrites general capabilities (low retention of general
+   knowledge) or fails to internalize domain knowledge beyond surface-level
+   pattern matching.
+ 2 Granularity mismatch — Domain knowledge exists at multiple granularities
+   (fact-level, concept-level, procedural/rule-level), yet current injection
+   methods typically apply a single mechanism (continued pretraining, retrieval
+   augmentation, or adapter tuning) that treats all knowledge types uniformly.
+ 3 Evaluation confound — Standard benchmarks measure isolated fact recall (e.g.,
+   multiple-choice QA) but not the model's ability to reason compositionally
+   with injected knowledge — e.g., combining two injected facts to answer a
+   novel question. Reported gains may reflect memorization rather than genuine
+   knowledge integration.
+
+The core challenge is therefore not whether knowledge can be injected, but how
+to inject knowledge at multiple granularities such that the model can flexibly
+compose and reason with it while preserving general capabilities.
+
+--------------------------------------------------------------------------------
+
+HypothesisStructuring domain knowledge into a curriculum of increasing
+compositional complexity and injecting each level via a dedicated,
+minimally-interfering parameterization will produce higher compositional
+reasoning accuracy and lower general-knowledge degradation than either
+monolithic fine-tuning or single-mechanism injection.
+
+Specifically: (1) fact-level knowledge is best injected via lightweight
+memory-augmented parameters (key-value adapters), (2) concept-level knowledge
+via rank-constrained LoRA modules on mid-layer attention, and (3)
+procedural/rule-level knowledge via sparse feed-forward network grafting.
+Training these in a curriculum order (facts → concepts → rules) and freezing
+each stage's parameters before introducing the next reduces interference and
+improves compositional generalization.
+
+--------------------------------------------------------------------------------
+
+MethodCIPI (Curriculum-grounded Injection with Parameter Isolation)
+
+ 1 Knowledge Decomposition Pipeline
+
+ • Parse the domain corpus into three tiers via LLM-assisted extraction + human
+   verification sampling:
+ • Tier1 (Facts): atomic triples (entity, relation, entity) — e.g., (Drug X,
+   treats, Disease Y) - Tier2 (Concepts): cluster-level representations linking
+   related facts — e.g., mechanism-of-action clusters linking drugs, targets,
+   and pathways - Tier3 (Procedures/Rules): conditional inference rules — e.g.,
+   "If patient has condition A and biomarker B > threshold, then drug X is
+   contraindicated"
+
+ 2 Three-Parameter Injection Modules
+
+ • Fact Injector (Tier1): A small set of cross-attention key-value adapters
+   inserted after each Transformer layer's self-attention. The keys index fact
+   triples; the values project retrieved facts into the residual stream. No
+   base-model weights are updated. Motivation: facts are lookup-intensive;
+   retrieval-based injection suits this without touching general reasoning.
+ • Concept Injector (Tier2): Low-rank adaptation (LoRA, r=8) applied to the
+   value projections in the middle-third of layers (layers12–24 of a32-layer
+   model). Trained on concept-grounded next-token prediction where concept
+   labels are prepended as soft prompts. Motivation: concept abstraction
+   benefits from distributed weight updates in layers associated with semantic
+   composition.
+ • Procedure Injector (Tier3): Sparse grafting — replace a small fraction (1–2%)
+   of feed-forward network neurons in the last third of layers with
+   domain-rule-specialized neurons initialized from the rule corpus. Trained
+   with L0 sparsity regularization. Motivation: rules require deterministic
+   branching; sparse FFN specialization preserves the bulk of general knowledge.
+
+ 3 Curriculum Schedule
+
+ • Phase1: Train Fact Injector alone (freeze base + all other modules).1 epoch.
+ • Phase2: Freeze Fact Injector. Train Concept Injector.1 epoch.
+ • Phase3: Freeze all prior. Train Procedure Injector.1 epoch.
+ • Phase4 (optional): Joint very-low-rate training (lr ×0.1) on mixed data to
+   allow cross-module coordination.
+
+ 4 Inference
+
+ • All three modules are active. The Fact Injector retrieves relevant facts, the
+   Concept Injector provides contextual abstraction, and the Procedure Injector
+   applies rule-based branching where triggered.
+
+--------------------------------------------------------------------------------
+
+Dataset / Benchmark- Domain: Biomedical (chosen for well-structured knowledge
+bases and established benchmarks).
+
+ • Training corpus: A curated set of ~200K biomedical documents spanning:
+ • DrugBank (facts: drug-target-disease triples)
+ • UMLS (concepts: semantic type clusters)
+ • Clinical practice guidelines (rules: conditional treatment protocols)
+ • Evaluation benchmarks:
+ • Fact recall: BioQA (in-domain multiple-choice) and a held-out triple
+   completion task (Tier1)
+ • Concept reasoning: MedMCQA subset requiring multi-step inference (Tier2)
+ • Rule application: a novel compositional benchmark constructed by composing
+   two facts into a rule-required question (Tier3) — e.g., "Drug X treats
+   Disease Y. Disease Y has symptom Z. Does Drug X alleviate Z?" requires fact
+   lookup + rule application - General retention: MMLU (full), HellaSwag, and
+   GSM8K — to measure forgetting- Base model: Llama-3-8B (Instruct).
+
+--------------------------------------------------------------------------------
+
+Evaluation Metrics| Capability | Metric | Primary / Secondary |
+
+|---|---|---| | Fact recall | Triple completion accuracy (Hits@1, Hits@10) |
+Primary | | Concept reasoning | MedMCQA accuracy (subset requiring ≥2 inference
+steps) | Primary | | Rule application | Compositional QA accuracy (novel
+benchmark) | Primary | | General retention | Δ MMLU (relative drop from base
+model) | Secondary | | General retention | Δ HellaSwag, Δ GSM8K | Secondary | |
+Injection efficiency | # trainable parameters / total parameters | Reporting | |
+Interference | Per-tier accuracy after each curriculum phase (forward transfer /
+backward interference) | Analysis |
+
+Primary metrics determine the go/no-go decision. Secondary metrics characterize
+trade-offs.
+
+--------------------------------------------------------------------------------
+
+Baselines1. Full fine-tune (FFT): Continued pretraining on the domain corpus
+(all model weights). Represents maximum injection with minimum parameter
+efficiency.
+
+ 2 LoRA-only (r=16): Single LoRA module on all attention projections, trained on
+   the full corpus (no curriculum, no tier separation). Matches computational
+   budget to CIPI.
+ 3 Retrieval-Augmented Generation (RAG): No weight updates — retrieve top-3
+   facts from the knowledge base at each generation step. Represents the pure
+   retrieval baseline.
+ 4 CIPI (uniform joint): Same three modules, but trained jointly (no curriculum)
+   on all tiers simultaneously. Isolates the curriculum effect.
+ 5 CIPI (reverse order): Rules → Concepts → Facts curriculum. Isolates the
+   ordering effect.
+
+--------------------------------------------------------------------------------
+
+Ablations| Ablation | What is removed / varied | What it measures |
+
+|---|---|---| | No Fact Injector | Remove key-value adapters | Contribution of
+dedicated fact-retrieval parameters | | No Concept Injector | Remove LoRA
+modules | Contribution of concept-level distributed updates | | No Procedure
+Injector | Keep0% of grafted FFN neurons | Contribution of rule-specialized
+sparse parameters | | Joint training (baseline4) | Remove curriculum ordering |
+Whether curriculum ordering reduces interference | | Single LoRA (baseline2) |
+Replace three modules with one LoRA | Whether modular isolation beats monolithic
+adaptation | | Tier-1-only injection | Only Fact Injector trained | Upper bound
+on forgetting prevention, lower bound on integration |
+
+--------------------------------------------------------------------------------
+
+Expected Failure Modes1. Tier bleed: Fact Injector retrieves facts irrelevant to
+the compositional question, misleading the Procedure Injector. Mitigation: train
+a lightweight gating mechanism that down-weights retrieved facts when
+concept-level reasoning is active.
+
+ 2 Curriculum lock-in: Early frozen modules prevent later modules from learning
+   useful cross-tier interactions. Mitigation: Phase4 joint low-rate training is
+   designed to address this; if it fails, relax freezing to allow gradual
+   fine-tuning of early modules at very low learning rates.
+ 3 Sparse grafting underutilization: The L0-regularized FFN neurons collapse to
+   near-zero activation, rendering the Procedure Injector inert. Mitigation:
+   initialize grafted neurons with weights from rule-derived auxiliary training
+   (not random) and schedule L0 regularization to activate only after a warmup
+   phase.
+ 4 General knowledge degradation still exceeds5%: The cumulative number of
+   updated parameters (~2–3% of total) may still drift general representations.
+   Mitigation: add a KL-divergence regularization term between the base model's
+   logits and CIPI's logits on a held-out general-domain corpus during all
+   training phases.
+ 5 Compositional benchmark is too easy / too hard: A novel benchmark risks
+   ceiling or floor effects. Mitigation: calibrate difficulty on a small pilot
+   (N=100 examples) with human expert baseline accuracy. Iterate on question
+   design to target50–70% human accuracy before full-scale evaluation.
+
+--------------------------------------------------------------------------------
+
+Limitations1. Knowledge decomposition cost: Extracting the three tiers from a
+new domain requires significant human-in-the-loop validation (target:95%
+precision on a5% sampled audit). This limits deployment speed in low-resource
+domains.
+
+ 2 Modularity ceiling: Separating knowledge into three tiers assumes clean
+   boundaries between facts, concepts, and rules. In practice, these boundaries
+   are fuzzy — a single sentence may encode all three. The decomposition
+   pipeline's errors propagate to the injection modules.
+ 3 Scale dependence: The curriculum and modular design is tested on8B
+   parameters. At much larger scales (70B+), interference patterns and optimal
+   tier definitions may shift qualitatively.
+ 4 Sequential dependency: The curriculum assumes that fact-level knowledge is a
+   prerequisite for concept-level reasoning. If a domain requires top-down
+   reasoning (rules constrain which facts are relevant), the current order may
+   be suboptimal. The reverse-curriculum ablation tests this, but deployment
+   would need to determine the correct order per domain.
+ 5 No lifelong learning evaluation: The proposal tests a one-shot injection
+   scenario. Real-world knowledge bases evolve; CIPI's modular design is
+   intended to support updating individual tiers without retraining, but this is
+   not evaluated in the proposed experiments.

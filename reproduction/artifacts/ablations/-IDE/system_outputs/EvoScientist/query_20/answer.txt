@@ -1,0 +1,150 @@
+Research Proposal: Evaluating Context-Appropriate Diversity in Neural Text
+Generation## Title
+CoDE: A Context-Dependent Diversity Evaluation Framework for
+Open-Ended Text Generation
+
+Problem
+Existing diversity metrics for text generation (Distinct-n, Self-BLEU,
+Entropy-5, TTR) all share a fundamental flaw: they measure diversity as a single
+scalar aggregated over a corpus, independent of the input context. This means:
+
+• A model that generates the same generic response to every prompt can score
+high on diversity if responses differ across prompts (high inter-prompt
+diversity) while being pathologically repetitive within each response (low
+intra-prompt diversity).
+• A factual QA model that should produce low-variance answers is punished for
+being "not diverse."
+• There is no established way to distinguish appropriate diversity (multiple
+valid paraphrases of the same meaning) from inappropriate diversity
+(hallucinated facts or topic drift).
+
+The central gap is that diversity is not a single target to maximize—it is a
+distributional property that should match the conditional distribution implied
+by the input.
+
+Hypothesis
+Diversity in text generation can be decomposed into two orthogonal
+components—intra-response diversity (variety within a single generated text) and
+inter-response diversity (variety across generations for the same input, i.e.,
+model stochasticity)—and each has a context-dependent expected range that can be
+estimated from the training data or human references. A model whose diversity
+falls outside this expected range (too high or too low) is exhibiting a failure
+mode that existing aggregate metrics miss.
+
+Method
+CoDE (Context-Dependent Diversity Evaluation) proceeds in three stages:
+
+1 Reference-conditional diversity calibration. For each input context in the
+evaluation set, collect a set of human-written references (≥5 per context).
+Compute per-context diversity statistics on the references to establish an
+expected diversity interval per context and per diversity facet. Facets
+include:
+
+• Lexical diversity: Distinct-1, Distinct-2, corrected TTR (Herdan's TTR)
+• Structural diversity: syntactic tree depth variance, POS tag entropy -
+Semantic diversity: pairwise sentence-BERT cosine variance among candidate
+generations for the same prompt2. Within-vs-across response decomposition.
+For each model under evaluation, generate K responses per prompt (K ≥10).
+Compute:
+• Intra-response diversity: averaged per-response metrics (e.g., average
+Self-BLEU of a response against itself in sliding windows)
+• Inter-response diversity: diversity across the K generations for the same
+prompt (e.g., pairwise BERTScore variance, corpus-level Distinct-n across
+generations)
+
+3 Deviation scoring. For each (model, prompt, facet) triple, measure the signed
+deviation of the model's diversity from the human-established interval:
+
+• Deviation ∈ [−1, +1] where negative = under-diverse (more repetitive than
+humans), positive = over-diverse (more varied than humans, potentially
+hallucinatory)
+• Aggregate: mean absolute deviation across facets = CoDE score (lower is
+better)
+
+Dataset / Benchmark
+Construct a multi-domain diversity benchmark spanning
+contexts with intrinsically different diversity expectations:
+
+Domain                    Expected diversity        Rationale
+Factoid QA (SQuAD2.0,     Low inter + low intra     One correct answer, short
+TriviaQA)
+Story generation          High intra, moderate      One narrative, varied
+(WritingPrompts,          inter                     style
+ROCStories)
+Data-to-text (WebNLG,     Low intra, moderate       Fixed facts, varied
+E2E NLG)                  inter                     surface form
+Open-ended dialogue       High intra + high inter   Many valid turns
+(PersonaChat,
+DailyDialog)
+Creative continuation     High intra + high inter   Many valid completions
+(Story Cloze, CommonGen)
+
+Sample500 prompts per domain (2,500 total) with ≥5 human references each.
+
+Evaluation Metrics1. Primary metric: CoDE score (mean absolute deviation from
+the human diversity interval across all facets and domains).
+
+2 Secondary metrics: Breakdown by facet (lexical, structural, semantic) and by
+domain.
+3 Validation metric: Correlation with human judgment of "appropriate diversity"
+(Likert1–5) on a held-out set of200 (model, prompt, response) triples rated
+by ≥3 annotators. Target: Spearman ρ ≥0.6 against the CoDE score.
+
+Baselines| Baseline | What it measures | Expected limitation |
+
+|---|---|---| | Distinct-1 / Distinct-2 | Surface n-gram novelty | No context
+conditioning, length-biased | | Self-BLEU | Intra-corpus n-gram overlap | Single
+scalar, no per-context or per-facet breakdown | | Entropy-5 / Entropy-n | n-gram
+distribution uniformity | Ignores semantic and structural diversity | | Zipf
+coefficient | Frequency-rank distribution fit | Only describes the tail;
+insensitive to local repetition | | vMeasure (Hashimoto et al.,2019) |
+Cluster-conditional diversity | Requires latent cluster assignments; not
+natively context-conditional | | MAUVE (Pillutla et al.,2021) | Divergence
+between model and human output distributions | Measures distribution matching,
+not per-response diversity |
+
+Ablations1. Reference-count ablation: Vary the number of human references per
+prompt from1 to20. Hypothesis: the CoDE score stabilizes at ≥5 references.
+
+2 Facet ablation: Remove each facet one at a time and measure correlation drop
+with human judgment. Identifies which facet contributes most signal.
+3 Pooling ablation: Replace per-prompt intervals with corpus-level intervals
+(the current default in the field). Hypothesis: the per-prompt decomposition
+is the main source of improvement.
+4 Generation count ablation: Vary K (number of generations per prompt) from2
+to50. Identifies the minimum K for stable inter-response estimates.
+5 Metric-level baselines: Replace the deviation formulation with a simple
+average of existing metrics conditioned on nothing. Measures the marginal
+gain of context-conditional calibration.
+
+Expected Failure Modes1. Reference quality collapse. If human references are
+themselves low-quality or inconsistently diverse (e.g., crowd workers producing
+minimal-effort responses), the "expected interval" becomes meaningless.
+Mitigation: filter references via an automatic quality check (e.g., minimum
+length, minimum Distinct-1 >0) and exclude outlying prompts where
+inter-reference variance is >2σ from the domain mean.
+
+2 Metric saturation on long-form generation. For very long generations (stories
+>500 tokens), intra-response lexical diversity may saturate (all models
+approach the same high Distinct-n), making the lexical facet uninformative.
+Mitigation: use sliding-window diversity (window =100 tokens) and report the
+minimum window diversity, not the aggregate, to capture local repetition that
+longer texts hide.
+3 Semantic diversity metric conflates quality with diversity. Sentence-BERT
+variance could be high simply because generations are incoherent rather than
+genuinely diverse. Mitigation: compute semantic diversity only over
+generations that pass a minimum fluency/coherence threshold (e.g., perplexity
+< a domain-specific cutoff). Flag the model's quality-diversity trade-off
+explicitly as a secondary diagnostic.
+4 Domain boundary ambiguity. The "expected diversity" for an ambiguous prompt
+(e.g., a news headline that could be either factual or editorial) may not
+fall cleanly into one domain bin. Mitigation: report per-prompt deviations
+rather than only domain aggregates, and provide prompt-level visualization
+for outlier analysis.
+5 Inter-response diversity is confounded by sampling temperature. A model run
+at temperature1.0 will naturally produce more inter-response variation than
+at temperature0.1. The CoDE score must hold sampling hyperparameters fixed
+across all models, or the benchmark becomes a comparison of sampling
+strategies rather than model architectures. Mitigation: standardize to
+temperature =0.7, top-p =0.9 for all models, and include a sensitivity
+experiment reporting how CoDE changes with temperature.

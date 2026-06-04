@@ -1,0 +1,141 @@
+Ablation Variant: -all (no idea-direction evolution, no idea-validation
+evolution, no experiment-strategy evolution — single-shot static proposal)
+
+--------------------------------------------------------------------------------
+
+Retrieval-Augmented Curriculum Distillation: Structured Knowledge Injection for
+Domain-Specific LLMs### ProblemDomain-specific LLMs (legal, medical, financial)
+consistently underperform general-purpose models on specialized reasoning tasks
+despite fine-tuning on domain corpora. The core failure is not data quantity but
+knowledge structure: standard fine-tuning treats domain documents as flat token
+sequences, ignoring the hierarchical and relational nature of expert knowledge
+(e.g., statutory dependencies, clinical pathways, regulatory chains).
+Contemporary approaches — continual pretraining, prompt-based injection, and RAG
+— each address one facet but suffer from catastrophic forgetting, shallow
+retrieval, or brittle prompt engineering. No existing method jointly solves what
+knowledge to inject, when in training to inject it, and how to verify it has
+been absorbed.
+
+HypothesisA structured two-stage pipeline — (1) retrieval-augmented curriculum
+construction that organizes domain knowledge into dependency-ordered chunks,
+followed by (2) distilled fine-tuning that interleaves chunk-level
+autoregressive loss with a contrastive verification objective — yields higher
+domain-specific task accuracy per unit of training compute than uniform
+fine-tuning or flat RAG, while reducing catastrophic forgetting by at least40%
+on held-out general benchmarks.
+
+MethodStage A — Curriculum Construction. Given a domain corpus C, parse
+documents into a knowledge graph using a lightweight entity-relation extractor
+(e.g., a frozen domain-tuned NER + dependency parser). Topologically sort graph
+nodes into a curriculum K = (k₁, k₂, ..., kₙ) where prerequisite knowledge
+precedes dependent knowledge. For each chunk kᵢ, retrieve the top-3 semantically
+similar chunks from earlier in the curriculum and prepend them as a retrieval
+context window.
+
+Stage B — Curriculum Distillation. Fine-tune a decoder-only base model (7B
+params) on K with a two-term loss:
+
+ • LLM: standard next-token prediction on each chunk.
+ • Lcontrast: for each chunk, the model must assign higher likelihood to the
+   correct retrieval context than to a randomly sampled distractor context from
+   the same domain (margin-based triplet loss).
+
+Training proceeds in curriculum order; each chunk is seen exactly once per epoch
+(no shuffled repetition). After each curriculum epoch, evaluate on a held-out
+domain QA set; halt when QA accuracy plateaus for two consecutive epochs.
+
+Inference. Standard autoregressive generation. Optionally prepend the top-2
+retrieved chunks at test time (RAG inference), but the method is designed to
+degrade gracefully without retrieval.
+
+Dataset / Benchmark- **Training corpus:**50 GB of legal case law and statutes
+(public domain, English-language). This is sufficiently narrow to make knowledge
+structure non-trivial yet broad enough to stress generalization.
+
+ • Evaluation benchmarks:
+ • *Domain QA:*2,000 expert-written legal multiple-choice questions covering12
+   sub-domains (contract law, tort, procedure, etc.).
+ • *Domain summarization:*200 legal document-summary pairs (ROUGE-L /
+   BERTScore).
+ • General-language retention: MMLU (full,57 subjects) and HellaSwag — measured
+   before and after training.
+ • Probabilistic baselines: Also report perplexity on held-out domain chunks,
+   stratified by curriculum position (early vs. late).
+
+Evaluation Metrics| Metric | Primary / Secondary | What it measures |
+
+|---|---|---| | Domain QA accuracy | Primary | Knowledge absorption | | ΔMMLU
+(post – pre) | Primary | Catastrophic forgetting | | BERTScore on summarization
+| Secondary | Generative quality | | Domain perplexity (by position) | Secondary
+| Curriculum effectiveness | | Training tokens to convergence | Efficiency |
+Compute efficiency |
+
+Each metric reported with95% confidence intervals over3 random seeds.
+
+Baselines1. Flat fine-tune — Standard autoregressive fine-tuning on the same50
+GB corpus, shuffled uniformly (no curriculum, no retrieval, no contrastive
+loss). Same model, same total tokens.
+
+ 2 RAG-only — Base model frozen; top-3 retrieved chunks prepended at test time
+   for every example (no fine-tuning).
+ 3 Continual pretraining — Masked-language-model pretraining on domain corpus
+   for50B tokens, then fine-tuned on domain QA. Standard retrieval-free
+   approach.
+ 4 Curriculum-only (ablated method, no retrieval) — Same curriculum ordering and
+   LLM, but no retrieval context windows and no Lcontrast.
+ 5 Curriculum + RAG inference (ablated method, training-time curriculum only,
+   RAG at inference only) — Same as the full method but skip Lcontrast and skip
+   retrieval contexts during training.
+
+Ablations (within-method)
+
+All performed on a10 GB subset to control cost:
+
+ • No curriculum — random shuffle, keep retrieval + contrastive loss. Tests
+   whether curriculum ordering is the critical factor.
+ • No contrastive loss — keep curriculum + retrieval contexts, remove Lcontrast.
+   Tests whether the contrastive objective drives the gain.
+ • No retrieval contexts (Baseline4 above) — curriculum + Lcontrast, but no
+   prepended contexts. Tests whether in-context retrieval is needed during
+   training.
+ • Flat curriculum — curriculum ordering but no topological sort (pseudo-random
+   order respecting no dependencies). Tests whether dependency structure matters
+   vs. any ordering.
+
+Expected Failure Modes1. Knowledge graph noise. The entity-relation extractor
+may produce spurious edges, creating misleading dependencies in the curriculum.
+Mitigation: manually audit200 random edges and report precision/recall; if
+precision <70%, switch to a simple section-heading hierarchy (cheaper but
+coarser).
+
+ 2 Contrastive loss collapse. The triplet margin objective may drive the model
+   to a degenerate solution where retrieval-context encodings collapse to the
+   same embedding. Monitor embedding variance during training; if it drops below
+   a threshold, increase margin or switch to a negative sampling strategy with
+   hard-negatives from the same curriculum week.
+ 3 Curriculum early-chunk overfitting. Early chunks are smaller and seen more
+   times per epoch. If perplexity on early positions is significantly lower than
+   on late positions, subsample early chunks or add a curriculum-position weight
+   to LLM.
+ 4 MMLU regression despite method gains. If domain QA improves but MMLU drops
+   >5%, the domain corpus is inducing forgetting. Proposed mitigation: replay5%
+   general-domain data per curriculum step (recorded as a variant analysis if
+   triggered).
+
+Limitations1. Single domain. Results may not generalize to domains with flatter
+knowledge structures (e.g., conversational customer support). Cross-domain
+replication is left to future work.
+
+ 2 No human evaluation. Domain QA accuracy is expert-written but
+   multiple-choice. Open-ended generation quality and expert-judged correctness
+   are not measured, which may overstate practical utility.
+ 3 Curriculum construction cost. Knowledge graph extraction and topological
+   sorting add ~2× preprocessing cost over flat tokenization. The efficiency
+   argument rests on reduced training tokens to convergence, not on total
+   end-to-end cost.
+ 4 7B ceiling. Scaling behavior to70B+ models is unknown. The contrastive loss
+   and curriculum design may behave differently at scale where models
+   internalize structure with less explicit guidance.
+ 5 Single-pass curriculum. The method does not adapt the curriculum based on
+   which chunks the model struggles with. An adaptive curriculum that re-orders
+   based on validation loss is a natural extension but is not tested here.

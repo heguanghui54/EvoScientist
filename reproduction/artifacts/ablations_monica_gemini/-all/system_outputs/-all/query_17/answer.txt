@@ -1,0 +1,63 @@
+Table3 Ablation: EvoScientist(-all)
+
+--------------------------------------------------------------------------------
+
+TitleA Multi-Task Framework for Automated Information Extraction from
+Unstructured Scientific Text### ProblemExtracting structured relational
+information (entities, attributes, relations) from unstructured scientific text
+remains bottlenecked by two factors: (1) domain-specific entity types shift
+across subfields, making rigid schemas brittle, and (2) annotated data is sparse
+for most niche scientific domains. Current approaches either rely on large-scale
+distant supervision (which introduces label noise) or require expensive expert
+annotation per domain. A general-purpose framework that adapts to new scientific
+domains with minimal supervision while maintaining extraction precision is
+needed.
+
+HypothesisA shared encoder-decoder architecture that jointly models named entity
+recognition (NER), relation extraction (RE), and attribute-value extraction,
+combined with a lightweight domain-adaptation module (adapter layers inserted
+per domain), can transfer extraction capabilities across scientific subfields
+and reach within5 F1 points of fully-supervised per-domain models using only10%
+of the training data.
+
+MethodThe framework—SciExtract—is a three-component pipeline:
+
+ 1 Encoder: A pretrained scientific language model (SciBERT) fine-tuned on a
+   multi-task objective that combines NER, RE, and attribute extraction via a
+   shared span representation.
+ 2 Multi-Task Decoder Heads: Three task-specific linear projection heads on top
+   of the SciBERT [CLS] token and token-level span representations:
+
+ • NER head: CRF-layer over token-level BIO labels.
+ • RE head: Bilinear classifier over entity-pair span representations.
+ • Attribute head: Question-answering formulation ("What is the [attribute] of
+   [entity]?") with a span extraction head.
+
+ 3 Domain Adapters: Bottleneck adapter layers (down-project to d/4, up-project
+   back to d) inserted after each transformer layer. When adapting to a new
+   domain, only adapter parameters and task heads are fine-tuned; the base
+   SciBERT is frozen.
+
+Training proceeds in two stages:
+
+ • Stage1 (multi-task pretraining): Train on three high-resource scientific
+   domains (biomedical, computer science, materials science) jointly.
+ • Stage2 (domain adaptation): For each new target domain, insert adapters and
+   fine-tune on10% of available in-domain data.
+
+Dataset / Benchmark- Training domains: BC5CDR (biomedical NER+RE), SciERC (CS
+entities+relations), Materials-Schema (a synthetic materials science IE dataset
+constructed from500 manually annotated papers sampled from the Materials Project
+corpus).
+
+ • Target evaluation domains: - Primary: Few-shot NER+RE on the ADE Corpus
+   (adverse drug events, biomedical domain shift).
+ • Secondary: Zero-shot transfer to CORD-19 subset (COVID-19 literature,200
+   held-out documents with relation annotations from the CORD-NER+RE dataset).
+
+Evaluation Metrics- Macro F1 for NER (strict entity matching)
+
+ • Macro F1 for RE (relation argument matching)
+ • Attribute extraction accuracy (exact match of attribute span)
+ • Composite IE score: micro-average of all three F1 values- Data efficiency: F1
+   at

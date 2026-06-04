@@ -4,11 +4,31 @@
   "paper_exact": false,
   "artifact_root": "reproduction/artifacts/ablations",
   "mirror_artifact_root": "reproduction/artifacts/ablations_monica_gemini",
-  "query_ids": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
+  "query_ids": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15
+  ],
   "expected_query_count": 30,
   "covered_query_count": 15,
   "coverage_pct": 50.0,
-  "variants": ["-IDE", "-IVE", "-all"],
+  "variants": [
+    "-IDE",
+    "-IVE",
+    "-all"
+  ],
   "judge": {
     "provider": "monica",
     "model": "gemini-3-flash-preview",
@@ -32,9 +52,19 @@
     "reason": "Coverage-aware validation requires all 30 paper query ids for each ablation variant."
   },
   "variant_records": {
-    "-IDE": {"raw_records": 15, "usable_records": 15},
-    "-IVE": {"raw_records": 15, "usable_records": 15},
-    "-all": {"raw_records": 15, "usable_records": 15}
+    "-IDE": {
+      "raw_records": 15,
+      "usable_records": 15
+    },
+    "-IVE": {
+      "raw_records": 15,
+      "usable_records": 15
+    },
+    "-all": {
+      "raw_records": 15,
+      "usable_records": 15
+    }
   },
-  "caveat": "Replacement ablation run driven by prompt-level disabled-component constraints. The public checkout does not expose the paper's native IDE/IVE ablation switches."
+  "caveat": "Replacement ablation run driven by prompt-level disabled-component constraints. The public checkout does not expose the paper's native IDE/IVE ablation switches.",
+  "superseded_by": "reproduction/ablation_queries01_20_monica_gemini_report.json"
 }
