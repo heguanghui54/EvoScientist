@@ -1,0 +1,49 @@
+{
+  "date": "2026-06-04",
+  "baseline": "AI-Researcher",
+  "checkout": "/Users/hgh54913/research/AI-Researcher",
+  "pinned_head": "f9a6f8480860c193afff600eeffe3defcee8a978",
+  "checkout_head": null,
+  "env_keys": {
+    "CATEGORY": false,
+    "INSTANCE_ID": false,
+    "TASK_LEVEL": false,
+    "CONTAINER_NAME": false,
+    "WORKPLACE_NAME": false,
+    "CACHE_PATH": false,
+    "PORT": false,
+    "MAX_ITER_TIMES": false,
+    "OPENROUTER_API_KEY": false,
+    "GITHUB_AI_TOKEN": false
+  },
+  "commands": {
+    "python": {
+      "command": "python3",
+      "path": "/usr/bin/python3",
+      "available": true,
+      "version": "Python 3.9.6"
+    },
+    "docker": {
+      "command": "docker",
+      "path": null,
+      "available": false
+    },
+    "git": {
+      "command": "git",
+      "path": "/usr/bin/git",
+      "available": true,
+      "version": "git version 2.50.1 (Apple Git-155)"
+    }
+  },
+  "benchmark_template_dir": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/ai_researcher_adapter_runbook/benchmark_instances",
+  "benchmark_template_count": 30,
+  "status": "not_ready",
+  "blocking_items": [
+    "missing pinned AI-Researcher checkout",
+    "Docker CLI is not installed or unavailable",
+    "OPENROUTER_API_KEY is not configured",
+    "GITHUB_AI_TOKEN is not configured"
+  ],
+  "adapter_runbook": "reproduction/ai_researcher_adapter_runbook/ai_researcher_adapter_runbook.json",
+  "caveat": "AI-Researcher is benchmark-instance based and is not a drop-in runner for the recovered EvoScientist natural-language queries. This gate verifies whether a replacement rerun can start from generated per-query benchmark-instance templates."
+}

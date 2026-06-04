@@ -32,6 +32,8 @@ and paper-level experimental reproduction.
 | Replacement baseline protocol is pinned | `replacement_baseline_protocol.json` and `verify_replacement_baseline_protocol.py` define and validate the substitute baseline rerun path | Verified |
 | Virtual Scientist baseline probe is recorded | `virtual_scientist_baseline_probe.json` records the VirSci open-source platform path and its paper-exact limitations | Verified |
 | AI-Researcher baseline probe is recorded | `ai_researcher_baseline_probe.json` records that the public runner is benchmark-instance based, not a drop-in runner for the 30 recovered queries | Verified |
+| AI-Researcher adapter runbook is executable | `build_ai_researcher_adapter_runbook.py` generates 30 per-query benchmark-instance templates plus rerun/import/judge/audit steps for the replacement baseline | Verified |
+| AI-Researcher runtime gate is recorded | `ai_researcher_runtime_gate.json` marks the local rerun not ready because the pinned checkout, Docker, OpenRouter key, and GitHub AI token are currently missing | Verified |
 | InternAgent baseline probe is recorded | `internagent_baseline_probe.json` records a QA CLI replacement-baseline path and its paper-exact limitations | Verified |
 | InternAgent QA runbook is executable | `build_internagent_qa_runbook.py` generates 30 query commands plus import/judge/audit steps for the replacement baseline | Verified |
 | InternAgent query-01 replacement smoke is complete | `internagent_query01_smoke_report.json` records one real InternAgent QA run, import, 2 swapped DeepSeek judge records, aggregate table, and local audit completion for query 01 | Verified |

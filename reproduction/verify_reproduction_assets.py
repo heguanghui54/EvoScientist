@@ -56,6 +56,8 @@ def main() -> None:
         "summarize_baseline_readiness.py",
         "probe_virtual_scientist_baseline.py",
         "probe_ai_researcher_baseline.py",
+        "verify_ai_researcher_runtime.py",
+        "build_ai_researcher_adapter_runbook.py",
         "probe_internagent_baseline.py",
         "build_internagent_qa_runbook.py",
         "run_internagent_qa_baseline.py",
@@ -157,6 +159,31 @@ def main() -> None:
     assert ai_researcher_probe["direct_30_query_runner_available"] is False
     assert "benchmark-instance based" in ai_researcher_probe["reproduction_implication"]
     assert "not_drop_in" in ai_researcher_probe_md_path.read_text(encoding="utf-8")
+    ai_researcher_runbook_root = ROOT / "ai_researcher_adapter_runbook"
+    ai_researcher_runbook_json_path = ai_researcher_runbook_root / "ai_researcher_adapter_runbook.json"
+    ai_researcher_runbook_md_path = ai_researcher_runbook_root / "ai_researcher_adapter_runbook.md"
+    assert ai_researcher_runbook_json_path.is_file(), "missing AI-Researcher adapter runbook JSON"
+    assert ai_researcher_runbook_md_path.is_file(), "missing AI-Researcher adapter runbook markdown"
+    ai_researcher_runbook = json.loads(ai_researcher_runbook_json_path.read_text(encoding="utf-8"))
+    assert ai_researcher_runbook["baseline"] == "AI-Researcher"
+    assert ai_researcher_runbook["query_count"] == 30
+    assert ai_researcher_runbook["paper_exact"] is False
+    assert len(ai_researcher_runbook["commands"]) == 30
+    assert (ai_researcher_runbook_root / "benchmark_instances" / "query_30.json").is_file()
+    ai_researcher_gate_json_path = ROOT / "ai_researcher_runtime_gate.json"
+    ai_researcher_gate_md_path = ROOT / "ai_researcher_runtime_gate.md"
+    assert ai_researcher_gate_json_path.is_file(), "missing AI-Researcher runtime gate JSON"
+    assert ai_researcher_gate_md_path.is_file(), "missing AI-Researcher runtime gate markdown"
+    ai_researcher_gate = json.loads(ai_researcher_gate_json_path.read_text(encoding="utf-8"))
+    assert ai_researcher_gate["baseline"] == "AI-Researcher"
+    assert ai_researcher_gate["pinned_head"] == ai_researcher_probe["checked_head"]
+    assert ai_researcher_gate["benchmark_template_count"] == 30
+    assert ai_researcher_gate["status"] == "not_ready"
+    assert "Docker CLI is not installed or unavailable" in ai_researcher_gate["blocking_items"]
+    assert "OPENROUTER_API_KEY is not configured" in ai_researcher_gate["blocking_items"]
+    assert "AI-Researcher Runtime Gate" in ai_researcher_gate_md_path.read_text(
+        encoding="utf-8"
+    )
     internagent_probe_json_path = ROOT / "internagent_baseline_probe.json"
     internagent_probe_md_path = ROOT / "internagent_baseline_probe.md"
     assert internagent_probe_json_path.is_file(), "missing InternAgent probe JSON"
@@ -669,6 +696,8 @@ def main() -> None:
         "Replacement baseline protocol is pinned",
         "Virtual Scientist baseline probe is recorded",
         "AI-Researcher baseline probe is recorded",
+        "AI-Researcher adapter runbook is executable",
+        "AI-Researcher runtime gate is recorded",
         "InternAgent baseline probe is recorded",
         "InternAgent QA runbook is executable",
         "InternAgent query-01 replacement smoke is complete",

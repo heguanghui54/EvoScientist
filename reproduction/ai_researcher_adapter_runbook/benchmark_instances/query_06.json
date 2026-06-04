@@ -1,0 +1,17 @@
+{
+  "url": "https://arxiv.org/abs/2603.08127",
+  "source_papers": [
+    {
+      "reference": "EvoScientist: Towards Systematic Evaluation of Automated Scientific Discovery Agents",
+      "usage": "Use this recovered query as the target task. Do not assume access to the paper authors' private baseline outputs."
+    }
+  ],
+  "task1": "Generate a concise, feasible, and novel machine-learning research proposal for the recovered EvoScientist Table 1 evaluation query. The answer should include a concrete hypothesis, related-work distinction, experimental plan, evaluation metrics, and limitations.\n\nTopic: Speech recognition\nGoal: Generate a research proposal on low-resource speech recognition.",
+  "task_instructions": "Generate a concise, feasible, and novel machine-learning research proposal for the recovered EvoScientist Table 1 evaluation query. The answer should include a concrete hypothesis, related-work distinction, experimental plan, evaluation metrics, and limitations.\n\nTopic: Speech recognition\nGoal: Generate a research proposal on low-resource speech recognition.",
+  "adapter_metadata": {
+    "query_id": 6,
+    "topic": "Speech recognition",
+    "paper_exact": false,
+    "source": "reproduction/queries.json"
+  }
+}
