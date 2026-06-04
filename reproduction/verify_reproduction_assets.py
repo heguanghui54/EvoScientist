@@ -55,6 +55,8 @@ def main() -> None:
         "run_llm_judge.py",
         "summarize_baseline_readiness.py",
         "probe_virtual_scientist_baseline.py",
+        "build_virtual_scientist_adapter_runbook.py",
+        "verify_virtual_scientist_runtime.py",
         "probe_ai_researcher_baseline.py",
         "verify_ai_researcher_runtime.py",
         "build_ai_researcher_adapter_runbook.py",
@@ -449,6 +451,44 @@ def main() -> None:
     assert virtual_scientist_probe["signals"]["raw_table1_outputs_found"] is False
     assert virtual_scientist_probe["direct_30_query_runner_available"] is False
     assert "open_source_platform_not_drop_in" in virtual_scientist_probe_md_path.read_text(encoding="utf-8")
+    virtual_scientist_runbook_root = ROOT / "virtual_scientist_adapter_runbook"
+    virtual_scientist_runbook_json_path = (
+        virtual_scientist_runbook_root / "virtual_scientist_adapter_runbook.json"
+    )
+    virtual_scientist_runbook_md_path = (
+        virtual_scientist_runbook_root / "virtual_scientist_adapter_runbook.md"
+    )
+    assert virtual_scientist_runbook_json_path.is_file(), "missing Virtual Scientist adapter runbook JSON"
+    assert virtual_scientist_runbook_md_path.is_file(), "missing Virtual Scientist adapter runbook markdown"
+    virtual_scientist_runbook = json.loads(
+        virtual_scientist_runbook_json_path.read_text(encoding="utf-8")
+    )
+    assert virtual_scientist_runbook["baseline"] == "Virtual Scientist"
+    assert virtual_scientist_runbook["query_count"] == 30
+    assert virtual_scientist_runbook["paper_exact"] is False
+    assert len(virtual_scientist_runbook["commands"]) == 30
+    assert "sci_platform" in virtual_scientist_runbook["commands"][0]["command"]
+    assert "python run.py" in virtual_scientist_runbook["commands"][0]["command"]
+    assert "Virtual Scientist" in virtual_scientist_runbook["import_command"]
+    assert (virtual_scientist_runbook_root / "simulation_specs" / "query_30.json").is_file()
+    assert "Virtual Scientist Adapter Runbook" in virtual_scientist_runbook_md_path.read_text(
+        encoding="utf-8"
+    )
+    virtual_scientist_gate_json_path = ROOT / "virtual_scientist_runtime_gate.json"
+    virtual_scientist_gate_md_path = ROOT / "virtual_scientist_runtime_gate.md"
+    assert virtual_scientist_gate_json_path.is_file(), "missing Virtual Scientist runtime gate JSON"
+    assert virtual_scientist_gate_md_path.is_file(), "missing Virtual Scientist runtime gate markdown"
+    virtual_scientist_gate = json.loads(
+        virtual_scientist_gate_json_path.read_text(encoding="utf-8")
+    )
+    assert virtual_scientist_gate["baseline"] == "Virtual Scientist"
+    assert virtual_scientist_gate["pinned_head"] == "07097fd67efd177dd6d5304684d3657dc3411bc1"
+    assert virtual_scientist_gate["simulation_spec_count"] == 30
+    assert virtual_scientist_gate["status"] == "not_ready"
+    assert "AMiner-derived Virtual Scientist data package is not installed at the requested data root" in virtual_scientist_gate["blocking_items"]
+    assert "Virtual Scientist Runtime Gate" in virtual_scientist_gate_md_path.read_text(
+        encoding="utf-8"
+    )
     hypogenic_probe_json_path = ROOT / "hypogenic_baseline_probe.json"
     hypogenic_probe_md_path = ROOT / "hypogenic_baseline_probe.md"
     assert hypogenic_probe_json_path.is_file(), "missing Hypogenic probe JSON"

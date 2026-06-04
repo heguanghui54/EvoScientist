@@ -31,6 +31,8 @@ and paper-level experimental reproduction.
 | Replacement-baseline judge pipeline is complete | Clean EvoScientist answers vs `Direct-DeepSeek`: 60 swapped pairwise records, 60 DeepSeek judge outputs, aggregate table, audit complete | Verified |
 | Replacement baseline protocol is pinned | `replacement_baseline_protocol.json` and `verify_replacement_baseline_protocol.py` define and validate the substitute baseline rerun path | Verified |
 | Virtual Scientist baseline probe is recorded | `virtual_scientist_baseline_probe.json` records the VirSci open-source platform path and its paper-exact limitations | Verified |
+| Virtual Scientist adapter runbook is executable | `build_virtual_scientist_adapter_runbook.py` generates 30 per-query simulation specs plus extraction/import/judge/audit steps for a replacement baseline | Verified |
+| Virtual Scientist runtime gate is recorded | `virtual_scientist_runtime_gate.json` marks the local rerun not ready until the pinned checkout, AMiner-derived data package, FAISS, Ollama CLI, and required Ollama models are available | Verified |
 | AI-Researcher baseline probe is recorded | `ai_researcher_baseline_probe.json` records that the public runner is benchmark-instance based, not a drop-in runner for the 30 recovered queries | Verified |
 | AI-Researcher adapter runbook is executable | `build_ai_researcher_adapter_runbook.py` generates 30 per-query benchmark-instance templates plus rerun/import/judge/audit steps for the replacement baseline | Verified |
 | AI-Researcher runtime gate is recorded | `ai_researcher_runtime_gate.json` marks the local rerun not ready because the pinned checkout, Docker, OpenRouter key, and GitHub AI token are currently missing | Verified |

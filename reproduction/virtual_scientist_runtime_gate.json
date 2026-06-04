@@ -1,0 +1,53 @@
+{
+  "date": "2026-06-04",
+  "baseline": "Virtual Scientist",
+  "checkout": "/Users/hgh54913/research/Virtual-Scientists",
+  "pinned_head": "07097fd67efd177dd6d5304684d3657dc3411bc1",
+  "checkout_head": null,
+  "data_inventory": {
+    "data_root": "/Users/hgh54913/research/Virtual-Scientists/data",
+    "exists": false,
+    "expected_name_hits": []
+  },
+  "commands": {
+    "python3": {
+      "command": "python3",
+      "path": "/usr/bin/python3",
+      "available": true,
+      "version": "Python 3.9.6"
+    },
+    "git": {
+      "command": "git",
+      "path": "/usr/bin/git",
+      "available": true,
+      "version": "git version 2.50.1 (Apple Git-155)"
+    },
+    "ollama": {
+      "command": "ollama",
+      "path": null,
+      "available": false
+    }
+  },
+  "faiss_available": false,
+  "ollama_url": "http://localhost:11434",
+  "ollama_models": [],
+  "required_ollama_models": [
+    "llama3.1",
+    "llama3.1:70b",
+    "mxbai-embed-large"
+  ],
+  "simulation_spec_dir": "/Users/hgh54913/.codex/worktrees/d70a/cp4106/EvoScientist/reproduction/virtual_scientist_adapter_runbook/simulation_specs",
+  "simulation_spec_count": 30,
+  "status": "not_ready",
+  "blocking_items": [
+    "missing pinned Virtual-Scientists checkout",
+    "sci_platform/run.py is not present",
+    "sci_platform/sci_platform.py is not present",
+    "AMiner-derived Virtual Scientist data package is not installed at the requested data root",
+    "Python faiss module is not importable",
+    "Ollama CLI is not installed",
+    "required Ollama models are missing: llama3.1, llama3.1:70b, mxbai-embed-large"
+  ],
+  "adapter_runbook": "reproduction/virtual_scientist_adapter_runbook/virtual_scientist_adapter_runbook.json",
+  "caveat": "Virtual Scientist is a VirSci team-simulation platform, not a drop-in runner for the recovered EvoScientist natural-language queries. This gate verifies whether a replacement rerun can start from generated per-query simulation specs."
+}

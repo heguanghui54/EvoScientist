@@ -1,0 +1,18 @@
+{
+  "query_id": 9,
+  "topic": "Model deployment",
+  "goal": "Generate a research proposal on solving quantization challenges for LLM deployment on edge devices.",
+  "simulation_prompt": "Use the recovered EvoScientist Table 1 query as the scientific theme for a VirSci/Virtual Scientist collaboration simulation. The final extracted baseline answer should be a concise research proposal with hypothesis, related-work distinction, method, experiments, metrics, risks, and limitations.\n\nTopic: Model deployment\nGoal: Generate a research proposal on solving quantization challenges for LLM deployment on edge devices.",
+  "paper_exact": false,
+  "adapter": {
+    "source": "reproduction/queries.json",
+    "target_platform": "open-sciencelab/Virtual-Scientists",
+    "team_limit": 1,
+    "max_discuss_iteration": 3,
+    "max_team_member": 3,
+    "epochs": 1,
+    "runs": 1,
+    "extraction_rule": "After sci_platform/run.py completes, inspect team_info/*_dialogue.json and extract the final idea/proposal/abstract-bearing assistant message. Save exactly one final answer as query_XX.md before importing."
+  },
+  "caveat": "This is a replacement-baseline adapter spec. It is not the original Virtual Scientist raw output used by the EvoScientist paper."
+}

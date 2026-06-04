@@ -16,9 +16,12 @@ Probe: `reproduction/virtual_scientist_baseline_probe.json`
 Commands:
 
 ```bash
-git clone https://github.com/open-sciencelab/Virtual-Scientists $HOME/research/Virtual-Scientists
+.venv/bin/python reproduction/build_virtual_scientist_adapter_runbook.py
+.venv/bin/python reproduction/verify_virtual_scientist_runtime.py
+git clone https://github.com/open-sciencelab/Virtual-Scientists $HOME/research/Virtual-Scientists && cd $HOME/research/Virtual-Scientists && git checkout 07097fd67efd177dd6d5304684d3657dc3411bc1
 # Download the AMiner-derived Papers, Embeddings, Authors, and adjacency data linked in the VirSci README.
 # Patch sci_platform/sci_platform.py paths and run Ollama llama3.1/mxbai-embed-large.
+# Copy reproduction/virtual_scientist_adapter_runbook/simulation_specs/query_*.json into the checkout for traceability.
 # Extract generated idea/abstract fields from team_info/*_dialogue.json into outputs/evoscientist_table1_queries/virtual_scientist/query_XX.md.
 .venv/bin/python reproduction/import_baseline_outputs.py --system-name 'Virtual Scientist' --source $HOME/research/Virtual-Scientists/outputs/evoscientist_table1_queries/virtual_scientist --source-format directory --output-root reproduction/artifacts/idea_outputs --strict
 .venv/bin/python reproduction/build_pairwise_judge_inputs.py --systems-root reproduction/artifacts/idea_outputs --baseline 'Virtual Scientist' --output reproduction/artifacts/judge_inputs/evosci_vs_virtual_scientist.jsonl
